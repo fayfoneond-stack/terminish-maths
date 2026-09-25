@@ -1,0 +1,12 @@
+# Fichiers auxiliaires LaTeX
+*.aux
+*.log
+*.xdv
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# Runtime LaTeX WASM (installé hors dépôt, voir outils_latex/README.md)
+/latex-runtime/

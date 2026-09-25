@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fiche pédagogique — Suites arithmétiques — 1ère D | Terminish</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Segoe UI',system-ui,sans-serif;
+      background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0f172a 100%);
+      color:#e2e8f0; min-height:100vh; line-height:1.55;
+    }
+    .wrap { max-width:1000px; margin:0 auto; padding:0 18px 40px; }
+
+    header {
+      text-align:center; padding:36px 20px 24px;
+      background:linear-gradient(180deg,rgba(56,189,248,0.12) 0%,transparent 100%);
+    }
+    .subtitle { font-size:12px; letter-spacing:4px; text-transform:uppercase; color:#38bdf8; margin-bottom:8px; }
+    h1 { font-size:clamp(1.4rem,3.5vw,2.2rem); font-weight:800;
+         background:linear-gradient(90deg,#38bdf8,#818cf8,#c084fc);
+         -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .byline { margin-top:8px; font-size:0.95rem; color:#94a3b8; }
+    .badge { background:#38bdf8; color:#0f172a; padding:2px 10px; border-radius:12px; font-size:0.75rem; font-weight:700; }
+
+    .card {
+      background:rgba(255,255,255,0.03);
+      border:1px solid rgba(56,189,248,0.18);
+      border-radius:18px; padding:22px 24px; margin-bottom:20px;
+      break-inside:avoid; page-break-inside:avoid;
+    }
+    .card h2 {
+      display:flex; align-items:center; gap:10px;
+      font-size:1.05rem; color:#38bdf8; margin-bottom:14px;
+      padding-bottom:10px; border-bottom:1px solid rgba(56,189,248,0.15);
+    }
+    .icon {
+      width:36px; height:36px; border-radius:11px; flex:none;
+      background:linear-gradient(135deg,#38bdf8,#0284c7);
+      display:flex; align-items:center; justify-content:center; font-size:1.05rem;
+    }
+    .icon.violet { background:linear-gradient(135deg,#818cf8,#6366f1); }
+    .icon.rose   { background:linear-gradient(135deg,#f472b6,#db2777); }
+    .icon.or     { background:linear-gradient(135deg,#fbbf24,#d97706); }
+    .icon.vert   { background:linear-gradient(135deg,#34d399,#059669); }
+
+    /* identification */
+    .id-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); gap:10px 18px; }
+    .id-item { background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.14);
+               border-radius:10px; padding:9px 13px; font-size:0.9rem; }
+    .id-item .k { display:block; font-size:0.7rem; text-transform:uppercase; letter-spacing:1.5px; color:#7dd3fc; margin-bottom:2px; }
+    .dot { color:#fbbf24; font-weight:800; }
+
+    ul.dash { list-style:none; }
+    ul.dash li { padding:5px 0 5px 22px; position:relative; color:#cbd5e1; }
+    ul.dash li::before { content:"▸"; position:absolute; left:2px; color:#38bdf8; font-weight:700; }
+    ol.obj { margin-left:20px; }
+    ol.obj li { padding:4px 0; color:#cbd5e1; }
+    ol.obj li b { color:#e2e8f0; }
+
+    .tag { display:inline-block; background:rgba(129,140,248,0.14); border:1px solid rgba(129,140,248,0.3);
+           color:#c7d2fe; border-radius:999px; padding:3px 12px; font-size:0.78rem; margin:3px 4px 3px 0; font-weight:600; }
+
+    /* situation */
+    .situation {
+      background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.28);
+      border-radius:14px; padding:18px 20px; color:#fde68a;
+    }
+    .situation p { color:#fde68a; }
+    .consignes { margin-top:12px; }
+    .consigne {
+      background:rgba(255,255,255,0.05); border-left:3px solid #fbbf24;
+      border-radius:8px; padding:8px 14px; margin-top:8px; color:#e2e8f0; font-size:0.92rem;
+    }
+    .consigne b { color:#fbbf24; }
+
+    /* tableau déroulement */
+    .tbl-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; font-size:0.84rem; min-width:760px; }
+    th { background:rgba(56,189,248,0.14); color:#7dd3fc; text-transform:uppercase;
+         font-size:0.68rem; letter-spacing:1.2px; padding:9px 10px; text-align:left;
+         border:1px solid rgba(56,189,248,0.2); }
+    td { padding:9px 10px; border:1px solid rgba(255,255,255,0.07); vertical-align:top; color:#cbd5e1; }
+    tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+    td.phase { color:#e2e8f0; font-weight:700; white-space:nowrap; }
+    td.dur { text-align:center; color:#fbbf24; font-weight:700; white-space:nowrap; }
+    td small { color:#94a3b8; display:block; margin-top:3px; font-weight:400; }
+
+    /* synthèse */
+    .def {
+      background:rgba(52,211,153,0.07); border:1px solid rgba(52,211,153,0.25);
+      border-radius:12px; padding:13px 16px; margin:10px 0; color:#d1fae5;
+    }
+    .def .t { color:#34d399; font-weight:800; text-transform:uppercase; font-size:0.72rem; letter-spacing:1.5px; display:block; margin-bottom:4px; }
+    .formule { text-align:center; font-size:1.05rem; color:#e2e8f0; margin:8px 0; }
+    .math { font-family:'Cambria Math',Georgia,serif; font-style:italic; }
+    sub { font-size:0.72em; }
+    .exemple { background:rgba(255,255,255,0.04); border-radius:10px; padding:11px 15px; margin-top:10px; font-size:0.9rem; color:#cbd5e1; }
+    .exemple b { color:#818cf8; }
+
+    /* grille APC */
+    table.apc td { text-align:center; }
+    table.apc td:first-child { text-align:left; }
+    table.apc tr.total td { background:rgba(56,189,248,0.12); color:#e2e8f0; font-weight:800; }
+
+    /* exercices + solutions */
+    details { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+              border-radius:12px; padding:12px 16px; margin-top:10px; }
+    summary { cursor:pointer; font-weight:700; color:#c084fc; }
+    summary:hover { color:#e9d5ff; }
+    details[open] summary { margin-bottom:8px; }
+    details .sol { border-top:1px dashed rgba(192,132,252,0.35); padding-top:9px; font-size:0.88rem; color:#a7f3d0; }
+    details .sol b { color:#34d399; }
+    .ex-tag { display:inline-block; background:linear-gradient(135deg,#c084fc,#a855f7); color:#fff;
+              border-radius:8px; padding:2px 10px; font-size:0.75rem; font-weight:700; margin-right:8px; }
+
+    .devoir { background:rgba(248,113,113,0.07); border:1px solid rgba(248,113,113,0.25);
+              border-radius:12px; padding:13px 16px; color:#fecaca; }
+
+    footer { text-align:center; padding:30px 20px; color:#475569; font-size:0.85rem;
+             border-top:1px solid rgba(255,255,255,0.05); margin-top:10px; }
+
+    .btn-print {
+      display:block; margin:6px auto 26px; padding:12px 30px;
+      background:linear-gradient(135deg,#38bdf8,#0284c7); color:#fff; border:none;
+      border-radius:12px; font-weight:700; font-size:0.95rem; cursor:pointer;
+      box-shadow:0 4px 18px rgba(56,189,248,0.3); transition:all 0.3s;
+    }
+    .btn-print:hover { transform:translateY(-2px); }
+
+    /* ============ IMPRESSION ============ */
+    @media print {
+      body { background:#fff !important; color:#111 !important; }
+      header { background:none; padding:14px 0 6px; }
+      h1 { -webkit-text-fill-color:#0c4a6e; color:#0c4a6e; background:none; }
+      .subtitle { color:#0369a1; }
+      .byline { color:#444; }
+      .card { background:#fff; border:1px solid #cbd5e1; margin-bottom:12px; padding:14px 18px; }
+      .card h2 { color:#0369a1; border-bottom-color:#cbd5e1; }
+      .icon { background:#0369a1 !important; color:#fff; }
+      .icon.violet, .icon.rose, .icon.or, .icon.vert { background:#0369a1 !important; }
+      .id-item { background:#f1f5f9; border-color:#cbd5e1; }
+      .id-item .k { color:#0369a1; }
+      .dot { color:#b45309; }
+      ul.dash li, ol.obj li { color:#222; }
+      ul.dash li::before { color:#0369a1; }
+      .tag { background:#eef2ff; border-color:#c7d2fe; color:#3730a3; }
+      .situation { background:#fffbeb; border-color:#f59e0b; color:#78350f !important; }
+      .situation p { color:#78350f; }
+      .consigne { background:#fff; color:#111; border-left-color:#f59e0b; }
+      .consigne b { color:#b45309; }
+      th { background:#e0f2fe; color:#075985; border-color:#bae6fd; }
+      td { border-color:#cbd5e1; color:#222; background:#fff !important; }
+      td.phase { color:#111; }
+      td.dur { color:#b45309; }
+      td small { color:#555; }
+      .def { background:#f0fdf4; border-color:#86efac; color:#14532d; }
+      .def .t { color:#15803d; }
+      .formule, .math { color:#111; }
+      .exemple { background:#f8fafc; color:#222; }
+      .exemple b { color:#4338ca; }
+      table.apc tr.total td { background:#e0f2fe !important; color:#0c4a6e; }
+      details { background:#fff; border-color:#cbd5e1; }
+      summary { color:#7e22ce; }
+      details .sol { color:#166534; border-top-color:#c084fc; }
+      details .sol b { color:#15803d; }
+      .ex-tag { background:#7e22ce; }
+      .devoir { background:#fef2f2; border-color:#fca5a5; color:#7f1d1d; }
+      footer { color:#666; border-top-color:#e2e8f0; }
+      .btn-print { display:none !important; }
+      table { font-size:0.78rem; min-width:0; }
+      @page { size:A4 portrait; margin:12mm 10mm; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="subtitle">Plateforme Éducative — Terminish</div>
+  <h1>Fiche pédagogique de Mathématiques</h1>
+  <div class="byline">by <strong style="color:#38bdf8;">KODJONE Kodjo</strong> <span class="badge">NE +1</span></div>
+</header>
+
+<div class="wrap">
+  <button class="btn-print" onclick="window.print()">🖨️ Imprimer / Enregistrer en PDF</button>
+
+  <!-- ═══════════ IDENTIFICATION ═══════════ -->
+  <section class="card">
+    <h2><span class="icon">📋</span> Identification</h2>
+    <div class="id-grid">
+      <div class="id-item"><span class="k">Établissement</span>Lycée de Péta — Kpalimé</div>
+      <div class="id-item"><span class="k">Année académique</span>2025 – 2026</div>
+      <div class="id-item"><span class="k">Professeur</span>KODJONE Kodjo</div>
+      <div class="id-item"><span class="k">Discipline</span>Mathématiques</div>
+      <div class="id-item"><span class="k">Classe</span>Première D</div>
+      <div class="id-item"><span class="k">Effectif</span>………<span class="dot">/………</span> présents</div>
+      <div class="id-item"><span class="k">Durée</span>55 minutes</div>
+      <div class="id-item"><span class="k">Date</span>…… / …… / 2026</div>
+      <div class="id-item"><span class="k">Semestre</span>Deuxième (S2)</div>
+      <div class="id-item"><span class="k">Thème</span>Suites numériques</div>
+    </div>
+    <div class="id-grid" style="margin-top:10px;">
+      <div class="id-item" style="grid-column:1/-1;"><span class="k">Titre de la leçon</span>
+        <b>Suites arithmétiques</b> — Séance 1 : définition, raison et terme général
+      </div>
+      <div class="id-item" style="grid-column:1/-1;"><span class="k">Place dans la progression</span>
+        Séance 2 du chapitre « Suites numériques » (après : notion de suite numérique, suite définie par son terme général ou par récurrence)
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ OBJECTIFS ═══════════ -->
+  <section class="card">
+    <h2><span class="icon violet">🎯</span> Objectifs pédagogiques</h2>
+    <p style="color:#cbd5e1;"><b style="color:#e2e8f0;">Objectif général :</b> amener les apprenants à s'approprier la notion de suite arithmétique et à l'utiliser pour résoudre des situations-problèmes liées à leur vécu.</p>
+    <p style="color:#cbd5e1; margin-top:10px;"><b style="color:#e2e8f0;">Objectifs spécifiques :</b> à la fin de la séance, l'élève sera capable de :</p>
+    <ol class="obj">
+      <li><b>Reconnaître</b> une suite arithmétique à partir de sa définition ou d'un tableau de valeurs ;</li>
+      <li><b>Déterminer</b> le premier terme et la raison d'une suite arithmétique ;</li>
+      <li><b>Établir et utiliser</b> l'expression du terme général <span class="math">u<sub>n</sub></span> en fonction de <span class="math">n</span> ;</li>
+      <li><b>Résoudre</b> une situation-problème contextualisée à l'aide d'une suite arithmétique.</li>
+    </ol>
+  </section>
+
+  <!-- ═══════════ PRÉREQUIS ═══════════ -->
+  <section class="card">
+    <h2><span class="icon vert">🧩</span> Prérequis</h2>
+    <ul class="dash">
+      <li>Notion de suite numérique : terme général, suite définie par récurrence <span class="math">u<sub>n+1</sub> = f(u<sub>n</sub>)</span> ;</li>
+      <li>Calcul dans ℝ, calcul de valeurs d'expressions ;</li>
+      <li>Résolution d'une équation du premier degré à une inconnue ;</li>
+      <li>Notion d'évolution régulière (augmentation constante, rang, échéance).</li>
+    </ul>
+  </section>
+
+  <!-- ═══════════ MATÉRIEL & MÉTHODES ═══════════ -->
+  <section class="card">
+    <h2><span class="icon">🧰</span> Matériel, méthodes et références</h2>
+    <p style="color:#cbd5e1;"><b style="color:#e2e8f0;">Matériel et supports didactiques :</b></p>
+    <div style="margin-top:6px;">
+      <span class="tag">Tableau noir</span><span class="tag">Craies</span><span class="tag">Règle</span>
+      <span class="tag">Manuel agréé 1ère D</span><span class="tag">Recueil TERMINISH Tome 1</span>
+      <span class="tag">Fiche d'activités</span><span class="tag">Calculatrices</span><span class="tag">Cahiers de leçon / exercices</span>
+    </div>
+    <p style="color:#cbd5e1; margin-top:14px;"><b style="color:#e2e8f0;">Méthodes et techniques (APC) :</b></p>
+    <div style="margin-top:6px;">
+      <span class="tag">Pédagogie de la situation-problème</span><span class="tag">Essai-recherche</span>
+      <span class="tag">Questionnement</span><span class="tag">Travail individuel → petits groupes → mise en commun</span>
+      <span class="tag">Brainstorming</span><span class="tag">Démonstration guidée</span>
+    </div>
+    <p style="color:#cbd5e1; margin-top:14px;"><b style="color:#e2e8f0;">Documents et références :</b></p>
+    <ul class="dash">
+      <li>Programme officiel de mathématiques de la classe de Première D (Semestre 2) ;</li>
+      <li>Manuel scolaire agréé de mathématiques, Première D ;</li>
+      <li>Recueil <i>TERMINISH — Tome 1</i>, KODJONE Kodjo, chapitre « Suites Numériques » (exercices 23 et 24) ;</li>
+      <li>Épreuves des Compositions Régionales et DRE (annales).</li>
+    </ul>
+  </section>
+
+  <!-- ═══════════ SITUATION D'APPRENTISSAGE ═══════════ -->
+  <section class="card">
+    <h2><span class="icon or">💡</span> Situation d'apprentissage (problème)</h2>
+    <div class="situation">
+      <p><b>Contexte :</b> Pour préparer la fête de fin d'année, le groupe <i>« Ablodé »</i> de la tontine de Kpalimé fonctionne ainsi : le 1<sup>er</sup> mois, chaque membre épargne <b>2 000 F</b> ; le 2<sup>e</sup> mois, <b>2 500 F</b> ; le 3<sup>e</sup> mois, <b>3 000 F</b> ; et ainsi de suite, en augmentant chaque mois de <b>500 F</b>.</p>
+      <p style="margin-top:8px;"><b>Problème :</b> Akouvi, trésorière du groupe, veut prévoir à l'avance le montant du versement de chaque mois afin d'informer les membres. Elle vient solliciter ton aide.</p>
+      <div class="consignes">
+        <div class="consigne"><b>Consigne 1 :</b> Montrer que les montants mensuels versés forment une suite arithmétique dont on précisera le premier terme et la raison.</div>
+        <div class="consigne"><b>Consigne 2 :</b> Calculer le montant versé au 12<sup>e</sup> mois.</div>
+        <div class="consigne"><b>Consigne 3 :</b> Déterminer le rang du mois au cours duquel le montant versé atteindra 10 000 F.</div>
+        <div class="consigne"><b>Consigne 4 :</b> Exprimer le montant <span class="math">u<sub>n</sub></span> versé le <span class="math">n</span>-ième mois en fonction de <span class="math">n</span>.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ DÉROULEMENT ═══════════ -->
+  <section class="card">
+    <h2><span class="icon">🕐</span> Déroulement de la leçon (55 min)</h2>
+    <div class="tbl-wrap">
+    <table>
+      <tr>
+        <th>Phases</th><th>Durée</th>
+        <th>Activités de l'enseignant</th>
+        <th>Activités des apprenants</th>
+        <th>Techniques / Outils</th>
+      </tr>
+      <tr>
+        <td class="phase">1. Mise en place</td>
+        <td class="dur">3 min</td>
+        <td>Contrôle de la présence, du matériel et des cahiers ; crée le climat de travail.</td>
+        <td>Se mettent au travail, répondent à l'appel, sortent le matériel.</td>
+        <td>Appel oral</td>
+      </tr>
+      <tr>
+        <td class="phase">2. Convocation des prérequis</td>
+        <td class="dur">5 min</td>
+        <td>Propose oralement : « Soit <span class="math">u<sub>n</sub></span> définie par <span class="math">u<sub>1</sub> = 4</span> et <span class="math">u<sub>n+1</sub> = u<sub>n</sub> + 3</span>. Calculer <span class="math">u<sub>2</sub></span>, <span class="math">u<sub>3</sub></span>, <span class="math">u<sub>4</sub></span>. Que remarque-t-on ? » Fait corriger et ajuste.</td>
+        <td>Résolvent individuellement, répondent, formulent une observation (ajout constant de 3).</td>
+        <td>Questionnement, correction orale</td>
+      </tr>
+      <tr>
+        <td class="phase">3. Lancement de la situation-problème</td>
+        <td class="dur">7 min</td>
+        <td>Présente la situation de la tontine « Ablodé » ; fait reformuler le problème ; écrit le titre de la leçon et communique les objectifs ; distribue les consignes.</td>
+        <td>Écoutent, reformulent la situation, identifient la tâche, notent le titre et les objectifs.</td>
+        <td>Situation-problème, pédagogie du contrat</td>
+      </tr>
+      <tr>
+        <td class="phase">4. Essai-recherche</td>
+        <td class="dur">15 min</td>
+        <td>Laisse d'abord chercher individuellement (5 min), puis constitue des groupes de 4-5 ; circule, observe, encourage, guide par des questions sans donner la solution.</td>
+        <td>Cherchent seuls, puis en groupes : dressent un tableau de valeurs, conjecturent la constante +500 F, vérifient, rédigent une production.</td>
+        <td>Travail individuel puis de groupes, fiches d'activités</td>
+      </tr>
+      <tr>
+        <td class="phase">5. Mise en commun et institutionnalisation</td>
+        <td class="dur">12 min</td>
+        <td>Fait exposer deux ou trois groupes ; organise la confrontation des productions ; valide ; structure le savoir au tableau (définition, raison, terme général) ; fait prendre le résumé.</td>
+        <td>Exposent, critiquent les productions des camarades, confrontent, valident ; copient la synthèse (leçon à retenir).</td>
+        <td>Mise en commun, synthèse écrite</td>
+      </tr>
+      <tr>
+        <td class="phase">6. Exercices d'application</td>
+        <td class="dur">8 min</td>
+        <td>Propose les exercices d'application ; fait passer deux élèves au tableau ; fait corriger et précise les erreurs.</td>
+        <td>Résolvent dans les cahiers ; deux élèves traitent les exercices au tableau ; le reste de la classe corrige.</td>
+        <td>Exercices d'application, correction au tableau</td>
+      </tr>
+      <tr>
+        <td class="phase">7. Évaluation et annonce du devoir</td>
+        <td class="dur">5 min</td>
+        <td>Évalue la production des groupes à l'aide de la grille de critères ; fait le bilan ; donne le travail à faire à la maison et annonce la séance suivante.</td>
+        <td>Auto-évaluent leur production, notent le devoir, écoutent l'annonce.</td>
+        <td>Grille APC (critères et indicateurs)</td>
+      </tr>
+    </table>
+    </div>
+  </section>
+
+  <!-- ═══════════ SYNTHÈSE / INSTITUTIONNALISATION ═══════════ -->
+  <section class="card">
+    <h2><span class="icon vert">📖</span> Synthèse — Leçon à retenir (institutionnalisation)</h2>
+
+    <div class="def">
+      <span class="t">Définition</span>
+      Une suite <span class="math">(u<sub>n</sub>)</span> est dite <b>arithmétique</b> s'il existe un réel <span class="math">r</span> tel que, pour tout entier naturel <span class="math">n</span> :
+      <div class="formule"><span class="math">u<sub>n+1</sub> = u<sub>n</sub> + r</span></div>
+      Le réel <span class="math">r</span> s'appelle la <b>raison</b> de la suite. Chaque terme s'obtient donc en ajoutant au précédent un nombre constant.
+    </div>
+
+    <div class="def">
+      <span class="t">Terme général</span>
+      Pour tous entiers <span class="math">n</span> et <span class="math">p</span> : <span class="math">u<sub>n</sub> = u<sub>p</sub> + (n − p) r</span>
+      <div class="formule">En particulier : <span class="math">u<sub>n</sub> = u<sub>0</sub> + nr</span> &nbsp;&nbsp;ou&nbsp;&nbsp; <span class="math">u<sub>n</sub> = u<sub>1</sub> + (n − 1) r</span></div>
+      C'est une expression <b>affine</b> de <span class="math">n</span> : <span class="math">u<sub>n</sub> = rn + u<sub>0</sub></span>.
+    </div>
+
+    <div class="def">
+      <span class="t">Reconnaître une suite arithmétique</span>
+      On montre que la différence <span class="math">u<sub>n+1</sub> − u<sub>n</sub></span> est constante (égale à <span class="math">r</span>) ; ou, à partir d'un tableau de valeurs, que deux termes consécutifs diffèrent toujours du même nombre.
+    </div>
+
+    <div class="exemple">
+      <b>Retour à la situation :</b> <span class="math">u<sub>1</sub> = 2000</span> et <span class="math">u<sub>n+1</sub> = u<sub>n</sub> + 500</span> → suite arithmétique de premier terme 2 000 et de raison <span class="math">r = 500</span>.<br>
+      Donc <span class="math">u<sub>n</sub> = u<sub>1</sub> + (n − 1) × 500 = 500n + 1500</span>.<br>
+      <b>• Consigne 2 :</b> <span class="math">u<sub>12</sub> = 500 × 12 + 1500 = 7500</span> F &nbsp;&nbsp;|&nbsp;&nbsp;
+      <b>• Consigne 3 :</b> <span class="math">500n + 1500 = 10000 ⟺ 500n = 8500 ⟺ n = 17</span> → au <b>17<sup>e</sup> mois</b>.
+    </div>
+  </section>
+
+  <!-- ═══════════ EXERCICES D'APPLICATION ═══════════ -->
+  <section class="card">
+    <h2><span class="icon rose">✏️</span> Exercices d'application (avec corrigés)</h2>
+
+    <details>
+      <summary><span class="ex-tag">Exercice 1</span> Reconnaître et exploiter une suite</summary>
+      <p style="color:#cbd5e1;">Soit <span class="math">(u<sub>n</sub>)</span> la suite définie par <span class="math">u<sub>1</sub> = 3</span> et, pour tout <span class="math">n ≥ 1</span>, <span class="math">u<sub>n+1</sub> = u<sub>n</sub> + 7</span>.<br>
+      1) Montrer que <span class="math">(u<sub>n</sub>)</span> est arithmétique ; préciser sa raison et son premier terme.<br>
+      2) Calculer <span class="math">u<sub>10</sub></span> et exprimer <span class="math">u<sub>n</sub></span> en fonction de <span class="math">n</span>.</p>
+      <div class="sol">
+        <b>Corrigé :</b> 1) Pour tout <span class="math">n ≥ 1</span>, <span class="math">u<sub>n+1</sub> − u<sub>n</sub> = 7</span> : la différence de deux termes consécutifs est constante, donc <span class="math">(u<sub>n</sub>)</span> est arithmétique de raison <span class="math">r = 7</span> et de premier terme <span class="math">u<sub>1</sub> = 3</span>.<br>
+        2) <span class="math">u<sub>n</sub> = u<sub>1</sub> + (n − 1)r = 3 + 7(n − 1) = 7n − 4</span> ; d'où <span class="math">u<sub>10</sub> = 7 × 10 − 4 = 66</span>.
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="ex-tag">Exercice 2</span> Tableau de valeurs</summary>
+      <p style="color:#cbd5e1;">On donne : <span class="math">v<sub>2</sub> = 5</span>, <span class="math">v<sub>5</sub> = 17</span>.<br>
+      1) Montrer que si <span class="math">(v<sub>n</sub>)</span> est arithmétique, sa raison est 4.<br>
+      2) Déterminer <span class="math">v<sub>1</sub></span>, puis exprimer <span class="math">v<sub>n</sub></span> en fonction de <span class="math">n</span> et calculer <span class="math">v<sub>50</sub></span>.</p>
+      <div class="sol">
+        <b>Corrigé :</b> 1) <span class="math">v<sub>5</sub> = v<sub>2</sub> + 3r</span>, donc <span class="math">17 = 5 + 3r</span>, d'où <span class="math">r = 4</span>.<br>
+        2) <span class="math">v<sub>1</sub> = v<sub>2</sub> − r = 1</span> ; <span class="math">v<sub>n</sub> = v<sub>1</sub> + (n − 1) × 4 = 4n − 3</span> ; <span class="math">v<sub>50</sub> = 4 × 50 − 3 = 197</span>.
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="ex-tag">Exercice 3</span> Situation de vie (modélisation)</summary>
+      <p style="color:#cbd5e1;">Un jeune planteur d'Agou a plant un arbre de <b>150 cm</b> qui grandit de <b>30 cm par an</b>. On note <span class="math">h<sub>n</sub></span> la hauteur de l'arbre après <span class="math">n</span> années.<br>
+      1) Donner <span class="math">h<sub>0</sub></span>, <span class="math">h<sub>1</sub></span>, <span class="math">h<sub>2</sub></span>.<br>
+      2) Montrer que <span class="math">(h<sub>n</sub>)</span> est arithmétique et exprimer <span class="math">h<sub>n</sub></span> en fonction de <span class="math">n</span>.<br>
+      3) Au bout de combien d'années l'arbre dépassera-t-il 4,5 m ?</p>
+      <div class="sol">
+        <b>Corrigé :</b> 1) <span class="math">h<sub>0</sub> = 150</span> ; <span class="math">h<sub>1</sub> = 180</span> ; <span class="math">h<sub>2</sub> = 210</span> (en cm).<br>
+        2) <span class="math">h<sub>n+1</sub> − h<sub>n</sub> = 30</span> : suite arithmétique de raison 30 et de premier terme 150 ; <span class="math">h<sub>n</sub> = 150 + 30n</span>.<br>
+        3) <span class="math">150 + 30n &gt; 450 ⟺ n &gt; 10</span> : à partir de la <b>11<sup>e</sup> année</b>.
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="ex-tag">Renforcement</span> Vers le recueil TERMINISH</summary>
+      <p style="color:#cbd5e1;">En devoir ou en soutien : traiter les <b>exercices 23</b> (suite définie par récurrence — L.A.C.S) et <b>24</b> (Suites — Composition Régionale Grand Lomé) du chapitre « Suites Numériques » du recueil <i>TERMINISH — Tome 1</i>.</p>
+    </details>
+  </section>
+
+  <!-- ═══════════ GRILLE D'ÉVALUATION APC ═══════════ -->
+  <section class="card">
+    <h2><span class="icon or">📊</span> Évaluation — Grille de critères et indicateurs (APC)</h2>
+    <p style="color:#cbd5e1; font-size:0.9rem;">Chaque consigne de la situation d'apprentissage est évaluée à l'aide des quatre critères ci-dessous (<b style="color:#fbbf24;">total : 10 points</b>).</p>
+    <div class="tbl-wrap" style="margin-top:8px;">
+    <table class="apc">
+      <tr>
+        <th>Consignes</th><th>Pertinence<br><small>(la production répond à la consigne)</small></th>
+        <th>Correction<br><small>(exactitude des calculs)</small></th>
+        <th>Cohérence<br><small>(enchaînement logique, rédaction)</small></th>
+        <th>Perfectionnement<br><small>(présentation, originalité)</small></th>
+        <th>Total</th>
+      </tr>
+      <tr><td>Consigne 1</td><td>0,75 pt</td><td>0,75 pt</td><td>0,5 pt</td><td>0,25 pt</td><td><b>2,5 pts</b></td></tr>
+      <tr><td>Consigne 2</td><td>0,75 pt</td><td>0,75 pt</td><td>0,5 pt</td><td>0,25 pt</td><td><b>2,5 pts</b></td></tr>
+      <tr><td>Consigne 3</td><td>0,75 pt</td><td>0,75 pt</td><td>0,5 pt</td><td>0,25 pt</td><td><b>2,5 pts</b></td></tr>
+      <tr><td>Consigne 4</td><td>0,75 pt</td><td>0,75 pt</td><td>0,5 pt</td><td>0,25 pt</td><td><b>2,5 pts</b></td></tr>
+      <tr class="total"><td>Total</td><td>3 pts</td><td>3 pts</td><td>2 pts</td><td>1 pt</td><td>10 pts</td></tr>
+    </table>
+    </div>
+    <p style="color:#94a3b8; font-size:0.82rem; margin-top:8px;">Indicateurs de réussite : au moins 3 productions de groupe sur 4 atteignent la moyenne (5/10) ; chaque apprenant participe à la production de son groupe ; le résumé est correctement recopié.</p>
+  </section>
+
+  <!-- ═══════════ TRAVAIL À FAIRE ═══════════ -->
+  <section class="card">
+    <h2><span class="icon rose">🏠</span> Travail à faire (devoir)</h2>
+    <div class="devoir">
+      <p><b>À la maison :</b> Soit <span class="math">(w<sub>n</sub>)</span> définie par <span class="math">w<sub>0</sub> = 12</span> et <span class="math">w<sub>n+1</sub> = w<sub>n</sub> − 5</span>.<br>
+      1) Calculer <span class="math">w<sub>1</sub></span>, <span class="math">w<sub>2</sub></span>, <span class="math">w<sub>3</sub></span>.<br>
+      2) Montrer que <span class="math">(w<sub>n</sub>)</span> est arithmétique ; préciser sa raison.<br>
+      3) Exprimer <span class="math">w<sub>n</sub></span> en fonction de <span class="math">n</span> et déterminer le plus petit entier <span class="math">n</span> tel que <span class="math">w<sub>n</sub> &lt; −50</span>.</p>
+      <p style="margin-top:8px;"><b>Séance suivante :</b> Somme des termes consécutifs d'une suite arithmétique — puis suites géométriques.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2026 <strong style="color:#38bdf8;">Terminish l'univers de Mathématiques</strong> — by <strong>KODJONE Kodjo</strong> <span class="badge" style="background:#38bdf8;color:#0f172a;padding:2px 10px;border-radius:12px;font-size:0.72rem;font-weight:700;">NE +1</span></p>
+    <p style="margin-top:6px;font-size:0.78rem;color:#334155;">Fiche pédagogique élaborée dans le cadre de l'Approche Par Compétences (APC) — Mathématiques, Première D, Semestre 2.</p>
+  </footer>
+</div>
+
+</body>
+</html>
