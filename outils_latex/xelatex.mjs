@@ -164,8 +164,9 @@ writeFileSync(outPath, Buffer.from(r.pdf));
 const log = r.log ?? "";
 const pages = (log.match(/Output written on .*?\((\d+) page/) ?? [])[1];
 console.error(`\n✔ PDF généré : ${outPath}${pages ? ` — ${pages} page(s)` : ""} (${r.passes} passe(s) XeTeX)`);
-if (log.includes("LaTeX Warning")) {
-  const warns = [...new Set(log.split("\n").filter((l) => l.includes("LaTeX Warning")))];
-  for (const w of warns.slice(0, 6)) console.error(`  ⚠ ${w.trim()}`);
-}
+const probleme = [
+  ...new Set(log.split("\n").filter((l) => l.includes("LaTeX Warning") || l.includes("Overfull \\hbox"))),
+];
+for (const w of probleme.slice(0, 10)) console.error(`  ⚠ ${w.trim()}`);
+if (probleme.length > 10) console.error(`  … et ${probleme.length - 10} autres avertissements`);
 process.exit(0);
