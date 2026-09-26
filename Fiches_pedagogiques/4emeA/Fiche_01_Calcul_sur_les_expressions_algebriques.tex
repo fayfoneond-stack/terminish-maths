@@ -5,9 +5,9 @@
 %  LEÇON 2 : CALCUL SUR LES EXPRESSIONS ALGEBRIQUES
 %  Canevas : fiche "Propriété de Thalès" (3ème) — même mise en page.
 %
-%  Structure de chaque séance :
-%    … → Activité de découverte → SYNTHÈSE (3 min) → TRACE ÉCRITE → …
-%  La situation d'apprentissage mobilise TOUTES les capacités du tableau.
+%  Structure : Séance 1 = situation-problème + présentation + synthèse (3 min)
+%  puis trace écrite. Séances 2 à 6 : petite activité (2 min), correction
+%  de maison, leçon du jour (trace écrite directe), application, maison.
 %
 %  Compatible Overleaf (pdflatex/xelatex) ET le moteur local :
 %  packages utilisés : article, geometry, xcolor, amsmath, longtable.
@@ -39,11 +39,11 @@
 \newcommand{\seance}[1]{\fcolorbox{bleuseance}{bleufond}{\textcolor{bleuseance}{\bfseries #1}}}
 \newcommand{\moment}[1]{\textbf{\itshape #1}}
 \newcommand{\mclef}[1]{\colorbox{jaunesurl}{#1}}
-\newcommand{\tagcap}[1]{\hfill{\small\fcolorbox{bleuseance}{bleufond}{\textcolor{bleuseance}{\bfseries Capacité : #1}}}}
 \newcommand{\prop}[1]{\par\medskip\noindent\fbox{\parbox{0.96\linewidth}{#1}}\par\medskip}
 \newcommand{\rouge}[1]{\textcolor{rougetitre}{\bfseries #1}}
 \newcommand{\ieme}{\textsuperscript{ième}}
 \newcommand{\iere}{\textsuperscript{ière}}
+\newcommand{\ier}{\textsuperscript{er}}
 \newcommand{\ere}{\textsuperscript{ère}}
 
 % ── En-tête et pied de page (comme le canevas) ────────────────────────
@@ -159,43 +159,32 @@ $B=2\times(7+3)=2\times10=20$ \par
 Recopie la situation au tableau et la lit à haute voix. &
 Recopient la situation dans le cahier et la lisent. &
 \titreR{Situation d'apprentissage} \par
-\textit{Pour semer du maïs sur son champ rectangulaire, M. AYITÉ doit connaître son aire.
-Le champ a pour longueur $(x+3)$~dam et pour largeur $2x$~dam ($x$ désigne un nombre de
-dam). Ses trois enfants proposent chacun une écriture de l'aire $S$ du champ :} \par
-— \textit{le premier propose le programme de calcul : « choisir $x$ ; écrire son
-carré ; le multiplier par $2$ ; calculer le produit de $x$ par $6$ ; additionner les deux
-résultats » ;} \par
-— \textit{le deuxième écrit : $S=x^2+2x+x^2+4x$ ;} \par
-— \textit{la troisième écrit : $S=2x\,(x+3)$.} \par
-\textit{M. AYITÉ ne sait quelle écriture utiliser pour préparer ses calculs. Il vient solliciter ton aide.} \par
+\textit{Pour agrandir son poulailler, M. ABALO veut construire un nouveau parc
+rectangulaire de longueur $(3x+2)$~m et de largeur $(x+4)$~m. Pour connaître la longueur
+de grillage nécessaire, il demande à ses trois enfants de calculer le périmètre $P$
+du rectangle. Le premier écrit : $P=2\,(3x+2)+2\,(x+4)$ ; le deuxième écrit :
+$P=(3x+2)+(3x+2)+(x+4)+(x+4)$ ; la troisième réduit et écrit : $P=8x+12$.} \par
 \begin{center}
 \setlength{\unitlength}{1mm}%
 \begin{picture}(84,26)
   \put(2,2){\framebox(56,17){}}
-  \put(15,21){\small longueur $=(x+3)$ dam}
-  \put(21,8){\small champ rectangulaire}
+  \put(15,21){\small longueur $=(3x+2)$ m}
+  \put(21,8){\small parc rectangulaire}
   \put(62,12){\small largeur}
-  \put(62,8){\small $=2x$ dam}
+  \put(62,8){\small $=(x+4)$ m}
 \end{picture}
-\end{center} \\ \hline
+\end{center}
+\textbf{Problème :} les trois écritures donnent-elles le même périmètre ? Laquelle est
+la plus simple ? \\ \hline
 
 \moment{Appropriation de la situation-problème et de la tâche (10 min)} &
 Explique les mots difficiles, pose des questions de compréhension et répond aux
 interrogations des élèves. &
 Exploquent la situation, posent des questions et relèvent les mots difficiles. &
 \rouge{Consignes :} \par
-\textbf{1)} Traduire le programme de calcul du premier enfant par une expression
-algébrique, puis préciser la variable, les termes, leurs coefficients et la constante.
-\tagcap{reconnaître / traduire} \par
-\textbf{2)} Réduire l'écriture du deuxième enfant.
-\tagcap{réduire} \par
-\textbf{3)} Développer l'écriture de la troisième enfant.
-\tagcap{développer} \par
-\textbf{4)} Montrer que les trois écritures donnent la même aire, puis calculer cette
-aire pour $x=4$~dam.
-\tagcap{justifier / valeur numérique} \par
-\textbf{5)} Retrouver l'écriture de la troisième enfant à partir de l'écriture réduite.
-\tagcap{factoriser} \\ \hline
+\textbf{1)} Traduire le programme de calcul de chacun des trois enfants. \par
+\textbf{2)} Montrer que les trois écritures donnent le même périmètre. \par
+\textbf{3)} Donner l'écriture la plus simple de $P$, puis calculer ce périmètre pour $x=2$~m. \\ \hline
 
 \moment{Travail individuel (5 min) et travail en groupe (15 min)} &
 Vérifie les productions des élèves, fait des remarques à haute voix, circule et guide
@@ -203,13 +192,13 @@ les groupes sans donner la solution. &
 \textbf{Résolution} : cherchent individuellement puis en groupe ; confrontent leurs
 écritures ; rédigent une production. &
 \titreR{Recherche} \par
-\textbf{1)} $S=2x^2+6x$ ; variable : $x$ ; termes : $2x^2$ et $6x$ ; coefficients :
-$2$ et $6$ ; pas de constante. \par
-\textbf{2)} $S=(x^2+x^2)+(2x+4x)=2x^2+6x$. \par
-\textbf{3)} $S=2x\times x+2x\times3=2x^2+6x$. \par
-\textbf{4)} Les trois écritures valent $2x^2+6x$ : ce sont trois écritures d'un même
-nombre. Pour $x=4$ : $S=2\times(4)^2+6\times4=32+24=56$~dam$^2$. \par
-\textbf{5)} $2x^2+6x=2x\times x+2x\times3=2x\,(x+3)$. \\ \hline
+\textbf{1)} $1^{\text{er}}$ enfant : choisir $x$, calculer $3x+2$, le doubler, puis
+calculer $x+4$, le doubler, et ajouter. \par
+$2^{\text{e}}$ enfant : additionner les quatre côtés. \par
+$3^{\text{e}}$ enfant : regrouper les termes semblables. \par
+\textbf{2)} $2\,(3x+2)+2\,(x+4)=6x+4+2x+8=(6x+2x)+(4+8)=8x+12$ ; \par
+$(3x+2)+(3x+2)+(x+4)+(x+4)=(3x+3x+x+x)+(2+2+4+4)=8x+12$. \par
+\textbf{3)} Écriture la plus simple : $P=8x+12$ ; pour $x=2$ : $P=8\times2+12=28$~m. \\ \hline
 
 \moment{Présentation des productions (7 min)} &
 Fait exposer les productions des groupes au tableau, organise la confrontation des
@@ -217,25 +206,23 @@ remarques et apporte des amendements. &
 Exposent leurs productions ; critiquent celles des camarades ; apportent des
 amendements à la présentation. &
 \titreR{Présentation des productions} \par
-Les trois groupes exposent : le programme de calcul traduit ($S=2x^2+6x$) ;
-la réduction de l'écriture du 2\ieme{} enfant : $x^2+2x+x^2+4x=2x^2+6x$ ;
-le développement de l'écriture de la 3\ieme{} enfant : $2x\,(x+3)=2x^2+6x$. \par
-\textbf{Constat :} les trois écritures donnent la même aire. \\ \hline
+Les trois groupes exposent : le programme de calcul du 1\ier{} enfant ;
+la somme des quatre côtés du 2\ieme{} enfant réduite :
+$(3x+3x+x+x)+(2+2+4+4)=8x+12$ ; le développement de l'écriture de la 3\ieme{} enfant :
+$2\,(3x+2)+2\,(x+4)=8x+12$. \par
+\textbf{Constat :} les trois écritures donnent le même périmètre : $8x+12$. \\ \hline
 
 \moment{Synthèse (3 min)} &
 Fait reformuler, en trois minutes, ce que la situation a permis de découvrir ;
 corrige les formulations puis valide. &
 Réforment avec leurs propres mots ; s'écoutent et se corrigent entre eux. &
 \titreR{Synthèse} \par
-\textbf{Données :} longueur $=(x+3)$~dam ; largeur $=2x$~dam ; $S$ l'aire du champ. \par
-\textbf{Calculs :} $1^{\text{er}}$ enfant (programme) : $S=2x^2+6x$ ;
-$2^{\text{e}}$ enfant : $S=x^2+2x+x^2+4x=\mathbf{2x^2+6x}$ (réduction) ;
-$3^{\text{e}}$ enfant : $S=2x\,(x+3)=\mathbf{2x^2+6x}$ (développement). \par
-Pour $x=4$~dam : $S=2\times(4)^2+6\times4=56$~dam$^2$. \par
-\textbf{Conclusion :} les trois écritures sont égales : $2x\,(x+3)=2x^2+6x=x^2+2x+x^2+4x$.
-Une même expression algébrique peut avoir \mclef{plusieurs écritures} (somme ou
-produit) ; savoir les transformer (réduire, développer, factoriser) est l'objet de la
-leçon. \\ \hline
+\textbf{Données :} longueur $=3x+2$ ; largeur $=x+4$ ; $P$ le périmètre. \par
+\textbf{Calculs :} $P=L+l+L+l=2\,(3x+2)+2\,(x+4)$ \par
+\hfill $=6x+4+2x+8=(6x+2x)+(4+8)=8x+12$. \par
+Pour $x=2$~m : $P=8\times2+12=28$~m. \par
+\textbf{Conclusion :} les trois écritures sont égales ; la plus simple est $P=8x+12$.
+On dit qu'on l'a \mclef{réduite}. \\ \hline
 
 \moment{Trace écrite : institutionalisation (5 min)} &
 Fait recopier la synthèse de la situation et les premières définitions. &
@@ -272,32 +259,11 @@ Fait passer des élèves au tableau, corrige et précise les erreurs. &
 Réduire : $A=7x+3-2x+5=(7x-2x)+(3+5)=5x+8$ ; \par
 $B=5a+2b-a+4b=(5a-a)+(2b+4b)=4a+6b$. \\ \hline
 
-\moment{Activité de découverte (15 min)} &
-Écrit l'activité au tableau, laisse chercher individuellement puis en groupe, circule
-et guide sans donner la réponse. &
-Cherchent, produisent une réponse et la présentent au tableau. &
-\titreR{Activité de découverte} \par
-On donne $A=3x+5$ et $B=2x^2-4x+7$. \par
-\textbf{1)} Que représentent $x$, $3$ et $5$ dans l'expression $A$ ? \par
-\textbf{2)} Citer les termes de $B$, leurs coefficients et la constante. \par
-\textbf{3)} Calculer $A$ pour $x=2$. \par
-\textbf{4)} Comparer $7x+3x$ et $(7+3)x$ ; en déduire une écriture plus simple de
-$C=7x+3x+5$. \par
-\textbf{Réponses :} 1) $x$ est la variable, $3$ le coefficient du terme $3x$, $5$ la
-constante. 2) termes $2x^2$, $-4x$, $7$ ; coefficients $2$, $-4$, $7$. 3) $A=3\times2+5=11$.
-4) $7x+3x=(7+3)x=10x$ donc $C=10x+5$. \\ \hline
-
-\moment{Synthèse (3 min)} &
-Fait reformuler ce qui a été découvert, corrige les formulations puis valide. &
-Énoncent la règle avec leurs propres mots ; écoutent les camarades et participent. &
-\titreR{Synthèse} \par
-— Une expression algébrique relie des nombres et des lettres par des opérations ;
-la lettre est la \mclef{variable}, un morceau ajouté est un \mclef{terme}. \par
-— \textbf{Réduire}, c'est regrouper les termes semblables : $ax+bx=(a+b)\,x$. \\ \hline
-
-\moment{Trace écrite (5 min)} &
-Fait recopier la leçon au tableau et dans les cahiers. &
-Recopient la leçon. &
+\moment{Leçon du jour (23 min)} &
+Présente le vocabulaire à partir d'exemples d'expressions, fait remarquer les termes
+semblables, puis énonce la règle de réduction et fait recopier la leçon. &
+Écoutent, répondent aux questions, identifient termes, coefficients et variables ;
+recopient la leçon. &
 \titreR{Trace écrite} \par
 \textbf{I) Présentation et vocabulaire} \par
 \textbf{1) Définitions et vocabulaire} \par
@@ -345,30 +311,10 @@ $E=(12y+3y)+(-8+8)=15y$ ; \par
 $F=(7x^2+x^2)+(3x-3x)-4=8x^2-4$ ; \par
 $G=6x+2+x-4=7x-2$. \\ \hline
 
-\moment{Activité de découverte (15 min)} &
-Distribue l'activité (aire d'un rectangle découpé en deux), laisse chercher, circule
-et guide les groupes. &
-Cherchent en groupes, calculent de deux manières, formulent une constatation. &
-\titreR{Activité de découverte} \par
-Un rectangle a pour largeur $k=3$ et pour longueur $(a+b)$ avec $a=4$ et $b=2$. \par
-\textbf{1)} Calculer son aire d'un seul bloc : $3\times(4+2)$. \par
-\textbf{2)} Calculer l'aire des deux morceaux : $3\times4+3\times2$. Comparer. \par
-\textbf{3)} Refaire le calcul avec $k=5$, $a=x$, $b=3$, puis écrire le résultat général
-avec $k$, $a$ et $b$. \par
-\textbf{Réponses :} 1) $3\times6=18$ ; 2) $12+6=18$ : même aire ; 3) $5\,(x+3)=5x+15$
-d'où $k\,(a+b)=ka+kb$. \\ \hline
-
-\moment{Synthèse (3 min)} &
-Fait reformuler la règle découverte, corrige les formulations et valide. &
-Énoncent la propriété avec leurs mots ; participent à la validation. &
-\titreR{Synthèse} \par
-\textbf{Multiplier une somme par un nombre, c'est multiplier chaque terme de la somme
-par ce nombre} (propriété de la distributivité) : $k\,(a+b)=ka+kb$.
-Développer, c'est utiliser cette propriété pour transformer un produit en somme. \\ \hline
-
-\moment{Trace écrite (5 min)} &
-Fait recopier la leçon. &
-Recopient la leçon. &
+\moment{Leçon du jour (23 min)} &
+Fait découvrir la distributivité à partir de l'aire d'un rectangle de côtés $k$ et
+$(a+b)$, énonce la propriété de développement et fait recopier la leçon. &
+Observent la figure, énoncent la propriété et recopient la leçon. &
 \titreR{Trace écrite} \par
 \textbf{2) Développement d'une expression algébrique} \par
 \begin{center}
@@ -426,31 +372,10 @@ Fait corriger l'exercice de maison. &
 $D=12x-20$ ; \; $E=2x^2+6x+x+3=2x^2+7x+3$ ; \par
 $F=5x+10-3x+3=2x+13$. \\ \hline
 
-\moment{Activité de découverte (15 min)} &
-Écrit l'activité au tableau, laisse chercher, circule et oriente vers le facteur
-commun. &
-Cherchent individuellement puis en groupe, présentent leurs productions. &
-\titreR{Activité de découverte} \par
-\textbf{1)} Observe : $6x+9=3\times2x+3\times3=3\,(2x+3)$. Quel nombre multiplie
-à la fois $2x$ et $3$ ? \par
-\textbf{2)} De même, transformer $5x^2-15x$ en un produit : quel facteur commun à
-$5x^2$ et $15x$ ? \par
-\textbf{3)} Vérifier que $(2x+1)\,(x-3)+(2x+1)\,(x+5)$ peut s'écrire sous la forme
-d'un produit. \par
-\textbf{Réponses :} 1) le facteur commun est $3$ ; 2) $5x^2-15x=5x\,(x-3)$ ;
-3) $(2x+1)\,(x-3+x+5)=(2x+1)\,(2x+2)$. \\ \hline
-
-\moment{Synthèse (3 min)} &
-Fait reformuler : passer d'une somme à un produit, c'est factoriser ; fait préciser
-le rôle du facteur commun. &
-Énoncent la règle avec leurs mots ; participent. &
-\titreR{Synthèse} \par
-\textbf{Factoriser, c'est transformer une somme en produit en recherchant le facteur
-commun} : $ka+kb=k\,(a+b)$. C'est l'opération inverse du développement. \\ \hline
-
-\moment{Trace écrite (5 min)} &
-Fait recopier la leçon. &
-Recopient la leçon. &
+\moment{Leçon du jour (23 min)} &
+Fait remarquer, sur des exemples, qu'on peut passer de $ka+kb$ à $k\,(a+b)$ :
+c'est la factorisation. Énonce la propriété et fait recopier la leçon. &
+Répondent, identifient le facteur commun et recopient la leçon. &
 \titreR{Trace écrite} \par
 \textbf{3) Factorisation d'une expression algébrique} \par
 \prop{\textbf{\textcolor{rougetitre}{Propriété (factorisation)}} \par
@@ -493,31 +418,11 @@ Fait corriger l'exercice de maison. &
 \titreR{Correction de l'exercice de maison} \par
 $D=3\,(3x-4)$ ; \; $E=5x\,(4x+1)$ ; \; $F=3\,(x-2)\,(2x-1)$. \\ \hline
 
-\moment{Activité de découverte (15 min)} &
-Propose l'activité (prix d'un marchand), laisse chercher, surveille le remplacement
-de $x$ et les priorités. &
-Cherchent, calculent, comparent leurs résultats et décrivent la méthode utilisée. &
-\titreR{Activité de découverte} \par
-Un marchand affiche : « prix en F $=3x^2+2x$, où $x$ est le nombre de
-sachets~». \par
-\textbf{1)} Calculer le prix pour $x=2$ sachets. \par
-\textbf{2)} Calculer le prix pour $x=3$ sachets. \par
-\textbf{3)} Quelle précaution faut-il prendre pour remplacer $x$ par une valeur ? \par
-\textbf{Réponses :} 1) $3\times(2)^2+2\times(2)=12+4=16$~F ;
-2) $3\times(3)^2+2\times(3)=27+6=33$~F ; 3) écrire la valeur entre parenthèses et
-respecter les priorités opératoires (puissance avant multiplication). \\ \hline
-
-\moment{Synthèse (3 min)} &
-Fait reformuler la méthode de calcul de la valeur numérique puis la valide. &
-Énoncent la méthode avec leurs mots ; participent. &
-\titreR{Synthèse} \par
-\textbf{Pour calculer la valeur numérique d'une expression pour $x=a$ :} remplacer
-$x$ par $a$ \textbf{entre parenthèses}, puis effectuer dans l'ordre : puissances,
-multiplications et divisions, additions et soustractions. \\ \hline
-
-\moment{Trace écrite (5 min)} &
-Fait recopier la leçon. &
-Recopient la leçon. &
+\moment{Leçon du jour (23 min)} &
+Présente la méthode de calcul de la valeur numérique d'une expression, insiste sur
+les priorités opératoires et les substitutions avec parenthèses, puis fait recopier
+la leçon. &
+Écoutent, exécutent la méthode sur un exemple et recopient la leçon. &
 \titreR{Trace écrite} \par
 \textbf{4) Valeur numérique d'une expression algébrique} \par
 Calculer la \mclef{valeur numérique} d'une expression pour $x=a$, c'est remplacer
@@ -562,7 +467,7 @@ Fait corriger l'exercice de maison. &
 $D(-2)=12-4-5=3$ ; \; $D(1{,}5)=6{,}75+3-5=4{,}75$ ; \par
 $E=2x^2+6x-x-3=2x^2+5x-3$ ; \; $E(2)=8+10-3=15$. \\ \hline
 
-\moment{Exercices de consolidation (25 min)} &
+\moment{Exercices de consolidation (28 min)} &
 Propose des exercices mêlant réduction, développement, factorisation et valeur
 numérique ; fait passer des élèves au tableau ; corrige. &
 \textbf{Résolution} : cherchent individuellement, puis passent au tableau. &
@@ -579,16 +484,6 @@ c) Retrouve-t-on $46$ avec l'écriture réduite ? \par
 $J=4x\,(2x+3)$ ; \; $K=(x-3)\,(5-2x-4)=(x-3)\,(1-2x)$ ; \par
 4) a) $2\,(4x+3)$ ; \; b) $2\times(20+3)=46$ ; \; c) écriture réduite : $8x+6$,
 pour $5$ : $46$. ✓ \\ \hline
-
-\moment{Synthèse (3 min)} &
-Fait reformuler les quatre procédés de la leçon et leurs liens (développer
-$\leftrightarrow$ factoriser). &
-Réforment la synthèse avec leurs mots ; se corrigent entre eux. &
-\titreR{Synthèse} \par
-\textbf{Ce qu'il faut retenir :} réduire (regrouper les termes semblables),
-développer (produit $\to$ somme), factoriser (somme $\to$ produit),
-valeur numérique (remplacer la variable par sa valeur).
-Développer et factoriser sont des opérations inverses. \\ \hline
 
 \moment{Trace écrite (5 min)} &
 Fait recopier le récapitulatif de la leçon. &
