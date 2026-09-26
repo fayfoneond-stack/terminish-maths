@@ -5,12 +5,23 @@
 %  LEÇON 2 : CALCUL SUR LES EXPRESSIONS ALGEBRIQUES
 %  Canevas : fiche "Propriété de Thalès" (3ème) — même mise en page.
 %
-%  Structure : Séance 1 = situation-problème + présentation + synthèse (3 min)
-%  puis trace écrite. Séances 2 à 6 : petite activité (2 min), correction
-%  de maison, leçon du jour (trace écrite directe), application, maison.
+%  Plan de cours (trace écrite) :
+%   I) Présentation et vocabulaire : 1) Définition d'une expression
+%      algébrique ; 2) Produits remarquables
+%   II) Opérations sur les expressions algébriques : 1) Produits
+%      remarquables ; 2) Règles de calcul : développement, réduction ;
+%      3) Factorisation ; 4) Valeur numérique
+%   III) Utilisation des définitions et propriétés pour justifier :
+%      1) Équivalence de deux programmes de calcul ; 2) Démontrer une
+%      propriété arithmétique
+%
+%  Structure : Séance 1 = situation-problème + présentation des
+%  productions (7 min) + synthèse (3 min) + trace écrite (5 min).
+%  Séances 2 à 6 : petite activité (2 min), correction de maison (5 min),
+%  leçon du jour (23 min), exercice d'application (20 min), maison (5 min).
 %
 %  Compatible Overleaf (pdflatex/xelatex) ET le moteur local :
-%  packages utilisés : article, geometry, xcolor, amsmath, longtable.
+%  packages : article, geometry, xcolor, amsmath, longtable.
 % ═══════════════════════════════════════════════════════════════════════
 \documentclass[10pt]{article}
 
@@ -91,8 +102,8 @@
 {\bfseries SUPPORTS DIDACTIQUES PRINCIPAUX :} \; Enoncé de la situation d'apprentissage ; CIAM 4\ieme ; CARGO 4\ieme ; Programme et son guide\\[3pt]
 {\bfseries MATERIEL DIDACTIQUE ORDINAIRE :} \; Régie ; craie ; règle ; cahiers \qquad
 {\bfseries MATERIEL DIDACTIQUE ADAPTÉ :} \; Fiche d'activités ; expressions découpées (étiquettes)\\[3pt]
-{\bfseries CONSIGNE POUR LE PROFESSEUR DE SUIVI :} \; Vérifier le respect des moments didactiques, la synthèse avant chaque trace écrite et la trace écrite de la leçon.\\[3pt]
-{\bfseries PREREQUIS :} \; Priorités opératoires ; programmes de calcul ; vocabulaire (somme, différence, produit, quotient, terme, facteur) ;
+{\bfseries CONSIGNE POUR LE PROFESSEUR DE SUIVI :} \; Vérifier le respect des moments didactiques, la synthèse avant la trace écrite et la trace écrite de la leçon.\\[3pt]
+{\bfseries PREREQUIS :} \; Priorités opératoires ; programmes de calcul ; carré d'un nombre ; vocabulaire (somme, différence, produit, terme, facteur) ;
 propriétés de la multiplication (commutativité, associativité, distributivité sur l'addition).
 \smallskip
 \end{minipage}}
@@ -104,17 +115,17 @@ propriétés de la multiplication (commutativité, associativité, distributivit
 \multicolumn{1}{|c|}{\colorbox{vertentete}{\makebox[9.2cm][c]{\bfseries Capacités}}} &
 \multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[17.1cm][c]{\bfseries Contenus}}} \\ \hline
 Reconnaître une expression algébrique et son vocabulaire &
-\small Expressions algébriques : \mclef{variable}, \mclef{constante}, \mclef{terme}, \mclef{coefficient} ; traduction d'un programme de calcul par une expression algébrique. \\ \hline
-Réduire une expression algébrique &
-\small Réduction : \small termes semblables ; regroupement ; $ax+bx=(a+b)\,x$ ; ordre décroissant des puissances. \\ \hline
-Développer une expression algébrique &
-\small Développement : $k\,(a+b)=ka+kb$ ; \; $(a+b)\,(c+d)=ac+ad+bc+bd$. \\ \hline
+\small Expressions algébriques : \mclef{variable}, \mclef{constante}, \mclef{terme}, \mclef{coefficient} ; traduction d'un programme de calcul. \\ \hline
+Reconnaître et énoncer les produits remarquables &
+\small $(a+b)^2=a^2+2ab+b^2$ ; \; $(a-b)^2=a^2-2ab+b^2$ ; \; $(a+b)(a-b)=a^2-b^2$. \\ \hline
+Développer et réduire une expression algébrique &
+\small Règles de calcul : distributivité $k\,(a+b)=ka+kb$ ; \; $(a+b)\,(c+d)=ac+ad+bc+bd$ ; produits remarquables ; regroupement des termes semblables. \\ \hline
 Factoriser une expression algébrique &
-\small Factorisation par \small facteur commun : $ka+kb=k\,(a+b)$. \\ \hline
+\small Facteur commun : $ka+kb=k\,(a+b)$ ; \; identités remarquables inversées. \\ \hline
 Calculer la valeur numérique d'une expression algébrique &
 \small Substitution : remplacer la variable \small par la valeur donnée, en respectant les priorités opératoires. \\ \hline
-Justifier l'égalité de deux écritures d'une même expression &
-\small Propriétés de la distributivité \small (développer / factoriser) ; périmètres, aires, programmes de calcul. \\ \hline
+Utiliser les définitions et propriétés pour justifier &
+\small Équivalence de deux programmes de calcul ; \small démonstration d'une propriété arithmétique. \\ \hline
 \end{tabular}
 
 \bigskip
@@ -228,6 +239,8 @@ On dit qu'on l'a \mclef{réduite}. \\ \hline
 Fait recopier la synthèse de la situation et les premières définitions. &
 Recopient la trace écrite de la leçon. &
 \titreR{À retenir (recopié par les élèves)} \par
+\textbf{I) Présentation et vocabulaire} \par
+\textbf{1) Définition d'une expression algébrique} \par
 — Une \mclef{expression algébrique} est une écriture dans laquelle des nombres et des
 lettres sont reliés par des opérations. \par
 — La lettre s'appelle la \mclef{variable} ; chaque morceau ajouté est un
@@ -248,110 +261,116 @@ valeur numérique}. \\ \hline
 Dicte les mini-questions, fait répondre à main levée et chronomètre 2 minutes. &
 Répondent individuellement sur ardoise ou cahier de brouillon. &
 \titreR{Petite activité} \par
-À compléter de tête : $5x+2x=\dots$ ; \; $9y-4y=\dots$ ; \; dans $3x+5$, donner la
-variable et la constante. \par
-\textbf{Réponses :} $7x$ ; \; $5y$ ; \; variable $x$, constante $5$. \\ \hline
+De tête : développer $2\,(x+5)$ ; \; $3x\,(x+2)$ ; \; calculer $11^2$ et $12^2$. \par
+\textbf{Réponses :} $2x+10$ ; \; $3x^2+6x$ ; \; $121$ ; \; $144$. \\ \hline
 
 \moment{Correction de l'exercice de maison (5 min)} &
 Fait passer des élèves au tableau, corrige et précise les erreurs. &
 \textbf{Résolution} : deux élèves traitent l'exercice au tableau ; les autres corrigent. &
 \titreR{Correction de l'exercice de maison} \par
-Réduire : $A=7x+3-2x+5=(7x-2x)+(3+5)=5x+8$ ; \par
-$B=5a+2b-a+4b=(5a-a)+(2b+4b)=4a+6b$. \\ \hline
+$E=12y-8+3y+8=15y$ ; \; $F=8x^2-4$ ; \; $G=6x+2+x-4=7x-2$. \\ \hline
 
 \moment{Leçon du jour (23 min)} &
-Présente le vocabulaire à partir d'exemples d'expressions, fait remarquer les termes
-semblables, puis énonce la règle de réduction et fait recopier la leçon. &
-Écoutent, répondent aux questions, identifient termes, coefficients et variables ;
-recopient la leçon. &
+Fait découvrir les trois produits remarquables par développement, présente la figure
+de $(a+b)^2$, énonce la propriété et fait recopier la leçon. &
+Développent sous la dictée, observent la figure, énoncent la propriété et recopient
+la leçon. &
 \titreR{Trace écrite} \par
 \textbf{I) Présentation et vocabulaire} \par
-\textbf{1) Définitions et vocabulaire} \par
-Une \mclef{expression algébrique} est une écriture dans laquelle des nombres et des
-lettres sont reliés par des opérations. \par
-\textit{Exemples :} $A=3x+5$ ; \; $B=2x^2-4x+7$ ; \; $C=(2x+1)\,(x-3)$. \par
-— la lettre $x$ s'appelle la \mclef{variable} ; \par
-— $3x$ est un \mclef{terme} de coefficient $3$ ; \par
-— $5$ est une \mclef{constante}. \par
-\prop{\textbf{\textcolor{rougetitre}{Propriété (réduction)}} \par
-Réduire une expression algébrique, c'est regrouper ses \textbf{termes semblables} :
-\[ a\,x+b\,x=(a+b)\,x . \]} \\ \hline
+\textbf{2) Produits remarquables} \par
+Les \mclef{produits remarquables} sont des produits que l'on doit savoir transformer
+par cœur, sans calcul intermédiaire. \par
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(64,48)
+  \put(2,2){\framebox(40,40){}}
+  \put(17,2){\rule{0.35mm}{40mm}}
+  \put(2,17){\rule{40mm}{0.35mm}}
+  \put(7,8){\small $a^2$}
+  \put(28,8){\small $a\,b$}
+  \put(7,28){\small $a\,b$}
+  \put(28,28){\small $b^2$}
+  \put(8,43.5){\small $a$}
+  \put(28,43.5){\small $b$}
+  \put(-1.5,8){\small $a$}
+  \put(-1.5,28){\small $b$}
+  \put(46,30){\small aire $=(a+b)^2$}
+  \put(46,23){\small $=a^2+ab+ab+b^2$}
+  \put(46,16){\small $=a^2+2ab+b^2$}
+\end{picture}
+\end{center}
+\prop{\textbf{\textcolor{rougetitre}{Propriété (produits remarquables)}} \par
+Pour tous nombres $a$ et $b$ :
+\[ (a+b)^2=a^2+2ab+b^2 \quad ; \quad (a-b)^2=a^2-2ab+b^2 \quad ; \quad
+   (a+b)(a-b)=a^2-b^2 . \]}
+\textit{Exemples :} \par
+$(x+4)^2=x^2+8x+16$ ; \; $(3x-2)^2=9x^2-12x+4$ ; \; $(x+7)(x-7)=x^2-49$. \\ \hline
 
 \moment{Exercice d'application (20 min)} &
-Propose l'exercice d'application, fait passer deux élèves au tableau et corrige. &
-\textbf{Résolution} : résolvent dans les cahiers ; deux élèves passent au tableau. &
+Propose l'exercice, fait passer deux élèves au tableau, corrige. &
+\textbf{Résolution} : cherchent puis passent au tableau. &
 \app \par
-Réduire : \; $R=8x+5-3x+7$ ; \; $S=4x^2+2x-5x^2+x$ ; \; $T=3a+2b-5+a-b$. \par
-\textbf{Réponses :} $R=5x+12$ ; \; $S=-x^2+3x$ ; \; $T=4a+b-5$. \\ \hline
+Développer : \; $A=(x+3)^2$ ; \; $B=(2x-1)^2$ ; \; $C=(x+5)(x-5)$. \par
+\textbf{Réponses :} $A=x^2+6x+9$ ; \; $B=4x^2-4x+1$ ; \; $C=x^2-25$. \\ \hline
 
 \moment{Exercice de maison (5 min)} &
-Donne l'exercice à faire à la maison et annonce la suite. &
-Notent l'exercice de maison. &
+Donne l'exercice de maison. &
+Notent l'exercice. &
 \maison \par
-Réduire les expressions : \; $E=12y-8+3y+8$ ; \;
-$F=7x^2+3x-4+x^2-3x$ ; \; $G=2(3x+1)+x-4$. \\ \hline
+Développer : \; $D=(x+2)^2$ ; \; $E=(x-3)^2$ ; \; $F=(x+4)(x-4)$. \\ \hline
 \end{longtable}
 
 % ═════════════════════ SÉANCE 3 ═════════════════════
 \begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
 \hline
 \seance{SEANCE 3} \newline \moment{Petite activité (2 min)} &
-Dicte l'activité, fait répondre à main levée et chronomètre 2 minutes. &
+Dicte l'activité, fait réciter à voix basse puis interroge à main levée,
+chronomètre 2 minutes. &
 Répondent individuellement sur ardoise ou cahier de brouillon. &
 \titreR{Petite activité} \par
-Calculer de tête : $2\times(10+5)$ puis $2\times10+2\times5$. Comparer les deux
-résultats. \par
-\textbf{Réponse :} $30$ et $30$ : on peut distribuer la multiplication sur l'addition. \\ \hline
+Réciter de tête : $(a+b)^2=\dots$ ; \; $(a-b)^2=\dots$ ; \; $(a+b)(a-b)=\dots$. \par
+\textbf{Réponses :} $a^2+2ab+b^2$ ; \; $a^2-2ab+b^2$ ; \; $a^2-b^2$. \\ \hline
 
 \moment{Correction de l'exercice de maison (5 min)} &
 Fait corriger l'exercice de maison au tableau. &
 \textbf{Résolution} : correction au tableau. &
 \titreR{Correction de l'exercice de maison} \par
-$E=(12y+3y)+(-8+8)=15y$ ; \par
-$F=(7x^2+x^2)+(3x-3x)-4=8x^2-4$ ; \par
-$G=6x+2+x-4=7x-2$. \\ \hline
+$D=x^2+4x+4$ ; \; $E=x^2-6x+9$ ; \; $F=x^2-16$. \\ \hline
 
 \moment{Leçon du jour (23 min)} &
-Fait découvrir la distributivité à partir de l'aire d'un rectangle de côtés $k$ et
-$(a+b)$, énonce la propriété de développement et fait recopier la leçon. &
-Observent la figure, énoncent la propriété et recopient la leçon. &
+Montre l'utilisation des produits remarquables pour calculer vite, puis structure
+les règles de calcul (développer puis réduire) et fait recopier la leçon. &
+Exécutent les calculs astucieux, décrivent la méthode et recopient la leçon. &
 \titreR{Trace écrite} \par
-\textbf{2) Développement d'une expression algébrique} \par
-\begin{center}
-\setlength{\unitlength}{1mm}%
-\begin{picture}(88,28)
-  \put(2,2){\framebox(40,20){}}
-  \put(20.6,2){\rule{0.35mm}{20mm}}
-  \put(10,24){\small $a$}
-  \put(31,24){\small $b$}
-  \put(-1.5,10){\small $k$}
-  \put(46,22){\small aire $=k\,(a+b)$}
-  \put(46,15){\small $=$ aire $(a\times k)$ $+$ aire $(b\times k)$}
-  \put(46,8){\small $=ka+kb$}
-\end{picture}
-\end{center}
-\prop{\textbf{\textcolor{rougetitre}{Propriété (développement)}} \par
-Pour tous nombres $k$, $a$, $b$, $c$, $d$ :
-\[ k\,(a+b)=ka+kb \qquad ; \qquad (a+b)\,(c+d)=ac+ad+bc+bd . \]}
-\textit{Exemples :} \par
-$3\,(2x+5)=6x+15$ ; \; $-2\,(4x-3)=-8x+6$ ; \par
-$(x+3)\,(x+2)=x^2+2x+3x+6=x^2+5x+6$. \\ \hline
+\textbf{II) Opérations sur les expressions algébriques} \par
+\textbf{1) Produits remarquables (utilisation)} \par
+\textit{Exemple :} $101^2=(100+1)^2=100^2+2\times100\times1+1^2=10\,201$. \par
+\textit{Exemple :} $51\times49=(50+1)(50-1)=50^2-1=2\,499$. \par
+\textbf{2) Règles de calcul : développement, réduction} \par
+Pour transformer une expression : \par
+— \textbf{développer} avec la distributivité $k\,(a+b)=ka+kb$,
+$(a+b)(c+d)=ac+ad+bc+bd$ et les \mclef{produits remarquables} ; \par
+— puis \textbf{réduire} : regrouper les termes semblables et classer les termes
+par puissances décroissantes. \par
+\textit{Exemple :} $(x+2)^2+(x-1)(x+3)$ \par
+$=x^2+4x+4+x^2+2x-3=2x^2+6x+1$. \\ \hline
 
 \moment{Exercice d'application (20 min)} &
 Propose l'exercice, fait passer deux élèves au tableau, corrige. &
 \textbf{Résolution} : cherchent puis passent au tableau. &
 \app \par
-Développer puis réduire : \; $A=5\,(2x+3)$ ; \; $B=(x+4)\,(x+1)$ ; \;
-$C=3\,(x-2)+2\,(2x+5)$. \par
-\textbf{Réponses :} $A=10x+15$ ; \; $B=x^2+5x+4$ ; \;
-$C=3x-6+4x+10=7x+4$. \\ \hline
+\textbf{1)} Calculer astucieusement : \; $98^2$ ; \; $52\times48$. \par
+\textbf{2)} Développer puis réduire : \; $U=2\,(x+1)^2-(x+2)(x-2)$ ; \;
+$V=3\,(x-2)+(x+4)^2$. \par
+\textbf{Réponses :} $98^2=(100-2)^2=9\,604$ ; \; $52\times48=(50+2)(50-2)=2\,496$ ; \par
+$U=2x^2+4x+2-x^2+4=x^2+4x+6$ ; \; $V=3x-6+x^2+8x+16=x^2+11x+10$. \\ \hline
 
 \moment{Exercice de maison (5 min)} &
 Donne l'exercice de maison. &
 Notent l'exercice. &
 \maison \par
-Développer puis réduire : \; $D=4\,(3x-5)$ ; \; $E=(2x+1)\,(x+3)$ ; \;
-$F=5\,(x+2)-3\,(x-1)$. \\ \hline
+Développer puis réduire : \; $G=5\,(2x-3)+(x+1)(x+2)$ ; \;
+$H=(x+3)^2-(x-1)(x+1)$ ; \; $I=2\,(3x-1)-(2x+5)$. \\ \hline
 \end{longtable}
 
 % ═════════════════════ SÉANCE 4 ═════════════════════
@@ -369,36 +388,37 @@ Souligner le facteur commun dans : $4x+4$ ; \; $6x^2-2x$ ; \; $5(x+1)+(x+1)$. \p
 Fait corriger l'exercice de maison. &
 \textbf{Résolution} : correction au tableau. &
 \titreR{Correction de l'exercice de maison} \par
-$D=12x-20$ ; \; $E=2x^2+6x+x+3=2x^2+7x+3$ ; \par
-$F=5x+10-3x+3=2x+13$. \\ \hline
+$G=10x-15+x^2+3x+2=x^2+13x-13$ ; \par
+$H=x^2+6x+9-x^2+1=6x+10$ ; \; $I=6x-2-2x-5=4x-7$. \\ \hline
 
 \moment{Leçon du jour (23 min)} &
-Fait remarquer, sur des exemples, qu'on peut passer de $ka+kb$ à $k\,(a+b)$ :
-c'est la factorisation. Énonce la propriété et fait recopier la leçon. &
+Fait remarquer, sur des exemples, qu'on peut passer de $ka+kb$ à $k\,(a+b)$, puis
+présente les identités remarquables lues dans l'autre sens ; fait recopier la leçon. &
 Répondent, identifient le facteur commun et recopient la leçon. &
 \titreR{Trace écrite} \par
-\textbf{3) Factorisation d'une expression algébrique} \par
+\textbf{3) Factorisation} \par
 \prop{\textbf{\textcolor{rougetitre}{Propriété (factorisation)}} \par
-Factoriser, c'est transformer une somme en produit en recherchant le
-\textbf{facteur commun} :
-\[ k\,a+k\,b=k\,(a+b) . \]}
+Factoriser, c'est transformer une somme en produit : \par
+— avec le \textbf{facteur commun} : \; $k\,a+k\,b=k\,(a+b)$ ; \par
+— avec les \textbf{identités remarquables} : \;
+$a^2+2ab+b^2=(a+b)^2$ ; \; $a^2-2ab+b^2=(a-b)^2$ ; \; $a^2-b^2=(a+b)(a-b)$.}
 \textit{Exemples :} \par
 $6x+9=3\,(2x+3)$ ; \; $5x^2-15x=5x\,(x-3)$ ; \par
-$(2x+1)\,(x-3)+(2x+1)\,(x+5)=(2x+1)\,(2x+2)$. \\ \hline
+$x^2+6x+9=(x+3)^2$ ; \; $x^2-25=(x+5)(x-5)$ ; \; $4x^2+12x+9=(2x+3)^2$. \\ \hline
 
 \moment{Exercice d'application (20 min)} &
 Propose l'exercice, fait passer deux élèves au tableau, corrige. &
 \textbf{Résolution} : cherchent puis passent au tableau. &
 \app \par
-Factoriser : \; $A=7x+21$ ; \; $B=12x^2-8x$ ; \; $C=4\,(x+1)+(x+1)\,(3x-2)$. \par
-\textbf{Réponses :} $A=7\,(x+3)$ ; \; $B=4x\,(3x-2)$ ; \;
-$C=(x+1)\,(4+3x-2)=(x+1)\,(3x+2)$. \\ \hline
+Factoriser : \; $A=7x+21$ ; \; $B=x^2-9$ ; \; $C=(x+3)^2+(x+3)(2x-5)$. \par
+\textbf{Réponses :} $A=7\,(x+3)$ ; \; $B=(x+3)(x-3)$ ; \par
+$C=(x+3)\,\big[(x+3)+(2x-5)\big]=(x+3)(3x-2)$. \\ \hline
 
 \moment{Exercice de maison (5 min)} &
 Donne l'exercice de maison. &
 Notent l'exercice. &
 \maison \par
-Factoriser : \; $D=9x-12$ ; \; $E=20x^2+5x$ ; \; $F=6x\,(x-2)-3\,(x-2)$. \\ \hline
+Factoriser : \; $J=9x-12$ ; \; $K=x^2-16$ ; \; $L=(x-2)^2-(x-2)(3x+1)$. \\ \hline
 \end{longtable}
 
 % ═════════════════════ SÉANCE 5 ═════════════════════
@@ -416,38 +436,42 @@ $x+7$. \par
 Fait corriger l'exercice de maison. &
 \textbf{Résolution} : correction au tableau. &
 \titreR{Correction de l'exercice de maison} \par
-$D=3\,(3x-4)$ ; \; $E=5x\,(4x+1)$ ; \; $F=3\,(x-2)\,(2x-1)$. \\ \hline
+$J=3\,(3x-4)$ ; \; $K=(x+4)(x-4)$ ; \par
+$L=(x-2)\,\big[(x-2)-(3x+1)\big]=(x-2)(-2x-3)$. \\ \hline
 
 \moment{Leçon du jour (23 min)} &
 Présente la méthode de calcul de la valeur numérique d'une expression, insiste sur
-les priorités opératoires et les substitutions avec parenthèses, puis fait recopier
-la leçon. &
+les priorités opératoires et les substitutions avec parenthèses, montre le calcul
+astucieux avec les produits remarquables, puis fait recopier la leçon. &
 Écoutent, exécutent la méthode sur un exemple et recopient la leçon. &
 \titreR{Trace écrite} \par
-\textbf{4) Valeur numérique d'une expression algébrique} \par
+\textbf{4) Valeur numérique d'une expression algébrique pour une valeur donnée de
+la variable} \par
 Calculer la \mclef{valeur numérique} d'une expression pour $x=a$, c'est remplacer
 $x$ par $a$ (entre parenthèses) puis effectuer les calculs en respectant les priorités
 opératoires. \par
 \textit{Exemple :} pour $x=2$, \; $A=3x^2-2x+1$ devient \par
-$A=3\times(2)^2-2\times(2)+1=3\times4-4+1=12-4+1=9$. \\ \hline
+$A=3\times(2)^2-2\times(2)+1=3\times4-4+1=12-4+1=9$. \par
+\textit{Calcul astucieux :} $B=x^2+2x+1$ pour $x=9$ : \par
+$B=(x+1)^2$ donc $B=(9+1)^2=100$. \\ \hline
 
 \moment{Exercice d'application (20 min)} &
 Propose l'exercice, fait passer deux élèves au tableau, corrige. &
 \textbf{Résolution} : cherchent puis passent au tableau. &
 \app \par
-Soit $B=2x^2-3x+4$ et $C=(x+1)\,(x-2)$. \par
-\textbf{1)} Calculer $B$ pour $x=-1$ puis pour $x=3$. \par
-\textbf{2)} Calculer $C$ pour $x=5$ ; vérifier en développant $C$ d'abord. \par
-\textbf{Réponses :} $B(-1)=2+3+4=9$ ; \; $B(3)=18-9+4=13$ ; \par
-$C(x)=x^2-x-2$ donc $C(5)=25-5-2=18$. \\ \hline
+Soit $C=2x^2-3x+4$ et $D=(x+1)(x-2)$. \par
+\textbf{1)} Calculer $C$ pour $x=-1$ puis pour $x=3$. \par
+\textbf{2)} Calculer $D$ pour $x=5$ ; vérifier en développant $D$ d'abord. \par
+\textbf{Réponses :} $C(-1)=2+3+4=9$ ; \; $C(3)=18-9+4=13$ ; \par
+$D(x)=x^2-x-2$ donc $D(5)=25-5-2=18$. \\ \hline
 
 \moment{Exercice de maison (5 min)} &
 Donne l'exercice de maison. &
 Notent l'exercice. &
 \maison \par
-Soit $D=3x^2+2x-5$ et $E=(2x-1)\,(x+3)$. \par
-\textbf{1)} Calculer $D$ pour $x=-2$ et pour $x=1{,}5$. \par
-\textbf{2)} Développer $E$ puis calculer $E$ pour $x=2$. \\ \hline
+Soit $M=3x^2+2x-5$ et $N=(2x-1)(x+3)$. \par
+\textbf{1)} Calculer $M$ pour $x=-2$ et pour $x=1{,}5$. \par
+\textbf{2)} Développer $N$ puis calculer $N$ pour $x=2$. \\ \hline
 \end{longtable}
 
 % ═════════════════════ SÉANCE 6 ═════════════════════
@@ -464,37 +488,55 @@ De tête : réduire $2x+5x$ ; développer $3\,(x+1)$ ; factoriser $7x+7x^2$. \pa
 Fait corriger l'exercice de maison. &
 \textbf{Résolution} : correction au tableau. &
 \titreR{Correction de l'exercice de maison} \par
-$D(-2)=12-4-5=3$ ; \; $D(1{,}5)=6{,}75+3-5=4{,}75$ ; \par
-$E=2x^2+6x-x-3=2x^2+5x-3$ ; \; $E(2)=8+10-3=15$. \\ \hline
+$M(-2)=12-4-5=3$ ; \; $M(1{,}5)=6{,}75+3-5=4{,}75$ ; \par
+$N=2x^2+6x-x-3=2x^2+5x-3$ ; \; $N(2)=8+10-3=15$. \\ \hline
 
-\moment{Exercices de consolidation (28 min)} &
-Propose des exercices mêlant réduction, développement, factorisation et valeur
-numérique ; fait passer des élèves au tableau ; corrige. &
-\textbf{Résolution} : cherchent individuellement, puis passent au tableau. &
-\titreR{Exercices proposés (consolidation)} \par
-\textbf{1)} Réduire : \; $H=5x^2-2x+3x^2+x-7$. \par
-\textbf{2)} Développer puis réduire : \; $I=2\,(3x-1)+(x+4)\,(x-2)$. \par
-\textbf{3)} Factoriser : \; $J=8x^2+12x$ ; \; $K=5\,(x-3)-(x-3)\,(2x+1)$. \par
-\textbf{4)} Un programme de calcul : \textit{choisir un nombre, le multiplier par $4$,
-ajouter $3$, multiplier le résultat par $2$.} \par
-a) Traduire par une expression algébrique. \;
-b) Calculer le résultat pour $5$. \;
-c) Retrouve-t-on $46$ avec l'écriture réduite ? \par
-\textbf{Réponses :} $H=8x^2-x-7$ ; \; $I=6x-2+x^2+2x-8=x^2+8x-10$ ; \par
-$J=4x\,(2x+3)$ ; \; $K=(x-3)\,(5-2x-4)=(x-3)\,(1-2x)$ ; \par
-4) a) $2\,(4x+3)$ ; \; b) $2\times(20+3)=46$ ; \; c) écriture réduite : $8x+6$,
-pour $5$ : $46$. ✓ \\ \hline
+\moment{Leçon du jour (23 min)} &
+Présente la notion d'équivalence de deux programmes de calcul et la démarche de
+démonstration d'une propriété arithmétique par le calcul littéral ; fait recopier
+la leçon. &
+Écoutent, participent aux exemples et recopient la leçon. &
+\titreR{Trace écrite} \par
+\textbf{III) Utilisation des définitions et propriétés pour justifier} \par
+\textbf{1) Équivalence de deux programmes de calcul} \par
+Deux programmes de calcul sont \mclef{équivalents} si, pour toute valeur choisie,
+ils donnent le même résultat : on traduit chacun par une expression algébrique, puis
+on montre que les deux écritures réduites sont égales. \par
+\textit{Exemple :} P\textsubscript{1} : « choisir $x$ ; ajouter $3$ ; élever au
+carré » et P\textsubscript{2} : « choisir $x$ ; élever au carré ; ajouter le produit
+de $6$ par $x$ ; ajouter $9$ » donnent : \par
+$(x+3)^2=x^2+6x+9$ : les deux programmes sont équivalents. \par
+\textbf{2) Démontrer une propriété arithmétique} \par
+\textit{Exemple :} pour tout entier naturel $n$ : \par
+$(n+1)^2-n^2=n^2+2n+1-n^2=2n+1$. \par
+Or $2n+1$ est un nombre impair : \textbf{la différence des carrés de deux entiers
+consécutifs est un nombre impair}. \\ \hline
 
-\moment{Trace écrite (5 min)} &
-Fait recopier le récapitulatif de la leçon. &
+\moment{Exercice d'application (20 min)} &
+Propose l'exercice, fait passer deux élèves au tableau, corrige. &
+\textbf{Résolution} : cherchent puis passent au tableau. &
+\app \par
+\textbf{1)} Montrer que les programmes \textit{« choisir $x$ ; le multiplier par $4$ ;
+ajouter $3$ ; multiplier le résultat par $2$ »} et \textit{« choisir $x$ ; le
+multiplier par $8$ ; ajouter $6$ »} sont équivalents. \par
+\textbf{2)} Démontrer que la somme de trois entiers consécutifs est un multiple de $3$. \par
+\textbf{Réponses :} 1) $2\,(4x+3)=8x+6$ : mêmes écritures réduites, donc programmes
+équivalents. \par
+2) $n+(n+1)+(n+2)=3n+3=3\,(n+1)$ : multiple de $3$. \\ \hline
+
+\moment{Synthèse et trace écrite (5 min)} &
+Dictée du récapitulatif au tableau et fait recopier la synthèse. &
 Recopient la synthèse. &
 \titreR{Synthèse (à retenir)} \par
-— \textbf{Réduire} : regrouper les termes semblables ($ax+bx=(a+b)x$). \par
-— \textbf{Développer} : $k(a+b)=ka+kb$ ; $(a+b)(c+d)=ac+ad+bc+bd$. \par
-— \textbf{Factoriser} : $ka+kb=k(a+b)$ (facteur commun). \par
-— \textbf{Valeur numérique} : remplacer la variable par sa valeur. \\ \hline
+— \textbf{Produits remarquables} : $(a+b)^2=a^2+2ab+b^2$ ; \;
+$(a-b)^2=a^2-2ab+b^2$ ; \; $(a+b)(a-b)=a^2-b^2$. \par
+— \textbf{Règles de calcul} : développer (distributivité) puis réduire
+(termes semblables) ; \textbf{factoriser} (facteur commun, identités). \par
+— \textbf{Valeur numérique} : remplacer la variable par sa valeur. \par
+— \textbf{Justifier} : équivalence de programmes ; démonstration par le calcul
+littéral. \\ \hline
 
-\moment{Bilan de la leçon et exercice de maison (15 min)} &
+\moment{Bilan de la leçon et exercice de maison (5 min)} &
 Fait le bilan de la leçon ; donne l'exercice de synthèse à la maison ; annonce la
 leçon suivante. &
 Notent l'exercice de maison et écoutent l'annonce. &
@@ -503,7 +545,7 @@ Un champ rectangulaire a pour longueur $(2x+5)$~m et pour largeur $(x+3)$~m. \pa
 \textbf{1)} Exprimer le périmètre $P$ et l'aire $S$ du champ en fonction de $x$
 (écritures réduites). \par
 \textbf{2)} Calculer $P$ et $S$ pour $x=4$~m. \par
-\textbf{Leçon suivante :} identités remarquables (développement du carré d'une somme). \\ \hline
+\textbf{Leçon suivante :} équations du premier degré à une inconnue. \\ \hline
 \end{longtable}
 
 \begin{center}
