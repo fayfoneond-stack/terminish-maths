@@ -28,6 +28,7 @@
 \usepackage[a4paper,landscape,top=1.5cm,bottom=1.3cm,left=1.1cm,right=1.1cm]{geometry}
 \usepackage{amsmath}
 \usepackage[RGB]{xcolor}
+\usepackage{graphicx}
 \usepackage{longtable}
 
 % ── Couleurs du canevas ────────────────────────────────────────────────
@@ -57,11 +58,18 @@
 \newcommand{\ier}{\textsuperscript{er}}
 \newcommand{\ere}{\textsuperscript{ère}}
 
-% ── En-tête et pied de page (comme le canevas) ────────────────────────
+% ── En-tête, filigramme et pied de page ────────────────────────────────
+\newcommand{\filigrane}{%
+  \rlap{%
+    \raisebox{7.5cm}[0pt][0pt]{%
+      \hbox to 0pt{\hskip 3cm
+        \rotatebox{30}{\scalebox{3}{\textcolor{gray!38}{\bfseries KODJONE Kodjo}}}%
+      \hss}}}}
 \makeatletter
 \def\ps@fiche{%
   \def\@oddhead{\hfill\underline{\textcolor{rougetitre}{\bfseries FICHE PEDAGOGIQUE DE MATHEMATIQUES}}\hfill}%
-  \def\@oddfoot{\hfill\textcolor{bleuseance}{\bfseries Maths 4\textsuperscript{eme} A}\hfill
+  \def\@oddfoot{\filigrane
+                \hfill\textcolor{bleuseance}{\bfseries M.KODJONE Kodjo Prof de Maths}\hfill
                 \fcolorbox{black}{vertentete}{\arabic{page}}\hfill}%
 }
 \makeatother
@@ -73,13 +81,13 @@
 \begin{tabular}{|p{8.6cm}|p{8.6cm}|p{8.6cm}|}
 \hline
 \textbf{NOM} \; : \; {\bfseries KODJONE} &
-\textbf{DRE} \; : \; \dotfill &
+\textbf{DRE} \; : \; {\bfseries PLO} &
 \textbf{FICHE N\textsuperscript{o}} \; : \; {\bfseries 1} \\ \hline
 \textbf{PRÉNOM} \; : \; {\bfseries Kodjo} &
-\textbf{IESG} \; : \; \dotfill &
+\textbf{IESG} \; : \; {\bfseries KPALIME} &
 \textbf{DISCIPLINE} \; : \; {\bfseries MATHS} \\ \hline
-\textbf{CONTACT} \; : \; \dotfill &
-\textbf{ÉTABLISSEMENT} \; : \; \dotfill &
+\textbf{CONTACT} \; : \; {\bfseries 93 150 178} &
+\textbf{ÉTABLISSEMENT} \; : \; {\bfseries LYCEE KPETA} &
 \textbf{CLASSE} \; : \; {\bfseries 4\ieme{} A} \\ \hline
 \textbf{EFFECTIF} \; : \; \textbf{G} : \dotfill \quad
                            \textbf{F} : \dotfill \quad
@@ -547,13 +555,5 @@ Un champ rectangulaire a pour longueur $(2x+5)$~m et pour largeur $(x+3)$~m. \pa
 \textbf{2)} Calculer $P$ et $S$ pour $x=4$~m. \par
 \textbf{Leçon suivante :} équations du premier degré à une inconnue. \\ \hline
 \end{longtable}
-
-\begin{center}
-\fcolorbox{black}{vertbilan}{\begin{minipage}{24cm}\smallskip
-\centering TERMINISH — l'univers de Mathématiques \quad $\cdot$ \quad
-Fiche pédagogique — Maths 4\ieme{} A — Calcul sur les expressions algébriques \quad $\cdot$ \quad
-Année scolaire 2026--2027\smallskip
-\end{minipage}}
-\end{center}
 
 \end{document}
