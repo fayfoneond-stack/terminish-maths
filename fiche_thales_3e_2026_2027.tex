@@ -1,0 +1,354 @@
+% !TEX program = pdflatex
+% Fiche pédagogique de mathématiques -- Classe de 3e
+% Thème : Configurations du plan -- Leçon : Propriété de Thalès
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{array,tabularx,longtable,booktabs}
+\usepackage[table]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{calc,arrows.meta,decorations.pathreplacing,positioning}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{eso-pic}
+\usepackage{enumitem}
+\usepackage{multicol}
+\usepackage{lastpage}
+\usepackage{ragged2e}
+\usepackage{microtype}
+
+\geometry{landscape,a4paper,left=1cm,right=1cm,top=0.8cm,bottom=0.75cm,headheight=14pt,headsep=3pt,footskip=14pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1pt}
+\setlist[itemize]{leftmargin=*,nosep}
+\setlist[enumerate]{leftmargin=*,nosep}
+\renewcommand{\arraystretch}{1.12}
+\setlength{\tabcolsep}{3pt}
+
+% Couleurs de la fiche
+\definecolor{bleufiche}{RGB}{35,83,135}
+\definecolor{bleufonce}{RGB}{10,48,91}
+\definecolor{rougefiche}{RGB}{175,20,20}
+\definecolor{vertentete}{RGB}{225,238,216}
+\definecolor{bleucellule}{RGB}{232,241,252}
+\definecolor{jaunecellule}{RGB}{255,247,214}
+\definecolor{grisfiligrane}{RGB}{150,150,150}
+\definecolor{grisclair}{RGB}{246,246,246}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{\textcolor{bleufiche}{\small\bfseries\underline{FICHE PÉDAGOGIQUE DE MATHÉMATIQUES}}}
+\fancyfoot[L]{\footnotesize\textit{Configurations du plan -- Propriété de Thalès}}
+\fancyfoot[R]{\footnotesize\bfseries Maths 3\textsuperscript{e}}
+\renewcommand{\headrulewidth}{0.35pt}
+\renewcommand{\footrulewidth}{0.35pt}
+
+% Filigrane discret, présent sur toutes les pages
+\AddToShipoutPictureBG{%
+  \AtPageCenter{%
+    \begin{tikzpicture}[remember picture,overlay]
+      \node[rotate=42,text=grisfiligrane,opacity=.13,font=\fontsize{70}{70}\selectfont\bfseries]
+      {TERM\kern-2ptINISH};
+    \end{tikzpicture}%
+  }%
+}
+
+\newcommand{\ligneinfo}[2]{\textcolor{rougefiche}{\bfseries #1 :}~#2}
+\newcommand{\titre}[1]{\textcolor{rougefiche}{\bfseries\underline{#1}}}
+\newcommand{\sousTitre}[1]{\textcolor{bleufiche}{\bfseries\underline{#1}}}
+\newcommand{\motcle}[1]{\textcolor{bleufonce}{\bfseries #1}}
+\newcommand{\eval}[1]{\textcolor{rougefiche}{\bfseries Évaluation :} #1}
+\newcommand{\trace}[1]{\textcolor{bleufonce}{\bfseries Trace écrite :} #1}
+\newcommand{\consigne}[1]{\textcolor{rougefiche}{\bfseries Consigne :} #1}
+\newcommand{\petit}[1]{{\scriptsize #1}}
+
+% Colonnes du tableau principal : structure / professeur / consignes élève / évaluation-trace
+\newcolumntype{Y}{>{\RaggedRight\arraybackslash}X}
+\newcolumntype{P}[1]{>{\RaggedRight\arraybackslash}p{#1}}
+\newcommand{\entetetab}{%
+  \rowcolor{vertentete}
+  \textcolor{rougefiche}{\bfseries\centering Moment didactique} &
+  \textcolor{rougefiche}{\bfseries\centering Activité de l'enseignant} &
+  \textcolor{rougefiche}{\bfseries\centering Consignes / activité de l'élève} &
+  \textcolor{rougefiche}{\bfseries\centering Trace écrite / évaluation}\\\hline}
+\newcommand{\debuttable}{\begin{tabularx}{\textwidth}{|P{2.65cm}|P{5.55cm}|P{5.35cm}|Y|}\hline\entetetab}
+\newcommand{\fintable}{\end{tabularx}}
+\newcommand{\cellule}[1]{\begin{minipage}[t]{\linewidth}\vspace{1pt}#1\vspace{1pt}\end{minipage}}
+
+% Figures TikZ, dessinées directement dans le fichier LaTeX
+\newcommand{\trianglethales}{%
+\begin{tikzpicture}[scale=.62,baseline=-2pt,line cap=round,line join=round]
+  \coordinate (A) at (2.9,3.15); \coordinate (B) at (0,0); \coordinate (C) at (5.8,0);
+  \coordinate (M) at ($(A)!0.48!(B)$); \coordinate (N) at ($(A)!0.48!(C)$);
+  \draw[thick] (A)--(B)--(C)--cycle; \draw[very thick,bleufiche] (M)--(N);
+  \fill (A) circle (2pt) (B) circle (2pt) (C) circle (2pt) (M) circle (2pt) (N) circle (2pt);
+  \node[above] at (A) {$A$}; \node[below left] at (B) {$B$}; \node[below right] at (C) {$C$};
+  \node[left] at (M) {$M$}; \node[right] at (N) {$N$};
+  \node[above,bleufiche] at ($(M)!0.5!(N)$) {$(MN)\parallel(BC)$};
+\end{tikzpicture}}
+
+\newcommand{\situationtriangle}{%
+\begin{tikzpicture}[scale=.57,baseline=-2pt,line cap=round,line join=round]
+  \coordinate (B) at (0,3.4); \coordinate (C) at (0,0); \coordinate (A) at (5.9,0);
+  \coordinate (M) at ($(B)!0.52!(A)$); \coordinate (N) at ($(C)!0.52!(A)$);
+  \draw[thick] (B)--(C)--(A)--cycle; \draw[very thick,bleufiche] (M)--(N);
+  \fill (A) circle (1.8pt) (B) circle (1.8pt) (C) circle (1.8pt) (M) circle (1.8pt) (N) circle (1.8pt);
+  \node[above left] at (B) {$B$}; \node[below left] at (C) {$C$}; \node[below right] at (A) {$A$};
+  \node[above] at (M) {$M$}; \node[below] at (N) {$N$};
+  \node[left] at ($(B)!0.5!(C)$) {$6\,\mathrm{dam}$};
+  \node[below] at ($(C)!0.5!(A)$) {$8\,\mathrm{dam}$};
+  \node[above right,bleufiche] at ($(M)!0.5!(N)$) {$(MN)\parallel(BC)$};
+\end{tikzpicture}}
+
+\newcommand{\casgeneral}{%
+\begin{tikzpicture}[scale=.53,baseline=-2pt,line cap=round,line join=round]
+  \coordinate (L1) at (0,2.25); \coordinate (R1) at (8,3.1);
+  \coordinate (L2) at (0,0.3); \coordinate (R2) at (8,-.25);
+  \draw[thick] (L1)--(R1); \draw[thick] (L2)--(R2);
+  \foreach \x/\lab in {1.2/A,3.0/B,4.8/C,6.6/D}{
+    \coordinate (U\lab) at (\x,{2.25+0.85*\x/8});
+    \coordinate (V\lab) at (\x,{0.3-0.55*\x/8});
+    \draw[very thick,bleufiche] (U\lab)--(V\lab);
+    \fill (U\lab) circle (1.5pt) (V\lab) circle (1.5pt);
+    \node[above] at (U\lab) {$\lab$}; \node[below] at (V\lab) {$\lab'$};
+  }
+  \node[above left] at (0,2.25) {$(L)$}; \node[below left] at (0,.3) {$(L')$};
+  \node[bleufiche] at (5.5,1.15) {droites parallèles};
+\end{tikzpicture}}
+
+\newcommand{\partage}{%
+\begin{tikzpicture}[scale=.47,baseline=-2pt,line cap=round,line join=round]
+  \coordinate (A) at (0,0); \coordinate (B) at (8,0);
+  \draw[thick] (A)--(B); \draw[thick,dashed] (A)--(3.1,3.2);
+  \foreach \x/\lab in {1.35/E,2.7/F,4.05/G}{\fill (\x,{\x*3.2/3.1}) circle (1.8pt) node[above] {$\lab$};}
+  \foreach \x/\lab in {1.3/E',2.6/F',3.9/G'}{\fill (\x,0) circle (1.4pt) node[below] {$\lab$};}
+  \draw[bleufiche,dashed] (1.35,1.39)--(1.3,0); \draw[bleufiche,dashed] (2.7,2.79)--(2.6,0); \draw[bleufiche,dashed] (4.05,4.18)--(3.9,0);
+  \node[below left] at (A) {$A$}; \node[below right] at (B) {$B$};
+  \node[below,bleufonce] at (4,-.65) {$AE'=E'F'=F'B$};
+\end{tikzpicture}}
+
+\newcommand{\reciproque}{%
+\begin{tikzpicture}[scale=.53,baseline=-2pt,line cap=round,line join=round]
+  \coordinate (A) at (0,0); \coordinate (B) at (7.2,0); \coordinate (C) at (1.4,3.0);
+  \coordinate (M) at ($(A)!0.55!(B)$); \coordinate (N) at ($(A)!0.55!(C)$);
+  \draw[thick] (A)--(B)--(C)--cycle; \draw[very thick,rougefiche] (M)--(N);
+  \fill (A) circle (1.8pt) (B) circle (1.8pt) (C) circle (1.8pt) (M) circle (1.8pt) (N) circle (1.8pt);
+  \node[below left] at (A) {$A$}; \node[below right] at (B) {$B$}; \node[above] at (C) {$C$};
+  \node[below] at (M) {$M$}; \node[left] at (N) {$N$};
+  \node[above right,rougefiche] at ($(M)!0.5!(N)$) {à démontrer};
+\end{tikzpicture}}
+
+\begin{document}
+
+% ========================= PAGE 1 =========================
+\begin{center}
+{\Large\textcolor{bleufiche}{\bfseries\underline{FICHE PÉDAGOGIQUE DE MATHÉMATIQUES}}}
+\end{center}
+
+\renewcommand{\arraystretch}{1.05}
+\begin{tabularx}{\textwidth}{|P{0.47\textwidth}|P{0.47\textwidth}|}\hline
+\cellule{\ligneinfo{NOM}{..............................................}\\[2pt]
+\ligneinfo{PRÉNOM}{..............................................}\\[2pt]
+\ligneinfo{CONTACT}{..............................................}\\[2pt]
+\ligneinfo{EFFECTIF}{G : ........\quad F : ........\quad T : ........}}
+&
+\cellule{\ligneinfo{DRE}{..............................................}\\[2pt]
+\ligneinfo{IESG}{..............................................}\\[2pt]
+\ligneinfo{ÉTABLISSEMENT}{..............................................}\\[2pt]
+\ligneinfo{FICHE N\textsuperscript{o}}{1}\quad
+\ligneinfo{DISCIPLINE}{MATHS}\\[2pt]
+\ligneinfo{CLASSE}{3\textsuperscript{e}}\quad
+\ligneinfo{SEMAINE}{1}}\\\hline
+\end{tabularx}
+
+\vspace{2pt}
+\fbox{\begin{minipage}{0.985\textwidth}
+\small
+\ligneinfo{COMPÉTENCE TERMINALE 1}{Résoudre des problèmes faisant appel aux configurations de l'espace et du plan, aux applications du plan, à l'outil vectoriel et à la géométrie analytique.}\\
+\ligneinfo{THÈME 2}{CONFIGURATIONS DU PLAN}\\
+\ligneinfo{LEÇON 2}{PROPRIÉTÉ DE THALÈS}\\
+\ligneinfo{NOMBRE DE SÉANCES}{8}\hspace{1.2cm}\ligneinfo{DURÉE D'UNE SÉANCE}{55 min}\\
+\ligneinfo{SUPPORTS DIDACTIQUES PRINCIPAUX}{Énoncé de la situation d'apprentissage ; CIAM ; CARGO ; Programme et son guide.}\\
+\ligneinfo{MATÉRIEL DIDACTIQUE ORDINAIRE}{Règle ; compas ; équerre ; craie ; cahier.}\\
+\ligneinfo{MATÉRIEL DIDACTIQUE ADAPTÉ}{Fiche d'activités ; figures géométriques ; quadrillage.}\\
+\ligneinfo{CONSIGNE POUR LE PROFESSEUR DE SUIVI}{Vérifier la progression des huit séances, la formulation des rapports, la justification des calculs et la qualité de la trace écrite.}\\
+\ligneinfo{PRÉREQUIS}{Notion de triangle ; droites parallèles ; segments et longueurs ; fractions et proportionnalité ; construction à la règle et au compas.}
+\end{minipage}}
+
+\vspace{3pt}
+\begin{tabularx}{\textwidth}{|P{0.38\textwidth}|Y|}\hline
+\rowcolor{vertentete}\textcolor{rougefiche}{\bfseries\centering Capacités} & \textcolor{rougefiche}{\bfseries\centering Contenus}\\\hline
+Reconnaître / identifier une configuration
+& Configurations de Thalès :\begin{itemize}\item cas particulier du triangle ;\item cas général.\end{itemize}\\\hline
+Calculer des grandeurs
+& Longueur des segments, côtés du triangle :\begin{itemize}\item cas particulier ;\item cas général ;\item partage d'un segment selon une proportion donnée.\end{itemize}\\\hline
+Justifier
+& Parallélisme de deux droites (réciproque de la propriété de Thalès).\\\hline
+\end{tabularx}
+
+\vspace{3pt}
+\textbf{\underline{Stratégie pédagogique}}\\[-2pt]
+\hspace{7mm}-- Travail individuel\qquad -- Travail en groupe\qquad -- Discussion et confrontation des procédures\qquad -- Correction formative.
+
+\vspace{4pt}
+\debuttable
+\cellule{\rowcolor{bleucellule}\textcolor{bleufonce}{\bfseries SÉANCE 1}\\[2pt]Pré-requis\\(5 min)} &
+\cellule{\titre{Activité de rappel}\\Construis un triangle $ABC$. Sans utiliser l'équerre, trace une droite parallèle à $(BC)$ passant par un point $M$ de $[AB]$. Faire rappeler le vocabulaire : sommet, côté, parallèle, milieu.} &
+\cellule{\consigne{Construire la figure et nommer les points.}\\Les élèves construisent individuellement puis comparent leur tracé avec celui d'un camarade.} &
+\cellule{\trace{Une droite est parallèle à une autre droite si elles ne se coupent pas.}\\\eval{La figure est correctement construite ; les droites et les points sont correctement nommés.}}\\\hline
+\cellule{\textbf{Présentation de la situation-problème}\\(5 min)} &
+\cellule{Présenter et lire la situation d'apprentissage. Faire repérer les données numériques et la droite $(MN)$.} &
+\cellule{Lire la situation, relever les données et formuler la question posée.} &
+\cellule{\textbf{Situation d'apprentissage}\\Monsieur Jacques possède un champ triangulaire $ABC$. Il souhaite le diviser suivant la claie $[MN]$, de largeur $1{,}5$ m. On donne $AC=8$ dam, $BC=6$ dam et $(MN)\parallel(BC)$.\\[1pt]\centering\situationtriangle\\\eval{Identifier la longueur à calculer avant de déterminer le nombre de claies.}}\\\hline
+\end{tabularx}
+
+\newpage
+% ========================= PAGE 2 =========================
+\debuttable
+\cellule{\textbf{Appropriation de la situation}\\(5 min)} &
+\cellule{Expliquer les mots difficiles : claie, champ triangulaire, distance $MN$. Questionner les élèves sur la position des points et le parallélisme.} &
+\cellule{\consigne{Répondre oralement :}\\1. Quels sont les triangles de la figure ?\\2. Quelles droites sont parallèles ?\\3. Quelle longueur représente une claie ?} &
+\cellule{\eval{L'élève distingue les côtés correspondants et comprend que $MN$ est une longueur de séparation.}}\\\hline
+\cellule{\textbf{Travail individuel puis en groupe}\\(20 min)} &
+\cellule{Faire chercher sans donner immédiatement la formule. Orienter vers la comparaison des triangles $AMN$ et $ABC$.} &
+\cellule{\consigne{Proposer une méthode pour calculer $MN$. Puis déterminer le nombre de claies nécessaires.}} &
+\cellule{\sousTitre{Recherche attendue}\\On reconnaît une configuration de Thalès car $M\in[AB]$, $N\in[AC]$ et $(MN)\parallel(BC)$.\\\eval{La démarche mentionne la configuration, les données et l'unité.}}\\\hline
+\cellule{\textbf{Synthèse et bilan}\\(20 min)} &
+\cellule{Faire présenter les productions. Corriger les erreurs de correspondance des côtés et valider la proportion.} &
+\cellule{Présenter la production du groupe, écouter les autres méthodes et corriger la sienne.} &
+\cellule{\sousTitre{Synthèse}\\$AC=8\,\mathrm{dam}=80\,\mathrm{m}$ et $BC=6\,\mathrm{dam}=60\,\mathrm{m}$.\\Comme $(MN)\parallel(BC)$, la propriété de Thalès donne une proportion. Dans le cas de la droite des milieux, $MN=\dfrac{BC}{2}=\dfrac{60}{2}=30\,\mathrm{m}$.\\Nombre de claies : $n=\dfrac{30}{1{,}5}=20$.\\\textbf{Conclusion :} il faut 20 claies.\\\eval{Conversion correcte, calcul posé, unité et conclusion rédigée.}}\\\hline
+\cellule{\textbf{Institutionnalisation}\\(5 min)} &
+\cellule{Faire formuler la propriété à retenir et la faire recopier.} &
+\cellule{Recopier la trace écrite et souligner les hypothèses de la propriété.} &
+\cellule{\sousTitre{À retenir}\\Dans un triangle $ABC$, si $M\in(AB)$, $N\in(AC)$ et $(MN)\parallel(BC)$, alors\\\[\boxed{\dfrac{AM}{AB}=\dfrac{AN}{AC}=\dfrac{MN}{BC}}\]\\\eval{Les trois rapports sont écrits dans le même ordre.}}\\\hline
+
+\cellule{\rowcolor{bleucellule}\textcolor{bleufonce}{\bfseries SÉANCE 2}\\Petite activité\\(5 min)} &
+\cellule{Faire rappeler les conditions d'utilisation de la propriété.} &
+\cellule{\consigne{Dans chaque figure, repérer les deux droites parallèles et les deux sécantes.}} &
+\cellule{\eval{L'élève sait reconnaître la configuration particulière dans un triangle.}}\\\hline
+\cellule{\textbf{Leçon du jour}\\(25 min)} &
+\cellule{Présenter le cas particulier du triangle, le vocabulaire et la conséquence de la propriété. Faire observer la figure.} &
+\cellule{Compléter la proportion puis verbaliser le rapport de réduction entre le grand et le petit triangle.} &
+\cellule{\centering\trianglethales\\\sousTitre{Cas particulier du triangle}\\Si $ABC$ est un triangle, $M\in(AB)$, $N\in(AC)$ et $(MN)\parallel(BC)$, alors\\\[\boxed{\frac{AM}{AB}=\frac{AN}{AC}=\frac{MN}{BC}}\]\\\eval{Conditions, égalité des rapports et ordre des longueurs.}}\\\hline
+\end{tabularx}
+
+\newpage
+% ========================= PAGE 3 =========================
+\debuttable
+\cellule{\textbf{Exercice d'application}\\(15 min)} &
+\cellule{Proposer un calcul numérique et faire justifier chaque étape.} &
+\cellule{\consigne{On donne $OM=3$, $ON=2$, $OQ=4$ et $(MN)\parallel(PQ)$. Calculer $OP$.}} &
+\cellule{Comme $(MN)\parallel(PQ)$, d'après Thalès :\\$\dfrac{OM}{OP}=\dfrac{ON}{OQ}$.\\Donc $OP=\dfrac{OM\times OQ}{ON}=\dfrac{3\times4}{2}=6$.\\\boxed{OP=6}\\\eval{Rapport correctement écrit et résultat justifié.}}\\\hline
+\cellule{\textbf{Exercice de maison}} &
+\cellule{Donner un exercice de réinvestissement et préciser la rédaction attendue.} &
+\cellule{Dans le triangle $TDI$ rectangle en $T$, $K\in[TD]$ et $(KL)\parallel(DI)$ coupe $[TI]$ en $L$. On donne $TD=3$ cm, $TI=4$ cm, $DI=5$ cm et $TK=1$ cm. Calculer $TL$ et $KL$.} &
+\cellule{\eval{Écrire les hypothèses, la proportion de Thalès, les calculs et les unités.}}\\\hline
+\cellule{\rowcolor{bleucellule}\textcolor{bleufonce}{\bfseries SÉANCE 3}\\Correction\\(10 min)} &
+\cellule{Faire corriger l'exercice de maison au tableau. Insister sur la correspondance $TK/TD=TL/TI=KL/DI$.} &
+\cellule{Comparer sa solution au modèle et corriger les erreurs de fraction ou d'unité.} &
+\cellule{\sousTitre{Correction}\\$\dfrac{TK}{TD}=\dfrac{TL}{TI}=\dfrac{KL}{DI}=\dfrac13$.\\Ainsi $TL=\dfrac{1}{3}\times4=\dfrac43$ cm et $KL=\dfrac{1}{3}\times5=\dfrac53$ cm.\\\eval{Les résultats sont accompagnés de leurs unités.}}\\\hline
+\cellule{\textbf{Leçon du jour : cas général}\\(25 min)} &
+\cellule{Faire découvrir la configuration de deux droites sécantes coupées par des parallèles. Faire établir les rapports de longueurs correspondantes.} &
+\cellule{\consigne{Sur la figure, relever trois égalités de rapports entre les segments correspondants.}} &
+\cellule{\centering\casgeneral\\\sousTitre{Propriété de Thalès dans le cas général}\\Deux droites sécantes $(L)$ et $(L')$ sont coupées par des droites parallèles. Les longueurs correspondantes sont proportionnelles :\\\[\boxed{\frac{AB}{A'B'}=\frac{BC}{B'C'}=\frac{CD}{C'D'}=\frac{AC}{A'C'}}\]\\\eval{Les segments correspondants sont associés dans le même ordre.}}\\\hline
+\cellule{\textbf{Exercice d'application}\\(15 min)} &
+\cellule{Demander un calcul de quatrième proportionnelle et faire expliciter la propriété utilisée.} &
+\cellule{On donne $AB=1{,}4$ cm, $CD=1{,}6$ cm et $CN=2{,}4$ cm dans une configuration de Thalès. Calculer la longueur correspondante $AM$.} &
+\cellule{On écrit $\dfrac{AM}{CN}=\dfrac{AB}{CD}$.\\Donc $AM=\dfrac{2{,}4\times1{,}4}{1{,}6}=2{,}1$ cm.\\\boxed{AM=2{,}1\,\mathrm{cm}}\\\eval{Calcul exact et rédaction de la proportion.}}\\\hline
+\end{tabularx}
+
+\newpage
+% ========================= PAGE 4 =========================
+\debuttable
+\cellule{\textbf{Exercice de maison}} &
+\cellule{Proposer une figure de configuration générale et demander le calcul d'une longueur.} &
+\cellule{Utiliser la propriété de Thalès pour calculer $AM$ dans une figure où $(AC)\parallel(BD)$ et $(BD)\parallel(MN)$.} &
+\cellule{\eval{Les élèves doivent identifier les parallèles avant d'utiliser les rapports correspondants.}}\\\hline
+\cellule{\rowcolor{bleucellule}\textcolor{bleufonce}{\bfseries SÉANCE 4}\\Correction\\(10 min)} &
+\cellule{Corriger l'exercice de maison et faire rappeler le principe de réduction ou d'agrandissement.} &
+\cellule{Présenter les étapes de calcul et justifier la proportion choisie.} &
+\cellule{\eval{Correction collective : hypothèses, rapport, calcul, unité et conclusion.}}\\\hline
+\cellule{\textbf{Leçon du jour : partage d'un segment}\\(25 min)} &
+\cellule{Montrer la construction d'un partage en segments de même longueur à l'aide d'une demi-droite auxiliaire et de parallèles.} &
+\cellule{\consigne{Construire un segment $[AB]$ de 10 cm et le partager en trois parties égales.}} &
+\cellule{\centering\partage\\\sousTitre{Programme de construction}\\1. Tracer $[AB]$.\\2. Tracer une demi-droite auxiliaire d'origine $A$.\\3. Placer $E,F,G$ tels que $AE=EF=FG$.\\4. Tracer $(GB)$.\\5. Par $E$ et $F$, tracer les parallèles à $(GB)$.\\Les points obtenus partagent $[AB]$ en trois segments égaux.\\\eval{Utilisation correcte de la règle, du compas et des parallèles.}}\\\hline
+\cellule{\textbf{Exercice d'application}\\(15 min)} &
+\cellule{Accompagner la construction et vérifier la précision des tracés.} &
+\cellule{Construire un segment $[EF]$ de longueur 9 cm puis le partager en quatre segments de même longueur.} &
+\cellule{Chaque partie mesure $9\div4=2{,}25$ cm.\\\eval{La construction est propre et les quatre parties sont égales.}}\\\hline
+\cellule{\textbf{Exercice de maison}} &
+\cellule{Donner une construction de point défini par une proportion.} &
+\cellule{Dans le triangle $RPK$, construire $N\in[RK]$ tel que $\dfrac{RN}{RK}=\dfrac{5}{7}$ puis calculer $SN$ lorsque $S\in[RP]$ et $(SN)\parallel(PK)$.} &
+\cellule{\eval{La proportion est traduite en construction et le parallélisme est justifié.}}\\\hline
+\cellule{\rowcolor{bleucellule}\textcolor{bleufonce}{\bfseries SÉANCE 5}\\Correction\\(10 min)} &
+\cellule{Corriger la construction, montrer comment retrouver une longueur par la proportion et faire verbaliser les propriétés.} &
+\cellule{Comparer les constructions et rectifier les écarts de longueur.} &
+\cellule{\eval{La démarche est correcte si la parallèle est tracée par le point demandé et si la proportion est respectée.}}\\\hline
+\end{tabularx}
+
+\newpage
+% ========================= PAGE 5 =========================
+\debuttable
+\cellule{\textbf{Leçon du jour : réciproque}\\(25 min)} &
+\cellule{Faire constater que l'égalité des rapports permet de conclure au parallélisme. Distinguer propriété directe et réciproque.} &
+\cellule{\consigne{Calculer les deux rapports puis conclure sur le parallélisme de $(MN)$ et $(BC)$.}} &
+\cellule{\centering\reciproque\\\sousTitre{Réciproque de la propriété de Thalès}\\Dans un triangle $ABC$, si $M\in(AB)$ et $N\in(AC)$ sont placés dans le même ordre et si\\\[\boxed{\frac{AM}{AB}=\frac{AN}{AC}}\]\\alors $(MN)\parallel(BC)$.\\\eval{L'égalité des rapports est calculée avant la conclusion.}}\\\hline
+\cellule{\textbf{Exercice d'application}\\(15 min)} &
+\cellule{Faire traiter l'exercice en exigeant une justification complète et une conclusion rédigée.} &
+\cellule{Dans le triangle $ABC$, $AB=9$ cm, $AC=6$ cm, $BC=7{,}5$ cm. $R\in[AB]$ avec $BR=6$ cm et $S\in[AC]$ avec $AS=2$ cm. Justifier que $(RS)\parallel(BC)$ puis calculer $RS$.} &
+\cellule{$AR=AB-BR=9-6=3$ cm.\\$\dfrac{AR}{AB}=\dfrac{3}{9}=\dfrac13$ et $\dfrac{AS}{AC}=\dfrac{2}{6}=\dfrac13$.\\Donc $(RS)\parallel(BC)$ par la réciproque.\\Puis $\dfrac{RS}{BC}=\dfrac13$, donc $RS=\dfrac{7{,}5}{3}=2{,}5$ cm.\\\boxed{RS=2{,}5\,\mathrm{cm}}\\\eval{Parallélisme justifié avant le calcul de $RS$.}}\\\hline
+\cellule{\textbf{Exercice de maison}} &
+\cellule{Préparer l'évaluation formative de la séance suivante.} &
+\cellule{Dans un triangle $ABC$, $AB=12$ cm, $AC=8$ cm et $BC=10$ cm. $E\in[AB]$, $F\in[AC]$, $AE=9$ cm et $AF=6$ cm.\\1. Construire la figure.\\2. Démontrer que $(EF)\parallel(BC)$.\\3. Calculer $EF$.} &
+\cellule{\eval{Rédaction attendue : calcul de deux rapports égaux, invocation de la réciproque, puis application de Thalès.}}\\\hline
+\cellule{\rowcolor{bleucellule}\textcolor{bleufonce}{\bfseries SÉANCE 6}\\Correction et révision\\(15 min)} &
+\cellule{Corriger l'exercice de maison. Faire récapituler : reconnaître, calculer, justifier.} &
+\cellule{Corriger en couleur et compléter une fiche méthode en trois étapes.} &
+\cellule{\sousTitre{Méthode}\\1. Vérifier les hypothèses et les parallèles.\\2. Écrire les rapports dans le même ordre.\\3. Calculer puis conclure avec l'unité.\\\eval{L'élève choisit correctement propriété directe ou réciproque.}}\\\hline
+\cellule{\textbf{Évaluation formative}\\(25 min)} &
+\cellule{Distribuer trois exercices gradués. Observer les procédures et apporter une remédiation ciblée.} &
+\cellule{Résoudre individuellement :\\A. calculer une longueur dans le triangle ;\\B. calculer une longueur dans le cas général ;\\C. démontrer un parallélisme.} &
+\cellule{\eval{Critères : configuration repérée / 2 ; proportion correcte / 2 ; calcul / 2 ; justification et unité / 2.}}\\\hline
+\end{tabularx}
+
+\newpage
+% ========================= PAGE 6 =========================
+\debuttable
+\cellule{\rowcolor{bleucellule}\textcolor{bleufonce}{\bfseries SÉANCE 7}\\Remédiation\\(20 min)} &
+\cellule{Regrouper les élèves selon les erreurs observées : correspondance des segments, calcul de quatrième proportionnelle, rédaction de la réciproque.} &
+\cellule{Reprendre l'exercice correspondant à sa difficulté et expliquer sa correction à un camarade.} &
+\cellule{\trace{Une proportion est une égalité de deux rapports. Dans une configuration de Thalès, les rapports de longueurs correspondantes sont égaux.}\\\eval{L'élève identifie et corrige précisément son erreur.}}\\\hline
+\cellule{\textbf{Exercices de synthèse}\\(25 min)} &
+\cellule{Faire travailler par groupes puis organiser la mise en commun.} &
+\cellule{Résoudre deux problèmes :\\1. Une longueur manquante dans une configuration de Thalès.\\2. Une construction de partage selon une proportion donnée.} &
+\cellule{\eval{La solution comporte figure annotée, hypothèses, propriété, calculs et conclusion.}}\\\hline
+\cellule{\textbf{Bilan de séance}\\(10 min)} &
+\cellule{Faire verbaliser les savoirs et savoir-faire maîtrisés.} &
+\cellule{Compléter : « Pour utiliser Thalès, je dois d'abord… ».} &
+\cellule{\eval{Réponse attendue : repérer les parallèles et les points alignés, puis écrire les rapports correspondants.}}\\\hline
+\cellule{\rowcolor{bleucellule}\textcolor{bleufonce}{\bfseries SÉANCE 8}\\Évaluation sommative\\(40 min)} &
+\cellule{Distribuer une évaluation individuelle couvrant les trois capacités de la leçon. Ne pas donner d'indication de méthode.} &
+\cellule{\consigne{Traiter les exercices en rédigeant toutes les étapes.}\\1. Reconnaître une configuration.\\2. Calculer une longueur.\\3. Justifier un parallélisme.\\4. Partager un segment selon une proportion.} &
+\cellule{\eval{Barème indicatif : reconnaissance / 4 ; calculs / 6 ; justification / 5 ; construction / 3 ; présentation et unités / 2.}}\\\hline
+\cellule{\textbf{Correction et bilan}\\(15 min)} &
+\cellule{Corriger les points essentiels, relever les réussites et proposer une remédiation.} &
+\cellule{Comparer sa copie au corrigé, repérer les erreurs et noter la correction.} &
+\cellule{\sousTitre{Synthèse à retenir}\\\begin{itemize}\item Si des droites sont parallèles, les longueurs correspondantes sont proportionnelles.\item La propriété de Thalès permet de calculer une longueur.\item La réciproque permet de justifier que deux droites sont parallèles.\item Le partage d'un segment se construit à l'aide de parallèles.\end{itemize}\\\eval{Bilan individuel : acquis, en cours d'acquisition, à renforcer.}}\\\hline
+\end{tabularx}
+
+\vspace{4pt}
+\begin{center}
+\fbox{\begin{minipage}{0.94\textwidth}\centering\small
+\textcolor{rougefiche}{\bfseries REMARQUE IMPORTANTE}\quad
+La propriété de Thalès et sa réciproque ne s'appliquent qu'après vérification des alignements, du parallélisme et de l'ordre des points. Toute réponse doit comporter une propriété, un calcul et une conclusion.
+\end{minipage}}
+\end{center}
+
+\vfill
+\begin{center}\textcolor{bleufiche}{\bfseries Année scolaire 2026--2027 \quad -- \quad Classe de 3\textsuperscript{e} \quad -- \quad Propriété de Thalès}\end{center}
+
+\end{document}
