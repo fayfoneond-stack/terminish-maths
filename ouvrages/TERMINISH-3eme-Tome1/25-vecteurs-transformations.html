@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Chapitre 6 — Vecteurs, transformations et géométrie dans l’espace</title>
+  <link rel="stylesheet" href="../style/terminish.css">
+  <link rel="stylesheet" href="../../outils/pdf/node_modules/katex/dist/katex.min.css">
+</head>
+<body>
+
+<div class="filigrane">KODJONE Kodjo</div>
+
+<h1 class="chapitre"><span class="numero">Chapitre 6.</span> Vecteurs, transformations et géométrie dans l’espace</h1>
+
+<h2 class="section">6.1 L’essentiel du cours</h2>
+
+<p><strong>Vecteur et translation.</strong> Le vecteur \(\overrightarrow{AB}\) est caractérisé par sa direction (celle de la droite \((AB)\)), son sens (de \(A\) vers \(B\)) et sa norme (la longueur \(AB\)). Deux vecteurs sont <em>égaux</em> lorsqu’ils ont même direction, même sens et même norme ; le quadrilatère \(ABDC\) est alors un parallélogramme. Le vecteur \(\overrightarrow{AB}\) est le <em>vecteur de la translation</em> qui transforme \(A\) en \(B\).</p>
+
+<div class="a-retenir">
+  <p><strong>Relations vectorielles utiles.</strong>
+  \[ \overrightarrow{AB} + \overrightarrow{BC} = \overrightarrow{AC} \quad (\text{relation de Chasles}), \qquad \overrightarrow{AB} = -\overrightarrow{BA}, \]
+  et si \(I\) est le milieu de \([AB]\), alors \(\overrightarrow{AI} = \overrightarrow{IB} = \tfrac{1}{2}\overrightarrow{AB}\).</p>
+</div>
+
+<p><strong>Coordonnées d’un vecteur.</strong> Dans un repère orthonormé, si \(A(x_A\,;y_A)\) et \(B(x_B\,;y_B)\), alors
+\[ \overrightarrow{AB}\,(x_B - x_A\,;\ y_B - y_A) \qquad \text{et} \qquad AB = \sqrt{(x_B-x_A)^2 + (y_B-y_A)^2}. \]
+Deux vecteurs \(\vec{u}\,(x\,;y)\) et \(\vec{v}\,(x'\,;y')\) sont <em>colinéaires</em> si et seulement si \(xy' - x'y = 0\).</p>
+
+<p><strong>Transformations du plan.</strong> Une <em>symétrie axiale</em> d’axe \((\Delta)\) est un retournement autour de la droite \((\Delta)\) ; une <em>symétrie centrale</em> de centre \(O\) est un demi-tour autour du point \(O\) ; une <em>translation</em> de vecteur \(\vec{u}\) glisse chaque point dans la direction, le sens et la longueur de \(\vec{u}\) ; une <em>rotation</em> de centre \(O\) et d’angle \(\alpha\) fait tourner chaque point autour de \(O\) ; une <em>homothétie</em> de centre \(O\) et de rapport \(k > 0\) agrandit ou réduit les figures dans le rapport \(k\).</p>
+
+<div class="encadre">
+  <p><strong>Propriétés communes.</strong> Ces transformations conservent l’alignement, les distances (sauf l’homothétie, qui les multiplie par \(k\)), les mesures d’angles, les aires (sauf l’homothétie, qui les multiplie par \(k^2\)) et transforment une figure en une figure de même nature. Une symétrie axiale conserve le sens de rotation des angles <em>non orientés</em>, mais modifie l’orientation d’une figure.</p>
+</div>
+
+<p><strong>Géométrie dans l’espace.</strong> Pour le pavé droit de dimensions \(L\), \(l\) et \(h\) :
+\[ \mathcal{V} = L \times l \times h, \qquad \mathcal{A}_{\text{latérale}} = 2(L+l) \times h. \]
+Pour le cylindre de rayon \(r\) et de hauteur \(h\) :
+\[ \mathcal{V} = \pi r^2 h, \qquad \mathcal{A}_{\text{latérale}} = 2\pi r h. \]
+Deux droites de l’espace sont <em>orthogonales</em> lorsqu’elles sont perpendiculaires ou lorsqu’une parallèle à l’une est perpendiculaire à l’autre. Une droite est <em>perpendiculaire à un plan</em> lorsqu’elle est orthogonale à deux droites sécantes de ce plan.</p>
+
+<h2 class="section">6.2 Situations d’évaluation</h2>
+
+<h3 class="exercice">Exercice 53 : Le plan du lotissement <span class="source">(DRE-C/IESG-SOT)</span></h3>
+<p class="contexte"><strong>Contexte :</strong> Le plan d’un lotissement est rapporté à un repère orthonormé \((O\,;\vec{i}\,;\vec{j})\) où l’unité représente \(10\;\text{m}\). Une parcelle rectangulaire a pour sommets \(A(1\,;2)\), \(B(5\,;2)\), \(C(5\,;5)\) et \(D(1\,;5)\). Le géomètre veut créer trois nouvelles parcelles : la parcelle \(P_1\), image de \(ABCD\) par la translation de vecteur \(\vec{u}\,(4\,;-1)\) ; la parcelle \(P_2\), image de \(ABCD\) par la symétrie de centre \(K(3\,;3)\) ; la parcelle \(P_3\), image de \(ABCD\) par la rotation de centre \(O\) et d’angle \(90^\circ\) dans le sens direct.</p>
+<p class="consigne"><strong>Consigne 1 :</strong> Déterminer les coordonnées des sommets de la parcelle \(P_1\), puis calculer l’aire réelle de la parcelle \(ABCD\) en mètres carrés.</p>
+<p class="consigne"><strong>Consigne 2 :</strong> Déterminer les coordonnées des sommets de la parcelle \(P_2\). Que peut-on dire de la parcelle \(P_3\) par rapport à \(ABCD\) ? Justifier sans calcul.</p>
+<table class="bareme">
+  <tr><th>Consignes</th><th>Pertinence</th><th>Correction</th><th>Cohérence</th><th>Perfectionnement</th></tr>
+  <tr><td>Consigne 1</td><td>1,5 pt</td><td>1,5 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+  <tr><td>Consigne 2</td><td>1,5 pt</td><td>1 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+</table>
+
+<h3 class="exercice">Exercice 54 : La citerne du village <span class="source">(Composition Régionale Grand Lomé)</span></h3>
+<p class="contexte"><strong>Contexte :</strong> Un village vient de bénéficier d’une citerne cylindrique destinée à recueillir l’eau de pluie. La citerne a un rayon intérieur de \(1{,}4\;\text{m}\) et une hauteur de \(2{,}5\;\text{m}\). On prendra \(\pi \approx 3{,}14\). La citerne est construite en tôles ; sa paroi latérale extérieure doit être repeinte à raison de \(1\,500\;\text{F}\) le mètre carré. Les habitants consomment en moyenne \(150\) litres d’eau par jour et souhaitent savoir combien de temps la citerne pleine peut alimenter le village.</p>
+<p class="consigne"><strong>Consigne 1 :</strong> Calculer le volume de la citerne en mètres cubes, puis en litres.</p>
+<p class="consigne"><strong>Consigne 2 :</strong> Calculer l’aire de la paroi latérale à peindre, puis la dépense correspondante. Déterminer enfin le nombre de jours d’autonomie du village avec une citerne pleine, arrondi à l’unité.</p>
+<table class="bareme">
+  <tr><th>Consignes</th><th>CM1</th><th>CM2</th><th>CM3</th><th>CP</th></tr>
+  <tr><td>Consigne 1</td><td>1,5 pt</td><td>1,5 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+  <tr><td>Consigne 2</td><td>1 pt</td><td>1 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+</table>
+
+<h3 class="exercice">Exercice 55 : Le cube de l’artisan <span class="source">(DRE Plateaux-Est)</span></h3>
+<p class="contexte"><strong>Contexte :</strong> Un artisan menuisier taille un cube \(ABCDEFGH\) dont l’arête mesure \(10\;\text{cm}\) ; les faces \(ABCD\) et \(EFGH\) sont horizontales et \(E\) est situé au-dessus de \(A\). L’artisan repère le centre \(O\) de la face supérieure \(EFGH\) et le milieu \(I\) de l’arête \([BF]\). Avant de découper une pièce décorative, il veut connaître le volume du cube et la longueur du segment \([OI]\). Il souhaite également montrer à son apprenti deux propriétés de la figure : la droite \((ED)\) est orthogonale à la droite \((BG)\), et la droite \((AD)\) est perpendiculaire au plan de la face \(ABFE\).</p>
+<p class="consigne"><strong>Consigne 1 :</strong> Calculer le volume du cube, montrer que \(OI^2 = 75\), puis en déduire la valeur arrondie de \(OI\) au millimètre.</p>
+<p class="consigne"><strong>Consigne 2 :</strong> Démontrer que les droites \((ED)\) et \((BG)\) sont orthogonales, puis que \((AD)\) est perpendiculaire au plan de la face \(ABFE\).</p>
+<table class="bareme">
+  <tr><th>Consignes</th><th>Pertinence</th><th>Correction</th><th>Cohérence</th><th>Perfectionnement</th></tr>
+  <tr><td>Consigne 1</td><td>1,5 pt</td><td>1,5 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+  <tr><td>Consigne 2</td><td>1,5 pt</td><td>1 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+</table>
+
+<h2 class="section">6.3 Exercices d’application</h2>
+
+<h3 class="exercice">Exercice 56</h3>
+<p>Dans le plan muni d’un repère orthonormé, on donne \(A(-2\,;1)\), \(B(3\,;1)\) et \(C(3\,;5)\).</p>
+<ol class="liste-questions">
+  <li>Placer les points et calculer les longueurs \(AB\), \(AC\) et \(BC\).</li>
+  <li>Montrer que le triangle \(ABC\) est rectangle en \(B\).</li>
+  <li>Déterminer les coordonnées du point \(D\) tel que \(ABCD\) soit un rectangle.</li>
+  <li>Calculer les coordonnées du milieu \(I\) de \([AC]\). Que représente \(I\) pour le rectangle \(ABCD\) ?</li>
+</ol>
+
+<h3 class="exercice">Exercice 57</h3>
+<p>On donne les vecteurs \(\vec{u}\,(2\,;-3)\) et \(\vec{v}\,(-4\,;6)\).</p>
+<ol class="liste-questions">
+  <li>Les vecteurs \(\vec{u}\) et \(\vec{v}\) sont-ils colinéaires ? Justifier par le calcul.</li>
+  <li>Calculer les coordonnées de \(\vec{w} = 3\vec{u} - \vec{v}\).</li>
+  <li>Calculer la norme de \(\vec{u}\).</li>
+</ol>
+
+<h3 class="exercice">Exercice 58</h3>
+<p>\(ABC\) est un triangle, \(I\) le milieu de \([AB]\) et \(J\) le milieu de \([AC]\).</p>
+<ol class="liste-questions">
+  <li>Comparer les vecteurs \(\overrightarrow{IJ}\) et \(\overrightarrow{BC}\).</li>
+  <li>En déduire la longueur \(IJ\) si \(BC = 14\;\text{cm}\).</li>
+  <li>Quelle transformation du plan transforme \(I\) en \(B\) et \(J\) en \(C\) ?</li>
+</ol>
+
+<h3 class="exercice">Exercice 59</h3>
+<p>Un réservoir en forme de pavé droit a pour dimensions \(2\;\text{m}\), \(1{,}5\;\text{m}\) et \(0{,}8\;\text{m}\).</p>
+<ol class="liste-questions">
+  <li>Calculer son volume en mètres cubes, puis sa capacité en litres.</li>
+  <li>Il est rempli aux trois quarts. Combien de litres d’eau contient-il ?</li>
+  <li>Une pompe débite \(12\) litres par minute. Combien de temps faut-il pour vider entièrement le réservoir ?</li>
+</ol>
+
+<h3 class="exercice">Exercice 60</h3>
+<p>Construire l’image d’un triangle \(ABC\) par chacune des transformations suivantes (on justifiera la construction) :</p>
+<ol class="liste-questions">
+  <li>la symétrie d’axe \((AB)\) ;</li>
+  <li>la symétrie de centre \(A\) ;</li>
+  <li>la translation de vecteur \(\overrightarrow{BC}\) ;</li>
+  <li>l’homothétie de centre \(A\) et de rapport \(k = 2\).</li>
+</ol>
+
+<h2 class="section">6.4 QCM et Vrai/Faux</h2>
+
+<h3 class="exercice">Exercice 61 : QCM</h3>
+<ol class="liste-questions">
+  <li>Si \(I\) est le milieu de \([AB]\), alors \(\overrightarrow{AI} = \ldots\) : \(a)\;\overrightarrow{IB}\)   \(b)\;\overrightarrow{BI}\)   \(c)\;2\overrightarrow{AB}\).</li>
+  <li>Le point image de \(A(3\,;-1)\) par la translation de vecteur \(\vec{u}\,(-2\,;5)\) est : \(a)\;(1\,;4)\)   \(b)\;(5\,;-6)\)   \(c)\;(-6\,;-5)\).</li>
+  <li>L’aire d’une figure est multipliée par \(4\) lorsqu’on lui applique une homothétie de rapport : \(a)\;2\)   \(b)\;4\)   \(c)\;16\).</li>
+  <li>Une transformation qui conserve les distances et les angles mais modifie l’orientation est : \(a)\) la translation   \(b)\) la rotation   \(c)\) la symétrie axiale.</li>
+</ol>
+
+<h3 class="exercice">Exercice 62 : Vrai ou Faux</h3>
+<ol class="liste-questions">
+  <li>La translation conserve les aires.</li>
+  <li>Deux vecteurs colinéaires ont toujours la même norme.</li>
+  <li>La composée de deux symétries axiales d’axes parallèles est une translation.</li>
+  <li>Dans l’espace, deux droites qui ne sont pas parallèles sont nécessairement sécantes.</li>
+</ol>
+
+</body>
+</html>

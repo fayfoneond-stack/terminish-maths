@@ -1,0 +1,303 @@
+/* =====================================================================
+   TERMINISH — charte graphique des ouvrages
+   by KODJONE Kodjo — LYKPETA KPALIME
+   ===================================================================== */
+
+:root {
+  --bleu: #1f3a5f;
+  --bleu-clair: #2e5f8a;
+  --rouge: #a4172a;
+  --vert: #2e7d32;
+  --or: #b8860b;
+  --gris: #44506b;
+  --filet: #8a97ad;
+}
+
+/* ------------------------------------------------------------ pages ---- */
+@page {
+  size: A4;
+  margin: 24mm 18mm 20mm 18mm;
+}
+
+html { font-size: 10.5pt; }
+
+body {
+  font-family: 'DejaVu Serif', 'Liberation Serif', serif;
+  color: #111827;
+  line-height: 1.42;
+  margin: 0;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
+p {
+  margin: 0 0 4.5pt 0;
+  text-align: justify;
+}
+
+strong { font-weight: bold; }
+em { font-style: italic; }
+
+/* ------------------------------------------------- filigrane + entête -- */
+.filigrane {
+  position: fixed;
+  top: 52%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-28deg);
+  font-family: 'DejaVu Sans', sans-serif;
+  font-size: 46pt;
+  font-weight: bold;
+  color: rgba(31, 58, 95, 0.055);
+  letter-spacing: 3pt;
+  white-space: nowrap;
+  z-index: -1;
+}
+
+/* -------------------------------------------------------- couverture --- */
+.couverture {
+  position: relative;
+  height: 247mm;              /* A4 (297) moins les marges haut/bas */
+  border: 2.2pt solid var(--bleu);
+  outline: 1pt solid var(--or);
+  outline-offset: 2.4pt;
+  text-align: center;
+  padding: 0 12mm;
+  page-break-after: always;
+}
+
+.couverture .pastille {
+  position: absolute;
+  top: 5mm; left: 5mm;
+  width: 4.2mm; height: 4.2mm;
+  border-radius: 50%;
+  background: var(--or);
+}
+
+.couverture .haut {
+  margin-top: 9mm;
+  font-family: 'DejaVu Serif', serif;
+  font-size: 10pt;
+  color: var(--bleu);
+}
+
+.couverture .haut .sep { color: var(--or); }
+
+.couverture .titre-site {
+  margin-top: 18mm;
+  font-family: 'DejaVu Sans', sans-serif;
+  font-size: 34pt;
+  font-weight: bold;
+  letter-spacing: 1.5pt;
+  color: var(--bleu);
+}
+
+.couverture .filet-titre {
+  width: 55%;
+  margin: 5mm auto 0;
+  border-bottom: 1.6pt solid var(--or);
+}
+
+.couverture .tome {
+  margin-top: 12mm;
+  font-family: 'DejaVu Serif', serif;
+  font-size: 22pt;
+  font-weight: bold;
+  color: var(--rouge);
+}
+
+.couverture .sous-titre {
+  margin-top: 8mm;
+  font-size: 13pt;
+  font-style: italic;
+  color: var(--bleu-clair);
+}
+
+.couverture .classe {
+  margin-top: 7mm;
+  font-family: 'DejaVu Sans', sans-serif;
+  font-size: 15pt;
+  font-weight: bold;
+  color: var(--vert);
+}
+
+.couverture .elabore {
+  margin-top: 11mm;
+  font-size: 11pt;
+  font-style: italic;
+  color: var(--bleu-clair);
+}
+
+.couverture .auteur {
+  margin-top: 4mm;
+  font-size: 19pt;
+  font-weight: bold;
+  letter-spacing: 0.6pt;
+  color: var(--rouge);
+}
+
+.couverture .annee {
+  margin-top: 9mm;
+  font-size: 12pt;
+  font-weight: bold;
+  color: var(--bleu);
+}
+
+.couverture .lieu {
+  margin-top: 7mm;
+  font-family: 'DejaVu Sans', sans-serif;
+  font-size: 12.5pt;
+  font-weight: bold;
+  color: var(--vert);
+}
+
+.couverture .blason { margin-top: 11mm; }
+
+/* --------------------------------------------------- titres ouvrage ----- */
+h1.chapitre {
+  font-family: 'DejaVu Sans', sans-serif;
+  font-size: 17pt;
+  color: var(--bleu);
+  margin: 0 0 2mm 0;
+  padding-bottom: 1.5mm;
+  border-bottom: 1.2pt solid var(--bleu);
+  break-before: page;
+  page-break-before: always;
+}
+
+h1.chapitre .numero { color: var(--rouge); }
+
+h2.section {
+  font-family: 'DejaVu Sans', sans-serif;
+  font-size: 13.5pt;
+  color: var(--bleu-clair);
+  margin: 6mm 0 3mm 0;
+}
+
+h3.exercice {
+  font-family: 'DejaVu Serif', serif;
+  font-size: 11pt;
+  color: #111827;
+  margin: 5.5mm 0 2mm 0;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+h3.exercice .source { font-weight: normal; color: var(--gris); }
+
+h1.sans-numero {
+  font-family: 'DejaVu Sans', sans-serif;
+  font-size: 17pt;
+  color: var(--bleu);
+  margin: 0 0 3mm 0;
+  padding-bottom: 1.5mm;
+  border-bottom: 1.2pt solid var(--bleu);
+  break-before: page;
+  page-break-before: always;
+}
+
+/* --------------------------------------------------- listes / encarts -- */
+ul, ol { margin: 2mm 0 4mm 6mm; padding: 0; }
+li { margin-bottom: 1.2mm; text-align: justify; }
+
+.tirets { list-style: none; margin-left: 2mm; }
+.tirets li::before { content: "— "; color: var(--gris); }
+
+.contexte { text-align: justify; }
+
+.consigne { margin-top: 2.5mm; }
+
+.liste-questions { margin: 1.5mm 0 3mm 7mm; }
+.liste-questions li { margin-bottom: 1mm; }
+
+/* ------------------------------------------------------------ tableaux - */
+table.bareme {
+  border-collapse: collapse;
+  margin: 3mm auto 5mm auto;
+  font-size: 9.5pt;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+table.bareme tr:first-child th { border-top: 1.1pt solid #111827; }
+table.bareme tr:last-child td { border-bottom: 1.1pt solid #111827; }
+table.bareme th {
+  border-bottom: 0.7pt solid #111827;
+  padding: 1.3mm 3mm;
+  font-weight: bold;
+  text-align: center;
+  white-space: nowrap;
+}
+table.bareme td { padding: 1.1mm 3mm; text-align: center; }
+table.bareme td:first-child { text-align: left; white-space: nowrap; }
+
+table.donnees {
+  border-collapse: collapse;
+  margin: 3mm auto;
+  font-size: 9.5pt;
+  break-inside: avoid;
+}
+table.donnees th, table.donnees td {
+  border: 0.6pt solid var(--gris);
+  padding: 1.1mm 3mm;
+  text-align: center;
+}
+table.donnees th { background: #eef2f7; font-weight: bold; }
+
+/* ------------------------------------------------------------- divers -- */
+.formule { text-align: center; margin: 3mm 0; }
+
+.encadre {
+  border: 0.8pt solid var(--filet);
+  background: #f7f9fc;
+  padding: 3mm 4mm;
+  margin: 3mm 0;
+  break-inside: avoid;
+}
+
+.a-retenir {
+  border-left: 2.5pt solid var(--bleu);
+  background: #f7f9fc;
+  padding: 2.5mm 4mm;
+  margin: 3mm 0;
+  break-inside: avoid;
+}
+
+.exercice-bloc { break-inside: avoid; page-break-inside: avoid; }
+
+/* --------------------------------------------- table des matières ------ */
+.table-matiere { margin-top: 4mm; }
+.table-matiere .ligne {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 1.4mm;
+  font-size: 10.5pt;
+}
+.table-matiere .nom { flex: 0 0 auto; }
+.table-matiere .pointilles {
+  flex: 1 1 auto;
+  border-bottom: 0.6pt dotted var(--filet);
+  margin: 0 2mm 0.8mm 2mm;
+}
+.table-matiere .page { flex: 0 0 auto; font-weight: bold; color: var(--bleu); }
+.table-matiere .sous { margin-left: 7mm; font-size: 10pt; color: #374151; }
+.table-matiere .sous .page { color: var(--gris); font-weight: normal; }
+
+/* ---------------------------------------------------------- conclusion - */
+.citation {
+  margin: 12mm 8mm 0 8mm;
+  padding: 4mm 6mm;
+  border-top: 0.8pt solid var(--filet);
+  border-bottom: 0.8pt solid var(--filet);
+  font-style: italic;
+  text-align: center;
+}
+.citation .signature {
+  display: block;
+  margin-top: 3mm;
+  font-style: normal;
+  font-weight: bold;
+  color: var(--bleu);
+}
+
+.katex { font-size: 1.04em; }
+.katex-display { margin: 3mm 0; }

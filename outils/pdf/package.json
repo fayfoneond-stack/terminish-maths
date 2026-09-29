@@ -1,0 +1,12 @@
+{
+  "name": "terminish-pdf",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Chaine de production PDF des ouvrages TERMINISH (HTML + KaTeX -> PDF)",
+  "dependencies": {
+    "@sparticuz/chromium": "^131.0.0",
+    "katex": "^0.16.9",
+    "puppeteer-core": "^23.0.0"
+  }
+}

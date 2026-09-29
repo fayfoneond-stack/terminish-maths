@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Chapitre 7 — Statistiques et initiation aux probabilités</title>
+  <link rel="stylesheet" href="../style/terminish.css">
+  <link rel="stylesheet" href="../../outils/pdf/node_modules/katex/dist/katex.min.css">
+</head>
+<body>
+
+<div class="filigrane">KODJONE Kodjo</div>
+
+<h1 class="chapitre"><span class="numero">Chapitre 7.</span> Statistiques et initiation aux probabilités</h1>
+
+<h2 class="section">7.1 L’essentiel du cours</h2>
+
+<p><strong>Vocabulaire des statistiques.</strong> Une étude statistique porte sur une <em>population</em> dont chaque élément est un <em>individu</em> ; le <em>caractère</em> étudié peut être qualitatif (une mention, une couleur) ou quantitatif (une taille, un prix). L’<em>effectif</em> d’une valeur est le nombre d’individus qui présentent cette valeur ; l’effectif total est \(N\).</p>
+
+<div class="a-retenir">
+  <p><strong>Fréquence, moyenne.</strong> La fréquence d’une valeur d’effectif \(n_i\) est
+  \[ f_i = \frac{n_i}{N} \qquad (0 \le f_i \le 1). \]
+  La moyenne d’une série de valeurs \(x_i\) d’effectifs \(n_i\) est la <em>moyenne pondérée</em>
+  \[ \overline{x} = \frac{n_1x_1 + n_2x_2 + \cdots + n_kx_k}{N}. \]</p>
+</div>
+
+<p><strong>Mode et médiane.</strong> Le <em>mode</em> est la valeur de plus grand effectif. La <em>médiane</em> est la valeur qui partage la série ordonnée en deux groupes de même effectif : au moins la moitié des valeurs lui sont inférieures ou égales, et au moins la moitié lui sont supérieures ou égales.</p>
+
+<p><strong>Vocabulaire des probabilités.</strong> Une expérience est <em>aléatoire</em> lorsqu’on ne peut pas prévoir son résultat. L’ensemble des résultats possibles s’appelle l’<em>univers</em> \(\Omega\) ; un <em>événement</em> est une partie de \(\Omega\) ; un événement est <em>élémentaire</em> lorsqu’il ne contient qu’une seule issue.</p>
+
+<div class="a-retenir">
+  <p><strong>Probabilité en situation d’équiprobabilité.</strong> Lorsque toutes les issues ont la même chance de se produire,
+  \[ P(A) = \frac{\text{nombre de cas favorables}}{\text{nombre de cas possibles}}. \]
+  On a toujours \(0 \le P(A) \le 1\), \(P(\Omega) = 1\), et si \(\overline{A}\) désigne l’événement contraire de \(A\) :
+  \[ P(\overline{A}) = 1 - P(A). \]</p>
+</div>
+
+<div class="encadre">
+  <p><strong>Exemple rédigé.</strong> On tire une carte au hasard dans un jeu de \(32\) cartes. La probabilité d’obtenir un cœur est \(P = \dfrac{8}{32} = \dfrac{1}{4} = 0{,}25\). La probabilité de ne pas obtenir un cœur est \(P(\overline{A}) = 1 - \tfrac{1}{4} = \tfrac{3}{4}\).</p>
+</div>
+
+<h2 class="section">7.2 Situations d’évaluation</h2>
+
+<h3 class="exercice">Exercice 63 : Résultats du BEPC d’un collège <span class="source">(DRE-Maritime)</span></h3>
+<p class="contexte"><strong>Contexte :</strong> Le proviseur d’un collège de Kpalimé a relevé les mentions obtenues par les \(120\) élèves de \(3^{\text{ème}}\) admis au BEPC de l’année écoulée : \(12\) élèves ont obtenu la mention « Très bien », \(28\) la mention « Bien », \(50\) la mention « Assez bien », les autres ayant été admis sans mention. Pour féliciter les élèves, l’établissement organise une cérémonie : la dépense par élève est de \(2\,000\;\text{F}\) pour ceux admis sans mention, de \(3\,500\;\text{F}\) pour la mention « Assez bien », de \(5\,000\;\text{F}\) pour « Bien » et de \(8\,000\;\text{F}\) pour « Très bien ». Le proviseur dispose d’un budget de \(450\,000\;\text{F}\).</p>
+<p class="consigne"><strong>Consigne 1 :</strong> Recopier et compléter le tableau des effectifs et des fréquences (on donnera les fréquences sous forme de fractions irréductibles), puis calculer la fréquence des élèves admis sans mention.</p>
+<p class="consigne"><strong>Consigne 2 :</strong> Calculer la dépense totale de la cérémonie et vérifier si le budget du proviseur suffit. Déterminer enfin la dépense moyenne par élève admis.</p>
+<table class="bareme">
+  <tr><th>Consignes</th><th>CM1</th><th>CM2</th><th>CM3</th><th>CP</th></tr>
+  <tr><td>Consigne 1</td><td>1,5 pt</td><td>1,5 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+  <tr><td>Consigne 2</td><td>1,5 pt</td><td>1 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+</table>
+
+<h3 class="exercice">Exercice 64 : Le jeu du sac <span class="source">(Composition Régionale Grand Lomé)</span></h3>
+<p class="contexte"><strong>Contexte :</strong> Lors de la fête de fin d’année, un stand propose le jeu suivant : un sac opaque contient \(20\) boules indiscernables au toucher, dont \(8\) boules rouges, \(7\) boules vertes et \(5\) boules jaunes. Les boules rouges sont numérotées de \(1\) à \(8\), les vertes de \(1\) à \(7\) et les jaunes de \(1\) à \(5\). Le joueur tire une boule au hasard. Il gagne un cadeau lorsque la boule tirée est rouge ou porte le numéro \(5\). Le responsable du stand craint de distribuer trop de cadeaux et veut connaître la probabilité de gain avant d’ouvrir son stand.</p>
+<p class="consigne"><strong>Consigne 1 :</strong> Déterminer le nombre d’issues possibles de l’expérience, puis la probabilité que le joueur tire une boule rouge.</p>
+<p class="consigne"><strong>Consigne 2 :</strong> Déterminer la probabilité que le joueur gagne un cadeau, puis celle qu’il ne gagne rien. Les deux événements sont-ils aussi probables l’un que l’autre ? Justifier.</p>
+<table class="bareme">
+  <tr><th>Consignes</th><th>Pertinence</th><th>Correction</th><th>Cohérence</th><th>Perfectionnement</th></tr>
+  <tr><td>Consigne 1</td><td>1,5 pt</td><td>1,25 pt</td><td>1 pt</td><td>0,75 pt</td></tr>
+  <tr><td>Consigne 2</td><td>1,5 pt</td><td>1 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+</table>
+
+<h3 class="exercice">Exercice 65 : Contrôle de la production d’une unité laitière <span class="source">(DRE Plateaux-Est)</span></h3>
+<p class="contexte"><strong>Contexte :</strong> Une unité de production laitière de Kpalimé a relevé, sur \(50\) jours, la quantité journalière de lait collectée auprès des éleveurs. Les résultats sont regroupés dans le tableau ci-dessous.</p>
+<table class="donnees">
+  <tr><th>Quantité collectée (litres)</th><th>Effectif (nombre de jours)</th></tr>
+  <tr><td>20</td><td>6</td></tr>
+  <tr><td>25</td><td>12</td></tr>
+  <tr><td>30</td><td>20</td></tr>
+  <tr><td>35</td><td>8</td></tr>
+  <tr><td>40</td><td>4</td></tr>
+</table>
+<p class="contexte">L’unité achète le litre de lait à \(400\;\text{F}\) auprès des éleveurs et le revend à \(600\;\text{F}\). Les charges fixes journalières s’élèvent à \(3\,000\;\text{F}\).</p>
+<p class="consigne"><strong>Consigne 1 :</strong> Calculer le mode et la moyenne de la quantité journalière collectée, arrondie au dixième de litre.</p>
+<p class="consigne"><strong>Consigne 2 :</strong> Déterminer le bénéfice moyen réalisé par jour, puis le bénéfice mensuel (on prendra \(30\) jours).</p>
+<table class="bareme">
+  <tr><th>Consignes</th><th>Pertinence</th><th>Correction</th><th>Cohérence</th><th>Perfectionnement</th></tr>
+  <tr><td>Consigne 1</td><td>1,75 pt</td><td>1,5 pt</td><td>1 pt</td><td>0,25 pt</td></tr>
+  <tr><td>Consigne 2</td><td>1,25 pt</td><td>1 pt</td><td>1 pt</td><td>0,25 pt</td></tr>
+</table>
+
+<h2 class="section">7.3 Exercices d’application</h2>
+
+<h3 class="exercice">Exercice 66</h3>
+<p>Voici les notes obtenues par \(20\) élèves d’une classe de \(3^{\text{ème}}\) à un devoir de mathématiques :</p>
+<p>\[ 8\;;\ 12\;;\ 15\;;\ 9\;;\ 7\;;\ 12\;;\ 16\;;\ 10\;;\ 12\;;\ 5\;;\ 14\;;\ 12\;;\ 11\;;\ 9\;;\ 18\;;\ 7\;;\ 13\;;\ 12\;;\ 6\;;\ 10 \]</p>
+<ol class="liste-questions">
+  <li>Dresser le tableau des effectifs et des fréquences de cette série.</li>
+  <li>Calculer la moyenne de la classe, arrondie au centième.</li>
+  <li>Déterminer la note médiane et le mode.</li>
+  <li>Le professeur décide d’ajouter \(2\) points à chaque élève. Quelle est la nouvelle moyenne ? Sa décision modifie-t-elle le mode et la médiane ?</li>
+</ol>
+
+<h3 class="exercice">Exercice 67</h3>
+<p>Une urne contient \(12\) boules indiscernables au toucher : \(5\) blanches, \(4\) noires et \(3\) rouges. On tire une boule au hasard.</p>
+<ol class="liste-questions">
+  <li>Calculer la probabilité de chaque événement : \(A\) « tirer une boule blanche », \(B\) « tirer une boule rouge ».</li>
+  <li>Définir l’événement contraire de \(A\) et calculer sa probabilité.</li>
+  <li>On ajoute \(4\) boules rouges dans l’urne. Calculer la nouvelle probabilité de tirer une boule rouge.</li>
+</ol>
+
+<h3 class="exercice">Exercice 68</h3>
+<p>Le tableau suivant donne la répartition des élèves d’un collège selon leur âge.</p>
+<table class="donnees">
+  <tr><th>Âge (années)</th><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td></tr>
+  <tr><th>Effectif</th><td>40</td><td>85</td><td>110</td><td>95</td><td>50</td><td>20</td></tr>
+</table>
+<ol class="liste-questions">
+  <li>Quel est l’effectif total du collège ?</li>
+  <li>Calculer la fréquence des élèves de \(13\) ans, sous forme de fraction irréductible puis en pourcentage.</li>
+  <li>Calculer l’âge moyen des élèves du collège, arrondi au dixième.</li>
+  <li>Déterminer l’âge médian.</li>
+</ol>
+
+<h3 class="exercice">Exercice 69</h3>
+<p>On lance un dé cubique équilibré dont les faces sont numérotées de \(1\) à \(6\).</p>
+<ol class="liste-questions">
+  <li>Donner l’univers \(\Omega\) de l’expérience et préciser le nombre d’issues.</li>
+  <li>Calculer la probabilité de l’événement \(E_1\) : « obtenir un nombre pair ».</li>
+  <li>Calculer la probabilité de l’événement \(E_2\) : « obtenir un nombre supérieur ou égal à \(5\) ».</li>
+  <li>Calculer la probabilité de l’événement \(E_1 \cap E_2\), puis celle de \(E_1 \cup E_2\).</li>
+</ol>
+
+<h3 class="exercice">Exercice 70</h3>
+<p>Une entreprise emploie \(24\) ouvriers qui ont perçu les salaires mensuels suivants : \(18\) ouvriers à \(60\,000\;\text{F}\), \(4\) ouvriers à \(85\,000\;\text{F}\) et \(2\) chefs d’équipe à \(150\,000\;\text{F}\).</p>
+<ol class="liste-questions">
+  <li>Calculer le salaire mensuel moyen d’un employé de cette entreprise.</li>
+  <li>La masse salariale mensuelle totale est-elle égale à \(24\) fois le salaire moyen ? Vérifier par le calcul.</li>
+  <li>Un ouvrier affirme que « le salaire moyen ne représente pas le salaire de la majorité ». Que veut-il dire ? Quel indicateur suffit-il de calculer pour le montrer ?</li>
+</ol>
+
+<h2 class="section">7.4 QCM et Vrai/Faux</h2>
+
+<h3 class="exercice">Exercice 71 : QCM</h3>
+<ol class="liste-questions">
+  <li>Dans une classe de \(40\) élèves, \(10\) viennent à vélo. La fréquence correspondante est : \(a)\;10\)   \(b)\;0{,}25\)   \(c)\;4\).</li>
+  <li>Une probabilité est toujours : \(a)\) supérieure à \(0\) et inférieure à \(1\) au sens strict ou égale à ces bornes   \(b)\) strictement supérieure à \(1\)   \(c)\) négative.</li>
+  <li>Si \(P(A) = 0{,}35\), alors \(P(\overline{A})\) vaut : \(a)\;0{,}35\)   \(b)\;0{,}65\)   \(c)\;1{,}35\).</li>
+  <li>La médiane d’une série statistique est : \(a)\) la plus grande valeur   \(b)\) la valeur de plus grand effectif   \(c)\) la valeur qui partage la série en deux groupes de même effectif.</li>
+</ol>
+
+<h3 class="exercice">Exercice 72 : Vrai ou Faux</h3>
+<ol class="liste-questions">
+  <li>La somme des fréquences d’une série statistique est égale à \(1\).</li>
+  <li>La moyenne d’une série est toujours une valeur de la série.</li>
+  <li>Lors d’un lancer de pièce, obtenir « pile » et obtenir « face » sont deux événements contraires.</li>
+  <li>Si deux événements sont incompatibles, alors \(P(A \cap B) = 0\).</li>
+</ol>
+
+</body>
+</html>

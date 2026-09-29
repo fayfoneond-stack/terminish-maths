@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Chapitre 5 — Théorème de Thalès et trigonométrie</title>
+  <link rel="stylesheet" href="../style/terminish.css">
+  <link rel="stylesheet" href="../../outils/pdf/node_modules/katex/dist/katex.min.css">
+</head>
+<body>
+
+<div class="filigrane">KODJONE Kodjo</div>
+
+<h1 class="chapitre"><span class="numero">Chapitre 5.</span> Théorème de Thalès et trigonométrie</h1>
+
+<h2 class="section">5.1 L’essentiel du cours</h2>
+
+<p><strong>Propriété de Thalès (configuration du triangle).</strong> \(ABC\) est un triangle. \(M\) est un point de la droite \((AB)\) et \(N\) un point de la droite \((AC)\). Si \((MN) \parallel (BC)\), alors
+\[ \frac{AM}{AB} = \frac{AN}{AC} = \frac{MN}{BC}. \]
+Les longueurs des côtés du triangle \(AMN\) sont proportionnelles aux longueurs des côtés correspondants du triangle \(ABC\) : c’est un <strong>agrandissement-réduction</strong>.</p>
+
+<p><strong>Conséquence (droite des milieux).</strong> Dans un triangle \(ABC\), si \(M\) est le milieu de \([AB]\) et \(N\) le milieu de \([AC]\), alors \((MN) \parallel (BC)\) et \(MN = \dfrac{BC}{2}\).</p>
+
+<div class="a-retenir">
+  <p><strong>Réciproque de la propriété de Thalès.</strong> Si \(M \in (AB)\), \(N \in (AC)\), si \(A\), \(M\), \(B\) sont alignés dans cet ordre comme \(A\), \(N\), \(C\), et si
+  \[ \frac{AM}{AB} = \frac{AN}{AC}, \]
+  alors les droites \((MN)\) et \((BC)\) sont <strong>parallèles</strong>.</p>
+</div>
+
+<p><strong>Trigonométrie du triangle rectangle.</strong> Dans un triangle \(ABC\) rectangle en \(A\), pour l’angle aigu \(\widehat{ABC}\) :
+\[ \cos \widehat{ABC} = \frac{\text{côté adjacent}}{\text{hypoténuse}} = \frac{AB}{BC}, \qquad \sin \widehat{ABC} = \frac{\text{côté opposé}}{\text{hypoténuse}} = \frac{AC}{BC}, \]
+\[ \tan \widehat{ABC} = \frac{\text{côté opposé}}{\text{côté adjacent}} = \frac{AC}{AB}. \]
+Moyen mnémotechnique : <em>« CAH – SOH – TOA »</em>.</p>
+
+<div class="a-retenir">
+  <p><strong>Relations fondamentales.</strong> Pour tout angle aigu \(x\) :
+  \[ \cos^2 x + \sin^2 x = 1, \qquad \tan x = \frac{\sin x}{\cos x}, \qquad 0 < \cos x < 1,\quad 0 < \sin x < 1. \]
+  Valeurs remarquables à connaître : \(\cos 60^\circ = \sin 30^\circ = \tfrac{1}{2}\) ; \(\sin 60^\circ = \cos 30^\circ = \tfrac{\sqrt{3}}{2}\) ;
+  \(\sin 45^\circ = \cos 45^\circ = \tfrac{\sqrt{2}}{2}\) ; \(\tan 45^\circ = 1\).</p>
+</div>
+
+<p><strong>Relations métriques dans le triangle rectangle.</strong> Si \(ABC\) est rectangle en \(A\), \(H\) le pied de la hauteur issue de \(A\) sur \((BC)\), et si l’on note \(a = BC\), \(b = AC\), \(c = AB\), alors
+\[ a^2 = b^2 + c^2 \ (\text{Pythagore}), \qquad AH = \frac{AB \times AC}{BC}. \]</p>
+
+<h2 class="section">5.2 Situations d’évaluation</h2>
+
+<h3 class="exercice">Exercice 42 : Le champ divisé par des claies <span class="source">(DRE Plateaux-Est)</span></h3>
+<p class="contexte"><strong>Contexte :</strong> Monsieur Jacques possède un champ de forme triangulaire \(ABC\) avec \(AB = 60\;\text{m}\), \(AC = 45\;\text{m}\) et \(BC = 75\;\text{m}\). Il veut partager ce champ en deux parcelles à l’aide d’une claie rectiligne \([MN]\), avec \(M\) sur \([AB]\) et \(N\) sur \([AC]\), de telle sorte que \((MN)\) soit parallèle à \((BC)\) et que \(AM = 24\;\text{m}\). Il souhaite déterminer la longueur de la claie nécessaire, puis vérifier la nature du triangle \(ABC\).</p>
+<p class="consigne"><strong>Consigne 1 :</strong> Montrer que le triangle \(ABC\) est rectangle en \(A\), puis calculer l’aire totale du champ.</p>
+<p class="consigne"><strong>Consigne 2 :</strong> Calculer les longueurs \(AN\) et \(MN\). En déduire l’aire de la parcelle \(AMN\) et la longueur totale de claie à prévoir.</p>
+<table class="bareme">
+  <tr><th>Consignes</th><th>Pertinence</th><th>Correction</th><th>Cohérence</th><th>Perfectionnement</th></tr>
+  <tr><td>Consigne 1</td><td>1,5 pt</td><td>1,25 pt</td><td>1 pt</td><td>0,75 pt</td></tr>
+  <tr><td>Consigne 2</td><td>1,5 pt</td><td>1 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+</table>
+
+<h3 class="exercice">Exercice 43 : La sortie de l’ombre <span class="source">(Composition Régionale Grand Lomé)</span></h3>
+<p class="contexte"><strong>Contexte :</strong> Les élèves d’un club scientifique mesurent la hauteur du mât qui se trouve dans la cour de leur établissement. Le mât est vertical et le sol est horizontal. À un moment de la journée, l’ombre du mât sur le sol mesure \(8\;\text{m}\) et un élève mesure l’angle que fait le rayon du soleil avec le sol : il obtient \(52^\circ\). Les élèves disposent du tableau suivant : \(\tan 52^\circ \approx 1{,}28\) ; \(\cos 52^\circ \approx 0{,}62\) ; \(\sin 52^\circ \approx 0{,}79\).</p>
+<p class="consigne"><strong>Consigne 1 :</strong> Faire un schéma de la situation, puis montrer que la hauteur du mât est voisine de \(10{,}24\;\text{m}\).</p>
+<p class="consigne"><strong>Consigne 2 :</strong> Les élèves veulent installer un câble tendu du sommet du mât jusqu’au point où l’ombre se termine. Calculer la longueur de ce câble, arrondie au décimètre, en utilisant les données du tableau.</p>
+<table class="bareme">
+  <tr><th>Consignes</th><th>CM1</th><th>CM2</th><th>CM3</th><th>CP</th></tr>
+  <tr><td>Consigne 1</td><td>1,5 pt</td><td>1,5 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+  <tr><td>Consigne 2</td><td>1,5 pt</td><td>1 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+</table>
+
+<h3 class="exercice">Exercice 44 : Le panneau de signalisation <span class="source">(DRE-Maritime)</span></h3>
+<p class="contexte"><strong>Contexte :</strong> Un technicien doit consolider un panneau publicitaire à l’aide d’un hauban. Le panneau est porté par un poteau vertical \([PC]\) de \(6\;\text{m}\) de haut. Le hauban est fixé au sommet \(C\) du poteau et ancré au sol en \(A\), à \(4{,}5\;\text{m}\) du pied \(P\) du poteau, le sol étant horizontal. Le technicien veut connaître la longueur de hauban nécessaire, l’angle que forme le hauban avec le sol, et le prix du matériel à \(2\,500\;\text{F}\) le mètre de hauban (il faut prévoir \(0{,}5\;\text{m}\) de plus pour les attaches).</p>
+<p class="consigne"><strong>Consigne 1 :</strong> Calculer la longueur exacte du hauban, puis sa valeur arrondie au centième de mètre.</p>
+<p class="consigne"><strong>Consigne 2 :</strong> Calculer la mesure, arrondie au degré, de l’angle \(\widehat{PAC}\) que fait le hauban avec le sol, puis déterminer la dépense du technicien.</p>
+<table class="bareme">
+  <tr><th>Consignes</th><th>Pertinence</th><th>Correction</th><th>Cohérence</th><th>Perfectionnement</th></tr>
+  <tr><td>Consigne 1</td><td>1,5 pt</td><td>1,5 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+  <tr><td>Consigne 2</td><td>1,5 pt</td><td>1 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+</table>
+
+<h2 class="section">5.3 Exercices d’application</h2>
+
+<h3 class="exercice">Exercice 45</h3>
+<p>Dans un triangle \(ABC\), \(M\) est un point de \([AB]\) et \(N\) un point de \([AC]\) tels que \((MN) \parallel (BC)\). On donne \(AB = 9\;\text{cm}\), \(AC = 12\;\text{cm}\) et \(AM = 6\;\text{cm}\).</p>
+<ol class="liste-questions">
+  <li>Calculer \(AN\).</li>
+  <li>Sachant que \(BC = 15\;\text{cm}\), calculer \(MN\).</li>
+  <li>Calculer le rapport de réduction du triangle \(ABC\) au triangle \(AMN\).</li>
+</ol>
+
+<h3 class="exercice">Exercice 46</h3>
+<p>\(ABCD\) est un trapèze de bases \([AB]\) et \([CD]\) avec \(AB = 4\;\text{cm}\) et \(CD = 7\;\text{cm}\). Les droites \((AD)\) et \((BC)\) se coupent en \(S\) et l’on a \(SA = 3\;\text{cm}\).</p>
+<ol class="liste-questions">
+  <li>Justifier que les droites \((AB)\) et \((CD)\) sont parallèles.</li>
+  <li>Écrire les rapports égaux donnés par la propriété de Thalès, puis calculer \(SD\).</li>
+  <li>En déduire la longueur \(AD\).</li>
+</ol>
+
+<h3 class="exercice">Exercice 47</h3>
+<p>\(ABC\) est un triangle rectangle en \(A\) tel que \(AB = 7\;\text{cm}\) et \(\widehat{ABC} = 35^\circ\).</p>
+<ol class="liste-questions">
+  <li>Calculer \(AC\) et \(BC\), arrondis au millimètre.</li>
+  <li>Recalculer \(BC\) à l’aide du théorème de Pythagore et comparer les deux résultats.</li>
+</ol>
+
+<h3 class="exercice">Exercice 48</h3>
+<p>Sachant que \(x\) est un angle aigu et que \(\sin x = \dfrac{3}{5}\) :</p>
+<ol class="liste-questions">
+  <li>Calculer \(\cos x\) à l’aide de la relation \(\cos^2 x + \sin^2 x = 1\).</li>
+  <li>En déduire la valeur exacte de \(\tan x\).</li>
+  <li>Vérifier que ces trois nombres sont bien les rapports de longueurs d’un triangle rectangle dont on précisera les côtés.</li>
+</ol>
+
+<h3 class="exercice">Exercice 49</h3>
+<p>Compléter, sans calculatrice, en justifiant chaque réponse :</p>
+<ul class="tirets">
+  <li>\(\cos 30^\circ = \sin \ldots\) ;    \(\sin 60^\circ = \ldots\) ;    \(\tan 45^\circ = \ldots\) ;</li>
+  <li>\(\cos^2 40^\circ + \sin^2 40^\circ = \ldots\) ;    \(\dfrac{\sin 25^\circ}{\cos 25^\circ} = \ldots\).</li>
+</ul>
+
+<h3 class="exercice">Exercice 50</h3>
+<p>Un géomètre veut mesurer la largeur d’une rivière. Il se place en un point \(A\) sur une rive, bien en face d’un arbre \(B\) situé sur l’autre rive : la droite \((AB)\) est perpendiculaire à la rive. Il se déplace ensuite de \(30\;\text{m}\) le long de la rive jusqu’en un point \(C\), puis mesure l’angle \(\widehat{ACB} = 38^\circ\).</p>
+<ol class="liste-questions">
+  <li>Faire un schéma et préciser la nature du triangle \(ABC\).</li>
+  <li>Calculer la largeur \(AB\) de la rivière, arrondie au décimètre (on prendra \(\tan 38^\circ \approx 0{,}78\)).</li>
+</ol>
+
+<h2 class="section">5.4 QCM et Vrai/Faux</h2>
+
+<h3 class="exercice">Exercice 51 : QCM</h3>
+<ol class="liste-questions">
+  <li>Dans un triangle rectangle, le cosinus d’un angle aigu est le rapport : \(a)\) côté opposé sur hypoténuse   \(b)\) côté adjacent sur hypoténuse   \(c)\) côté opposé sur côté adjacent.</li>
+  <li>Si \(\cos x = 0{,}5\) et \(x\) aigu, alors \(x\) mesure : \(a)\;30^\circ\)   \(b)\;45^\circ\)   \(c)\;60^\circ\).</li>
+  <li>Si \((MN) \parallel (BC)\) avec \(AM = 3\), \(AB = 6\) et \(BC = 10\), alors \(MN\) vaut : \(a)\;5\)   \(b)\;6\)   \(c)\;20\).</li>
+  <li>La valeur de \(\sin 30^\circ + \cos 60^\circ\) est : \(a)\;1\)   \(b)\;\tfrac{1}{2}\)   \(c)\;\sqrt{2}\).</li>
+</ol>
+
+<h3 class="exercice">Exercice 52 : Vrai ou Faux</h3>
+<ol class="liste-questions">
+  <li>La tangente d’un angle aigu peut être supérieure à \(1\).</li>
+  <li>Pour tout angle aigu \(x\), \(\sin x < \cos x\).</li>
+  <li>Les droites \((MN)\) et \((BC)\) sont parallèles si et seulement si \(\dfrac{AM}{AB} = \dfrac{AN}{AC}\) avec les points alignés dans le même ordre.</li>
+  <li>Dans un triangle rectangle, l’hypoténuse est le côté opposé à l’angle droit.</li>
+</ol>
+
+</body>
+</html>

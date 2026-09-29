@@ -1,0 +1,5 @@
+node_modules/
+nss/
+chromium-patched
+chromium-terminish
+*.pdf

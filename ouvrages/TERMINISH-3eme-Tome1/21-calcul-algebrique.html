@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Chapitre 2 — Calcul algébrique et équations</title>
+  <link rel="stylesheet" href="../style/terminish.css">
+  <link rel="stylesheet" href="../../outils/pdf/node_modules/katex/dist/katex.min.css">
+</head>
+<body>
+
+<div class="filigrane">KODJONE Kodjo</div>
+
+<h1 class="chapitre"><span class="numero">Chapitre 2.</span> Calcul algébrique et équations</h1>
+
+<h2 class="section">2.1 L’essentiel du cours</h2>
+
+<p><strong>Identités remarquables.</strong> Pour tous nombres réels \(a\), \(b\), \(c\) et \(k\) :
+\[ (a+b)^2 = a^2 + 2ab + b^2, \qquad (a-b)^2 = a^2 - 2ab + b^2, \qquad (a-b)(a+b) = a^2 - b^2. \]
+Ces trois identités servent aussi bien à <em>développer</em> qu’à <em>factoriser</em> une expression.</p>
+
+<p><strong>Développer et réduire.</strong> Développer, c’est transformer un produit en somme ; réduire, c’est regrouper les termes semblables. Il est souvent plus rapide de factoriser une expression littérale que de la développer.</p>
+
+<div class="a-retenir">
+  <p><strong>Équation produit.</strong> Un produit de facteurs est nul si et seulement si l’un au moins de ses facteurs est nul :
+  \[ A \times B = 0 \iff A = 0 \ \text{ou}\ B = 0. \]
+  C’est la propriété fondamentale pour résoudre les équations après factorisation.</p>
+</div>
+
+<p><strong>Équations du premier degré.</strong> Toute équation qui s’écrit \(ax + b = 0\), avec \(a \ne 0\), admet une unique solution \(x = -\dfrac{b}{a}\). Une équation du type \(ax + b = cx + d\) se résout en regroupant les \(x\) dans un membre.</p>
+
+<p><strong>Inéquations.</strong> Lorsqu’on multiplie ou divise les deux membres d’une inéquation par un nombre <strong>strictement négatif</strong>, le sens de l’inégalité change. L’ensemble des solutions se note sous forme d’intervalle.</p>
+
+<p><strong>Système de deux équations à deux inconnues.</strong> On résout par <em>substitution</em> (exprimer une inconnue en fonction de l’autre) ou par <em>combinaison linéaire</em> (éliminer une inconnue en additionnant les équations après multiplication convenable).</p>
+
+<div class="encadre">
+  <p><strong>Exemple rédigé.</strong> Résolvons \(2x + 3 = 5x - 9\). On écrit \(3 + 9 = 5x - 2x\), soit \(12 = 3x\), d’où \(x = 4\). L’ensemble des solutions est \(S = \{4\}\).</p>
+</div>
+
+<h2 class="section">2.2 Situations d’évaluation</h2>
+
+<h3 class="exercice">Exercice 11 : Approvisionnement d’une cantine <span class="source">(DRE-C/IESG-SOT)</span></h3>
+<p class="contexte"><strong>Contexte :</strong> La gestionnaire d’une cantine scolaire achète des sacs de riz et des cartons d’huile pour préparer les repas des élèves. La première semaine, elle a payé \(288\,000\;\text{F}\) pour \(15\) sacs de riz et \(12\) cartons d’huile. La deuxième semaine, les prix n’ayant pas changé, elle a payé \(273\,000\;\text{F}\) pour \(10\) sacs de riz et \(18\) cartons d’huile. Le budget mensuel de la cantine est de \(600\,000\;\text{F}\) et la gestionnaire doit prévoir l’achat de \(20\) sacs de riz et de \(15\) cartons d’huile par mois.</p>
+<p class="consigne"><strong>Consigne 1 :</strong> À l’aide d’un système d’équations, déterminer le prix d’un sac de riz et le prix d’un carton d’huile.</p>
+<p class="consigne">☞ On rappelle que la gestionnaire n’a pas le droit de dépasser son budget mensuel.</p>
+<p class="consigne"><strong>Consigne 2 :</strong> Vérifier si le budget mensuel de la cantine suffit pour l’achat prévu. Justifier la réponse.</p>
+<table class="bareme">
+  <tr><th>Consignes</th><th>CM1</th><th>CM2</th><th>CM3</th><th>CP</th></tr>
+  <tr><td>Consigne 1</td><td>1,5 pt</td><td>1,25 pt</td><td>1 pt</td><td>0,75 pt</td></tr>
+  <tr><td>Consigne 2</td><td>1 pt</td><td>1 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+</table>
+
+<h3 class="exercice">Exercice 12 : Vente d’eau glacée <span class="source">(Composition Régionale Grand Lomé)</span></h3>
+<p class="contexte"><strong>Contexte :</strong> Pendant les vacances, Ama vend des sachets d’eau glacée au marché. Chaque jour, elle dépense \(5\,000\;\text{F}\) pour la glace, le transport et l’emplacement, puis \(25\;\text{F}\) pour préparer chaque sachet qu’elle revend \(50\;\text{F}\). Sa glacière ne peut contenir au maximum que \(600\) sachets par jour. On note \(x\) le nombre de sachets vendus dans une journée et \(B(x)\) le bénéfice journalier, exprimé en francs CFA.</p>
+<p class="consigne"><strong>Consigne 1 :</strong> Montrer que \(B(x) = 25x - 5\,000\), puis déterminer le nombre minimal de sachets qu’Ama doit vendre pour ne pas travailler à perte.</p>
+<p class="consigne"><strong>Consigne 2 :</strong> Ama souhaite réaliser un bénéfice journalier d’au moins \(10\,000\;\text{F}\). Résoudre l’inéquation correspondante et indiquer si cet objectif est réalisable avec sa glacière.</p>
+<table class="bareme">
+  <tr><th>Consignes</th><th>Pertinence</th><th>Correction</th><th>Cohérence</th><th>Perfectionnement</th></tr>
+  <tr><td>Consigne 1</td><td>1,5 pt</td><td>1,25 pt</td><td>1 pt</td><td>0,75 pt</td></tr>
+  <tr><td>Consigne 2</td><td>1,5 pt</td><td>1 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+</table>
+
+<h3 class="exercice">Exercice 13 : Le poulailler de M. ABALO <span class="source">(DRE Plateaux-Est)</span></h3>
+<p class="contexte"><strong>Contexte :</strong> Pour agrandir son poulailler, M. ABALO veut construire un parc rectangulaire de longueur \((3x+2)\;\text{m}\) et de largeur \((x+4)\;\text{m}\). Ses trois enfants doivent calculer le périmètre \(P\) puis l’aire \(A\) du parc. L’aîné écrit \(P = 2(3x+2) + 2(x+4)\), le second écrit \(P = (3x+2) + (3x+2) + (x+4) + (x+4)\) et le dernier propose directement un résultat réduit. M. ABALO veut aussi connaître les dimensions du parc lorsque son périmètre vaut \(72\;\text{m}\).</p>
+<p class="consigne"><strong>Consigne 1 :</strong> Développer et réduire les deux expressions du périmètre proposées par les enfants et montrer qu’elles donnent le même résultat. Exprimer également l’aire \(A\) développée et réduite.</p>
+<p class="consigne"><strong>Consigne 2 :</strong> Déterminer la valeur de \(x\) pour laquelle le périmètre du parc vaut \(72\;\text{m}\), puis calculer l’aire du parc dans ce cas.</p>
+<table class="bareme">
+  <tr><th>Consignes</th><th>CM1</th><th>CM2</th><th>CM3</th><th>CP</th></tr>
+  <tr><td>Consigne 1</td><td>1,5 pt</td><td>1,5 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+  <tr><td>Consigne 2</td><td>1,5 pt</td><td>1 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+</table>
+
+<h2 class="section">2.3 Exercices d’application</h2>
+
+<h3 class="exercice">Exercice 14</h3>
+<p>Développer, réduire et ordonner les expressions suivantes :</p>
+<ul class="tirets">
+  <li>\(A = (2x+5)^2 - 3(x-1)\) ;</li>
+  <li>\(B = (4x-3)(4x+3) - (x+2)^2\) ;</li>
+  <li>\(C = (x-7)^2 + (x-7)(x+2)\).</li>
+</ul>
+
+<h3 class="exercice">Exercice 15</h3>
+<p>Factoriser les expressions suivantes :</p>
+<ul class="tirets">
+  <li>\(D = 9x^2 - 25\) ;</li>
+  <li>\(E = (3x+1)^2 - (x-4)^2\) ;</li>
+  <li>\(F = 4x^2 + 12x + 9\) ;</li>
+  <li>\(G = (2x-5)(x+3) - (2x-5)(3x-1)\).</li>
+</ul>
+
+<h3 class="exercice">Exercice 16</h3>
+<p>Résoudre dans \(\mathbb{R}\) les équations suivantes :</p>
+<ul class="tirets">
+  <li>\((1)\ 5x - 7 = 2x + 11\) ;</li>
+  <li>\((2)\ (2x+3)(x-5) = 0\) ;</li>
+  <li>\((3)\ x^2 - 49 = 0\) ;</li>
+  <li>\((4)\ \dfrac{3x-1}{2} = \dfrac{x+4}{3}\).</li>
+</ul>
+
+<h3 class="exercice">Exercice 17</h3>
+<p>Résoudre dans \(\mathbb{R}\) les inéquations suivantes et représenter l’ensemble des solutions sur une droite graduée :</p>
+<ul class="tirets">
+  <li>\((1)\ 3x - 8 < x + 4\) ;</li>
+  <li>\((2)\ -2x + 5 \ge 9\) ;</li>
+  <li>\((3)\ 4(x-1) \le 2x + 6\).</li>
+</ul>
+
+<h3 class="exercice">Exercice 18</h3>
+<p>Résoudre les systèmes suivants par la méthode de votre choix :</p>
+<ul class="tirets">
+  <li>\((S_1)\ \begin{cases} 2x + y = 11 \\ 3x - y = 4 \end{cases}\) ;</li>
+  <li>\((S_2)\ \begin{cases} 2x + 3y = 13 \\ 4x - y = 5 \end{cases}\).</li>
+</ul>
+
+<h2 class="section">2.4 QCM et Vrai/Faux</h2>
+
+<h3 class="exercice">Exercice 19 : QCM</h3>
+<ol class="liste-questions">
+  <li>Le développement de \((x+6)^2\) est : \(a)\;x^2+36\)   \(b)\;x^2+12x+36\)   \(c)\;x^2+6x+36\).</li>
+  <li>La forme factorisée de \(x^2 - 8x + 16\) est : \(a)\;(x-4)^2\)   \(b)\;(x+4)^2\)   \(c)\;(x-2)(x-8)\).</li>
+  <li>L’équation \(7x + 3 = 7x + 5\) admet : \(a)\) une solution   \(b)\) aucune solution   \(c)\) une infinité de solutions.</li>
+  <li>Les solutions de l’inéquation \(-3x > 12\) sont : \(a)\;x > -4\)   \(b)\;x < -4\)   \(c)\;x < 4\).</li>
+</ol>
+
+<h3 class="exercice">Exercice 20 : Vrai ou Faux</h3>
+<ol class="liste-questions">
+  <li>\((a + b)^2 = a^2 + b^2\) pour tous réels \(a\) et \(b\).</li>
+  <li>Si \(ab = 0\), alors \(a = 0\) ou \(b = 0\).</li>
+  <li>L’équation \(x^2 = 25\) a pour seule solution \(x = 5\).</li>
+  <li>Le couple \((2\,;1)\) est solution du système \((S_1)\) de l’exercice 18.</li>
+</ol>
+
+</body>
+</html>
