@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Chapitre 3 — Racines carrées et théorème de Pythagore</title>
+  <link rel="stylesheet" href="../style/terminish.css">
+  <link rel="stylesheet" href="../../outils/pdf/node_modules/katex/dist/katex.min.css">
+</head>
+<body>
+
+<div class="filigrane">KODJONE Kodjo</div>
+
+<h1 class="chapitre"><span class="numero">Chapitre 3.</span> Racines carrées et théorème de Pythagore</h1>
+
+<h2 class="section">3.1 L’essentiel du cours</h2>
+
+<p><strong>Racine carrée d’un nombre positif.</strong> Soit \(a\) un nombre réel positif. La racine carrée de \(a\), notée \(\sqrt{a}\), est l’unique nombre positif dont le carré vaut \(a\), c’est-à-dire
+\[ \left(\sqrt{a}\right)^2 = a \qquad \text{et} \qquad \sqrt{a} \ge 0. \]
+Un nombre négatif n’a pas de racine carrée : \(\sqrt{-9}\) n’existe pas.</p>
+
+<div class="a-retenir">
+  <p><strong>Propriétés du calcul.</strong> Pour tous nombres \(a \ge 0\) et \(b \ge 0\) :
+  \[ \sqrt{ab} = \sqrt{a} \times \sqrt{b}, \qquad \sqrt{\frac{a}{b}} = \frac{\sqrt{a}}{\sqrt{b}}\ (b \ne 0), \qquad \sqrt{a^2} = a. \]
+  En revanche \(\sqrt{a+b}\) n’est jamais égal à \(\sqrt{a}+\sqrt{b}\) en général : par exemple \(\sqrt{9+16} = 5\), alors que \(\sqrt{9}+\sqrt{16} = 7\).</p>
+</div>
+
+<p><strong>Simplifier une racine carrée.</strong> On décompose le nombre sous le radical en produit d’un carré parfait et d’un autre entier. Ainsi
+\(\sqrt{72} = \sqrt{36 \times 2} = 6\sqrt{2}\), et \(\sqrt{50} = \sqrt{25 \times 2} = 5\sqrt{2}\).</p>
+
+<p><strong>Rendre rationnel un dénominateur.</strong> On multiplie numérateur et dénominateur par une expression convenable :
+\[ \frac{1}{\sqrt{3}} = \frac{\sqrt{3}}{3}, \qquad \frac{1}{\sqrt{5}+\sqrt{2}} = \frac{\sqrt{5}-\sqrt{2}}{3}, \qquad \frac{6}{\sqrt{2}} = 3\sqrt{2}. \]</p>
+
+<p><strong>Théorème de Pythagore.</strong> Si un triangle \(ABC\) est rectangle en \(A\), alors
+\[ BC^2 = AB^2 + AC^2. \]
+<em>Réciproque :</em> si dans un triangle \(ABC\) on a \(BC^2 = AB^2 + AC^2\), alors le triangle est rectangle en \(A\). Le côté le plus long, \(BC\), est l’<em>hypoténuse</em>.</p>
+
+<p><strong>Encadrement.</strong> Pour encadrer \(\sqrt{a}\) au dixième près, on cherche les deux nombres décimaux consécutifs dont les carrés encadrent \(a\). Exemple : \(2{,}2^2 = 4{,}84 < 5\) et \(2{,}3^2 = 5{,}29 > 5\), donc \(2{,}2 < \sqrt{5} < 2{,}3\).</p>
+
+<h2 class="section">3.2 Situations d’évaluation</h2>
+
+<h3 class="exercice">Exercice 21 : Le champ triangulaire <span class="source">(DRE-Maritime)</span></h3>
+<p class="contexte"><strong>Contexte :</strong> Un agriculteur de Kpalimé possède un champ de forme triangulaire \(ABC\) rectangle en \(A\), avec \(AB = 3\sqrt{2}\;\text{m}\) et \(AC = 4\sqrt{2}\;\text{m}\). Il veut couvrir ce champ de gazon et le clôturer entièrement, sauf une ouverture de \(2\;\text{m}\) qui servira d’entrée. Le gazon coûte \(4\,500\;\text{F}\) le mètre carré et le grillage \(1\,500\;\text{F}\) le mètre. Pour prévoir le nombre de rouleaux de gazon, il lui faut la valeur exacte puis une valeur arrondie au centième de la longueur \(BC\).</p>
+<p class="consigne"><strong>Consigne 1 :</strong> À l’aide d’une production argumentée, montrer que \(BC = 5\sqrt{2}\;\text{m}\).</p>
+<p class="consigne"><strong>Consigne 2 :</strong> Calculer l’aire du champ et le montant du gazon, puis déterminer la longueur de grillage nécessaire et sa dépense.</p>
+<table class="bareme">
+  <tr><th>Consignes</th><th>CM1</th><th>CM2</th><th>CM3</th><th>CP</th></tr>
+  <tr><td>Consigne 1</td><td>2 pts</td><td>1,25 pt</td><td>1 pt</td><td>0,75 pt</td></tr>
+  <tr><td>Consigne 2</td><td>1,5 pt</td><td>1,25 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+</table>
+
+<h3 class="exercice">Exercice 22 : La piscine municipale <span class="source">(Composition Régionale Grand Lomé)</span></h3>
+<p class="contexte"><strong>Contexte :</strong> La mairie de Kpalimé aménage une piscine de forme carrée dont le côté mesure \((\sqrt{5} + \sqrt{3})\) mètres. Le fond et les parois latérales doivent être recouverts de carrelage. On estime le coût du carrelage à \(25\,000\;\text{F}\) le mètre carré, et la profondeur du bassin est de \(2\;\text{m}\). Un habitant affirme que la surface du fond dépasse \(15\;\text{m}^2\) ; le maire, lui, pense qu’elle est inférieure à \(16\;\text{m}^2\).</p>
+<p class="consigne"><strong>Consigne 1 :</strong> Montrer que l’aire du fond de la piscine s’écrit \(8 + 2\sqrt{15}\;\text{m}^2\).</p>
+<p class="consigne"><strong>Consigne 2 :</strong> Donner un encadrement de cette aire au dixième près à l’aide de \(3{,}8 < \sqrt{15} < 3{,}9\), puis calculer le montant dépensé pour le carrelage du fond. Justifier la position du maire.</p>
+<table class="bareme">
+  <tr><th>Consignes</th><th>Pertinence</th><th>Correction</th><th>Cohérence</th><th>Perfectionnement</th></tr>
+  <tr><td>Consigne 1</td><td>1,75 pt</td><td>1,5 pt</td><td>1 pt</td><td>0,25 pt</td></tr>
+  <tr><td>Consigne 2</td><td>1,25 pt</td><td>1 pt</td><td>1 pt</td><td>0,25 pt</td></tr>
+</table>
+
+<h3 class="exercice">Exercice 23 : L’échelle du maçon <span class="source">(DRE Plateaux-Est)</span></h3>
+<p class="contexte"><strong>Contexte :</strong> Un maçon veut appuyer une échelle contre un mur vertical. L’échelle mesure \(6{,}5\;\text{m}\). Pour qu’elle soit stable, le pied de l’échelle doit être placé à \(2{,}5\;\text{m}\) du pied du mur, et le sol est horizontal. Le maçon veut atteindre une fenêtre dont le bas se situe à \(6\;\text{m}\) du sol. Il travaille aujourd’hui sur le mur d’une maison dont la hauteur utile est de \(7\;\text{m}\).</p>
+<p class="consigne"><strong>Consigne 1 :</strong> Faire un schéma de la situation et calculer la hauteur atteinte par l’échelle sur le mur.</p>
+<p class="consigne"><strong>Consigne 2 :</strong> Le maçon pourra-t-il atteindre la fenêtre ? Justifier. Quelle distance faut-il retirer au pied de l’échelle pour qu’elle repose exactement au niveau du bas de la fenêtre ? (Donner la valeur arrondie au centimètre.)</p>
+<table class="bareme">
+  <tr><th>Consignes</th><th>Pertinence</th><th>Correction</th><th>Cohérence</th><th>Perfectionnement</th></tr>
+  <tr><td>Consigne 1</td><td>1,5 pt</td><td>1,5 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+  <tr><td>Consigne 2</td><td>1,5 pt</td><td>1 pt</td><td>1 pt</td><td>0,5 pt</td></tr>
+</table>
+
+<h2 class="section">3.3 Exercices d’application</h2>
+
+<h3 class="exercice">Exercice 24</h3>
+<p>Simplifier les expressions suivantes, \(x\) étant un réel positif :</p>
+<ul class="tirets">
+  <li>\(A = \sqrt{98} + \sqrt{32} - \sqrt{8}\) ;</li>
+  <li>\(B = \sqrt{27} \times \sqrt{3}\) ;</li>
+  <li>\(C = \dfrac{\sqrt{50}}{\sqrt{2}}\) ;</li>
+  <li>\(D = \left(2\sqrt{3} + 1\right)^2\).</li>
+</ul>
+
+<h3 class="exercice">Exercice 25</h3>
+<p>Écrire sans radical au dénominateur :</p>
+<ul class="tirets">
+  <li>\(E = \dfrac{5}{\sqrt{5}}\) ;    \(F = \dfrac{4}{\sqrt{6}}\) ;    \(G = \dfrac{3}{\sqrt{7}-2}\).</li>
+</ul>
+
+<h3 class="exercice">Exercice 26</h3>
+<p>Résoudre dans \(\mathbb{R}\) les équations suivantes, puis donner une valeur approchée des solutions au centième lorsque c’est nécessaire :</p>
+<ul class="tirets">
+  <li>\((1)\ x^2 = 81\) ;    \((2)\ x^2 = 7\) ;    \((3)\ x^2 + 4 = 0\) ;    \((4)\ 3x^2 = 75\).</li>
+</ul>
+
+<h3 class="exercice">Exercice 27</h3>
+<p>\(ABC\) est un triangle tel que \(AB = 9\;\text{cm}\), \(AC = 12\;\text{cm}\) et \(BC = 15\;\text{cm}\).</p>
+<ol class="liste-questions">
+  <li>Démontrer que le triangle \(ABC\) est rectangle. Préciser en quel sommet.</li>
+  <li>Calculer l’aire du triangle \(ABC\).</li>
+  <li>La hauteur issue de \(A\) coupe \((BC)\) en \(H\). Exprimer l’aire de \(ABC\) de deux façons et en déduire la longueur \(AH\), arrondie au millimètre.</li>
+</ol>
+
+<h3 class="exercice">Exercice 28</h3>
+<p>Un terrain de football est représenté par un rectangle \(ABCD\) tel que \(AB = 90\;\text{m}\) et \(BC = 45\;\text{m}\). Un joueur part du coin \(A\) et se dirige en ligne droite vers le coin \(C\).</p>
+<ol class="liste-questions">
+  <li>Calculer la distance exacte puis arrondie au mètre parcourue par le joueur.</li>
+  <li>Un second joueur part de \(B\) vers \(D\). Comparer les deux distances.</li>
+</ol>
+
+<h3 class="exercice">Exercice 29</h3>
+<p>Encadrer les nombres suivants entre deux entiers consécutifs, puis entre deux nombres décimaux consécutifs au dixième :</p>
+<ul class="tirets">
+  <li>\(\sqrt{20}\) ;    \(\sqrt{63}\) ;    \(\sqrt{150}\).</li>
+</ul>
+
+<h2 class="section">3.4 QCM et Vrai/Faux</h2>
+
+<h3 class="exercice">Exercice 30 : QCM</h3>
+<ol class="liste-questions">
+  <li>\(\sqrt{144} - \sqrt{25}\) est égal à : \(a)\;\sqrt{119}\)   \(b)\;7\)   \(c)\;17\).</li>
+  <li>\(\sqrt{8} \times \sqrt{2}\) est égal à : \(a)\;4\)   \(b)\;16\)   \(c)\;\sqrt{10}\).</li>
+  <li>Un triangle de côtés \(6\;\text{cm}\), \(8\;\text{cm}\) et \(10\;\text{cm}\) est : \(a)\) rectangle   \(b)\) isocèle   \(c)\) quelconque.</li>
+  <li>Si \(AB^2 = AC^2 + BC^2\), le triangle \(ABC\) est rectangle en : \(a)\;A\)   \(b)\;B\)   \(c)\;C\).</li>
+</ol>
+
+<h3 class="exercice">Exercice 31 : Vrai ou Faux</h3>
+<ol class="liste-questions">
+  <li>Pour tout réel positif \(a\), \(\sqrt{a^2} = a\).</li>
+  <li>\(\sqrt{3} + \sqrt{3} = \sqrt{6}\).</li>
+  <li>Le nombre \(\sqrt{2}\) est un nombre décimal.</li>
+  <li>Si un triangle a pour côtés \(5\), \(12\) et \(13\), il est rectangle.</li>
+</ol>
+
+</body>
+</html>

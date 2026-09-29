@@ -1,0 +1,12 @@
+# Chaîne de production PDF : dépendances et binaires régénérés localement
+outils/pdf/node_modules/
+outils/pdf/nss/
+outils/pdf/chromium-patched
+outils/pdf/chromium-terminish
+
+# Fichiers intermédiaires des ouvrages (régénérés par build.py)
+ouvrages/*/sortie/
+
+__pycache__/
+*.pyc
+*.tmp.pdf
