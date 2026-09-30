@@ -1,0 +1,144 @@
+% =====================================================================
+%   INTERROGATION N° 1  -  MATHÉMATIQUES  -  CLASSE DE 1ère D
+%   Leçon 1 : Équations - Inéquations du second degré dans IR
+%   Prof : KODJONE Kodjo   -   Établissement : LYCÉE KPETA
+%   Format : 1 feuille A4 = 4 exemplaires (2 x version A en haut,
+%            2 x version B en bas)  -  impression noir et blanc
+%   Page 2 : corrigé (pour le professeur, à ne pas distribuer)
+%   Compilation : pdflatex
+% =====================================================================
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{ae,aecompl}
+\usepackage[a4paper,margin=4mm,top=4.5mm,bottom=4.5mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{array}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\fboxsep}{1.4mm}
+\setlength{\fboxrule}{0.4pt}
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\tolerance=3000
+
+% ---------------------- réglages du tableau QCM ----------------------
+\newcommand{\tailleQCM}{\fontsize{7.4}{8.8}\selectfont}
+\DeclareMathSizes{7.4}{7.4}{5}{5}
+\newcolumntype{E}{>{\raggedright\arraybackslash}p{25.8mm}}
+\newcolumntype{P}{>{\centering\arraybackslash}p{16.5mm}}
+\newcolumntype{Q}{>{\centering\arraybackslash}p{9.5mm}}
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
+\newcommand{\enteteQCM}{%
+  \multicolumn{2}{|c|}{} & \multicolumn{3}{c|}{\textbf{Réponses proposées}} & \\ \cline{3-5}
+  \textbf{N\textsuperscript{o}} & \textbf{Énoncé} & \textbf{a} & \textbf{b} & \textbf{c} & \textbf{Choix} \\ \hline}
+
+% ---------------------------- version A ------------------------------
+\newcommand{\lignesA}{%
+1 & Discriminant de $2x^2-3x+1$ & 17 & 1 & $-1$ & \\ \hline
+2 & Solutions de $x^2-5x+6=0$ & 2 et 3 & $-2$ et $-3$ & $-1$ et 6 & \\ \hline
+3 & $2x^2+4x-6=0$ : calculer $S$ et $P$ & $S{=}2$ ; $P{=}-3$ & $S{=}-2$ ; $P{=}3$ & $S{=}-2$ ; $P{=}-3$ & \\ \hline
+4 & Nombres de somme 5 et de produit 6 & 1 et 6 & 2 et 3 & $-2$ et $-3$ & \\ \hline
+5 & Factorisation de $x^2-5x+4$ & $(x{+}1)(x{+}4)$ & $(x{-}2)(x{-}3)$ & $(x{-}1)(x{-}4)$ & \\ \hline
+6 & Solutions de $x^2-4x+3\leqslant 0$ & $[1\,;3]$ & $x<1$ ou $x>3$ & $]1\,;3[$ & \\ \hline
+7 & Solutions de $x^4-5x^2+4=0$ & $-1$ et 1 & $-2$ et 2 & $\pm1$ et $\pm2$ & \\ \hline
+8 & Validité de $\sqrt{2x-4}=\sqrt{6-x}$ & $[-2\,;6]$ & $[2\,;6]$ & $[6\,;+\infty[$ & \\ \hline
+9 & Solution de $\sqrt{x+1}=x-1$ & 0 & 0 et 3 & 3 & \\ \hline
+10 & Solutions de $\sqrt{x}\leqslant x-2$ & $[4\,;+\infty[$ & $[0\,;4]$ & $]-\infty\,;1]$ & \\ \hline
+}
+
+% ---------------------------- version B ------------------------------
+\newcommand{\lignesB}{%
+1 & Discriminant de $x^2-4x+3$ & 4 & 28 & $-4$ & \\ \hline
+2 & Solutions de $x^2-7x+12=0$ & $-3$ et $-4$ & 2 et 6 & 3 et 4 & \\ \hline
+3 & $x^2-6x+5=0$ : calculer $S$ et $P$ & $S{=}-6$ ; $P{=}5$ & $S{=}6$ ; $P{=}5$ & $S{=}6$ ; $P{=}-5$ & \\ \hline
+4 & Nombres de somme 8 et de produit 15 & 3 et 5 & 1 et 15 & $-3$ et $-5$ & \\ \hline
+5 & Factorisation de $x^2-7x+6$ & $(x{+}1)(x{+}6)$ & $(x{-}1)(x{-}6)$ & $(x{-}2)(x{-}3)$ & \\ \hline
+6 & Solutions de $x^2-5x+6<0$ & $[2\,;3]$ & $x<2$ ou $x>3$ & $]2\,;3[$ & \\ \hline
+7 & Solutions de $x^4-10x^2+9=0$ & $-1$ et 1 & $\pm1$ et $\pm3$ & $-3$ et 3 & \\ \hline
+8 & Validité de $\sqrt{3x-6}=\sqrt{10-x}$ & $[10\,;+\infty[$ & $[-2\,;10]$ & $[2\,;10]$ & \\ \hline
+9 & Solution de $\sqrt{2x+3}=x$ & $-1$ & 3 & $-1$ et 3 & \\ \hline
+10 & Solutions de $\sqrt{x+3}\leqslant\sqrt{5-x}$ & $[-3\,;1]$ & $[-3\,;5]$ & $[1\,;5]$ & \\ \hline
+}
+
+% ------------------------- un exemplaire complet ----------------------
+\newcommand{\unecopie}[2]{%
+\fbox{%
+\begin{minipage}[t][138mm][t]{93mm}%
+\vspace{0.4mm}%
+{\fontsize{6.3}{7.4}\selectfont
+\begin{tabular}{@{}p{44mm}@{}R{45mm}@{}}
+\textbf{Établissement :} LYCÉE KPETA & Année scolaire : 2026 -- 2027 \\
+\textbf{Prof :} KODJONE Kodjo & Classe : 1\textsuperscript{ère} D \\
+\end{tabular}}%
+\vspace{0.4mm}\hrule\vspace{0.9mm}%
+\begin{center}
+{\fontsize{8.2}{9.6}\selectfont\textbf{INTERROGATION N\textsuperscript{o} 1 DE MATHÉMATIQUES}}\\[0.6mm]
+{\fontsize{6.6}{7.8}\selectfont Leçon 1 : Équations -- Inéquations du second degré dans IR}\\[0.6mm]
+{\fontsize{6.4}{7.4}\selectfont\makebox[93mm]{Durée : 30 min \hfill Note : \dots\dots\dots\,/\,10 \hfill \textbf{VERSION #1}}}
+\end{center}
+\vspace{0.4mm}%
+{\fontsize{6.6}{7.8}\selectfont Nom : \dotfill\ Prénom : \dotfill\ Classe : 1\textsuperscript{ère} D}%
+\vspace{0.9mm}%
+\begin{center}
+{\fontsize{6.6}{7.8}\selectfont \textbf{Consigne :} Indique la bonne réponse par \textbf{a}, \textbf{b} ou \textbf{c}.}
+\end{center}
+\vspace{0.4mm}%
+\begingroup
+\setlength{\tabcolsep}{0.7pt}%
+\renewcommand{\arraystretch}{1.75}%
+\arrayrulewidth=0.4pt%
+\tailleQCM
+\begin{tabular}{|c|E|P|P|P|Q|}
+\hline
+\enteteQCM
+#2%
+\end{tabular}
+\endgroup
+\end{minipage}}%
+}
+
+% =====================================================================
+\begin{document}
+
+% ------------- FEUILLE ÉLÈVE : 4 EXEMPLAIRES SUR UNE FEUILLE A4 ------
+\noindent\unecopie{A}{\lignesA}\hfill\vrule width 0.3pt\hfill\unecopie{A}{\lignesA}
+
+\vspace{1mm}
+\noindent\hrule height 0.3pt
+\vspace{1mm}
+
+\noindent\unecopie{B}{\lignesB}\hfill\vrule width 0.3pt\hfill\unecopie{B}{\lignesB}
+
+\newpage
+
+% ------------- PAGE DE CORRECTION (PROFESSEUR) -----------------------
+\begin{center}
+{\Large\textbf{CORRIGÉ -- INTERROGATION N\textsuperscript{o} 1 DE MATHÉMATIQUES}}\\[2mm]
+{\normalsize Lycée Kpeta --- Classe de 1\textsuperscript{ère} D --- Prof : KODJONE Kodjo --- Année scolaire 2026 -- 2027}\\[1.5mm]
+{\normalsize Leçon 1 : Équations -- Inéquations du second degré dans IR --- Durée : 30 min --- Note sur 10}\\[1.5mm]
+{\small 1 point par réponse juste ; aucun point négatif.}
+\end{center}
+
+\vspace{3mm}
+\noindent{\small
+\begin{tabular}{|c|c|c|p{112mm}|}
+\hline
+\textbf{N\textsuperscript{o}} & \textbf{Version A} & \textbf{Version B} & \textbf{Justification} \\ \hline
+1 & \textbf{b} & \textbf{a} & A : $\Delta=(-3)^2-4(2)(1)=9-8=1$. \quad B : $\Delta=(-4)^2-4(1)(3)=16-12=4$. \\ \hline
+2 & \textbf{a} & \textbf{c} & A : $x^2-5x+6=0$, $\Delta=1$, $x_1=2$ et $x_2=3$. \quad B : $x^2-7x+12=0$, $\Delta=1$, $x_1=3$ et $x_2=4$. \\ \hline
+3 & \textbf{c} & \textbf{b} & A : $S=-\frac{b}{a}=-\frac{4}{2}=-2$ et $P=\frac{c}{a}=\frac{-6}{2}=-3$. \quad B : $S=6$ et $P=5$. \\ \hline
+4 & \textbf{b} & \textbf{a} & A : $x^2-5x+6=0$ donc 2 et 3. \quad B : $x^2-8x+15=0$ donc 3 et 5. \\ \hline
+5 & \textbf{c} & \textbf{b} & A : racines 1 et 4, donc $(x{-}1)(x{-}4)$. \quad B : racines 1 et 6, donc $(x{-}1)(x{-}6)$. \\ \hline
+6 & \textbf{a} & \textbf{c} & A : $a>0$, racines 1 et 3, donc $S=[1\,;3]$. \quad B : inéquation stricte, donc $S=]2\,;3[$. \\ \hline
+7 & \textbf{c} & \textbf{b} & On pose $X=x^2$. A : $X=1$ ou $X=4$, donc $x=\pm1$ ou $x=\pm2$. \quad B : $X=1$ ou $X=9$, donc $x=\pm1$ ou $x=\pm3$. \\ \hline
+8 & \textbf{b} & \textbf{c} & A : $2x-4\geqslant0$ et $6-x\geqslant0$, donc $S=[2\,;6]$. \quad B : $3x-6\geqslant0$ et $10-x\geqslant0$, donc $S=[2\,;10]$. \\ \hline
+9 & \textbf{c} & \textbf{b} & A : $x+1=(x-1)^2$ donne $x=0$ ou $x=3$ ; la condition $x\geqslant1$ rejette 0, donc $x=3$. \quad B : $2x+3=x^2$ donne $x=-1$ ou $x=3$ ; la condition $x\geqslant0$ rejette $-1$, donc $x=3$. \\ \hline
+10 & \textbf{a} & \textbf{a} & A : $x\geqslant2$ et $x\leqslant(x-2)^2 \Rightarrow x^2-5x+4\geqslant0$, donc $S=[4\,;+\infty[$. \quad B : $-3\leqslant x\leqslant5$ et $x+3\leqslant5-x$, donc $S=[-3\,;1]$. \\ \hline
+\end{tabular}
+
+\vspace{4mm}
+\noindent\textbf{Conseil de correction :} les questions 8, 9 et 10 portent sur l'ensemble de validité et sur la vérification des solutions : accorder le point seulement si l'élève a choisi la réponse exacte.
+}
+
+\end{document}
