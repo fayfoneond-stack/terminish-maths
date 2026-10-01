@@ -1,0 +1,865 @@
+% ═══════════════════════════════════════════════════════════════════════
+%  FICHE PEDAGOGIQUE DE MATHEMATIQUES — TERMINISH
+%  Classe : 3ème — Année scolaire 2026-2027 — 8 séances de 55 min
+%  Thème : CONFIGURATIONS DU PLAN
+%  LEÇON 2 : PROPRIETE DE THALES
+%
+%  D'après le programme (Compétence 1) : Résoudre des problèmes faisant
+%  appel aux configurations de l'espace et du plan, aux applications du
+%  plan, à l'outil vectoriel et à la géométrie analytique.
+%   • Reconnaître/Identifier une configuration → configurations de Thalès
+%     (cas particulier du triangle, cas général)
+%   • Calculer des grandeurs → longueurs des segments (côtés du triangle),
+%     partage d'un segment selon une proportion donnée
+%   • Justifier → parallélisme de deux droites (propriété réciproque)
+%
+%  STRUCTURE DU COURS (imposée) :
+%   I)   Présentation et description d'une configuration et vocabulaire
+%        1) Configurations de Thalès (cas particulier du triangle, cas
+%           général)  2) Propriété de Thalès et sa réciproque
+%   II)  Calculs de grandeurs
+%        1) Longueur des segments, côtés du triangle (propriété de Thalès)
+%        2) Partage d'un segment selon une proportion donnée
+%   III) Utilisation des définitions et propriétés pour justifier
+%        1) Parallélisme de deux droites (réciproque)
+%   IV)  Utilisation des définitions et propriétés pour justifier
+%        1) Propriété d'une configuration ; programme de construction
+%
+%  Répartition : S1 = lancement APC (I cas particulier) ; S2 = I (cas
+%  général, propriété + réciproque) ; S3 = II.1 (cas particulier) ;
+%  S4 = II.1 (cas général) ; S5 = II.2 ; S6 = III ; S7 = IV ; S8 = synthèse.
+%
+%  Compatible Overleaf (pdflatex/xelatex) ET le moteur local :
+%  packages : article, geometry, xcolor, amsmath, graphicx, longtable.
+% ═══════════════════════════════════════════════════════════════════════
+\documentclass[10pt]{article}
+
+\usepackage[a4paper,landscape,top=1.5cm,bottom=1.3cm,left=1.1cm,right=1.1cm]{geometry}
+\usepackage{amsmath}
+\usepackage[RGB]{xcolor}
+\usepackage{graphicx}
+\usepackage{longtable}
+
+% ── Couleurs du canevas ────────────────────────────────────────────────
+\definecolor{rougetitre}{RGB}{192,0,0}      % titres rouges soulignés
+\definecolor{rougemaison}{RGB}{160,30,30}   % exercice de maison
+\definecolor{vertentete}{RGB}{215,235,210}  % fond vert pâle (en-têtes)
+\definecolor{bleuseance}{RGB}{46,110,180}   % cadres bleus des séances
+\definecolor{bleufond}{RGB}{222,235,247}    % fond bleu pâle (n° séance)
+\definecolor{jaunesurl}{RGB}{255,230,90}    % surlignage mots-clés
+\definecolor{vertbilan}{RGB}{230,242,225}   % fond vert très pâle
+
+\setlength{\parindent}{0pt}
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.25}
+
+% ── Raccourcis de style ────────────────────────────────────────────────
+\newcommand{\titreR}[1]{\underline{\textcolor{rougetitre}{\bfseries #1}}}
+\newcommand{\app}{\titreR{Exercice d'application}}
+\newcommand{\maison}{\underline{\textcolor{rougemaison}{\bfseries Exercice de maison}}}
+\newcommand{\seance}[1]{\fcolorbox{bleuseance}{bleufond}{\textcolor{bleuseance}{\bfseries #1}}}
+\newcommand{\moment}[1]{\textbf{\itshape #1}}
+\newcommand{\mclef}[1]{\colorbox{jaunesurl}{#1}}
+\newcommand{\prop}[1]{\par\medskip\noindent\fbox{\parbox{0.96\linewidth}{#1}}\par\medskip}
+\newcommand{\rouge}[1]{\textcolor{rougetitre}{\bfseries #1}}
+\newcommand{\ieme}{\textsuperscript{ième}}
+\newcommand{\iere}{\textsuperscript{ière}}
+\newcommand{\ier}{\textsuperscript{er}}
+\newcommand{\ere}{\textsuperscript{ère}}
+
+% ── En-tête, filigramme et pied de page ────────────────────────────────
+\newcommand{\filigrane}{%
+  \rlap{%
+    \raisebox{7.5cm}[0pt][0pt]{%
+      \hbox to 0pt{\hskip 3cm
+        \rotatebox{30}{\scalebox{3}{\textcolor{gray!38}{\bfseries KODJONE Kodjo}}}%
+      \hss}}}}
+\makeatletter
+\def\ps@fiche{%
+  \def\@oddhead{\hfill\underline{\textcolor{rougetitre}{\bfseries FICHE PEDAGOGIQUE DE MATHEMATIQUES}}\hfill}%
+  \def\@oddfoot{\filigrane
+                \hfill\textcolor{bleuseance}{\bfseries M.KODJONE Kodjo Prof de Maths}\hfill
+                \fcolorbox{black}{vertentete}{\arabic{page}}\hfill}%
+}
+\makeatother
+\pagestyle{fiche}
+
+\begin{document}
+
+% ═════════════════════════ CARTOUCHE D'IDENTIFICATION ═════════════════════════
+\begin{tabular}{|p{8.6cm}|p{8.6cm}|p{8.6cm}|}
+\hline
+\textbf{NOM} \; : \; {\bfseries KODJONE} &
+\textbf{DRE} \; : \; {\bfseries PLO} &
+\textbf{FICHE N\textsuperscript{o}} \; : \; {\bfseries 2} \\ \hline
+\textbf{PRÉNOM} \; : \; {\bfseries Kodjo} &
+\textbf{IESG} \; : \; {\bfseries KPALIME} &
+\textbf{DISCIPLINE} \; : \; {\bfseries MATHS} \\ \hline
+\textbf{CONTACT} \; : \; {\bfseries 93 150 178} &
+\textbf{ÉTABLISSEMENT} \; : \; {\bfseries LYCEE KPETA} &
+\textbf{CLASSE} \; : \; {\bfseries 3\ieme{}} \\ \hline
+\textbf{EFFECTIF} \; : \; \textbf{G} : \dotfill \quad
+                           \textbf{F} : \dotfill \quad
+                           \textbf{T} : \dotfill &
+\textbf{ANNÉE SCOLAIRE} \; : \; {\bfseries 2026 - 2027} &
+\textbf{SEMAINE} \; : \; \dotfill \\ \hline
+\end{tabular}
+
+\bigskip
+\fcolorbox{black}{vertbilan}{%
+\begin{minipage}{27.1cm}
+\smallskip
+{\bfseries COMPETENCE 1 :} \textit{Résoudre des problèmes faisant appel aux configurations de l'espace
+et du plan, aux applications du plan, à l'outil vectoriel et à la géométrie analytique.}\\[3pt]
+{\bfseries THEME :} \hfill {\Large\bfseries CONFIGURATIONS DU PLAN} \hfill\mbox{}\\[3pt]
+{\bfseries LEÇON 2 :} \hfill \fcolorbox{rougetitre}{white}{\textcolor{rougetitre}{\large\bfseries PROPRIETE DE THALES}} \hfill\mbox{}\\[3pt]
+{\bfseries NOMBRE DE SÉANCES :} \; {\bfseries 8} \qquad
+{\bfseries DURÉE D'UNE SÉANCE :} \; {\bfseries 55 min}\\[3pt]
+{\bfseries SUPPORTS DIDACTIQUES PRINCIPAUX :} \; Enoncé de la situation d'apprentissage ; CIAM 3\ieme{} ; CARGO 3\ieme{} ; Programme et son guide\\[3pt]
+{\bfseries MATERIEL DIDACTIQUE ORDINAIRE :} \; Régie ; craie ; règle ; cahiers \qquad
+{\bfseries MATERIEL DIDACTIQUE ADAPTÉ :} \; Fiche d'activités ; instruments de géométrie (règle graduée, compas, équerre) ; papier millimétré\\[3pt]
+{\bfseries CONSIGNE POUR LE PROFESSEUR DE SUIVI :} \; Vérifier le respect des moments didactiques, la synthèse avant la trace écrite et la trace écrite de la leçon.\\[3pt]
+{\bfseries PREREQUIS :} \; Proportionnalité et quotients égaux (produit en croix) ; droites parallèles ; milieu d'un segment et
+théorème des milieux (4\ieme{}) ; reproduction de figures ; usage des instruments de géométrie.
+\smallskip
+\end{minipage}}
+
+\bigskip
+% ═════════════════════════ TABLEAU CAPACITES / CONTENUS ═════════════════════════
+\begin{tabular}{|p{9.4cm}|p{17.3cm}|}
+\hline
+\multicolumn{1}{|c|}{\colorbox{vertentete}{\makebox[9.2cm][c]{\bfseries Capacités}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[17.1cm][c]{\bfseries Contenus}}} \\ \hline
+Reconnaître/Identifier une configuration &
+\small Configurations de Thalès : \mclef{cas particulier du triangle} ; \mclef{cas général}. \\ \hline
+Calculer des grandeurs &
+\small Longueur des segments (côtés du triangle) : \mclef{cas particulier} ; \mclef{cas général} ;\\
+& \small \mclef{partage d'un segment} selon une proportion donnée. \\ \hline
+Justifier &
+\small \mclef{Parallélisme de deux droites} (propriété réciproque). \\ \hline
+\end{tabular}
+
+\bigskip
+{\bfseries Stratégie pédagogique}
+
+\begin{itemize}
+  \item[] — \; Observation et manipulation en petits groupes
+  \item[] — \; Méthode démonstrative
+  \item[] — \; Faire faire (travail individuel)
+  \item[] — \; Recours aux ressources du cours (définitions, propriétés)
+\end{itemize}
+
+\bigskip
+% ═════════════════════════ DEROULEMENT : TABLEAU A 4 COLONNES ═════════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+% ── en-tête répété sur chaque page ──
+\hline
+\multicolumn{1}{|c|}{\colorbox{vertentete}{\parbox{2.15cm}{\centering\small\bfseries Moment didactique}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[5.2cm][c]{\small\bfseries Activité de l'enseignant}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[4.4cm][c]{\small\bfseries Activité de l'élève}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[13.7cm][c]{\small\bfseries Trace écrite}}} \\
+\hline
+\endfirsthead
+\hline
+\multicolumn{1}{|c|}{\colorbox{vertentete}{\parbox{2.15cm}{\centering\small\bfseries Moment didactique}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[5.2cm][c]{\small\bfseries Activité de l'enseignant}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[4.4cm][c]{\small\bfseries Activité de l'élève}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[13.7cm][c]{\small\bfseries Trace écrite}}} \\
+\hline
+\endhead
+% ═══════════════════════════════════════════════════════
+%  SÉANCE 1 — I) CONFIGURATION (CAS PARTICULIER DU TRIANGLE)
+%             PROPRIÉTÉ DE THALÈS (DÉCOUVERTE)
+% ═══════════════════════════════════════════════════════
+\seance{SEANCE 1} \newline \moment{Prérequis (5 min)} &
+Fait réviser la proportionnalité (quotients égaux, produit en croix) et le tracé de
+parallèles ; corrige et fait le point. &
+Répondent à main levée puis passent au tableau. &
+\titreR{Exercice prérequis} \par
+\textbf{1)} Calculer $x$ : \; $\dfrac{x}{8}=\dfrac{3}{4}$. \quad
+\textbf{2)} Tracer une droite $(d)$ parallèle à $(BC)$ passant par un point $M$. \par
+\mclef{Rappels :} quotients égaux ; produit en croix ; équerre et règle pour tracer
+une parallèle. \par
+(\textit{Réponses : 1) $x=6$ ; 2) règle et équerre.}) \\ \hline
+
+\moment{Présentation de la situation-problème (5 min)} &
+Recopie la situation au tableau, fait la figure au tableau et la lit à haute voix. &
+Recopient la situation dans le cahier et observent la figure. &
+\titreR{Situation d'apprentissage} \par
+{\itshape $ABC$ est un triangle tel que $BC=4{,}5$~cm. $M$ est un point du côté $[AB]$
+et $N$ un point du côté $[AC]$ tels que la droite $(MN)$ soit parallèle à $(BC)$.
+Par mesure on trouve : $AM=2$~cm ; $AB=6$~cm ; $AN=1{,}5$~cm ; $AC=4{,}5$~cm ;
+$MN=1{,}5$~cm.} \par
+\textbf{Problème :} que remarque-t-on entre les longueurs $AM$, $AB$, $AN$, $AC$,
+$MN$ et $BC$ ? Peut-on prédire $MN$ sans mesurer ? \\ \hline
+
+\moment{Appropriation de la situation-problème et de la tâche (10 min)} &
+Explique les mots difficiles ; pose des questions de compréhension : « où sont $M$
+et $N$ ? que signifie $(MN)\,//\,(BC)$ ? qu'est-ce qu'un quotient de longueurs ? » &
+Exploquent la situation, posent des questions et relèvent les mots difficiles. &
+\titreR{Consignes :} \par
+\textbf{1)} Calculer les quotients $\dfrac{AM}{AB}$, $\dfrac{AN}{AC}$ et
+$\dfrac{MN}{BC}$. \par
+\textbf{2)} Comparer les trois quotients et écrire la constatation. \par
+\textbf{3)} Refaire l'expérience avec un autre triangle tracé par le groupe. \\ \hline
+
+\moment{Travail individuel (5 min) et travail en groupe (10 min)} &
+Distribue les figures, vérifie les productions, circule et guide les groupes sans
+donner la solution. &
+\textbf{Résolution} : calculent individuellement puis confrontent en groupes ;
+mesurent sur d'autres triangles ; rédigent une production. &
+\titreR{Recherche} \par
+\textbf{1)} $\dfrac{AM}{AB}=\dfrac{2}{6}=\dfrac{1}{3}$ ; \;
+$\dfrac{AN}{AC}=\dfrac{1{,}5}{4{,}5}=\dfrac{1}{3}$ ; \;
+$\dfrac{MN}{BC}=\dfrac{1{,}5}{4{,}5}=\dfrac{1}{3}$. \par
+\textbf{2)} Les trois quotients sont \textbf{égaux} : $\dfrac{AM}{AB}=\dfrac{AN}{AC}
+=\dfrac{MN}{BC}$. \par
+\textbf{3)} Les autres groupes trouvent la même égalité avec leurs propres mesures. \\ \hline
+
+\moment{Présentation des productions (7 min)} &
+Fait exposer les productions des groupes au tableau, organise la confrontation et
+apporte des amendements. &
+Exposent leurs tableaux de quotients, comparent les mesures et corrigent entre eux. &
+\titreR{Présentation des productions} \par
+Les groupes exposent leurs mesures et leurs quotients. \par
+\textbf{Constat :} lorsque $(MN)\,//\,(BC)$, on a toujours $\dfrac{AM}{AB}
+=\dfrac{AN}{AC}=\dfrac{MN}{BC}$, quelle que soit la position de $M$ et de $N$ :
+c'est la \mclef{propriété de Thalès}. \\ \hline
+
+\moment{Synthèse (3 min)} &
+Fait reformuler, en trois minutes, ce que l'expérience a permis de découvrir ;
+corrige les formulations puis valide. &
+Réforment avec leurs propres mots ; s'écoutent et se corrigent entre eux. &
+\titreR{Synthèse} \par
+\textbf{Données :} un triangle, $M\in[AB]$, $N\in[AC]$, $(MN)\,//\,(BC)$. \par
+\textbf{Calculs :} trois quotients égaux $\left(=\dfrac{1}{3}\right)$. \par
+\textbf{Conclusion :} la position de la parallèle fixe les quotients des longueurs :
+on peut \textbf{prédire} une longueur sans la mesurer. \\ \hline
+
+\moment{Trace écrite : institutionalisation (5 min)} &
+Fait recopier la leçon (configuration et propriété, cas particulier) au tableau et
+dans les cahiers. &
+Recopient la trace écrite de la leçon. &
+\titreR{Trace écrite} \par
+\textbf{I) Présentation et description d'une configuration et vocabulaire} \par
+\textbf{1) Configurations de Thalès — cas particulier du triangle} \par
+— Dans le triangle $ABC$, $M$ est un point du côté $[AB]$, $N$ est un point du côté
+$[AC]$ et les droites $(MN)$ et $(BC)$ sont parallèles : c'est une \mclef{configuration
+de Thalès} (cas particulier du triangle).
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(44,32)
+  \put(2,2){\rule{36mm}{0.35mm}}
+  \put(2,2){\rotatebox[origin=l]{55.30}{\rule{31.62mm}{0.35mm}}}
+  \put(20,28){\rotatebox[origin=l]{-55.30}{\rule{31.62mm}{0.35mm}}}
+  \put(8,10.7){\rule{24mm}{0.35mm}}
+  \put(19.4,27.4){\rule{1.2mm}{1.2mm}}
+  \put(1.4,1.4){\rule{1.2mm}{1.2mm}}
+  \put(37.4,1.4){\rule{1.2mm}{1.2mm}}
+  \put(7.4,10.1){\rule{1.2mm}{1.2mm}}
+  \put(31.4,10.1){\rule{1.2mm}{1.2mm}}
+  \put(18.7,28.8){\small $A$}
+  \put(0,-3){\small $B$}
+  \put(37.5,-3){\small $C$}
+  \put(3.6,11.4){\small $M$}
+  \put(32.8,11.4){\small $N$}
+\end{picture}
+\end{center}
+\textbf{2) Propriété de Thalès (cas particulier)} \par
+\prop{\textbf{\textcolor{rougetitre}{Propriété de Thalès}} \par
+Si $M\in[AB]$, $N\in[AC]$ et $(MN)\,//\,(BC)$, alors \;
+$\dfrac{AM}{AB}=\dfrac{AN}{AC}=\dfrac{MN}{BC}$. \par
+\textit{Exemple (situation) :} $\dfrac{AM}{AB}=\dfrac{AN}{AC}=\dfrac{MN}{BC}
+=\dfrac{1}{3}$.} \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice à faire à la maison et annonce la suite. &
+Notent l'exercice de maison. &
+\maison \par
+\textbf{1)} Tracer un triangle $ABC$ ($BC=5$~cm), placer $M\in[AB]$ et $N\in[AC]$
+tels que $(MN)\,//\,(BC)$. \par
+\textbf{2)} Mesurer $AM$, $AB$, $AN$, $AC$, $MN$ et vérifier que
+$\dfrac{AM}{AB}=\dfrac{AN}{AC}=\dfrac{MN}{BC}$. \par
+\textit{(Réponse attendue : les trois quotients sont égaux.)} \\ \hline
+\end{longtable}
+
+\begin{center}
+\underline{\textcolor{rougetitre}{\large\bfseries Institutionalisation \; : \; (trace écrite de la leçon par le professeur)}}
+\end{center}
+
+% ═══════════════════════════════════════════════════════
+%  SÉANCE 2 — I) CAS GÉNÉRAL + PROPRIÉTÉ DE THALÈS ET SA RÉCIPROQUE
+% ═══════════════════════════════════════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+\hline
+\seance{SEANCE 2} \newline \moment{Petite activité (2 min)} &
+Dicte les mini-questions, fait répondre à main levée et chronomètre 2 minutes. &
+Répondent individuellement sur ardoise ou cahier de brouillon. &
+\titreR{Petite activité} \par
+De tête : calculer $\dfrac{3}{12}$ ; $\dfrac{5}{20}$ ; les deux quotients sont-ils
+égaux ? \par
+\textbf{Réponses :} $\dfrac{1}{4}$ ; $\dfrac{1}{4}$ ; \; oui, $\dfrac{3}{12}
+=\dfrac{5}{20}$. \\ \hline
+
+\moment{Correction de l'exercice de maison (5 min)} &
+Fait passer des élèves au tableau, corrige et précise les erreurs. &
+\textbf{Résolution} : deux élèves présentent leur figure et leurs quotients ; les
+autres corrigent. &
+\titreR{Correction de l'exercice de maison} \par
+Chaque élève présente sa figure et ses trois quotients ; on constate qu'ils sont
+égaux (aux arrondis de mesure près). \\ \hline
+
+\moment{Leçon du jour (23 min)} &
+Fait décrire la configuration générale (papillon) au tableau, énonce la propriété
+générale puis sa réciproque, et fait recopier la leçon. &
+Observent, décrivent les configurations, énoncent la propriété et recopient la
+leçon. &
+\titreR{Trace écrite} \par
+\textbf{1) Configurations de Thalès — cas général} \par
+— Les points $A$, $M$, $B$ sont alignés sur une droite, les points $A$, $N$, $C$
+sont alignés sur une autre droite et $(MN)\,//\,(BC)$ : configuration de Thalès
+\mclef{cas général}. Les deux droites $(AB)$ et $(AC)$ sont sécantes en $A$ ; dans la
+configuration dite du « papillon », le sommet est noté $O$ : $O$, $A$, $B$ alignés ;
+$O$, $A'$, $B'$ alignés ; $(AA')\,//\,(BB')$.
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(48,25)
+  \put(2,2){\rotatebox[origin=l]{33.69}{\rule{28.84mm}{0.35mm}}}
+  \put(2,2){\rotatebox[origin=l]{19.98}{\rule{46.82mm}{0.35mm}}}
+  \put(14,10){\rule{10mm}{0.35mm}}
+  \put(26,18){\rule{20mm}{0.35mm}}
+  \put(1.4,1.4){\rule{1.2mm}{1.2mm}}
+  \put(13.4,9.4){\rule{1.2mm}{1.2mm}}
+  \put(25.4,17.4){\rule{1.2mm}{1.2mm}}
+  \put(23.4,9.4){\rule{1.2mm}{1.2mm}}
+  \put(45.4,17.4){\rule{1.2mm}{1.2mm}}
+  \put(0,-3.4){\small $O$}
+  \put(10.6,6.2){\small $A$}
+  \put(23.6,6.2){\small $A'$}
+  \put(24.2,19.5){\small $B$}
+  \put(45.2,19.5){\small $B'$}
+  \put(33,10.5){\small $(AA')\,//\,(BB')$}
+\end{picture}
+\end{center}
+\textbf{2) Propriété de Thalès et sa réciproque} \par
+\prop{\textbf{\textcolor{rougetitre}{Propriété de Thalès}} \par
+Si $A$, $M$, $B$ sont alignés, $A$, $N$, $C$ sont alignés et $(MN)\,//\,(BC)$,
+alors \; $\dfrac{AM}{AB}=\dfrac{AN}{AC}=\dfrac{MN}{BC}$. \par
+\textbf{\textcolor{rougetitre}{Propriété réciproque}} \par
+Si $A$, $M$, $B$ et $A$, $N$, $C$ sont alignés \textbf{dans le même ordre} et si
+$\dfrac{AM}{AB}=\dfrac{AN}{AC}$, alors $(MN)\,//\,(BC)$.} \par
+\textit{Remarque :} l'\textbf{ordre des points} est essentiel pour la réciproque. \\ \hline
+
+\moment{Ré\-in\-ves\-tis\-se\-ment (20 min)} &
+Propose l'exercice, fait passer deux élèves au tableau, corrige. &
+\textbf{Résolution} : cherchent puis passent au tableau. &
+\app \par
+\textbf{1)} Dans quels cas a-t-on une configuration de Thalès ? \par
+a) $M\in[AB]$, $N\in[AC]$, $(MN)\,//\,(BC)$ ; \par
+b) $M\in[AB]$, $N\in[AC]$, $(MN)$ sécante avec $(BC)$ ; \par
+c) $O$, $A$, $B$ alignés, $O$, $A'$, $B'$ alignés, $(AA')\,//\,(BB')$. \par
+\textbf{2)} $M\in[AB]$ avec $AM=3$~cm, $AB=9$~cm ; $N\in[AC]$ avec $AN=2{,}5$~cm et
+$(MN)\,//\,(BC)$. Calculer $AC$ et $MN$ sachant $BC=6$~cm. \par
+\textbf{Réponses :} \textbf{1)} a) et c) : configurations de Thalès (particulière et
+générale) ; b) : non. \par
+\textbf{2)} $\dfrac{AN}{AC}=\dfrac{AM}{AB}$ : $AC=\dfrac{9\times2{,}5}{3}=7{,}5$~cm ;
+$MN=\dfrac{6\times3}{9}=2$~cm. \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice à faire à la maison et annonce la suite. &
+Notent l'exercice de maison. &
+\maison \par
+\textbf{1)} Dessiner les deux configurations de Thalès (cas particulier et cas
+général) en codant la parallèle. \par
+\textbf{2)} Réciter la propriété de Thalès et sa réciproque. \par
+\textit{(Réponse attendue : deux figures correctes ; énoncés conformes.)} \\ \hline
+\end{longtable}
+
+\begin{center}
+\underline{\textcolor{rougetitre}{\large\bfseries Institutionalisation \; : \; (trace écrite de la leçon par le professeur)}}
+\end{center}
+
+% ═══════════════════════════════════════════════════════
+%  SÉANCE 3 — II) CALCULS DE GRANDEURS : CAS PARTICULIER
+% ═══════════════════════════════════════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+\hline
+\seance{SEANCE 3} \newline \moment{Petite activité (2 min)} &
+Dicte l'activité, fait réciter la propriété à voix basse puis interroge à main levée. &
+Répondent individuellement sur ardoise ou cahier de brouillon. &
+\titreR{Petite activité} \par
+Réciter la propriété de Thalès, puis calculer $x$ : $\dfrac{x}{7{,}5}=\dfrac{2}{3}$. \par
+\textbf{Réponse :} $x=\dfrac{7{,}5\times2}{3}=5$. \\ \hline
+
+\moment{Correction de l'exercice de maison (5 min)} &
+Fait passer des élèves au tableau, corrige et précise les erreurs. &
+\textbf{Résolution} : deux élèves présentent leurs figures et les énoncés ; les
+autres corrigent. &
+\titreR{Correction de l'exercice de maison} \par
+Vérification des deux figures (parallèle codée) et des deux énoncés (propriété et
+réciproque). \\ \hline
+
+\moment{Leçon du jour (23 min)} &
+Présente la méthode de calcul des longueurs dans le cas particulier, fait des
+exemples rédigés au tableau et fait recopier la leçon. &
+Observent la méthode, calculent sous la dictée et recopient la leçon. &
+\titreR{Trace écrite} \par
+\textbf{II) Calculs de grandeurs} \par
+\textbf{1) Longueur des segments, côtés du triangle (propriété de Thalès) — cas
+particulier} \par
+— \mclef{Méthode :} \textbf{1)} identifier la configuration ($M\in[AB]$,
+$N\in[AC]$, $(MN)\,//\,(BC)$) ; \textbf{2)} écrire la propriété de Thalès ;
+\textbf{3)} remplacer les longueurs connues ; \textbf{4)} conclure par un produit en
+croix. \par
+\textit{Exemple 1.} $AM=3$~cm ; $AB=7{,}5$~cm ; $AN=2{,}4$~cm ; $BC=5$~cm. \par
+$\dfrac{AM}{AB}=\dfrac{MN}{BC}$ : $MN=\dfrac{AM\times BC}{AB}
+=\dfrac{3\times5}{7{,}5}=2$~cm. \par
+$\dfrac{AM}{AB}=\dfrac{AN}{AC}$ : $AC=\dfrac{AB\times AN}{AM}
+=\dfrac{7{,}5\times2{,}4}{3}=6$~cm. \par
+\textit{Exemple 2.} Calculer $AB$ sachant $AM=4$~cm, $AN=3$~cm, $AC=9$~cm : \;
+$AB=\dfrac{AC\times AM}{AN}=\dfrac{9\times4}{3}=12$~cm. \par
+\textbf{Conclusion :} la propriété de Thalès permet de calculer une longueur
+inconnue (côté ou segment) par un produit en croix. \\ \hline
+
+\moment{Ré\-in\-ves\-tis\-se\-ment (20 min)} &
+Propose l'exercice, fait passer deux élèves au tableau, corrige. &
+\textbf{Résolution} : cherchent puis passent au tableau. &
+\app \par
+$ABC$ est un triangle, $M\in[AB]$, $N\in[AC]$, $(MN)\,//\,(BC)$. \par
+\textbf{1)} $AB=6$~cm ; $AM=4$~cm ; $AC=9$~cm ; $BC=7{,}5$~cm. Calculer $AN$ et $MN$. \par
+\textbf{2)} $AM=5$~cm ; $AB=12$~cm ; $AN=3{,}5$~cm. Calculer $AC$. \par
+\textbf{Réponses :} \textbf{1)} $AN=\dfrac{9\times4}{6}=6$~cm ; \;
+$MN=\dfrac{7{,}5\times4}{6}=5$~cm. \par
+\textbf{2)} $AC=\dfrac{12\times3{,}5}{5}=8{,}4$~cm. \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice à faire à la maison et annonce la suite. &
+Notent l'exercice de maison. &
+\maison \par
+$M\in[AB]$, $N\in[AC]$, $(MN)\,//\,(BC)$ ; $AM=2{,}5$~cm ; $AB=10$~cm ;
+$AC=12$~cm ; $MN=2$~cm. \par
+\textbf{1)} Calculer $AN$. \quad \textbf{2)} Calculer $BC$. \par
+\textit{(Réponse attendue : 1) $AN=3$~cm ; 2) $BC=8$~cm.)} \\ \hline
+\end{longtable}
+
+\begin{center}
+\underline{\textcolor{rougetitre}{\large\bfseries Institutionalisation \; : \; (trace écrite de la leçon par le professeur)}}
+\end{center}
+
+% ═══════════════════════════════════════════════════════
+%  SÉANCE 4 — II) CALCULS DE GRANDEURS : CAS GÉNÉRAL
+% ═══════════════════════════════════════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+\hline
+\seance{SEANCE 4} \newline \moment{Petite activité (2 min)} &
+Dicte les mini-questions, fait répondre à main levée et chronomètre 2 minutes. &
+Répondent individuellement sur ardoise ou cahier de brouillon. &
+\titreR{Petite activité} \par
+Calculer $x$ : $\dfrac{4}{10}=\dfrac{x}{25}$ ; \; $\dfrac{6}{9}=\dfrac{10}{x}$. \par
+\textbf{Réponses :} $x=10$ ; \; $x=15$. \\ \hline
+
+\moment{Correction de l'exercice de maison (5 min)} &
+Fait passer des élèves au tableau, corrige et précise les erreurs. &
+\textbf{Résolution} : deux élèves traitent l'exercice au tableau ; les autres corrigent. &
+\titreR{Correction de l'exercice de maison} \par
+\textbf{1)} $AN=\dfrac{AC\times AM}{AB}=\dfrac{12\times2{,}5}{10}=3$~cm. \par
+\textbf{2)} $BC=\dfrac{AB\times MN}{AM}=\dfrac{10\times2}{2{,}5}=8$~cm. \\ \hline
+
+\moment{Leçon du jour (23 min)} &
+Présente le calcul des longueurs dans la configuration générale (papillon), fait
+des exemples rédigés avec la figure et fait recopier la leçon. &
+Observent la figure, calculent sous la dictée et recopient la leçon. &
+\titreR{Trace écrite} \par
+\textbf{1) suite — Longueur des segments, côtés du triangle : cas général} \par
+— Dans la configuration générale, on utilise les droites sécantes en $O$ : \;
+$\dfrac{OA}{OB}=\dfrac{OA'}{OB'}=\dfrac{AA'}{BB}$. \par
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(48,25)
+  \put(2,2){\rotatebox[origin=l]{33.69}{\rule{28.84mm}{0.35mm}}}
+  \put(2,2){\rotatebox[origin=l]{19.98}{\rule{46.82mm}{0.35mm}}}
+  \put(14,10){\rule{10mm}{0.35mm}}
+  \put(26,18){\rule{20mm}{0.35mm}}
+  \put(1.4,1.4){\rule{1.2mm}{1.2mm}}
+  \put(13.4,9.4){\rule{1.2mm}{1.2mm}}
+  \put(25.4,17.4){\rule{1.2mm}{1.2mm}}
+  \put(23.4,9.4){\rule{1.2mm}{1.2mm}}
+  \put(45.4,17.4){\rule{1.2mm}{1.2mm}}
+  \put(0,-3.4){\small $O$}
+  \put(10.6,6.2){\small $A$}
+  \put(23.6,6.2){\small $A'$}
+  \put(24.2,19.5){\small $B$}
+  \put(45.2,19.5){\small $B'$}
+\end{picture}
+\end{center}
+\textit{Exemple 1.} $(AA')\,//\,(BB')$ ; $OA=4$~cm ; $OB=10$~cm ; $OA'=6$~cm. \par
+$\dfrac{OA}{OB}=\dfrac{OA'}{OB'}$ : $OB'=\dfrac{OB\times OA'}{OA}
+=\dfrac{10\times6}{4}=15$~cm. \par
+\textit{Exemple 2.} Si de plus $BB'=12$~cm : \;
+$AA'=\dfrac{OA\times BB'}{OB}=\dfrac{4\times12}{10}=4{,}8$~cm. \par
+\textbf{Conclusion :} quel que soit le cas (triangle ou papillon), on écrit les
+quotients égaux puis on fait un produit en croix. \\ \hline
+
+\moment{Ré\-in\-ves\-tis\-se\-ment (20 min)} &
+Propose l'exercice, fait passer deux élèves au tableau, corrige. &
+\textbf{Résolution} : cherchent puis passent au tableau. &
+\app \par
+$O$, $A$, $B$ alignés ; $O$, $A'$, $B'$ alignés ; $(AA')\,//\,(BB')$. \par
+\textbf{1)} $OA=3$~cm ; $OB=7{,}5$~cm ; $OA'=4{,}5$~cm. Calculer $OB'$. \par
+\textbf{2)} $OB'=12$~cm. Calculer $AA'$ sachant $BB'=8$~cm. \par
+\textbf{Réponses :} \textbf{1)} $OB'=\dfrac{7{,}5\times4{,}5}{3}=11{,}25$~cm. \par
+\textbf{2)} $AA'=\dfrac{OA\times BB'}{OB}=\dfrac{3\times8}{7{,}5}=3{,}2$~cm. \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice à faire à la maison et annonce la suite. &
+Notent l'exercice de maison. &
+\maison \par
+Configuration générale avec $(AA')\,//\,(BB')$ : $OA=5$~cm ; $OB=9$~cm ;
+$OB'=18$~cm ; $BB'=7{,}2$~cm. \par
+\textbf{1)} Calculer $OA'$. \quad \textbf{2)} Calculer $AA'$. \par
+\textit{(Réponse attendue : 1) $OA'=10$~cm ; 2) $AA'=4$~cm.)} \\ \hline
+\end{longtable}
+
+\begin{center}
+\underline{\textcolor{rougetitre}{\large\bfseries Institutionalisation \; : \; (trace écrite de la leçon par le professeur)}}
+\end{center}
+
+% ═══════════════════════════════════════════════════════
+%  SÉANCE 5 — II) PARTAGE D'UN SEGMENT SELON UNE PROPORTION DONNÉE
+% ═══════════════════════════════════════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+\hline
+\seance{SEANCE 5} \newline \moment{Petite activité (2 min)} &
+Dicte les mini-questions, fait répondre à main levée et chronomètre 2 minutes. &
+Répondent individuellement sur ardoise ou cahier de brouillon. &
+\titreR{Petite activité} \par
+De tête : $\dfrac{2}{5}$ de $10$ cm ; $\dfrac{3}{4}$ de $8$ cm ; $\dfrac{1}{3}$ de
+$12$ cm. \par
+\textbf{Réponses :} $4$~cm ; \; $6$~cm ; \; $4$~cm. \\ \hline
+
+\moment{Correction de l'exercice de maison (5 min)} &
+Fait passer des élèves au tableau, corrige et précise les erreurs. &
+\textbf{Résolution} : deux élèves traitent l'exercice au tableau ; les autres corrigent. &
+\titreR{Correction de l'exercice de maison} \par
+\textbf{1)} $OA'=\dfrac{9\times5}{5}=9$~cm \; (vérification : $\dfrac{5}{9}
+=\dfrac{OA'}{18}$) : $OA'=10$~cm. \par
+\textbf{2)} $AA'=\dfrac{5\times7{,}2}{9}=4$~cm. \\ \hline
+
+\moment{Leçon du jour (23 min)} &
+Présente le partage d'un segment selon une proportion, fait construire la figure
+et énonce le programme de construction, fait recopier la leçon. &
+Calculent, construisent la figure pas à pas et recopient la leçon. &
+\titreR{Trace écrite} \par
+\textbf{2) Partage d'un segment selon une proportion donnée (propriété de Thalès)} \par
+— \mclef{Partager} un segment $[AB]$ dans la proportion $m:n$, c'est placer un point
+$M\in[AB]$ tel que $\dfrac{AM}{MB}=\dfrac{m}{n}$, c'est-à-dire $AM=\dfrac{m}{m+n}\times AB$. \par
+\textit{Exemple.} Partager $[AB]$ de longueur $10$~cm dans la proportion $2:3$ : \;
+$AM=\dfrac{2}{5}\times10=4$~cm et $MB=6$~cm. \par
+— \mclef{Programme de construction} (sans calculer) : \par
+\textbf{1)} tracer une demi-droite $[Ax)$ ; \par
+\textbf{2)} reporter sur $[Ax)$, à partir de $A$, $5$ longueurs égales
+($2+3$) : $M_1$, $M_2$, …, $M_5$ ; \par
+\textbf{3)} relier $M_5$ à $B$ ; \par
+\textbf{4)} tracer la parallèle à $(M_5B)$ passant par $M_2$ : elle coupe $[AB]$ en
+$M$ ; \par
+\textbf{5)} on a $\dfrac{AM}{AB}=\dfrac{AM_2}{AM_5}=\dfrac{2}{5}$ (propriété de
+Thalès), donc $AM=4$~cm.
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(56,36)
+  \put(2,2){\rule{50mm}{0.35mm}}
+  \put(2,2){\rotatebox[origin=l]{45}{\rule{42.4mm}{0.35mm}}}
+  \put(32,32){\rotatebox[origin=l]{-56.31}{\rule{36.06mm}{0.35mm}}}
+  \put(14,14){\rotatebox[origin=l]{-56.31}{\rule{14.42mm}{0.35mm}}}
+  \put(7.4,7.4){\rule{1.2mm}{1.2mm}}
+  \put(13.4,13.4){\rule{1.2mm}{1.2mm}}
+  \put(19.4,19.4){\rule{1.2mm}{1.2mm}}
+  \put(25.4,25.4){\rule{1.2mm}{1.2mm}}
+  \put(31.4,31.4){\rule{1.2mm}{1.2mm}}
+  \put(21.4,1.4){\rule{1.2mm}{1.2mm}}
+  \put(0,-3.4){\small $A$}
+  \put(51,-3.4){\small $B$}
+  \put(20.6,4.8){\small $M$}
+  \put(9.2,8.6){\scriptsize $M_1$}
+  \put(15.2,14.6){\scriptsize $M_2$}
+  \put(21.2,20.6){\scriptsize $M_3$}
+  \put(27.2,26.6){\scriptsize $M_4$}
+  \put(33.2,32.4){\scriptsize $M_5$}
+\end{picture}
+\end{center}
+\textbf{Conclusion :} le partage d'un segment est une application directe de la
+propriété de Thalès. \\ \hline
+
+\moment{Ré\-in\-ves\-tis\-se\-ment (20 min)} &
+Propose l'exercice, fait travailler individuellement, fait passer deux élèves au
+tableau, corrige. &
+\textbf{Résolution} : calculent et construisent puis passent au tableau. &
+\app \par
+\textbf{1)} Calculer les parts d'un segment $[AB]$ de $9$~cm partagé dans la
+proportion $3:2$. \par
+\textbf{2)} Construire le partage avec règle et compas (programme de construction). \par
+\textbf{3)} Vérifier le résultat par mesure. \par
+\textbf{Réponses :} \textbf{1)} $AM=\dfrac{3}{5}\times9=5{,}4$~cm et
+$MB=\dfrac{2}{5}\times9=3{,}6$~cm ($5{,}4+3{,}6=9$~cm). \par
+\textbf{2)} demi-droite, $5$ reports égaux, droite $(M_5B)$, parallèle par $M_3$. \par
+\textbf{3)} mesure : $AM\approx5{,}4$~cm et $MB\approx3{,}6$~cm. \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice à faire à la maison et annonce la suite. &
+Notent l'exercice de maison. &
+\maison \par
+\textbf{1)} Partager un segment $[AB]$ de $8$~cm dans la proportion $1:3$
+(calcul des parts). \par
+\textbf{2)} Écrire le programme de construction correspondant. \par
+\textit{(Réponse attendue : 1) $AM=2$~cm ; $MB=6$~cm ; 2) $4$ reports égaux,
+parallèle passant par $M_1$.)} \\ \hline
+\end{longtable}
+
+\begin{center}
+\underline{\textcolor{rougetitre}{\large\bfseries Institutionalisation \; : \; (trace écrite de la leçon par le professeur)}}
+\end{center}
+
+% ═══════════════════════════════════════════════════════
+%  SÉANCE 6 — III) PARALLÉLISME DE DEUX DROITES (RÉCIPROQUE)
+% ═══════════════════════════════════════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+\hline
+\seance{SEANCE 6} \newline \moment{Petite activité (2 min)} &
+Dicte l'activité, fait réciter la réciproque à voix basse puis interroge à main levée. &
+Répondent individuellement sur ardoise ou cahier de brouillon. &
+\titreR{Petite activité} \par
+Réciter la propriété réciproque de Thalès. \par
+\textbf{Réponse :} si $A$, $M$, $B$ et $A$, $N$, $C$ sont alignés dans le même ordre
+et si $\dfrac{AM}{AB}=\dfrac{AN}{AC}$, alors $(MN)\,//\,(BC)$. \\ \hline
+
+\moment{Correction de l'exercice de maison (5 min)} &
+Fait passer des élèves au tableau, corrige et précise les erreurs. &
+\textbf{Résolution} : deux élèves traitent l'exercice au tableau ; les autres corrigent. &
+\titreR{Correction de l'exercice de maison} \par
+\textbf{1)} $AM=\dfrac{1}{4}\times8=2$~cm ; $MB=\dfrac{3}{4}\times8=6$~cm. \par
+\textbf{2)} demi-droite $[Ax)$ ; $4$ reports égaux ; relier $M_4$ à $B$ ; parallèle
+à $(M_4B)$ passant par $M_1$. \\ \hline
+
+\moment{Leçon du jour (23 min)} &
+Présente la méthode de justification du parallélisme avec la réciproque, fait un
+exemple rédigé et un contre-exemple, fait recopier la leçon. &
+Observent la méthode, rédigent sous la dictée et recopient la leçon. &
+\titreR{Trace écrite} \par
+\textbf{III) Utilisation des définitions et propriétés pour justifier} \par
+\textbf{1) Parallélisme de deux droites (propriété réciproque)} \par
+— \mclef{Méthode :} \textbf{1)} vérifier que les points sont alignés \textbf{dans le
+même ordre} ; \textbf{2)} calculer séparément $\dfrac{AM}{AB}$ et $\dfrac{AN}{AC}$ ;
+\textbf{3)} comparer les deux quotients ; \textbf{4)} conclure en citant la
+réciproque de Thalès. \par
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(48,25)
+  \put(2,2){\rotatebox[origin=l]{33.69}{\rule{28.84mm}{0.35mm}}}
+  \put(2,2){\rotatebox[origin=l]{19.98}{\rule{46.82mm}{0.35mm}}}
+  \put(14,10){\rule{10mm}{0.35mm}}
+  \put(26,18){\rule{20mm}{0.35mm}}
+  \put(1.4,1.4){\rule{1.2mm}{1.2mm}}
+  \put(13.4,9.4){\rule{1.2mm}{1.2mm}}
+  \put(25.4,17.4){\rule{1.2mm}{1.2mm}}
+  \put(23.4,9.4){\rule{1.2mm}{1.2mm}}
+  \put(45.4,17.4){\rule{1.2mm}{1.2mm}}
+  \put(0,-3.4){\small $O$}
+  \put(10.6,6.2){\small $A$}
+  \put(23.6,6.2){\small $A'$}
+  \put(24.2,19.5){\small $B$}
+  \put(45.2,19.5){\small $B'$}
+\end{picture}
+\end{center}
+\textit{Exemple 1.} $OA=4$~cm ; $OB=8$~cm ; $OA'=6$~cm ; $OB'=12$~cm. \par
+$\dfrac{OA}{OB}=\dfrac{4}{8}=0{,}5$ ; \; $\dfrac{OA'}{OB'}=\dfrac{6}{12}=0{,}5$ ;
+points dans le même ordre : d'après la \mclef{réciproque de Thalès},
+$(AA')\,//\,(BB')$. \par
+\textit{Exemple 2 (contre-exemple).} $OA=4$ ; $OB=10$ ; $OA'=6$ ; $OB'=13$ :
+$\dfrac{4}{10}=0{,}4$ et $\dfrac{6}{13}\approx0{,}46$ : quotients différents, les
+droites ne sont pas parallèles. \par
+\textbf{Conclusion :} la réciproque de Thalès sert à \mclef{justifier} (prouver) que
+deux droites sont parallèles. \\ \hline
+
+\moment{Ré\-in\-ves\-tis\-se\-ment (20 min)} &
+Propose l'exercice, fait passer deux élèves au tableau, corrige la rédaction de la
+justification. &
+\textbf{Résolution} : cherchent puis passent au tableau ; rédigent la justification. &
+\app \par
+Dans chaque cas, les points sont alignés dans le même ordre. Les droites sont-elles
+parallèles ? Justifier. \par
+\textbf{1)} $AM=3{,}6$~cm ; $AB=9$~cm ; $AN=2{,}4$~cm ; $AC=6$~cm. \par
+\textbf{2)} $OA=5$~cm ; $OB=12$~cm ; $OA'=4$~cm ; $OB'=9$~cm. \par
+\textbf{Réponses :} \textbf{1)} $\dfrac{3{,}6}{9}=0{,}4$ et
+$\dfrac{2{,}4}{6}=0{,}4$ : quotients égaux $\Rightarrow$ $(MN)\,//\,(BC)$
+(réciproque de Thalès). \par
+\textbf{2)} $\dfrac{5}{12}\approx0{,}42$ et $\dfrac{4}{9}\approx0{,}44$ :
+quotients différents $\Rightarrow$ pas parallèles. \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice à faire à la maison et annonce la suite. &
+Notent l'exercice de maison. &
+\maison \par
+$M\in[AB]$, $N\in[AC]$, dans le même ordre : $AM=2{,}8$~cm ; $AB=7$~cm ;
+$AN=3{,}6$~cm ; $AC=9$~cm. \par
+Les droites $(MN)$ et $(BC)$ sont-elles parallèles ? Justifier. \par
+\textit{(Réponse attendue : oui, $\dfrac{2{,}8}{7}=\dfrac{3{,}6}{9}=0{,}4$ ;
+réciproque de Thalès.)} \\ \hline
+\end{longtable}
+
+\begin{center}
+\underline{\textcolor{rougetitre}{\large\bfseries Institutionalisation \; : \; (trace écrite de la leçon par le professeur)}}
+\end{center}
+
+% ═══════════════════════════════════════════════════════
+%  SÉANCE 7 — IV) PROPRIÉTÉ D'UNE CONFIGURATION ;
+%              PROGRAMME DE CONSTRUCTION
+% ═══════════════════════════════════════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+\hline
+\seance{SEANCE 7} \newline \moment{Petite activité (2 min)} &
+Dicte les mini-questions, fait répondre à main levée et chronomètre 2 minutes. &
+Répondent individuellement sur ardoise ou cahier de brouillon. &
+\titreR{Petite activité} \par
+Compléter : pour prouver que $(MN)\,//\,(BC)$, on utilise la \dots de Thalès ; pour
+calculer une longueur, la \dots de Thalès. \par
+\textbf{Réponses :} propriété réciproque ; propriété (directe). \\ \hline
+
+\moment{Correction de l'exercice de maison (5 min)} &
+Fait passer des élèves au tableau, corrige et précise les erreurs. &
+\textbf{Résolution} : deux élèves traitent l'exercice au tableau ; les autres corrigent. &
+\titreR{Correction de l'exercice de maison} \par
+$\dfrac{AM}{AB}=\dfrac{2{,}8}{7}=0{,}4$ et $\dfrac{AN}{AC}=\dfrac{3{,}6}{9}=0{,}4$ :
+quotients égaux, points dans le même ordre $\Rightarrow$ $(MN)\,//\,(BC)$ d'après la
+réciproque de Thalès. \\ \hline
+
+\moment{Leçon du jour (23 min)} &
+Présente la notion de programme de construction d'une configuration, fait écrire
+l'exemple au tableau, fait réaliser la construction et recopier la leçon. &
+Écrivent le programme, réalisent la construction aux instruments et recopient la
+leçon. &
+\titreR{Trace écrite} \par
+\textbf{IV) Utilisation des définitions et propriétés pour justifier} \par
+\textbf{1) Propriété d'une configuration — Programme de construction} \par
+— Un \mclef{programme de construction} est une suite ordonnée d'instructions
+utilisant les instruments (règle, compas, équerre) pour obtenir une configuration
+donnée. \par
+— \mclef{Justifier une propriété d'une configuration :} on utilise les définitions
+et les propriétés du cours (propriété de Thalès, sa réciproque, quotients égaux). \par
+\prop{\textbf{\textcolor{rougetitre}{Exemple (programme de construction)}} \par
+Construire une configuration de Thalès vérifiant $\dfrac{AM}{AB}=\dfrac{1}{3}$ : \par
+\textbf{1)} tracer un triangle $ABC$ quelconque ; \par
+\textbf{2)} placer $M$ sur $[AB]$ tel que $AM=\dfrac{1}{3}\times AB$ (mesurer $AB$,
+calculer, reporter) ; \par
+\textbf{3)} tracer la parallèle à $(BC)$ passant par $M$ ; elle coupe $[AC]$ en $N$ ; \par
+\textbf{4)} justifier : $(MN)\,//\,(BC)$ et $M\in[AB]$, $N\in[AC]$, donc
+$\dfrac{AM}{AB}=\dfrac{AN}{AC}=\dfrac{MN}{BC}$ (propriété de Thalès) ;
+ainsi $\dfrac{AN}{AC}=\dfrac{1}{3}$ : la configuration a bien la propriété demandée.} \par
+\textbf{Conclusion :} un programme de construction se lit et se vérifie avec les
+propriétés du cours. \\ \hline
+
+\moment{Ré\-in\-ves\-tis\-se\-ment (20 min)} &
+Propose l'exercice, fait écrire les programmes, fait réaliser deux constructions,
+corrige. &
+\textbf{Résolution} : écrivent les programmes, construisent aux instruments puis
+passent au tableau. &
+\app \par
+\textbf{1)} Écrire le programme de construction d'une configuration dans laquelle
+$\dfrac{AM}{AB}=\dfrac{3}{4}$ ($ABC$ triangle). \par
+\textbf{2)} Réaliser la construction (triangle $BC=6$~cm). \par
+\textbf{3)} Justifier que $AN=\dfrac{3}{4}\times AC$ et $MN=\dfrac{3}{4}\times BC$. \par
+\textbf{Réponses :} \textbf{1)} tracer $ABC$ ; mesurer $AB$ ; placer $M$ tel que
+$AM=\dfrac{3}{4}AB$ ; parallèle à $(BC)$ par $M$ ; elle coupe $[AC]$ en $N$. \par
+\textbf{3)} d'après la propriété de Thalès : $\dfrac{AN}{AC}=\dfrac{MN}{BC}
+=\dfrac{AM}{AB}=\dfrac{3}{4}$ ; avec $BC=6$~cm : $MN=4{,}5$~cm. \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice à faire à la maison et annonce la synthèse. &
+Notent l'exercice de maison. &
+\maison \par
+Écrire le programme de construction d'une configuration de Thalès vérifiant
+$\dfrac{AM}{AB}=\dfrac{2}{5}$, puis la réaliser et justifier que $MN=0{,}4\times BC$. \par
+\textit{(Réponse attendue : programme en $4$ étapes ; justification par la propriété
+de Thalès.)} \\ \hline
+\end{longtable}
+
+\begin{center}
+\underline{\textcolor{rougetitre}{\large\bfseries Institutionalisation \; : \; (trace écrite de la leçon par le professeur)}}
+\end{center}
+
+% ═══════════════════════════════════════════════════════
+%  SÉANCE 8 — SYNTHÈSE DE LA LEÇON (SITUATION-PROBLÈME + RÉCAPITULATIF)
+% ═══════════════════════════════════════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+\hline
+\seance{SEANCE 8} \newline \moment{Petite activité (2 min)} &
+Interroge à main levée et chronomètre 2 minutes. &
+Répondent individuellement sur ardoise ou cahier de brouillon. &
+\titreR{Petite activité} \par
+Citer les deux configurations de Thalès et les deux énoncés (propriété et
+réciproque). \par
+\textbf{Réponses :} cas particulier du triangle ; cas général (papillon) ;
+propriété directe et propriété réciproque. \\ \hline
+
+\moment{Correction de l'exercice de maison (5 min)} &
+Fait passer des élèves au tableau, corrige et précise les erreurs. &
+\textbf{Résolution} : deux élèves présentent programme et figure ; les autres corrigent. &
+\titreR{Correction de l'exercice de maison} \par
+Programme : tracer $ABC$ ; mesurer $AB$ ; placer $M$ tel que
+$AM=\dfrac{2}{5}AB$ ; parallèle à $(BC)$ par $M$, elle coupe $[AC]$ en $N$. \par
+Justification : propriété de Thalès $\Rightarrow \dfrac{MN}{BC}=\dfrac{AM}{AB}
+=\dfrac{2}{5}=0{,}4$, donc $MN=0{,}4\times BC$. \\ \hline
+
+\moment{Leçon du jour (23 min)} &
+Présente la situation-problème de synthèse (hauteur inaccessible), guide la
+recherche en groupes, organise la confrontation et fait recopier le récapitulatif. &
+Cherchent en groupes, exposent leurs démarches et recopient la leçon. &
+\titreR{Situation-problème de synthèse} \par
+{\itshape Pour mesurer la hauteur $SM$ d'un mât, Kossi plante verticalement un bâton
+$S'M'$ de $1{,}5$~m. Au même instant, l'ombre du bâton mesure $2$~m et celle du mât
+$8$~m. Les rayons du soleil sont parallèles.} \par
+\textbf{Problème :} quelle est la hauteur du mât ? \par
+\textbf{Résolution :} les points $M$, $M'$, et les bouts d'ombre sont alignés au sol ;
+les droites $(SS')$ et (bâton$\to$ombre) se coupent ; comme les rayons sont
+parallèles, la configuration est une configuration de Thalès : \par
+$\dfrac{SM}{S'M'}=\dfrac{8}{2}$ \; d'où \; $SM=\dfrac{8\times1{,}5}{2}=6$~m. \par
+Le mât mesure $6$~m (propriété de Thalès — quotients égaux des côtés). \par
+\titreR{Trace écrite : récapitulatif} \par
+\textbf{V) Récapitulatif de la leçon} \par
+— \mclef{Configurations de Thalès :} cas particulier du triangle ; cas général
+(papillon, sommet $O$). \par
+— \mclef{Propriété de Thalès :} $(MN)\,//\,(BC)\Rightarrow\dfrac{AM}{AB}
+=\dfrac{AN}{AC}=\dfrac{MN}{BC}$ $\left(\right.$ou $\dfrac{OA}{OB}=\dfrac{OA'}{OB'}\left.\right)$
+$\to$ calculs de longueurs, partage d'un segment selon une proportion. \par
+— \mclef{Propriété réciproque :} même ordre $+$ quotients égaux $\Rightarrow$
+parallélisme $\to$ justification de deux droites parallèles. \par
+— \mclef{Programme de construction :} suite ordonnée d'instructions, vérifiée par
+les propriétés du cours. \\ \hline
+
+\moment{Ré\-in\-ves\-tis\-se\-ment (20 min)} &
+Propose la situation, fait chercher en groupes, fait exposer, corrige. &
+\textbf{Résolution} : cherchent en groupes, exposent puis corrigent entre eux. &
+\app \par
+\textit{Un muret vertical de $1{,}2$~m projette une ombre de $1{,}8$~m ; au même
+moment, un arbre projette une ombre de $7{,}5$~m.} \par
+\textbf{1)} Identifier la configuration de Thalès. \par
+\textbf{2)} Calculer la hauteur de l'arbre. \par
+\textbf{3)} Justifier le calcul en citant la propriété utilisée. \par
+\textbf{4)} Un second arbre de $5{,}4$~m : quelle est son ombre ? \par
+\textbf{Réponses :} \textbf{1)} configuration générale (rayons parallèles). \par
+\textbf{2)} $h=\dfrac{7{,}5\times1{,}2}{1{,}8}=5$~m. \par
+\textbf{3)} propriété de Thalès : quotients égaux des côtés correspondants. \par
+\textbf{4)} $\dfrac{x}{7{,}5}=\dfrac{5{,}4}{5}$ : $x=8{,}1$~m. \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice bilan à faire à la maison, annonce l'évaluation prévue et conclut
+la leçon. &
+Notent l'exercice de maison. &
+\maison \par
+\textbf{1)} $M\in[AB]$, $N\in[AC]$ : $AM=6$~cm ; $MB=4$~cm ; $AN=3{,}6$~cm ;
+$BC=8$~cm. Calculer $AB$, $AC$ et $MN$ ($2$ décimales si besoin). \par
+\textbf{2)} En déduire, par la réciproque, la position de $N$ pour que $(MN)\,//\,(BC)$. \par
+\textit{(Réponse attendue : 1) $AB=10$~cm ; $AC=6$~cm ; $MN=4{,}8$~cm ; 2)
+$\dfrac{AN}{AC}=0{,}6=\dfrac{AM}{AB}$ : $(MN)\,//\,(BC)$.)} \\ \hline
+\end{longtable}
+
+\end{document}
