@@ -1,0 +1,448 @@
+% ═══════════════════════════════════════════════════════════════════════
+%  FICHE PEDAGOGIQUE DE MATHEMATIQUES — TERMINISH
+%  Classe : 1ère D — Année scolaire 2026-2027 — 2 séances de 110 min (2×55)
+%  Thème : CALCULS ALGEBRIQUES
+%  LEÇON 2 : SYSTEMES D'EQUATIONS LINEAIRES DANS IR² ET DANS IR³
+%  Canevas : fiche "Propriété de Thalès" (3ème) — même mise en page.
+%
+%  D'après le programme (capacités 5 et 6) :
+%   • Capacité 5 : Résoudre algébriquement des systèmes d'équations
+%     linéaires → systèmes d'équations dans IR³ (méthode de Gauss)
+%   • Capacité 6 : Mathématiser une situation problème → situations
+%     faisant appel aux systèmes d'équations dans IR³ et d'inéquations
+%     dans IR² ; programmation linéaire (optimisation)
+%
+%  Structure : chaque séance comporte une présentation des productions,
+%  une synthèse (5 min) AVANT la trace écrite, un exercice d'application
+%  et un exercice de maison.
+%
+%  Compatible Overleaf (pdflatex/xelatex) ET le moteur local :
+%  packages : article, geometry, xcolor, amsmath, graphicx, longtable.
+% ═══════════════════════════════════════════════════════════════════════
+\documentclass[10pt]{article}
+
+\usepackage[a4paper,landscape,top=1.5cm,bottom=1.3cm,left=1.1cm,right=1.1cm]{geometry}
+\usepackage{amsmath}
+\usepackage[RGB]{xcolor}
+\usepackage{graphicx}
+\usepackage{longtable}
+
+% ── Couleurs du canevas ────────────────────────────────────────────────
+\definecolor{rougetitre}{RGB}{192,0,0}      % titres rouges soulignés
+\definecolor{rougemaison}{RGB}{160,30,30}   % exercice de maison
+\definecolor{vertentete}{RGB}{215,235,210}  % fond vert pâle (en-têtes)
+\definecolor{bleuseance}{RGB}{46,110,180}   % cadres bleus des séances
+\definecolor{bleufond}{RGB}{222,235,247}    % fond bleu pâle (n° séance)
+\definecolor{jaunesurl}{RGB}{255,230,90}    % surlignage mots-clés
+\definecolor{vertbilan}{RGB}{230,242,225}   % fond vert très pâle
+
+\setlength{\parindent}{0pt}
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.25}
+
+% ── Raccourcis de style ────────────────────────────────────────────────
+\newcommand{\titreR}[1]{\underline{\textcolor{rougetitre}{\bfseries #1}}}
+\newcommand{\app}{\titreR{Exercice d'application}}
+\newcommand{\maison}{\underline{\textcolor{rougemaison}{\bfseries Exercice de maison}}}
+\newcommand{\seance}[1]{\fcolorbox{bleuseance}{bleufond}{\textcolor{bleuseance}{\bfseries #1}}}
+\newcommand{\moment}[1]{\textbf{\itshape #1}}
+\newcommand{\mclef}[1]{\colorbox{jaunesurl}{#1}}
+\newcommand{\prop}[1]{\par\medskip\noindent\fbox{\parbox{0.96\linewidth}{#1}}\par\medskip}
+\newcommand{\rouge}[1]{\textcolor{rougetitre}{\bfseries #1}}
+\newcommand{\ieme}{\textsuperscript{ième}}
+\newcommand{\iere}{\textsuperscript{ière}}
+\newcommand{\ier}{\textsuperscript{er}}
+\newcommand{\ere}{\textsuperscript{ère}}
+\newcommand{\Rd}[1]{\mathrm{IR}^{#1}}   % IR^n sans amssymb
+
+% ── En-tête, filigramme et pied de page ────────────────────────────────
+\newcommand{\filigrane}{%
+  \rlap{%
+    \raisebox{7.5cm}[0pt][0pt]{%
+      \hbox to 0pt{\hskip 3cm
+        \rotatebox{30}{\scalebox{3}{\textcolor{gray!38}{\bfseries KODJONE Kodjo}}}%
+      \hss}}}}
+\makeatletter
+\def\ps@fiche{%
+  \def\@oddhead{\hfill\underline{\textcolor{rougetitre}{\bfseries FICHE PEDAGOGIQUE DE MATHEMATIQUES}}\hfill}%
+  \def\@oddfoot{\filigrane
+                \hfill\textcolor{bleuseance}{\bfseries M.KODJONE Kodjo Prof de Maths}\hfill
+                \fcolorbox{black}{vertentete}{\arabic{page}}\hfill}%
+}
+\makeatother
+\pagestyle{fiche}
+
+\begin{document}
+
+% ═════════════════════════ CARTOUCHE D'IDENTIFICATION ═════════════════════════
+\begin{tabular}{|p{8.6cm}|p{8.6cm}|p{8.6cm}|}
+\hline
+\textbf{NOM} \; : \; {\bfseries KODJONE} &
+\textbf{DRE} \; : \; {\bfseries PLO} &
+\textbf{FICHE N\textsuperscript{o}} \; : \; {\bfseries 2} \\ \hline
+\textbf{PRÉNOM} \; : \; {\bfseries Kodjo} &
+\textbf{IESG} \; : \; {\bfseries KPALIME} &
+\textbf{DISCIPLINE} \; : \; {\bfseries MATHS} \\ \hline
+\textbf{CONTACT} \; : \; {\bfseries 93 150 178} &
+\textbf{ÉTABLISSEMENT} \; : \; {\bfseries LYCEE KPETA} &
+\textbf{CLASSE} \; : \; {\bfseries 1\iere{} D} \\ \hline
+\textbf{EFFECTIF} \; : \; \textbf{G} : \dotfill \quad
+                           \textbf{F} : \dotfill \quad
+                           \textbf{T} : \dotfill &
+\textbf{ANNÉE SCOLAIRE} \; : \; {\bfseries 2026 - 2027} &
+\textbf{SEMAINE} \; : \; \dotfill \\ \hline
+\end{tabular}
+
+\bigskip
+\fcolorbox{black}{vertbilan}{%
+\begin{minipage}{27.1cm}
+\smallskip
+{\bfseries COMPETENCE TERMINALE :} \textit{Résoudre des problèmes de la vie courante se ramenant à la
+résolution algébrique de systèmes d'équations linéaires dans $\Rd{2}$ et dans $\Rd{3}$,
+et à des programmes linéaires (situations d'optimisation).}\\[3pt]
+{\bfseries THEME :} \hfill {\Large\bfseries CALCULS ALGEBRIQUES} \hfill\mbox{}\\[3pt]
+{\bfseries LEÇON 2 :} \hfill \fcolorbox{rougetitre}{white}{\textcolor{rougetitre}{\large\bfseries SYSTEMES D'EQUATIONS LINEAIRES DANS $\Rd{2}$ ET DANS $\Rd{3}$}} \hfill\mbox{}\\[3pt]
+{\bfseries NOMBRE DE SÉANCES :} \; {\bfseries 2} \qquad
+{\bfseries DURÉE D'UNE SÉANCE :} \; {\bfseries 110 min (2 × 55 min)}\\[3pt]
+{\bfseries SUPPORTS DIDACTIQUES PRINCIPAUX :} \; Enoncé de la situation d'apprentissage ; CIAM 1\iere{} D ; CARGO 1\iere{} D ; Programme et son guide\\[3pt]
+{\bfseries MATERIEL DIDACTIQUE ORDINAIRE :} \; Régie ; craie ; règle ; cahiers \qquad
+{\bfseries MATERIEL DIDACTIQUE ADAPTÉ :} \; Fiche d'activités ; papier millimétré\\[3pt]
+{\bfseries CONSIGNE POUR LE PROFESSEUR DE SUIVI :} \; Vérifier le respect des moments didactiques, la synthèse avant la trace écrite et la trace écrite de la leçon.\\[3pt]
+{\bfseries PREREQUIS :} \; Résolution d'un système d'équations linéaires dans $\Rd{2}$ (substitution, combinaison linéaire) ;
+inéquations dans $\Rd{2}$ et régions du plan ; représentation graphique de droites ; calcul dans $\mathrm{R}$.
+\smallskip
+\end{minipage}}
+
+\bigskip
+% ═════════════════════════ TABLEAU CAPACITES / CONTENUS ═════════════════════════
+\begin{tabular}{|p{9.4cm}|p{17.3cm}|}
+\hline
+\multicolumn{1}{|c|}{\colorbox{vertentete}{\makebox[9.2cm][c]{\bfseries Capacités}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[17.1cm][c]{\bfseries Contenus}}} \\ \hline
+Résoudre algébriquement des systèmes d'équations linéaires &
+\small Systèmes d'équations dans $\Rd{3}$ : \mclef{méthode de Gauss} (opérations élémentaires sur les lignes, système triangulaire). \\ \hline
+Mathématiser une situation problème &
+\small Exemples de situations problèmes faisant appel aux systèmes d'équations dans $\Rd{3}$ et d'\mclef{inéquations} dans $\Rd{2}$ ;
+\mclef{programmation linéaire} : contraintes, région admissible, fonction objectif, optimum. \\ \hline
+\end{tabular}
+
+\bigskip
+{\bfseries Stratégie pédagogique}
+
+\begin{itemize}
+  \item[] — \; Travail individuel ou en petits groupes
+  \item[] — \; Méthode démonstrative
+  \item[] — \; Faire faire (travail individuel)
+  \item[] — \; Travail individuel et en petits groupes
+\end{itemize}
+
+\bigskip
+% ═════════════════════════ DEROULEMENT : TABLEAU A 4 COLONNES ═════════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+% ── en-tête répété sur chaque page ──
+\hline
+\multicolumn{1}{|c|}{\colorbox{vertentete}{\parbox{2.15cm}{\centering\small\bfseries Moment didactique}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[5.2cm][c]{\small\bfseries Activité de l'enseignant}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[4.4cm][c]{\small\bfseries Activité de l'élève}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[13.7cm][c]{\small\bfseries Trace écrite}}} \\
+\hline
+\endfirsthead
+\hline
+\multicolumn{1}{|c|}{\colorbox{vertentete}{\parbox{2.15cm}{\centering\small\bfseries Moment didactique}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[5.2cm][c]{\small\bfseries Activité de l'enseignant}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[4.4cm][c]{\small\bfseries Activité de l'élève}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[13.7cm][c]{\small\bfseries Trace écrite}}} \\
+\hline
+\endhead
+% ═══════════════════════════════════════════════════════
+%  SÉANCE 1 — SYSTEMES D'EQUATIONS LINEAIRES DANS IR³ (GAUSS)
+% ═══════════════════════════════════════════════════════
+\seance{SEANCE 1} \newline \moment{Prérequis (15 min)} &
+\titreR{Exercices de révision} (d'après le programme) : fait réviser au tableau la
+résolution des systèmes dans $\Rd{2}$ et des inéquations dans $\Rd{2}$ ; corrige et
+fait le point. &
+\textbf{Résolution} : résolvent au tableau par substitution et par combinaison ;
+représentent les régions solutions. &
+\titreR{Exercice prérequis} \par
+\textbf{1)} Résoudre dans $\Rd{2}$ : \;
+$\left\{\begin{array}{l}2x+y=5 \\ x-y=1\end{array}\right.$ \quad
+(\textit{réponse : $x=2$ ; $y=1$}) \par
+\textbf{2)} Représenter la région du plan définie par $y\leq2x+1$. \par
+\mclef{Rappels :} substitution ; combinaison linéaire ; la droite $y=2x+1$
+sépare le plan en deux régions. \\ \hline
+
+\moment{Présentation de la situation-problème (10 min)} &
+Recopie la situation au tableau et la lit à haute voix. &
+Recopient la situation dans le cahier et la lisent. &
+\titreR{Situation d'apprentissage} \par
+{\itshape Dans son magasin de Kpalimé, M. AMOUZOU a vendu : \par
+— à sa première cliente : $2$ cahiers, $3$ stylos et $1$ sac pour $3\,900$~F ; \par
+— à la deuxième cliente : $1$ cahier, $2$ stylos et $2$ sacs pour $5\,100$~F ; \par
+— au troisième client : $3$ cahiers, $1$ stylo et $3$ sacs pour $7\,800$~F.} \par
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(86,30)
+  \put(2,2){\framebox(26,22){}}
+  \put(6,10){\small cahier}
+  \put(7,19){\small $x$ F}
+  \put(31,2){\framebox(22,22){}}
+  \put(34,10){\small stylo}
+  \put(35,19){\small $y$ F}
+  \put(56,2){\framebox(26,22){}}
+  \put(60,10){\small sac}
+  \put(63,19){\small $z$ F}
+\end{picture}
+\end{center}
+\textbf{Problème :} déterminer le prix unitaire de chaque article. \\ \hline
+
+\moment{Appropriation de la situation-problème et de la tâche (10 min)} &
+Explique les mots difficiles, pose des questions de compréhension et répond aux
+interrogations des élèves. &
+Exploquent la situation, posent des questions et relèvent les mots difficiles. &
+\rouge{Consignes :} \par
+\textbf{1)} Traduire la situation par un système d'équations linéaires à trois
+inconnues dans $\Rd{3}$. \par
+\textbf{2)} Résoudre ce système (méthode de Gauss ou combinaison linéaire). \par
+\textbf{3)} Vérifier la solution et donner le prix de chaque article. \\ \hline
+
+\moment{Travail individuel (10 min) et travail en groupe (15 min)} &
+Vérifie les productions des élèves, fait des remarques à haute voix, circule et guide
+les groupes sans donner la solution. &
+\textbf{Résolution} : cherchent individuellement puis en groupe ; confrontent leurs
+méthodes ; rédigent une production. &
+\titreR{Recherche} \par
+\textbf{1)} En notant $x$ le prix d'un cahier, $y$ celui d'un stylo et $z$ celui d'un
+sac :
+$\left\{\begin{array}{l}2x+3y+z=3\,900 \\ x+2y+2z=5\,100 \\ 3x+y+3z=7\,800\end{array}\right.$ \par
+\textbf{2)} $L_2\to2L_2-L_1$ : $y+3z=6\,300$ ; \;
+$L_3\to2L_3-3L_1$ : $-7y+3z=3\,900$ ; \par
+$L_3\to L_3-L_2$ : $-8y=-2\,400$, d'où $y=300$ ; $z=2\,000$ ; $x=500$. \par
+\textbf{3)} Cahier : $500$~F ; stylo : $300$~F ; sac : $2\,000$~F. \\ \hline
+
+\moment{Présentation des productions (10 min)} &
+Fait exposer les productions des groupes au tableau, organise la confrontation des
+méthodes et apporte des amendements. &
+Exposent leurs productions ; comparent la méthode de Gauss à la méthode par
+combinaison ; apportent des amendements. &
+\titreR{Présentation des productions} \par
+Les groupes exposent la traduction en système et les différentes démarches
+(élimination successives, combinaisons). \par
+\textbf{Constat :} le système dans $\Rd{3}$ se ramène, par éliminations successives,
+à un système triangulaire facile à résoudre : c'est l'objet de la
+\mclef{méthode de Gauss}. \\ \hline
+
+\moment{Synthèse (5 min)} &
+Fait reformuler, en cinq minutes, ce que la situation a permis de découvrir ;
+corrige les formulations puis valide. &
+Réforment avec leurs propres mots ; s'écoutent et se corrigent entre eux. &
+\titreR{Synthèse} \par
+\textbf{Données :} trois achats, trois inconnues ($x$, $y$, $z$). \par
+\textbf{Calculs :} traduction en système puis éliminations successives :
+$y=300$ ; $z=2\,000$ ; $x=500$ ; vérification dans les trois équations. \par
+\textbf{Conclusion :} un système linéaire dans $\Rd{3}$ se résout en le transformant,
+par des opérations élémentaires, en un \mclef{système triangulaire} (méthode de
+Gauss), puis en remontant de la dernière équation vers la première. \\ \hline
+
+\moment{Trace écrite : institutionnalisation (15 min)} &
+Fait recopier la leçon (définitions et méthode de Gauss) au tableau et dans les
+cahiers. &
+Recopient la trace écrite de la leçon. &
+\titreR{Trace écrite} \par
+\textbf{I) Systèmes d'équations linéaires dans $\Rd{3}$} \par
+\textbf{1) Définition} \par
+Un \mclef{système d'équations linéaires dans $\Rd{3}$} est un système de la forme
+\[ \left\{\begin{array}{l}a_1x+b_1y+c_1z=d_1 \\ a_2x+b_2y+c_2z=d_2 \\
+a_3x+b_3y+c_3z=d_3\end{array}\right. \]
+Une \mclef{solution} est un triplet $(x\,;\,y\,;\,z)$ qui vérifie les trois équations. \par
+\textbf{2) Méthode de Gauss (méthode du pivot)} \par
+\prop{\textbf{\textcolor{rougetitre}{Opérations élémentaires autorisées}} \par
+— échanger deux lignes : $L_i\leftrightarrow L_j$ ; \par
+— multiplier une ligne par un nombre non nul : $L_i\to k\,L_i$ ; \par
+— ajouter à une ligne un multiple d'une autre : $L_i\to L_i+k\,L_j$. \par
+Ces opérations transforment le système en un système \textbf{équivalent} de même
+solution ; on élimine $z$ dans les premières équations pour obtenir un système
+triangulaire, puis on résout en remontant.}
+\textit{Exemple (situation) :}
+$\left\{\begin{array}{l}2x+3y+z=3\,900 \\ x+2y+2z=5\,100 \\ 3x+y+3z=7\,800\end{array}\right.
+\longrightarrow
+\left\{\begin{array}{rcl}2x+3y+z&=&3\,900 \\ y+3z&=&6\,300 \\ -8y&=&-2\,400\end{array}\right.$ \par
+d'où $y=300$, puis $z=2\,000$ et $x=500$ : \; $S=\{(500\,;\,300\,;\,2\,000)\}$. \\ \hline
+
+\moment{Exercice d'application (15 min)} &
+Propose l'exercice, fait passer deux élèves au tableau, corrige. &
+\textbf{Résolution} : cherchent puis passent au tableau. &
+\app \par
+Résoudre dans $\Rd{3}$ par la méthode de Gauss :
+\[ \left\{\begin{array}{l}x+y+z=6 \\ 2x-y+z=3 \\ x+2y-z=2\end{array}\right. \]
+\textbf{Réponses :} $L_2\to L_2-2L_1$ : $-3y-z=-9$ ; \;
+$L_3\to L_3-L_1$ : $y-2z=-4$. \par
+De $y=2z-4$ : $-3(2z-4)-z=-9$ donne $z=3$, puis $y=2$ et $x=1$. \par
+$S=\{(1\,;\,2\,;\,3)\}$. \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice à faire à la maison et annonce la suite. &
+Notent l'exercice de maison. &
+\maison \par
+Résoudre dans $\Rd{3}$ :
+$\left\{\begin{array}{l}x+y+z=10 \\ x-y=2 \\ y+z=7\end{array}\right.$ \par
+\textit{(Réponse attendue : $x=3$ ; $y=1$ ; $z=6$.)} \\ \hline
+\end{longtable}
+
+\begin{center}
+\underline{\textcolor{rougetitre}{\large\bfseries Institutionalisation \; : \; (trace écrite de la leçon par le professeur)}}
+\end{center}
+
+% ═══════════════════════════════════════════════════════
+%  SÉANCE 2 — MATHEMATISER UNE SITUATION-PROBLEME
+%            PROGRAMMATION LINEAIRE (OPTIMISATION)
+% ═══════════════════════════════════════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+\hline
+\seance{SEANCE 2} \newline \moment{Petite activité (5 min)} &
+Dicte les mini-questions de révision des inéquations dans $\Rd{2}$, fait répondre à
+main levée. &
+Répondent individuellement sur ardoise ou cahier de brouillon. &
+\titreR{Petite activité} \par
+\textbf{1)} Vérifier que le point $(1\,;\,2)$ vérifie $2x+y\leq5$. \par
+\textbf{2)} Tracer la droite $d:y=2x+1$ puis citer la région de $y\leq2x+1$. \par
+\textbf{Réponses :} 1) $2\times1+2=4\leq5$ : oui ; \;
+2) droite passant par $(0\,;1)$ et $(1\,;3)$ : la région est le demi-plan
+sous la droite (frontière incluse). \\ \hline
+
+\moment{Correction de l'exercice de maison (10 min)} &
+Fait passer des élèves au tableau, corrige et précise les erreurs. &
+\textbf{Résolution} : deux élèves traitent l'exercice au tableau ; les autres corrigent. &
+\titreR{Correction de l'exercice de maison} \par
+$\left\{\begin{array}{l}x+y+z=10 \\ x-y=2 \\ y+z=7\end{array}\right.$ \par
+De $x-y=2$ : $x=y+2$ ; de $y+z=7$ : $z=7-y$. Dans la première équation :
+$y+2+y+7-y=10$, d'où $y=1$ ; puis $x=3$ et $z=6$. \par
+$S=\{(3\,;\,1\,;\,6)\}$. \\ \hline
+
+\moment{Présentation de la situation-problème (10 min)} &
+Recopie la situation au tableau et la lit à haute voix. &
+Recopient la situation dans le cahier et la lisent. &
+\titreR{Situation d'apprentissage} \par
+{\itshape Un menuisier de Kpalimé fabrique des tables ($x$) et des chaises ($y$).
+Chaque table demande $2$~h de travail et $3$ planches de bois ; chaque chaise
+demande $1$~h de travail et $2$ planches. Il dispose de $20$~h de travail et de
+$36$ planches. Le profit est de $5\,000$~F par table et $3\,000$~F par chaise.
+Il veut savoir combien fabriquer de tables et de chaises pour obtenir un profit
+maximal.} \par
+\textbf{Problème :} trouver $(x\,;\,y)$ réalisant le profit maximal sous les
+contraintes. \\ \hline
+
+\moment{Appropriation de la situation-problème et de la tâche (10 min)} &
+Explique les mots difficiles, pose des questions de compréhension et répond aux
+interrogations des élèves. &
+Exploquent la situation, posent des questions et relèvent les mots difficiles. &
+\rouge{Consignes :} \par
+\textbf{1)} Mathématiser la situation : variables, contraintes (inéquations dans
+$\Rd{2}$), fonction objectif. \par
+\textbf{2)} Déterminer la région admissible et ses sommets. \par
+\textbf{3)} En déduire la production donnant le profit maximal et ce profit. \\ \hline
+
+\moment{Travail individuel (10 min) et travail en groupe (10 min)} &
+Vérifie les productions des élèves, circule et guide les groupes sans donner la
+solution. &
+\textbf{Résolution} : cherchent individuellement puis en groupe ; tracent sur papier
+millimétré ; rédigent une production. &
+\titreR{Recherche} \par
+\textbf{1)} Contraintes : $\left\{\begin{array}{l}2x+y\leq20 \\ 3x+2y\leq36 \\
+x\geq0\ ;\ y\geq0\end{array}\right.$ ; profit : $P=5\,000x+3\,000y$. \par
+\textbf{2)} Sommets de la région admissible :
+$O(0\,;0)$, $A(10\,;0)$, $B(4\,;12)$, $C(0\,;18)$, où $B$ est l'intersection de
+$2x+y=20$ et $3x+2y=36$. \par
+\textbf{3)} $P(O)=0$ ; $P(A)=50\,000$ ; $P(B)=56\,000$ ; $P(C)=54\,000$ : \par
+profit maximal à $B(4\,;12)$ : $4$ tables et $12$ chaises, $56\,000$~F. \\ \hline
+
+\moment{Présentation des productions (10 min)} &
+Fait exposer les productions (graphiques au papier millimétré), organise la
+confrontation et apporte des amendements. &
+Exposent leurs graphiques et leurs tableaux de valeurs ; critiquent les productions
+des camarades. &
+\titreR{Présentation des productions} \par
+Les groupes exposent la région admissible, les sommets et le tableau des profits
+aux sommets. \par
+\textbf{Constat :} le maximum de $P$ est atteint \mclef{en un sommet} de la région
+admissible : c'est le principe de résolution des programmes linéaires. \\ \hline
+
+\moment{Synthèse (5 min)} &
+Fait reformuler, en cinq minutes, la démarche de résolution d'un programme
+linéaire ; corrige les formulations puis valide. &
+Réforment les quatre étapes avec leurs propres mots ; se corrigent entre eux. &
+\titreR{Synthèse} \par
+\textbf{Données :} contraintes $2x+y\leq20$ ; $3x+2y\leq36$ ; $x,y\geq0$ ;
+$P=5\,000x+3\,000y$. \par
+\textbf{Calculs :} sommets $O(0\,;0)$, $A(10\,;0)$, $B(4\,;12)$, $C(0\,;18)$ ;
+$P(B)=56\,000$~F est le plus grand. \par
+\textbf{Conclusion :} pour optimiser, on évalue la fonction objectif \mclef{aux
+sommets} de la région admissible ; l'optimum est atteint en $B(4\,;12)$. \\ \hline
+
+\moment{Trace écrite : institutionnalisation (15 min)} &
+Fait recopier la leçon (programmation linéaire) et construit la figure au tableau. &
+Recopient la trace écrite de la leçon. &
+\titreR{Trace écrite} \par
+\textbf{II) Mathématiser une situation-problème : programmation linéaire} \par
+\textbf{1) Vocabulaire} \par
+Un \mclef{programme linéaire} consiste à optimiser (maximiser ou minimiser) une
+\mclef{fonction objectif} $P=ax+by$ sous des \mclef{contraintes} : inéquations
+linéaires dans $\Rd{2}$ avec $x\geq0$, $y\geq0$. \par
+\textbf{2) Méthode de résolution (4 étapes)} \par
+— \textbf{Étape 1 :} mathématiser (choisir $x$ et $y$, écrire les contraintes et $P$) ; \par
+— \textbf{Étape 2 :} tracer les droites frontières et hachurer : la région non
+hachurée est la \mclef{région admissible} ; \par
+— \textbf{Étape 3 :} déterminer les coordonnées des sommets (intersections) ; \par
+— \textbf{Étape 4 :} calculer $P$ en chaque sommet : l'optimum est atteint en un
+sommet. \par
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(56,68)
+  \put(0,0){\rule{44mm}{0.35mm}}
+  \put(0,0){\rule{0.35mm}{62mm}}
+  \put(43.5,2){\small $x$}
+  \put(-3.5,58.5){\small $y$}
+  \put(0,60){\rotatebox[origin=l]{-63.43}{\rule{67.08mm}{0.35mm}}}
+  \put(0,54){\rotatebox[origin=l]{-56.31}{\rule{64.90mm}{0.35mm}}}
+  \put(-0.75,-0.75){\rule{1.5mm}{1.5mm}}
+  \put(29.25,-0.75){\rule{1.5mm}{1.5mm}}
+  \put(11.25,35.25){\rule{1.5mm}{1.5mm}}
+  \put(-0.75,53.25){\rule{1.5mm}{1.5mm}}
+  \put(2.5,-4.5){\small $O$}
+  \put(27,-5){\small $A(10\,;0)$}
+  \put(14.5,35){\small $B(4\,;12)$}
+  \put(1.5,55){\small $C(0\,;18)$}
+  \put(31,26){\small $d_1:\,2x+y=20$}
+  \put(38,40){\small $d_2:\,3x+2y=36$}
+\end{picture}
+\end{center}
+\textit{Exemple (situation) :} région admissible $OAB\!C$ ; sommets $O(0\,;0)$,
+$A(10\,;0)$, $B(4\,;12)$, $C(0\,;18)$ ; $P=5\,000x+3\,000y$ maximal en
+$B$ : $56\,000$~F. \\ \hline
+
+\moment{Exercice d'application (20 min)} &
+Propose l'exercice, fait travailler individuellement, fait passer deux élèves au
+tableau, corrige. &
+\textbf{Résolution} : cherchent sur papier millimétré puis passent au tableau. &
+\app \par
+Une coopérative produit des caisses de jus d'ananas ($x$) et de jus de mangue
+($y$). Les contraintes de stockage et de transport sont :
+$x+y\leq30$ et $2x+y\leq50$ ($x\geq0$, $y\geq0$). Le profit est
+$P=3\,000x+2\,000y$ (en F par caisse). \par
+\textbf{1)} Déterminer la région admissible et ses sommets. \par
+\textbf{2)} Quel nombre de caisses de chaque jus rend le profit maximal ? \par
+\textbf{Réponses :} sommets $O(0\,;0)$, $A(25\,;0)$, $B(20\,;10)$, $C(0\,;30)$ ; \par
+$P(A)=75\,000$ ; $P(B)=80\,000$ ; $P(C)=60\,000$ : maximum en $B(20\,;10)$,
+profit $80\,000$~F. \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice à faire à la maison et annonce la suite. &
+Notent l'exercice de maison. &
+\maison \par
+Un artisan fabrique des paniers ($x$) et des chapeaux ($y$) avec les contraintes
+$x+2y\leq20$ et $3x+2y\leq24$ ($x\geq0$, $y\geq0$). Le profit est
+$P=5\,000x+4\,000y$ (en F). \par
+Combien fabrique-t-il de paniers et de chapeaux pour un profit maximal ? \par
+\textit{(Réponse attendue : $(2\,;9)$, profit $46\,000$~F.)} \\ \hline
+\end{longtable}
+
+\end{document}
