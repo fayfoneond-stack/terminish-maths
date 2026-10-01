@@ -1,0 +1,146 @@
+% ═══════════════════════════════════════════════════════════════════════
+%  MODELE DE SAISIE D'EPREUVE — TERMINISH
+%  by KODJONE Kodjo — LYK PETA Kpalimé — Année académique 2025-2026
+%
+%  Compilation (moteur XeLaTeX WASM du dépôt) :
+%     bash outils_latex/compiler.sh Examen/1ereD/Semestre2/modele_saisie_epreuve.tex
+%
+%  Ce modèle reproduit le style du recueil TERMINISH (Tome 1) :
+%  situations contextualisées (APC), consignes, et barème selon les
+%  critères Pertinence / Correction / Cohérence / Perfectionnement.
+%
+%  REMARQUES MOTEUR (runtime embarqué) :
+%   - polices Latin Modern 10/12/17 pt (toutes corps disponibles) ;
+%   - éviter l'italique (\textit, \emph) dans un titre de corps >= 15 pt
+%     (lmroman17-italic absente) ; le romain penché 17 pt est présent ;
+%   - paquets disponibles : amsmath, geometry, xcolor, fontspec, hyperref,
+%     url, etoolbox, longtable ; PAS de babel (français saisi en UTF-8
+%     directement), PAS de fancyhdr/booktabs/enumitem/tikz.
+% ═══════════════════════════════════════════════════════════════════════
+\documentclass[12pt]{article}
+
+\usepackage{amsmath}
+\usepackage[top=1.8cm, bottom=2cm, left=2cm, right=2cm]{geometry}
+\usepackage{xcolor}
+
+% ── Couleurs TERMINISH ──────────────────────────────────────────────────
+\definecolor{termiciel}{HTML}{0284C7}   % bleu ciel foncé
+\definecolor{termfond}{HTML}{38BDF8}    % bleu ciel
+\definecolor{termbareme}{HTML}{E0F2FE}  % bleu très pâle (tableaux)
+\definecolor{termtxt}{HTML}{0F172A}     % presque noir
+
+\color{termtxt}
+\pagestyle{plain}
+
+% ── Commandes locales (pas de babel-french dans la runtime) ────────────
+\newcommand{\iere}{\textsuperscript{i\`ere}}
+\newcommand{\ier}{\textsuperscript{er}}
+\newcommand{\R}{\mathrm{R}}   % pas d'amssymb : R droit pour l'ensemble des réels
+
+% ── Raccourcis de mise en page ──────────────────────────────────────────
+\newcommand{\bandeau}[1]{%
+  \noindent{\color{termiciel}\rule{\linewidth}{2.5pt}}\\[2pt]
+  {\noindent\large\bfseries\color{termiciel}#1\par}
+  \noindent{\color{termiciel}\rule{\linewidth}{2.5pt}}\par\medskip}
+
+\newcommand{\titreexercice}[2]{%
+  \medskip\noindent{\large\bfseries\color{termiciel}Exercice #1 — #2}\par
+  \noindent{\color{termfond}\rule{\linewidth}{1pt}}\par\smallskip}
+
+\newcommand{\contexte}[1]{%
+  \noindent{\bfseries Contexte.} #1\par\smallskip}
+
+\newcommand{\consigne}[2]{%
+  \noindent{\bfseries\color{termiciel}Consigne #1.} #2\par\smallskip}
+
+% ── Barème APC (4 critères) ────────────────────────────────────────────
+% \baremeapc{Consigne 1}{pertinence}{correction}{coherence}{perf.}{total}
+\newcommand{\baremeapc}[6]{%
+  \noindent\begin{tabular}{|l|c|c|c|c|c|}
+    \hline
+    \bfseries Consignes & \bfseries Pertinence & \bfseries Correction
+      & \bfseries Cohérence & \bfseries Perf. & \bfseries Total \\ \hline
+    #1 & #2 & #3 & #4 & #5 & #6 \\ \hline
+  \end{tabular}\par\medskip}
+
+\begin{document}
+
+% ═══════════════ EN-TÊTE OFFICIEL ═══════════════
+\begin{center}
+  {\small\bfseries République Togolaise}\\
+  {\scriptsize Ministère des Enseignements Primaire, Secondaire et Technique}\\
+  {\scriptsize Direction Régionale de l'Éducation — \dots}\\[4pt]
+  {\small\bfseries Lycée de Péta — Kpalimé}\\[8pt]
+  {\LARGE\bfseries\color{termiciel} TERMINISH}\\[2pt]
+  {\large Saisie des épreuves de Mathématiques}\\[2pt]
+  {\normalsize Classe de \textbf{Première D} — Semestre 2}\\[2pt]
+  {\small Année académique 2025--2026 \quad$\pi\;\Sigma\;\mathrm{e}\;\mathrm{R}$}\\[6pt]
+  {\small Élaboré par \textbf{KODJONE Kodjo} — NE +1}
+\end{center}
+\bandeau{Composition du semestre 2 — Durée : 3 h — Coefficient : 5}
+
+\medskip
+\noindent\textit{La présentation, la rigueur du raisonnement et la qualité de la rédaction
+entreront pour une part importante dans l'appréciation des copies. L'usage de la
+calculatrice non programmable est autorisé.}
+
+% ═══════════════ EXERCICE TYPE APC ═══════════════
+\titreexercice{1}{Situation de vie — Épargne scolaire (12 pts)}
+
+\contexte{Pour aider sa fille Nadouvi, élève en \textbf{1\iere{} D} au lycée, à préparer
+la rentrée, Monsieur K. dépose le 1\ier{} janvier une somme de $30\,000$ F sur un compte
+d'épargne rémunéré à $5\,\%$ par an (intérêts composés). Chaque 1\ier{} janvier suivant,
+il ajoute une somme fixe de $10\,000$ F. On note $S_n$ le solde du compte le
+1\ier{} janvier de l'année $2026+n$.}
+
+\consigne{1}{Justifier que, pour tout entier naturel $n$, on a
+$S_{n+1} = 1{,}05\,S_n + 10\,000$. Calculer $S_1$ et $S_2$.}
+\consigne{2}{On pose $V_n = S_n + 200\,000$. Montrer que la suite $(V_n)$ est
+géométrique et préciser sa raison et son premier terme.}
+\consigne{3}{Exprimer $V_n$ puis $S_n$ en fonction de $n$. En déduire le solde du
+compte le 1\ier{} janvier 2031 (arrondi au franc près).}
+\consigne{4}{Déterminer l'année à partir de laquelle le solde dépasse $250\,000$ F.}
+
+\baremeapc{Consignes 1 à 4}{3 pts}{5 pts}{3 pts}{1 pt}{12 pts}
+
+% ═══════════════ EXERCICE CLASSIQUE ═══════════════
+\titreexercice{2}{Fonctions et limites (8 pts)}
+
+Soit $f$ la fonction définie sur $\R \setminus \{2\}$ par
+\[ f(x) = \frac{x^3 - 3x - 1}{x - 2}. \]
+
+\begin{enumerate}
+  \item Calculer $\lim_{x \to 2} f(x)$ et interpréter graphiquement le résultat.
+  \item Montrer que, pour tout réel $x \neq 2$,
+        $f'(x) = \dfrac{(x-2)^2\left(2x^3 - 6x^2 + 6\right) - \left(x^3-3x-1\right)\cdot 2(x-2)}{(x-2)^2}$
+        — on admettra le calcul — puis étudier, sans développer, le sens de variation
+        de $f$ lorsque $x > 2$.
+  \item Construire le tableau de variations de $f$ sur $]2\,;\,+\infty[$.
+\end{enumerate}
+
+\baremeapc{Questions 1 à 3}{2 pts}{4 pts}{1,5 pt}{0,5 pt}{8 pts}
+
+% ═══════════════ QCM ═══════════════
+\titreexercice{3}{QCM (5 pts)}
+
+\noindent\textit{Pour chaque affirmation, écrire VRAI ou FAUX. Une réponse juste :
+0,5 pt ; une justification correcte d'une réponse fausse : 0,25 pt.}
+
+\begin{enumerate}
+  \item Toute suite croissante et majorée diverge. \hfill (V / F)
+  \item Si $\lim_{n \to +\infty} u_n = \ell > 0$, alors $u_n > 0$ à partir d'un certain rang. \hfill (V / F)
+  \item La fonction $x \mapsto x^3 - 3x$ admet un minimum local en $x = -1$. \hfill (V / F)
+  \item Pour tout réel $x \in \left]-\pi\,;\,\pi\right[$ : $\cos\left(\frac{\pi}{2} - x\right) = \sin x$. \hfill (V / F)
+  \item Deux événements incompatibles sont nécessairement indépendants. \hfill (V / F)
+\end{enumerate}
+
+\baremeapc{Affirmations 1 à 5}{2,5 pts}{1,25 pt}{0,75 pt}{0,5 pt}{5 pts}
+
+% ═══════════════ ANNEXE / FIN ═══════════════
+\bandeau{Fin de l'épreuve — Bon courage !}
+\begin{center}
+  \small TERMINISH — l'univers de Mathématiques \quad$\cdot$\quad
+  \textcopyright~2026 KODJONE Kodjo \quad$\cdot$\quad NE +1
+\end{center}
+
+\end{document}
