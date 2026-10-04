@@ -1,0 +1,918 @@
+% ═══════════════════════════════════════════════════════════════════════
+%  FICHE PEDAGOGIQUE DE MATHEMATIQUES — TERMINISH
+%  Classe : 2nde A — Année scolaire 2026-2027 — 6 séances de 55 min
+%  Thème 3 : ORGANISATION DES DONNEES
+%  LEÇON 1 : DENOMBREMENT
+%
+%  D'après le programme (capacités 1, 2 et 3 de la leçon) :
+%   • Capacité 1 : Construire des tableaux → tableaux de données,
+%     arbres de choix
+%   • Capacité 2 : Interpréter les données → tableaux de données, arbres
+%     de choix ; réunion, intersection, produit cartésien de deux
+%     ensembles ; complémentaire d'un sous-ensemble
+%   • Capacité 3 : Mathématiser une situation-problème → exemples de
+%     situations-problèmes de dénombrement
+%
+%  Consignes du programme prises en compte :
+%   • situations concrètes pour introduire ensemble fini et cardinal ;
+%   • composantes d'une classe (garçons, filles, club d'anglais…) et
+%     diagrammes pour réunions, intersections, complémentaires ;
+%   • tableau pour illustrer le produit cartésien de deux ensembles ;
+%   • formules : Card(A∪B) = Card(A) + Card(B) − Card(A∩B) ;
+%     Card(A×B) = Card(A) × Card(B) ; arbre de choix.
+%
+%  Structure : Séance 1 = lancement APC complet ; Séances 2 à 6 :
+%  petite activité (2) / correction maison (5) / leçon du jour (23) /
+%  exercice d'application (20) / exercice de maison (5) = 55 min.
+%
+%  Compatible Overleaf (pdflatex/xelatex) ET le moteur local :
+%  packages : article, geometry, xcolor, amsmath, graphicx, longtable.
+% ═══════════════════════════════════════════════════════════════════════
+\documentclass[10pt]{article}
+
+\usepackage[a4paper,landscape,top=1.5cm,bottom=1.3cm,left=1.1cm,right=1.1cm]{geometry}
+\usepackage{amsmath}
+\usepackage[RGB]{xcolor}
+\usepackage{graphicx}
+\usepackage{longtable}
+
+% ── Couleurs du canevas ────────────────────────────────────────────────
+\definecolor{rougetitre}{RGB}{192,0,0}      % titres rouges soulignés
+\definecolor{rougemaison}{RGB}{160,30,30}   % exercice de maison
+\definecolor{vertentete}{RGB}{215,235,210}  % fond vert pâle (en-têtes)
+\definecolor{bleuseance}{RGB}{46,110,180}   % cadres bleus des séances
+\definecolor{bleufond}{RGB}{222,235,247}    % fond bleu pâle (n° séance)
+\definecolor{jaunesurl}{RGB}{255,230,90}    % surlignage mots-clés
+\definecolor{vertbilan}{RGB}{230,242,225}   % fond vert très pâle
+
+\setlength{\parindent}{0pt}
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.25}
+
+% ── Raccourcis de style ────────────────────────────────────────────────
+\newcommand{\titreR}[1]{\underline{\textcolor{rougetitre}{\bfseries #1}}}
+\newcommand{\app}{\titreR{Exercice d'application}}
+\newcommand{\maison}{\underline{\textcolor{rougemaison}{\bfseries Exercice de maison}}}
+\newcommand{\seance}[1]{\fcolorbox{bleuseance}{bleufond}{\textcolor{bleuseance}{\bfseries #1}}}
+\newcommand{\moment}[1]{\textbf{\itshape #1}}
+\newcommand{\mclef}[1]{\colorbox{jaunesurl}{#1}}
+\newcommand{\prop}[1]{\par\medskip\noindent\fbox{\parbox{0.96\linewidth}{#1}}\par\medskip}
+\newcommand{\rouge}[1]{\textcolor{rougetitre}{\bfseries #1}}
+\newcommand{\iere}{\textsuperscript{nde}}
+\newcommand{\ier}{\textsuperscript{er}}
+\newcommand{\ere}{\textsuperscript{ère}}
+
+% ── En-tête, filigramme et pied de page ────────────────────────────────
+\newcommand{\filigrane}{%
+  \rlap{%
+    \raisebox{7.5cm}[0pt][0pt]{%
+      \hbox to 0pt{\hskip 3cm
+        \rotatebox{30}{\scalebox{3}{\textcolor{gray!38}{\bfseries KODJONE Kodjo}}}%
+      \hss}}}}
+\makeatletter
+\def\ps@fiche{%
+  \def\@oddhead{\hfill\underline{\textcolor{rougetitre}{\bfseries FICHE PEDAGOGIQUE DE MATHEMATIQUES}}\hfill}%
+  \def\@oddfoot{\filigrane
+                \hfill\textcolor{bleuseance}{\bfseries M.KODJONE Kodjo Prof de Maths}\hfill
+                \fcolorbox{black}{vertentete}{\arabic{page}}\hfill}%
+}
+\makeatother
+\pagestyle{fiche}
+
+\begin{document}
+
+% ═════════════════════════ CARTOUCHE D'IDENTIFICATION ═════════════════════════
+\begin{tabular}{|p{8.6cm}|p{8.6cm}|p{8.6cm}|}
+\hline
+\textbf{NOM} \; : \; {\bfseries KODJONE} &
+\textbf{DRE} \; : \; {\bfseries PLO} &
+\textbf{FICHE N\textsuperscript{o}} \; : \; {\bfseries 1} \\ \hline
+\textbf{PRÉNOM} \; : \; {\bfseries Kodjo} &
+\textbf{IESG} \; : \; {\bfseries KPALIME} &
+\textbf{DISCIPLINE} \; : \; {\bfseries MATHS} \\ \hline
+\textbf{CONTACT} \; : \; {\bfseries 93 150 178} &
+\textbf{ÉTABLISSEMENT} \; : \; {\bfseries LYCEE KPETA} &
+\textbf{CLASSE} \; : \; {\bfseries 2\iere{} A} \\ \hline
+\textbf{EFFECTIF} \; : \; \textbf{G} : \dotfill \quad
+                           \textbf{F} : \dotfill \quad
+                           \textbf{T} : \dotfill &
+\textbf{ANNÉE SCOLAIRE} \; : \; {\bfseries 2026 - 2027} &
+\textbf{SEMAINE} \; : \; \dotfill \\ \hline
+\end{tabular}
+
+\bigskip
+\fcolorbox{black}{vertbilan}{%
+\begin{minipage}{27.1cm}
+\smallskip
+{\bfseries COMPETENCE TERMINALE :} \textit{Résoudre des problèmes de la vie courante en utilisant
+des modèles, des calculs et des raisonnements mathématiques.}\\[3pt]
+{\bfseries THEME 3 :} \hfill {\Large\bfseries ORGANISATION DES DONNEES} \hfill\mbox{}\\[3pt]
+{\bfseries LEÇON 1 :} \hfill \fcolorbox{rougetitre}{white}{\textcolor{rougetitre}{\large\bfseries DENOMBREMENT}} \hfill\mbox{}\\[3pt]
+{\bfseries NOMBRE DE SÉANCES :} \; {\bfseries 6} \qquad
+{\bfseries DURÉE D'UNE SÉANCE :} \; {\bfseries 55 min}\\[3pt]
+{\bfseries SUPPORTS DIDACTIQUES PRINCIPAUX :} \; Enoncé de la situation d'apprentissage ; CIAM 2\iere{} A ; Programme de 2\iere{} A et son guide\\[3pt]
+{\bfseries MATERIEL DIDACTIQUE ORDINAIRE :} \; Régie ; craie ; règle ; cahiers \qquad
+{\bfseries MATERIEL DIDACTIQUE ADAPTÉ :} \; Fiche d'activités ; jetons de couleur ; ardoises\\[3pt]
+{\bfseries CONSIGNE POUR LE PROFESSEUR DE SUIVI :} \; Vérifier le respect des moments didactiques, la synthèse avant la trace écrite et la trace écrite de la leçon.\\[3pt]
+{\bfseries PREREQUIS :} \; Notion d'ensemble et d'élément (appartenance, inclusion, sous-ensemble) ;
+énumération et comptage d'objets ; calcul numérique élémentaire.
+\smallskip
+\end{minipage}}
+
+\bigskip
+% ═════════════════════════ TABLEAU CAPACITES / CONTENUS ═════════════════════════
+\begin{tabular}{|p{9.4cm}|p{17.3cm}|}
+\hline
+\multicolumn{1}{|c|}{\colorbox{vertentete}{\makebox[9.2cm][c]{\bfseries Capacités}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[17.1cm][c]{\bfseries Contenus}}} \\ \hline
+Construire des tableaux &
+\small Tableaux de données ; \mclef{arbres de choix}. \\ \hline
+Interpréter les données &
+\small Tableaux de données, arbres de choix ; \mclef{réunion}, \mclef{intersection},
+\mclef{produit cartésien} de deux ensembles ; \mclef{complémentaire} d'un sous-ensemble. \\ \hline
+Mathématiser une situation-problème &
+\small Exemples de \mclef{situations-problèmes de dénombrement} (composantes d'une classe :
+garçons, filles, clubs…) ; formules : $\mathrm{Card}(A\cup B)=\mathrm{Card}(A)+\mathrm{Card}(B)
+-\mathrm{Card}(A\cap B)$ ; $\mathrm{Card}(A\times B)=\mathrm{Card}(A)\times\mathrm{Card}(B)$. \\ \hline
+\end{tabular}
+
+\bigskip
+{\bfseries Stratégie pédagogique}
+
+\begin{itemize}
+  \item[] — \; Travail individuel et en petits groupes
+  \item[] — \; Faire faire à partir d'exemples
+\end{itemize}
+
+\bigskip
+% ═════════════════════════ DEROULEMENT : TABLEAU A 4 COLONNES ═════════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+% ── en-tête répété sur chaque page ──
+\hline
+\multicolumn{1}{|c|}{\colorbox{vertentete}{\parbox{2.15cm}{\centering\small\bfseries Moment didactique}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[5.2cm][c]{\small\bfseries Activité de l'enseignant}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[4.4cm][c]{\small\bfseries Activité de l'élève}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[13.7cm][c]{\small\bfseries Trace écrite}}} \\
+\hline
+\endfirsthead
+\hline
+\multicolumn{1}{|c|}{\colorbox{vertentete}{\parbox{2.15cm}{\centering\small\bfseries Moment didactique}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[5.2cm][c]{\small\bfseries Activité de l'enseignant}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[4.4cm][c]{\small\bfseries Activité de l'élève}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[13.7cm][c]{\small\bfseries Trace écrite}}} \\
+\hline
+\endhead
+% ═══════════════════════════════════════════════════════
+%  SÉANCE 1 — NOTION D'ENSEMBLE FINI, CARDINAL
+% ═══════════════════════════════════════════════════════
+\seance{SEANCE 1} \newline \moment{Prérequis (5 min)} &
+Fait rappeler les notions d'ensemble, d'élément et d'inclusion ; corrige et fait le point. &
+Répondent à main levée puis passent au tableau. &
+\titreR{Exercice prérequis} \par
+Soit $E=\{2\,;\,4\,;\,6\,;\,8\,;\,10\}$. \textbf{1)} $4\in E$ ? $7\in E$ ? \;
+\textbf{2)} $\{2\,;\,6\}\subset E$ ? \;
+\textbf{3)} Citer les éléments de $E$ supérieurs à $5$. \par
+\mclef{Rappels :} appartenance $\in$ ; inclusion $\subset$ ; un ensemble est déterminé
+par ses éléments. \par
+(\textit{Réponses : oui ; non ; oui ; $6\,;\,8\,;\,10$}.) \\ \hline
+
+\moment{Présentation de la situation-problème (5 min)} &
+Recopie la liste au tableau et la lit à haute voix. &
+Recopient la situation dans le cahier et la lisent. &
+\titreR{Situation d'apprentissage} \par
+{\itshape Au club d'anglais du LYCÉE KPETA, M. KODJONE inscrit sur une ardoise la liste
+des élèves de la 2\iere{} A membres du club : AKPA, BALDI, DODEVI, EGBETE, FOEVI, KOUDJO.} \par
+\textbf{Problème :} combien d'élèves compte ce club ? — le nombre trouvé est le
+\mclef{nombre d'éléments} de l'ensemble des élèves du club. \\ \hline
+
+\moment{Appropriation de la situation-problème et de la tâche (10 min)} &
+Explique les mots difficiles ; pose des questions de compréhension : « la liste
+s'arrête-t-elle ? peut-on la continuer ? » ; fait citer d'autres ensembles. &
+Répondent, justifient et proposent des exemples d'ensembles (doigts d'une main,
+lettres d'un mot, nombres entiers…). &
+\titreR{Questions-réponses} \par
+— L'ensemble des doigts d'une main est fini : on peut les compter et s'arrêter. \par
+— Les nombres entiers $0\,;\,1\,;\,2\,;\,3\,;\,\dots$ ne s'arrêtent pas : cet ensemble
+est infini. \par
+— Un ensemble est \mclef{fini} lorsqu'on peut énumérer tous ses éléments et s'arrêter. \\ \hline
+
+\moment{Travail individuel (5 min) et travail en groupe (10 min)} &
+Vérifie les productions des élèves, circule et guide les groupes sans donner la solution. &
+\textbf{Résolution} : cherchent individuellement puis confrontent leurs listes en
+groupes ; rédigent une production. &
+\titreR{Recherche} : énumérer puis compter les éléments de : \par
+\textbf{1)} $A$ = lettres du mot « KPALIME » ; \par
+\textbf{2)} $B$ = diviseurs de $12$ ; \par
+\textbf{3)} $C$ = nombres premiers compris entre $1$ et $20$. \par
+(\textit{Réponses : $A=\{$K, P, A, L, I, M, E$\}$, $7$ lettres ; $B=\{1;2;3;4;6;12\}$,
+$6$ éléments ; $C=\{2;3;5;7;11;13;17;19\}$, $8$ éléments ; on a
+$6<7<8$}.) \\ \hline
+
+\moment{Présentation des productions (7 min)} &
+Fait exposer les listes des groupes au tableau, organise la confrontation et apporte
+des amendements. &
+Exposent leurs productions, comparent les démarches et corrigent entre eux. &
+\titreR{Présentation des productions} \par
+Les groupes exposent leurs énumérations ; on compare les effectifs obtenus. \par
+\textbf{Constat :} à chaque ensemble fini on peut associer son nombre d'éléments ;
+c'est cette donnée qui permet de \mclef{dénombrer}. \\ \hline
+
+\moment{Synthèse (3 min)} &
+Fait reformuler, en trois minutes, ce que la situation a permis de découvrir ;
+corrige les formulations puis valide. &
+Réforment avec leurs propres mots ; s'écoutent et se corrigent entre eux. &
+\titreR{Synthèse} \par
+\textbf{Données :} une liste d'élèves, un mot, des diviseurs. \par
+\textbf{Calculs :} énumération puis comptage des éléments. \par
+\textbf{Conclusion :} compter les éléments d'un ensemble fini, c'est déterminer son
+\mclef{cardinal} ; l'ensemble vide a pour cardinal $0$. \\ \hline
+
+\moment{Trace écrite : institutionalisation (5 min)} &
+Fait recopier la leçon (définitions) au tableau et dans les cahiers. &
+Recopient la trace écrite de la leçon. &
+\titreR{Trace écrite} \par
+\textbf{I) Ensembles finis — Cardinal d'un ensemble fini} \par
+\textbf{1) Ensemble fini, ensemble infini} \par
+— Un ensemble est \mclef{fini} lorsqu'on peut énumérer tous ses éléments et s'arrêter ;
+sinon, il est \mclef{infini}. \par
+— Exemples : $E=\{2;4;6;8;10\}$ est fini ; l'ensemble des entiers naturels
+$0\,;\,1\,;\,2\,;\,3\,;\dots$ est infini. \par
+\textbf{2) Cardinal d'un ensemble fini} \par
+— Le \mclef{cardinal} d'un ensemble fini $E$, noté $\mathrm{Card}(E)$, est le nombre
+de ses éléments. \par
+— Exemples : $\mathrm{Card}(\{a;b;c\})=3$ ; \; $\mathrm{Card}(\emptyset)=0$ ; \;
+$\mathrm{Card}(\{1;2;3;4;6;12\})=6$. \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice à faire à la maison et annonce la suite. &
+Notent l'exercice de maison. &
+\maison \par
+Donner les éléments puis le cardinal de : \par
+\textbf{1)} $M$ = lettres du mot « LOME » ; \par
+\textbf{2)} $N$ = diviseurs de $18$ ; \par
+\textbf{3)} $P$ = multiples de $5$ compris entre $1$ et $30$. \par
+\textit{(Réponse attendue : $\mathrm{Card}(M)=4$ ; $\mathrm{Card}(N)=6$ ;
+$\mathrm{Card}(P)=6$.)} \\ \hline
+\end{longtable}
+
+\begin{center}
+\underline{\textcolor{rougetitre}{\large\bfseries Institutionalisation \; : \; (trace écrite de la leçon par le professeur)}}
+\end{center}
+
+% ═══════════════════════════════════════════════════════
+%  SÉANCE 2 — RÉUNION ET INTERSECTION DE DEUX ENSEMBLES
+% ═══════════════════════════════════════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+\hline
+\seance{SEANCE 2} \newline \moment{Petite activité (2 min)} &
+Dicte les mini-questions, fait répondre à main levée et chronomètre 2 minutes. &
+Répondent individuellement sur ardoise ou cahier de brouillon. &
+\titreR{Petite activité} \par
+De tête : $\mathrm{Card}(\{a;e;i;o;u\})$ ; \; $\mathrm{Card}(\emptyset)$ ; \;
+cardinal de l'ensemble des jours de la semaine. \par
+\textbf{Réponses :} $5$ ; \; $0$ ; \; $7$. \\ \hline
+
+\moment{Correction de l'exercice de maison (5 min)} &
+Fait passer des élèves au tableau, corrige et précise les erreurs. &
+\textbf{Résolution} : deux élèves traitent l'exercice au tableau ; les autres corrigent. &
+\titreR{Correction de l'exercice de maison} \par
+$M=\{$L, O, M, E$\}$, $\mathrm{Card}(M)=4$ ; \; $N=\{1;2;3;6;9;18\}$,
+$\mathrm{Card}(N)=6$ ; \par
+$P=\{5;10;15;20;25;30\}$, $\mathrm{Card}(P)=6$. \\ \hline
+
+\moment{Leçon du jour (23 min)} &
+Fait découvrir la réunion et l'intersection à partir des clubs de la classe, construit
+le diagramme au tableau, énonce la formule et fait recopier la leçon. &
+Observent le diagramme, répondent aux questions, dénombrent et recopient la leçon. &
+\titreR{Trace écrite} \par
+\textbf{II) Réunion et intersection de deux ensembles} \par
+\textbf{1) Situation.} Dans la classe de 2\iere{} A : $A$ = élèves du club d'anglais
+($\mathrm{Card}(A)=15$) ; $B$ = élèves du club de théâtre ($\mathrm{Card}(B)=12$) ;
+$5$ élèves font les deux clubs.
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(52,30)
+  \put(1,1){\framebox(50,28){}}
+  \put(2.5,25){\small $\Omega$ : $45$ élèves}
+\thicklines
+  \put(25.00,13.00){\rotatebox[origin=l]{94.50}{\rule{1.41mm}{0.35mm}}}
+  \put(24.89,14.41){\rotatebox[origin=l]{103.50}{\rule{1.41mm}{0.35mm}}}
+  \put(24.56,15.78){\rotatebox[origin=l]{112.50}{\rule{1.41mm}{0.35mm}}}
+  \put(24.02,17.09){\rotatebox[origin=l]{121.50}{\rule{1.41mm}{0.35mm}}}
+  \put(23.28,18.29){\rotatebox[origin=l]{130.50}{\rule{1.41mm}{0.35mm}}}
+  \put(22.36,19.36){\rotatebox[origin=l]{139.50}{\rule{1.41mm}{0.35mm}}}
+  \put(21.29,20.28){\rotatebox[origin=l]{148.50}{\rule{1.41mm}{0.35mm}}}
+  \put(20.09,21.02){\rotatebox[origin=l]{157.50}{\rule{1.41mm}{0.35mm}}}
+  \put(18.78,21.56){\rotatebox[origin=l]{166.50}{\rule{1.41mm}{0.35mm}}}
+  \put(17.41,21.89){\rotatebox[origin=l]{175.50}{\rule{1.41mm}{0.35mm}}}
+  \put(16.00,22.00){\rotatebox[origin=l]{-175.50}{\rule{1.41mm}{0.35mm}}}
+  \put(14.59,21.89){\rotatebox[origin=l]{-166.50}{\rule{1.41mm}{0.35mm}}}
+  \put(13.22,21.56){\rotatebox[origin=l]{-157.50}{\rule{1.41mm}{0.35mm}}}
+  \put(11.91,21.02){\rotatebox[origin=l]{-148.50}{\rule{1.41mm}{0.35mm}}}
+  \put(10.71,20.28){\rotatebox[origin=l]{-139.50}{\rule{1.41mm}{0.35mm}}}
+  \put(9.64,19.36){\rotatebox[origin=l]{-130.50}{\rule{1.41mm}{0.35mm}}}
+  \put(8.72,18.29){\rotatebox[origin=l]{-121.50}{\rule{1.41mm}{0.35mm}}}
+  \put(7.98,17.09){\rotatebox[origin=l]{-112.50}{\rule{1.41mm}{0.35mm}}}
+  \put(7.44,15.78){\rotatebox[origin=l]{-103.50}{\rule{1.41mm}{0.35mm}}}
+  \put(7.11,14.41){\rotatebox[origin=l]{-94.50}{\rule{1.41mm}{0.35mm}}}
+  \put(7.00,13.00){\rotatebox[origin=l]{-85.50}{\rule{1.41mm}{0.35mm}}}
+  \put(7.11,11.59){\rotatebox[origin=l]{-76.50}{\rule{1.41mm}{0.35mm}}}
+  \put(7.44,10.22){\rotatebox[origin=l]{-67.50}{\rule{1.41mm}{0.35mm}}}
+  \put(7.98,8.91){\rotatebox[origin=l]{-58.50}{\rule{1.41mm}{0.35mm}}}
+  \put(8.72,7.71){\rotatebox[origin=l]{-49.50}{\rule{1.41mm}{0.35mm}}}
+  \put(9.64,6.64){\rotatebox[origin=l]{-40.50}{\rule{1.41mm}{0.35mm}}}
+  \put(10.71,5.72){\rotatebox[origin=l]{-31.50}{\rule{1.41mm}{0.35mm}}}
+  \put(11.91,4.98){\rotatebox[origin=l]{-22.50}{\rule{1.41mm}{0.35mm}}}
+  \put(13.22,4.44){\rotatebox[origin=l]{-13.50}{\rule{1.41mm}{0.35mm}}}
+  \put(14.59,4.11){\rotatebox[origin=l]{-4.50}{\rule{1.41mm}{0.35mm}}}
+  \put(16.00,4.00){\rotatebox[origin=l]{4.50}{\rule{1.41mm}{0.35mm}}}
+  \put(17.41,4.11){\rotatebox[origin=l]{13.50}{\rule{1.41mm}{0.35mm}}}
+  \put(18.78,4.44){\rotatebox[origin=l]{22.50}{\rule{1.41mm}{0.35mm}}}
+  \put(20.09,4.98){\rotatebox[origin=l]{31.50}{\rule{1.41mm}{0.35mm}}}
+  \put(21.29,5.72){\rotatebox[origin=l]{40.50}{\rule{1.41mm}{0.35mm}}}
+  \put(22.36,6.64){\rotatebox[origin=l]{49.50}{\rule{1.41mm}{0.35mm}}}
+  \put(23.28,7.71){\rotatebox[origin=l]{58.50}{\rule{1.41mm}{0.35mm}}}
+  \put(24.02,8.91){\rotatebox[origin=l]{67.50}{\rule{1.41mm}{0.35mm}}}
+  \put(24.56,10.22){\rotatebox[origin=l]{76.50}{\rule{1.41mm}{0.35mm}}}
+  \put(24.89,11.59){\rotatebox[origin=l]{85.50}{\rule{1.41mm}{0.35mm}}}
+  \put(39.00,13.00){\rotatebox[origin=l]{94.50}{\rule{1.41mm}{0.35mm}}}
+  \put(38.89,14.41){\rotatebox[origin=l]{103.50}{\rule{1.41mm}{0.35mm}}}
+  \put(38.56,15.78){\rotatebox[origin=l]{112.50}{\rule{1.41mm}{0.35mm}}}
+  \put(38.02,17.09){\rotatebox[origin=l]{121.50}{\rule{1.41mm}{0.35mm}}}
+  \put(37.28,18.29){\rotatebox[origin=l]{130.50}{\rule{1.41mm}{0.35mm}}}
+  \put(36.36,19.36){\rotatebox[origin=l]{139.50}{\rule{1.41mm}{0.35mm}}}
+  \put(35.29,20.28){\rotatebox[origin=l]{148.50}{\rule{1.41mm}{0.35mm}}}
+  \put(34.09,21.02){\rotatebox[origin=l]{157.50}{\rule{1.41mm}{0.35mm}}}
+  \put(32.78,21.56){\rotatebox[origin=l]{166.50}{\rule{1.41mm}{0.35mm}}}
+  \put(31.41,21.89){\rotatebox[origin=l]{175.50}{\rule{1.41mm}{0.35mm}}}
+  \put(30.00,22.00){\rotatebox[origin=l]{-175.50}{\rule{1.41mm}{0.35mm}}}
+  \put(28.59,21.89){\rotatebox[origin=l]{-166.50}{\rule{1.41mm}{0.35mm}}}
+  \put(27.22,21.56){\rotatebox[origin=l]{-157.50}{\rule{1.41mm}{0.35mm}}}
+  \put(25.91,21.02){\rotatebox[origin=l]{-148.50}{\rule{1.41mm}{0.35mm}}}
+  \put(24.71,20.28){\rotatebox[origin=l]{-139.50}{\rule{1.41mm}{0.35mm}}}
+  \put(23.64,19.36){\rotatebox[origin=l]{-130.50}{\rule{1.41mm}{0.35mm}}}
+  \put(22.72,18.29){\rotatebox[origin=l]{-121.50}{\rule{1.41mm}{0.35mm}}}
+  \put(21.98,17.09){\rotatebox[origin=l]{-112.50}{\rule{1.41mm}{0.35mm}}}
+  \put(21.44,15.78){\rotatebox[origin=l]{-103.50}{\rule{1.41mm}{0.35mm}}}
+  \put(21.11,14.41){\rotatebox[origin=l]{-94.50}{\rule{1.41mm}{0.35mm}}}
+  \put(21.00,13.00){\rotatebox[origin=l]{-85.50}{\rule{1.41mm}{0.35mm}}}
+  \put(21.11,11.59){\rotatebox[origin=l]{-76.50}{\rule{1.41mm}{0.35mm}}}
+  \put(21.44,10.22){\rotatebox[origin=l]{-67.50}{\rule{1.41mm}{0.35mm}}}
+  \put(21.98,8.91){\rotatebox[origin=l]{-58.50}{\rule{1.41mm}{0.35mm}}}
+  \put(22.72,7.71){\rotatebox[origin=l]{-49.50}{\rule{1.41mm}{0.35mm}}}
+  \put(23.64,6.64){\rotatebox[origin=l]{-40.50}{\rule{1.41mm}{0.35mm}}}
+  \put(24.71,5.72){\rotatebox[origin=l]{-31.50}{\rule{1.41mm}{0.35mm}}}
+  \put(25.91,4.98){\rotatebox[origin=l]{-22.50}{\rule{1.41mm}{0.35mm}}}
+  \put(27.22,4.44){\rotatebox[origin=l]{-13.50}{\rule{1.41mm}{0.35mm}}}
+  \put(28.59,4.11){\rotatebox[origin=l]{-4.50}{\rule{1.41mm}{0.35mm}}}
+  \put(30.00,4.00){\rotatebox[origin=l]{4.50}{\rule{1.41mm}{0.35mm}}}
+  \put(31.41,4.11){\rotatebox[origin=l]{13.50}{\rule{1.41mm}{0.35mm}}}
+  \put(32.78,4.44){\rotatebox[origin=l]{22.50}{\rule{1.41mm}{0.35mm}}}
+  \put(34.09,4.98){\rotatebox[origin=l]{31.50}{\rule{1.41mm}{0.35mm}}}
+  \put(35.29,5.72){\rotatebox[origin=l]{40.50}{\rule{1.41mm}{0.35mm}}}
+  \put(36.36,6.64){\rotatebox[origin=l]{49.50}{\rule{1.41mm}{0.35mm}}}
+  \put(37.28,7.71){\rotatebox[origin=l]{58.50}{\rule{1.41mm}{0.35mm}}}
+  \put(38.02,8.91){\rotatebox[origin=l]{67.50}{\rule{1.41mm}{0.35mm}}}
+  \put(38.56,10.22){\rotatebox[origin=l]{76.50}{\rule{1.41mm}{0.35mm}}}
+  \put(38.89,11.59){\rotatebox[origin=l]{85.50}{\rule{1.41mm}{0.35mm}}}
+  \put(11,18){\small $A$}
+  \put(35,18){\small $B$}
+  \put(9.5,11.5){\small $10$}
+  \put(22.5,11.5){\small $5$}
+  \put(34.5,11.5){\small $7$}
+  \put(42.5,12){\small $23$}
+\end{picture}
+\end{center}
+\small ($10+5+7=22$ élèves font au moins un club ; $23$ élèves n'appartiennent à
+aucun club.) \par
+\textbf{2) Définitions.} \par
+— La \mclef{réunion} de $A$ et $B$, notée $A\cup B$, est l'ensemble des éléments qui
+appartiennent à $A$ \textbf{ou} à $B$ (au moins un des deux). \par
+— L'\mclef{intersection} de $A$ et $B$, notée $A\cap B$, est l'ensemble des éléments
+qui appartiennent \textbf{à la fois} à $A$ et à $B$. \par
+\prop{\textbf{\textcolor{rougetitre}{Formule (dénombrement)}} \par
+Pour deux ensembles finis $A$ et $B$ : \;
+$\mathrm{Card}(A\cup B)=\mathrm{Card}(A)+\mathrm{Card}(B)-\mathrm{Card}(A\cap B)$. \par
+\textit{Ici :} $\mathrm{Card}(A\cup B)=15+12-5=22$ élèves font au moins un club.}
+\textit{Exemple :} si $\mathrm{Card}(A)=9$, $\mathrm{Card}(B)=7$ et
+$\mathrm{Card}(A\cap B)=3$, alors $\mathrm{Card}(A\cup B)=9+7-3=13$. \\ \hline
+
+\moment{Exercice d'application (20 min)} &
+Propose l'exercice, fait passer deux élèves au tableau, corrige. &
+\textbf{Résolution} : cherchent puis passent au tableau. &
+\app \par
+\textbf{1)} $A=\{1;2;3;4;5;6\}$ et $B=\{4;6;8;10\}$ : donner $A\cup B$, $A\cap B$ puis
+vérifier la formule. \par
+\textbf{2)} Dans une classe de $40$ élèves, $25$ aiment le football ($F$), $18$ aiment
+le basket-ball ($K$) et $7$ aiment les deux. Combien d'élèves aiment au moins un de ces
+sports ? aucun des deux ? \par
+\textbf{Réponses :} \textbf{1)} $A\cup B=\{1;2;3;4;5;6;8;10\}$,
+$\mathrm{Card}(A\cup B)=8$ ; $A\cap B=\{4;6\}$, $\mathrm{Card}(A\cap B)=2$ ; on a bien
+$6+4-2=8$. \par
+\textbf{2)} $\mathrm{Card}(F\cup K)=25+18-7=36$ élèves aiment au moins un sport ;
+$40-36=4$ élèves n'aiment aucun des deux. \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice à faire à la maison et annonce la suite. &
+Notent l'exercice de maison. &
+\maison \par
+$P$ = diviseurs de $18$ et $Q$ = diviseurs de $24$. Donner $P\cap Q$, $P\cup Q$,
+leurs cardinaux, puis vérifier la formule. \par
+\textit{(Réponse attendue : $P\cap Q=\{1;2;3;6\}$, $\mathrm{Card}=4$ ;
+$P\cup Q$ a $10$ éléments $=6+8-4$.)} \\ \hline
+\end{longtable}
+
+\begin{center}
+\underline{\textcolor{rougetitre}{\large\bfseries Institutionalisation \; : \; (trace écrite de la leçon par le professeur)}}
+\end{center}
+
+% ═══════════════════════════════════════════════════════
+%  SÉANCE 3 — COMPLÉMENTAIRE D'UN SOUS-ENSEMBLE
+% ═══════════════════════════════════════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+\hline
+\seance{SEANCE 3} \newline \moment{Petite activité (2 min)} &
+Dicte l'activité, fait réciter la formule à voix basse puis interroge à main levée. &
+Répondent individuellement sur ardoise ou cahier de brouillon. &
+\titreR{Petite activité} \par
+Réciter la formule du cardinal d'une réunion, puis calculer
+$\mathrm{Card}(A\cup B)$ sachant $\mathrm{Card}(A)=9$, $\mathrm{Card}(B)=7$,
+$\mathrm{Card}(A\cap B)=3$. \par
+\textbf{Réponse :} $\mathrm{Card}(A\cup B)=\mathrm{Card}(A)+\mathrm{Card}(B)
+-\mathrm{Card}(A\cap B)=9+7-3=13$. \\ \hline
+
+\moment{Correction de l'exercice de maison (5 min)} &
+Fait passer des élèves au tableau, corrige et précise les erreurs. &
+\textbf{Résolution} : deux élèves traitent l'exercice au tableau ; les autres corrigent. &
+\titreR{Correction de l'exercice de maison} \par
+$P\cap Q=\{1;2;3;6\}$, $\mathrm{Card}(P\cap Q)=4$ ; \;
+$P\cup Q=\{1;2;3;4;6;8;9;12;18;24\}$, \par
+$\mathrm{Card}(P\cup Q)=10=6+8-4$ : la formule est vérifiée. \\ \hline
+
+\moment{Leçon du jour (23 min)} &
+Fait découvrir le complémentaire à partir de la classe (club d'anglais), construit le
+diagramme, énonce la formule et fait recopier la leçon. &
+Observent le diagramme, répondent, dénombrent et recopient la leçon. &
+\titreR{Trace écrite} \par
+\textbf{III) Complémentaire d'un sous-ensemble} \par
+\textbf{1) Situation.} $\Omega$ = ensemble des $45$ élèves de la 2\iere{} A ; $A$ =
+ensemble des élèves du club d'anglais ($\mathrm{Card}(A)=15$). Combien d'élèves ne font
+pas partie du club ?
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(48,29)
+  \put(1,1){\framebox(46,26){}}
+  \put(2.5,23.5){\small $\Omega$ : $45$ élèves}
+\thicklines
+  \put(28.00,13.00){\rotatebox[origin=l]{94.50}{\rule{1.57mm}{0.35mm}}}
+  \put(27.88,14.56){\rotatebox[origin=l]{103.50}{\rule{1.57mm}{0.35mm}}}
+  \put(27.51,16.09){\rotatebox[origin=l]{112.50}{\rule{1.57mm}{0.35mm}}}
+  \put(26.91,17.54){\rotatebox[origin=l]{121.50}{\rule{1.57mm}{0.35mm}}}
+  \put(26.09,18.88){\rotatebox[origin=l]{130.50}{\rule{1.57mm}{0.35mm}}}
+  \put(25.07,20.07){\rotatebox[origin=l]{139.50}{\rule{1.57mm}{0.35mm}}}
+  \put(23.88,21.09){\rotatebox[origin=l]{148.50}{\rule{1.57mm}{0.35mm}}}
+  \put(22.54,21.91){\rotatebox[origin=l]{157.50}{\rule{1.57mm}{0.35mm}}}
+  \put(21.09,22.51){\rotatebox[origin=l]{166.50}{\rule{1.57mm}{0.35mm}}}
+  \put(19.56,22.88){\rotatebox[origin=l]{175.50}{\rule{1.57mm}{0.35mm}}}
+  \put(18.00,23.00){\rotatebox[origin=l]{-175.50}{\rule{1.57mm}{0.35mm}}}
+  \put(16.44,22.88){\rotatebox[origin=l]{-166.50}{\rule{1.57mm}{0.35mm}}}
+  \put(14.91,22.51){\rotatebox[origin=l]{-157.50}{\rule{1.57mm}{0.35mm}}}
+  \put(13.46,21.91){\rotatebox[origin=l]{-148.50}{\rule{1.57mm}{0.35mm}}}
+  \put(12.12,21.09){\rotatebox[origin=l]{-139.50}{\rule{1.57mm}{0.35mm}}}
+  \put(10.93,20.07){\rotatebox[origin=l]{-130.50}{\rule{1.57mm}{0.35mm}}}
+  \put(9.91,18.88){\rotatebox[origin=l]{-121.50}{\rule{1.57mm}{0.35mm}}}
+  \put(9.09,17.54){\rotatebox[origin=l]{-112.50}{\rule{1.57mm}{0.35mm}}}
+  \put(8.49,16.09){\rotatebox[origin=l]{-103.50}{\rule{1.57mm}{0.35mm}}}
+  \put(8.12,14.56){\rotatebox[origin=l]{-94.50}{\rule{1.57mm}{0.35mm}}}
+  \put(8.00,13.00){\rotatebox[origin=l]{-85.50}{\rule{1.57mm}{0.35mm}}}
+  \put(8.12,11.44){\rotatebox[origin=l]{-76.50}{\rule{1.57mm}{0.35mm}}}
+  \put(8.49,9.91){\rotatebox[origin=l]{-67.50}{\rule{1.57mm}{0.35mm}}}
+  \put(9.09,8.46){\rotatebox[origin=l]{-58.50}{\rule{1.57mm}{0.35mm}}}
+  \put(9.91,7.12){\rotatebox[origin=l]{-49.50}{\rule{1.57mm}{0.35mm}}}
+  \put(10.93,5.93){\rotatebox[origin=l]{-40.50}{\rule{1.57mm}{0.35mm}}}
+  \put(12.12,4.91){\rotatebox[origin=l]{-31.50}{\rule{1.57mm}{0.35mm}}}
+  \put(13.46,4.09){\rotatebox[origin=l]{-22.50}{\rule{1.57mm}{0.35mm}}}
+  \put(14.91,3.49){\rotatebox[origin=l]{-13.50}{\rule{1.57mm}{0.35mm}}}
+  \put(16.44,3.12){\rotatebox[origin=l]{-4.50}{\rule{1.57mm}{0.35mm}}}
+  \put(18.00,3.00){\rotatebox[origin=l]{4.50}{\rule{1.57mm}{0.35mm}}}
+  \put(19.56,3.12){\rotatebox[origin=l]{13.50}{\rule{1.57mm}{0.35mm}}}
+  \put(21.09,3.49){\rotatebox[origin=l]{22.50}{\rule{1.57mm}{0.35mm}}}
+  \put(22.54,4.09){\rotatebox[origin=l]{31.50}{\rule{1.57mm}{0.35mm}}}
+  \put(23.88,4.91){\rotatebox[origin=l]{40.50}{\rule{1.57mm}{0.35mm}}}
+  \put(25.07,5.93){\rotatebox[origin=l]{49.50}{\rule{1.57mm}{0.35mm}}}
+  \put(26.09,7.12){\rotatebox[origin=l]{58.50}{\rule{1.57mm}{0.35mm}}}
+  \put(26.91,8.46){\rotatebox[origin=l]{67.50}{\rule{1.57mm}{0.35mm}}}
+  \put(27.51,9.91){\rotatebox[origin=l]{76.50}{\rule{1.57mm}{0.35mm}}}
+  \put(27.88,11.44){\rotatebox[origin=l]{85.50}{\rule{1.57mm}{0.35mm}}}
+  \put(16.5,12){\small $A$}
+  \put(34,16){\small $\overline{A}$}
+  \put(34,12){\small $30$}
+  \put(15,8){\small $15$}
+\end{picture}
+\end{center}
+\small ($30$ élèves de $\Omega$ ne font pas partie du club $A$.) \par
+\textbf{2) Définition.} Le \mclef{complémentaire} de $A$ dans $\Omega$, noté
+$\overline{A}$, est l'ensemble des éléments de $\Omega$ qui n'appartiennent pas à $A$ :
+$\overline{A}=\{x\in\Omega \; / \; x\notin A\}$. \par
+\prop{\textbf{\textcolor{rougetitre}{Formule (dénombrement)}} \par
+Pour tout sous-ensemble $A$ de $\Omega$ : \;
+$\mathrm{Card}(\overline{A})=\mathrm{Card}(\Omega)-\mathrm{Card}(A)$. \par
+\textit{Ici :} $\mathrm{Card}(\overline{A})=45-15=30$ élèves ne font pas partie du club.}
+\textit{Exemple :} $\Omega=\{1;2;\dots;10\}$, $A=\{2;4;6;8\}$ : alors
+$\overline{A}=\{1;3;5;7;9;10\}$ et $\mathrm{Card}(\overline{A})=10-4=6$. \\ \hline
+
+\moment{Exercice d'application (20 min)} &
+Propose l'exercice, fait passer deux élèves au tableau, corrige. &
+\textbf{Résolution} : cherchent puis passent au tableau. &
+\app \par
+\textbf{1)} On prend $\Omega=\{1;2;\dots;12\}$ et $A$ = ensemble des diviseurs de $12$.
+Donner $A$, puis $\overline{A}$ et vérifier la formule. \par
+\textbf{2)} Sur les $45$ élèves de la 2\iere{} A, $24$ sont des filles. Combien y a-t-il
+de garçons ? \par
+\textbf{Réponses :} \textbf{1)} $A=\{1;2;3;4;6;12\}$, $\mathrm{Card}(A)=6$ ;
+$\overline{A}=\{5;7;8;9;10;11\}$, $\mathrm{Card}(\overline{A})=12-6=6$. \par
+\textbf{2)} $G$ = ensemble des garçons $=\overline{F}$ avec $\mathrm{Card}(F)=24$ :
+$\mathrm{Card}(G)=45-24=21$ garçons. \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice à faire à la maison et annonce la suite. &
+Notent l'exercice de maison. &
+\maison \par
+$\Omega$ = ensemble des $26$ lettres de l'alphabet et $V=\{a;e;i;o;u;y\}$ (voyelles).
+Donner $\overline{V}$ (en décrire le contenu) et calculer $\mathrm{Card}(\overline{V})$. \par
+\textit{(Réponse attendue : $\overline{V}$ = l'ensemble des $20$ consonnes ;
+$\mathrm{Card}(\overline{V})=26-6=20$.)} \\ \hline
+\end{longtable}
+
+\begin{center}
+\underline{\textcolor{rougetitre}{\large\bfseries Institutionalisation \; : \; (trace écrite de la leçon par le professeur)}}
+\end{center}
+
+% ═══════════════════════════════════════════════════════
+%  SÉANCE 4 — PRODUIT CARTÉSIEN DE DEUX ENSEMBLES
+% ═══════════════════════════════════════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+\hline
+\seance{SEANCE 4} \newline \moment{Petite activité (2 min)} &
+Dicte les mini-questions, fait répondre à main levée et chronomètre 2 minutes. &
+Répondent individuellement sur ardoise ou cahier de brouillon. &
+\titreR{Petite activité} \par
+De tête : $\mathrm{Card}(\{a;b\})$ ; \; $\mathrm{Card}(\{1;2;3\})$ ; \;
+$\mathrm{Card}(\overline{A})$ sachant $\mathrm{Card}(\Omega)=20$ et $\mathrm{Card}(A)=8$. \par
+\textbf{Réponses :} $2$ ; \; $3$ ; \; $20-8=12$. \\ \hline
+
+\moment{Correction de l'exercice de maison (5 min)} &
+Fait passer des élèves au tableau, corrige et précise les erreurs. &
+\textbf{Résolution} : deux élèves traitent l'exercice au tableau ; les autres corrigent. &
+\titreR{Correction de l'exercice de maison} \par
+$\overline{V}$ = ensemble des consonnes de l'alphabet ; \;
+$\mathrm{Card}(\overline{V})=26-6=20$. \\ \hline
+
+\moment{Leçon du jour (23 min)} &
+Fait découvrir le produit cartésien à partir des menus de la cantine, fait construire
+le tableau à double entrée, énonce la formule et fait recopier la leçon. &
+Construisent le tableau, comptent les couples et recopient la leçon. &
+\titreR{Trace écrite} \par
+\textbf{IV) Produit cartésien de deux ensembles} \par
+\textbf{1) Situation.} À la cantine scolaire, un menu est composé d'\textbf{un plat et
+d'une boisson}. Plats : $E=\{R;P;F\}$ (riz, pâtes, foutou) ; boissons :
+$F=\{B;J\}$ (bissap, jus d'ananas). Combien de menus différents peut-on composer ?
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(40,26)
+  \put(0,0){\framebox(38,24){}}
+  \put(10,0){\line(0,1){24}}
+  \put(24,0){\line(0,1){24}}
+  \put(0,6){\line(1,0){38}}
+  \put(0,12){\line(1,0){38}}
+  \put(0,18){\line(1,0){38}}
+  \put(3.5,20){\small $\times$}
+  \put(16.5,20){\small $B$}
+  \put(30.5,20){\small $J$}
+  \put(3.5,14){\small $R$}
+  \put(3.5,8){\small $P$}
+  \put(3.5,2){\small $F$}
+  \put(11,14){\small $(R\,;B)$}
+  \put(25,14){\small $(R\,;J)$}
+  \put(11,8){\small $(P\,;B)$}
+  \put(25,8){\small $(P\,;J)$}
+  \put(11,2){\small $(F\,;B)$}
+  \put(25,2){\small $(F\,;J)$}
+\end{picture}
+\end{center}
+\small (Tableau à double entrée : $3\times2=6$ menus différents.) \par
+\textbf{2) Définition.} Le \mclef{produit cartésien} de $E$ et $F$, noté $E\times F$,
+est l'ensemble des couples $(x\,;y)$ avec $x\in E$ et $y\in F$ :
+$E\times F=\{(x\,;y) \; / \; x\in E,\; y\in F\}$. \par
+\prop{\textbf{\textcolor{rougetitre}{Formule (dénombrement)}} \par
+Pour deux ensembles finis $E$ et $F$ : \;
+$\mathrm{Card}(E\times F)=\mathrm{Card}(E)\times\mathrm{Card}(F)$. \par
+\textit{Ici :} $\mathrm{Card}(E\times F)=3\times2=6$ menus différents.}
+\textit{Exemple :} si $\mathrm{Card}(A)=4$ et $\mathrm{Card}(B)=3$, alors
+$\mathrm{Card}(A\times B)=12$ et $\mathrm{Card}(B\times A)=12$ (même cardinal, mais les
+couples $(a\,;b)$ et $(b\,;a)$ sont différents). \\ \hline
+
+\moment{Exercice d'application (20 min)} &
+Propose l'exercice, fait passer deux élèves au tableau, corrige. &
+\textbf{Résolution} : cherchent puis passent au tableau. &
+\app \par
+\textbf{1)} $E=\{1;2;3\}$ et $F=\{5;6\}$ : lister les éléments de $E\times F$ et donner
+$\mathrm{Card}(E\times F)$ ; $E\times F$ et $F\times E$ sont-ils égaux ? \par
+\textbf{2)} Un élève possède $3$ pantalons et $2$ chemises. De combien de tenues
+différentes dispose-t-il ? \par
+\textbf{Réponses :} \textbf{1)} $E\times F=\{(1;5),(1;6),(2;5),(2;6),(3;5),(3;6)\}$,
+$\mathrm{Card}(E\times F)=3\times2=6$ ; non, $E\times F\neq F\times E$ (les couples ne
+sont pas écrits dans le même ordre) mais les cardinaux sont égaux. \par
+\textbf{2)} $\mathrm{Card}(\text{pantalons}\times\text{chemises})=3\times2=6$ tenues. \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice à faire à la maison et annonce la suite. &
+Notent l'exercice de maison. &
+\maison \par
+\textbf{1)} Une garde-robe contient $4$ hauts et $3$ pantalons. Combien de tenues
+différentes ? \par
+\textbf{2)} $A=\{x;y\}$ et $B=\{1;2\}$ : lister $A\times B$ et $B\times A$. \par
+\textit{(Réponse attendue : 1) $4\times3=12$ tenues ; 2) $4$ couples dans chaque
+ensemble.)} \\ \hline
+\end{longtable}
+
+\begin{center}
+\underline{\textcolor{rougetitre}{\large\bfseries Institutionalisation \; : \; (trace écrite de la leçon par le professeur)}}
+\end{center}
+
+% ═══════════════════════════════════════════════════════
+%  SÉANCE 5 — ARBRE DE CHOIX
+% ═══════════════════════════════════════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+\hline
+\seance{SEANCE 5} \newline \moment{Petite activité (2 min)} &
+Dicte les mini-questions, fait répondre à main levée et chronomètre 2 minutes. &
+Répondent individuellement sur ardoise ou cahier de brouillon. &
+\titreR{Petite activité} \par
+De tête : $\mathrm{Card}(A\times B)$ sachant $\mathrm{Card}(A)=2$ et
+$\mathrm{Card}(B)=3$ ; nombre de couples (plat ; boisson) avec $4$ plats et $2$
+boissons. \par
+\textbf{Réponses :} $2\times3=6$ ; \; $4\times2=8$. \\ \hline
+
+\moment{Correction de l'exercice de maison (5 min)} &
+Fait passer des élèves au tableau, corrige et précise les erreurs. &
+\textbf{Résolution} : deux élèves traitent l'exercice au tableau ; les autres corrigent. &
+\titreR{Correction de l'exercice de maison} \par
+\textbf{1)} $4\times3=12$ tenues ; \;
+\textbf{2)} $A\times B=\{(x;1),(x;2),(y;1),(y;2)\}$ ; \;
+$B\times A=\{(1;x),(1;y),(2;x),(2;y)\}$. \\ \hline
+
+\moment{Leçon du jour (23 min)} &
+Fait découvrir l'arbre de choix à partir des routes Lomé–Kpalimé–Atakpamé, construit
+l'arbre au tableau, énonce le principe et fait recopier la leçon. &
+Construisent l'arbre, comptent les chemins et recopient la leçon. &
+\titreR{Trace écrite} \par
+\textbf{V) Arbre de choix} \par
+\textbf{1) Situation.} Pour aller de Lomé à Atakpamé par Kpalimé, un élève choisit
+d'abord l'une des $3$ routes $R_1$, $R_2$, $R_3$ (Lomé $\to$ Kpalimé), puis l'une des
+$2$ routes $T_1$, $T_2$ (Kpalimé $\to$ Atakpamé). Combien de parcours différents ?
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(50,32)
+  \put(1.5,13.5){\rule{1mm}{1mm}}
+  \put(-0.5,16.8){\small Départ}
+  \put(2,14){\rotatebox[origin=l]{26.57}{\rule{20.12mm}{0.35mm}}}
+  \put(2,14){\line(1,0){18}}
+  \put(2,14){\rotatebox[origin=l]{-26.57}{\rule{20.12mm}{0.35mm}}}
+  \put(19.5,22.5){\rule{1mm}{1mm}}
+  \put(19.5,13.5){\rule{1mm}{1mm}}
+  \put(19.5,4.5){\rule{1mm}{1mm}}
+  \put(20.8,23.2){\small $R_1$}
+  \put(20.8,14.2){\small $R_2$}
+  \put(20.8,5.2){\small $R_3$}
+  \put(20,23){\rotatebox[origin=l]{9.46}{\rule{18.25mm}{0.35mm}}}
+  \put(20,23){\rotatebox[origin=l]{-9.46}{\rule{18.25mm}{0.35mm}}}
+  \put(20,14){\rotatebox[origin=l]{9.46}{\rule{18.25mm}{0.35mm}}}
+  \put(20,14){\rotatebox[origin=l]{-9.46}{\rule{18.25mm}{0.35mm}}}
+  \put(20,5){\rotatebox[origin=l]{9.46}{\rule{18.25mm}{0.35mm}}}
+  \put(20,5){\rotatebox[origin=l]{-9.46}{\rule{18.25mm}{0.35mm}}}
+  \put(37.5,25.5){\rule{1mm}{1mm}}
+  \put(37.5,19.5){\rule{1mm}{1mm}}
+  \put(37.5,16.5){\rule{1mm}{1mm}}
+  \put(37.5,10.5){\rule{1mm}{1mm}}
+  \put(37.5,7.5){\rule{1mm}{1mm}}
+  \put(37.5,1.5){\rule{1mm}{1mm}}
+  \put(38.8,25.8){\small $T_1$}
+  \put(38.8,19.8){\small $T_2$}
+  \put(38.8,16.8){\small $T_1$}
+  \put(38.8,10.8){\small $T_2$}
+  \put(38.8,7.8){\small $T_1$}
+  \put(38.8,1.8){\small $T_2$}
+\end{picture}
+\end{center}
+\small (Chaque chemin de « Départ » à une extrémité est un parcours ; on en compte
+$6=3\times2$.) \par
+\textbf{2) Définition.} Un \mclef{arbre de choix} est un schéma à branches qui
+présente, dans l'ordre, tous les choix possibles ; chaque chemin complet représente
+une possibilité. \par
+\prop{\textbf{\textcolor{rougetitre}{Principe (dénombrement)}} \par
+Lorsqu'une opération se fait en deux étapes à $p$ choix puis $q$ choix, le nombre de
+résultats possibles est $p\times q$. \par
+\textit{Ici :} $3\times2=6$ parcours. C'est le même principe que
+$\mathrm{Card}(A\times B)=\mathrm{Card}(A)\times\mathrm{Card}(B)$.} \\ \hline
+
+\moment{Exercice d'application (20 min)} &
+Propose l'exercice, fait passer deux élèves au tableau, corrige. &
+\textbf{Résolution} : cherchent puis passent au tableau. &
+\app \par
+\textbf{1)} Un code secret est formé de deux chiffres (la répétition est autorisée).
+Combien de codes peut-on écrire ? Faire l'arbre pour les deux premières branches. \par
+\textbf{2)} On lance deux dés (un rouge et un vert). Combien de résultats
+(chiffre du rouge ; chiffre du vert) peut-on obtenir ? \par
+\textbf{Réponses :} \textbf{1)} $10\times10=100$ codes (de $00$ à $99$). \par
+\textbf{2)} $6\times6=36$ résultats. \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice à faire à la maison et annonce la suite. &
+Notent l'exercice de maison. &
+\maison \par
+\textbf{1)} Pour aller au marché, maman part par l'une des $2$ pistes du village et
+revient par l'une des $3$ routes bitumées. Combien de trajets aller-retour différents ? \par
+\textbf{2)} Un menu comporte une entrée parmi $4$ et un plat parmi $3$. Combien de
+menus différents ? \par
+\textit{(Réponse attendue : 1) $2\times3=6$ trajets ; 2) $4\times3=12$ menus.)} \\ \hline
+\end{longtable}
+
+\begin{center}
+\underline{\textcolor{rougetitre}{\large\bfseries Institutionalisation \; : \; (trace écrite de la leçon par le professeur)}}
+\end{center}
+
+% ═══════════════════════════════════════════════════════
+%  SÉANCE 6 — SITUATIONS-PROBLÈMES DE DÉNOMBREMENT (SYNTHÈSE)
+% ═══════════════════════════════════════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+\hline
+\seance{SEANCE 6} \newline \moment{Petite activité (2 min)} &
+Interroge à main levée et chronomètre 2 minutes. &
+Répondent individuellement sur ardoise ou cahier de brouillon. &
+\titreR{Petite activité} \par
+Citer les outils de dénombrement étudiés dans la leçon. \par
+\textbf{Réponses :} réunion et intersection (formule du cardinal) ; complémentaire ;
+produit cartésien ; arbre de choix. \\ \hline
+
+\moment{Correction de l'exercice de maison (5 min)} &
+Fait passer des élèves au tableau, corrige et précise les erreurs. &
+\textbf{Résolution} : deux élèves traitent l'exercice au tableau ; les autres corrigent. &
+\titreR{Correction de l'exercice de maison} \par
+\textbf{1)} $2\times3=6$ trajets aller-retour ; \;
+\textbf{2)} $4\times3=12$ menus différents. \\ \hline
+
+\moment{Leçon du jour (23 min)} &
+Présente la situation-problème de synthèse, guide la recherche en groupes, organise la
+confrontation et fait recopier le récapitulatif. &
+Cherchent en groupes, exposent leurs démarches et recopient la leçon. &
+\titreR{Situation-problème de synthèse} \par
+{\itshape Sur les $45$ élèves de la 2\iere{} A, $24$ étudient l'anglais ($A$), $20$
+étudient l'espagnol ($E$) et $8$ étudient les deux langues.}
+\textbf{Problème :} \textbf{1)} combien d'élèves étudient au moins une langue ? \;
+\textbf{2)} combien n'étudient aucune langue ? \par
+\textbf{Résolution :} \par
+\textbf{1)} $\mathrm{Card}(A\cup E)=\mathrm{Card}(A)+\mathrm{Card}(E)
+-\mathrm{Card}(A\cap E)=24+20-8=36$ élèves. \par
+\textbf{2)} l'ensemble des élèves n'étudiant aucune langue est le complémentaire de
+$A\cup E$ dans $\Omega$ : $45-36=9$ élèves.
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(42,26)
+  \put(1,1){\framebox(40,22){}}
+  \put(2.5,19.5){\small $\Omega$ : $45$}
+\thicklines
+  \put(22.00,11.00){\rotatebox[origin=l]{94.50}{\rule{1.26mm}{0.35mm}}}
+  \put(21.90,12.25){\rotatebox[origin=l]{103.50}{\rule{1.26mm}{0.35mm}}}
+  \put(21.61,13.47){\rotatebox[origin=l]{112.50}{\rule{1.26mm}{0.35mm}}}
+  \put(21.13,14.63){\rotatebox[origin=l]{121.50}{\rule{1.26mm}{0.35mm}}}
+  \put(20.47,15.70){\rotatebox[origin=l]{130.50}{\rule{1.26mm}{0.35mm}}}
+  \put(19.66,16.66){\rotatebox[origin=l]{139.50}{\rule{1.26mm}{0.35mm}}}
+  \put(18.70,17.47){\rotatebox[origin=l]{148.50}{\rule{1.26mm}{0.35mm}}}
+  \put(17.63,18.13){\rotatebox[origin=l]{157.50}{\rule{1.26mm}{0.35mm}}}
+  \put(16.47,18.61){\rotatebox[origin=l]{166.50}{\rule{1.26mm}{0.35mm}}}
+  \put(15.25,18.90){\rotatebox[origin=l]{175.50}{\rule{1.26mm}{0.35mm}}}
+  \put(14.00,19.00){\rotatebox[origin=l]{-175.50}{\rule{1.26mm}{0.35mm}}}
+  \put(12.75,18.90){\rotatebox[origin=l]{-166.50}{\rule{1.26mm}{0.35mm}}}
+  \put(11.53,18.61){\rotatebox[origin=l]{-157.50}{\rule{1.26mm}{0.35mm}}}
+  \put(10.37,18.13){\rotatebox[origin=l]{-148.50}{\rule{1.26mm}{0.35mm}}}
+  \put(9.30,17.47){\rotatebox[origin=l]{-139.50}{\rule{1.26mm}{0.35mm}}}
+  \put(8.34,16.66){\rotatebox[origin=l]{-130.50}{\rule{1.26mm}{0.35mm}}}
+  \put(7.53,15.70){\rotatebox[origin=l]{-121.50}{\rule{1.26mm}{0.35mm}}}
+  \put(6.87,14.63){\rotatebox[origin=l]{-112.50}{\rule{1.26mm}{0.35mm}}}
+  \put(6.39,13.47){\rotatebox[origin=l]{-103.50}{\rule{1.26mm}{0.35mm}}}
+  \put(6.10,12.25){\rotatebox[origin=l]{-94.50}{\rule{1.26mm}{0.35mm}}}
+  \put(6.00,11.00){\rotatebox[origin=l]{-85.50}{\rule{1.26mm}{0.35mm}}}
+  \put(6.10,9.75){\rotatebox[origin=l]{-76.50}{\rule{1.26mm}{0.35mm}}}
+  \put(6.39,8.53){\rotatebox[origin=l]{-67.50}{\rule{1.26mm}{0.35mm}}}
+  \put(6.87,7.37){\rotatebox[origin=l]{-58.50}{\rule{1.26mm}{0.35mm}}}
+  \put(7.53,6.30){\rotatebox[origin=l]{-49.50}{\rule{1.26mm}{0.35mm}}}
+  \put(8.34,5.34){\rotatebox[origin=l]{-40.50}{\rule{1.26mm}{0.35mm}}}
+  \put(9.30,4.53){\rotatebox[origin=l]{-31.50}{\rule{1.26mm}{0.35mm}}}
+  \put(10.37,3.87){\rotatebox[origin=l]{-22.50}{\rule{1.26mm}{0.35mm}}}
+  \put(11.53,3.39){\rotatebox[origin=l]{-13.50}{\rule{1.26mm}{0.35mm}}}
+  \put(12.75,3.10){\rotatebox[origin=l]{-4.50}{\rule{1.26mm}{0.35mm}}}
+  \put(14.00,3.00){\rotatebox[origin=l]{4.50}{\rule{1.26mm}{0.35mm}}}
+  \put(15.25,3.10){\rotatebox[origin=l]{13.50}{\rule{1.26mm}{0.35mm}}}
+  \put(16.47,3.39){\rotatebox[origin=l]{22.50}{\rule{1.26mm}{0.35mm}}}
+  \put(17.63,3.87){\rotatebox[origin=l]{31.50}{\rule{1.26mm}{0.35mm}}}
+  \put(18.70,4.53){\rotatebox[origin=l]{40.50}{\rule{1.26mm}{0.35mm}}}
+  \put(19.66,5.34){\rotatebox[origin=l]{49.50}{\rule{1.26mm}{0.35mm}}}
+  \put(20.47,6.30){\rotatebox[origin=l]{58.50}{\rule{1.26mm}{0.35mm}}}
+  \put(21.13,7.37){\rotatebox[origin=l]{67.50}{\rule{1.26mm}{0.35mm}}}
+  \put(21.61,8.53){\rotatebox[origin=l]{76.50}{\rule{1.26mm}{0.35mm}}}
+  \put(21.90,9.75){\rotatebox[origin=l]{85.50}{\rule{1.26mm}{0.35mm}}}
+  \put(34.00,11.00){\rotatebox[origin=l]{94.50}{\rule{1.26mm}{0.35mm}}}
+  \put(33.90,12.25){\rotatebox[origin=l]{103.50}{\rule{1.26mm}{0.35mm}}}
+  \put(33.61,13.47){\rotatebox[origin=l]{112.50}{\rule{1.26mm}{0.35mm}}}
+  \put(33.13,14.63){\rotatebox[origin=l]{121.50}{\rule{1.26mm}{0.35mm}}}
+  \put(32.47,15.70){\rotatebox[origin=l]{130.50}{\rule{1.26mm}{0.35mm}}}
+  \put(31.66,16.66){\rotatebox[origin=l]{139.50}{\rule{1.26mm}{0.35mm}}}
+  \put(30.70,17.47){\rotatebox[origin=l]{148.50}{\rule{1.26mm}{0.35mm}}}
+  \put(29.63,18.13){\rotatebox[origin=l]{157.50}{\rule{1.26mm}{0.35mm}}}
+  \put(28.47,18.61){\rotatebox[origin=l]{166.50}{\rule{1.26mm}{0.35mm}}}
+  \put(27.25,18.90){\rotatebox[origin=l]{175.50}{\rule{1.26mm}{0.35mm}}}
+  \put(26.00,19.00){\rotatebox[origin=l]{-175.50}{\rule{1.26mm}{0.35mm}}}
+  \put(24.75,18.90){\rotatebox[origin=l]{-166.50}{\rule{1.26mm}{0.35mm}}}
+  \put(23.53,18.61){\rotatebox[origin=l]{-157.50}{\rule{1.26mm}{0.35mm}}}
+  \put(22.37,18.13){\rotatebox[origin=l]{-148.50}{\rule{1.26mm}{0.35mm}}}
+  \put(21.30,17.47){\rotatebox[origin=l]{-139.50}{\rule{1.26mm}{0.35mm}}}
+  \put(20.34,16.66){\rotatebox[origin=l]{-130.50}{\rule{1.26mm}{0.35mm}}}
+  \put(19.53,15.70){\rotatebox[origin=l]{-121.50}{\rule{1.26mm}{0.35mm}}}
+  \put(18.87,14.63){\rotatebox[origin=l]{-112.50}{\rule{1.26mm}{0.35mm}}}
+  \put(18.39,13.47){\rotatebox[origin=l]{-103.50}{\rule{1.26mm}{0.35mm}}}
+  \put(18.10,12.25){\rotatebox[origin=l]{-94.50}{\rule{1.26mm}{0.35mm}}}
+  \put(18.00,11.00){\rotatebox[origin=l]{-85.50}{\rule{1.26mm}{0.35mm}}}
+  \put(18.10,9.75){\rotatebox[origin=l]{-76.50}{\rule{1.26mm}{0.35mm}}}
+  \put(18.39,8.53){\rotatebox[origin=l]{-67.50}{\rule{1.26mm}{0.35mm}}}
+  \put(18.87,7.37){\rotatebox[origin=l]{-58.50}{\rule{1.26mm}{0.35mm}}}
+  \put(19.53,6.30){\rotatebox[origin=l]{-49.50}{\rule{1.26mm}{0.35mm}}}
+  \put(20.34,5.34){\rotatebox[origin=l]{-40.50}{\rule{1.26mm}{0.35mm}}}
+  \put(21.30,4.53){\rotatebox[origin=l]{-31.50}{\rule{1.26mm}{0.35mm}}}
+  \put(22.37,3.87){\rotatebox[origin=l]{-22.50}{\rule{1.26mm}{0.35mm}}}
+  \put(23.53,3.39){\rotatebox[origin=l]{-13.50}{\rule{1.26mm}{0.35mm}}}
+  \put(24.75,3.10){\rotatebox[origin=l]{-4.50}{\rule{1.26mm}{0.35mm}}}
+  \put(26.00,3.00){\rotatebox[origin=l]{4.50}{\rule{1.26mm}{0.35mm}}}
+  \put(27.25,3.10){\rotatebox[origin=l]{13.50}{\rule{1.26mm}{0.35mm}}}
+  \put(28.47,3.39){\rotatebox[origin=l]{22.50}{\rule{1.26mm}{0.35mm}}}
+  \put(29.63,3.87){\rotatebox[origin=l]{31.50}{\rule{1.26mm}{0.35mm}}}
+  \put(30.70,4.53){\rotatebox[origin=l]{40.50}{\rule{1.26mm}{0.35mm}}}
+  \put(31.66,5.34){\rotatebox[origin=l]{49.50}{\rule{1.26mm}{0.35mm}}}
+  \put(32.47,6.30){\rotatebox[origin=l]{58.50}{\rule{1.26mm}{0.35mm}}}
+  \put(33.13,7.37){\rotatebox[origin=l]{67.50}{\rule{1.26mm}{0.35mm}}}
+  \put(33.61,8.53){\rotatebox[origin=l]{76.50}{\rule{1.26mm}{0.35mm}}}
+  \put(33.90,9.75){\rotatebox[origin=l]{85.50}{\rule{1.26mm}{0.35mm}}}
+  \put(9,10.5){\small $16$}
+  \put(19.6,10.5){\small $8$}
+  \put(29.5,10.5){\small $12$}
+  \put(36.5,14.5){\small $9$}
+  \put(11,16.5){\small $A$}
+  \put(28.5,16.5){\small $E$}
+\end{picture}
+\end{center}
+\small (Lecture du diagramme : $16+8+12=36$ élèves étudient au moins une langue ;
+$9$ n'en étudient aucune.) \par
+\titreR{Trace écrite : récapitulatif} \par
+\textbf{VI) Outils de dénombrement} \par
+— \mclef{Réunion et intersection} :
+$\mathrm{Card}(A\cup B)=\mathrm{Card}(A)+\mathrm{Card}(B)-\mathrm{Card}(A\cap B)$ ; \par
+— \mclef{Complémentaire} : $\mathrm{Card}(\overline{A})=\mathrm{Card}(\Omega)
+-\mathrm{Card}(A)$ ; \par
+— \mclef{Produit cartésien} : $\mathrm{Card}(A\times B)=\mathrm{Card}(A)
+\times\mathrm{Card}(B)$ ; \par
+— \mclef{Arbre de choix} : le nombre de chemins est le produit des nombres de choix de
+chaque étape. \par
+\textbf{Conclusion :} pour mathématiser une situation de dénombrement, on choisit
+l'outil adapté (« au moins un » $\to$ réunion ; « ne pas » $\to$ complémentaire ;
+« couple, succession de choix » $\to$ produit cartésien ou arbre). \\ \hline
+
+\moment{Exercice d'application (20 min)} &
+Propose la situation, fait chercher en groupes, fait exposer, corrige. &
+\textbf{Résolution} : cherchent en groupes, exposent puis corrigent entre eux. &
+\app \par
+\textit{La bibliothèque du LYCÉE KPETA compte $40$ ouvrages : $25$ sont des romans
+($R$), $17$ sont des contes ($C$) et $6$ sont à la fois des romans et des contes.}
+\par
+\textbf{1)} Combien d'ouvrages appartiennent à au moins un des deux genres ? \par
+\textbf{2)} Combien d'ouvrages sont des romans seulement ? \par
+\textbf{3)} Combien d'ouvrages n'appartiennent à aucun des deux genres ? \par
+\textbf{4)} Un lecteur choisit un ouvrage puis, s'il le veut, un marque-page parmi $3$
+couleurs : combien de choix (ouvrage ; marque-page) ? \par
+\textbf{Réponses :} \textbf{1)} $\mathrm{Card}(R\cup C)=25+17-6=36$ ; \;
+\textbf{2)} romans seulement : $25-6=19$ ; \; \textbf{3)} $40-36=4$ ; \;
+\textbf{4)} $40\times3=120$ choix. \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice à faire à la maison, annonce l'évaluation prévue et conclut la leçon. &
+Notent l'exercice de maison. &
+\maison \par
+\textbf{1)} Dans une classe de $35$ élèves, $18$ sont au club de sport ($S$), $12$ au
+club de musique ($M$) et $5$ aux deux clubs. Combien d'élèves sont à au moins un club ?
+à aucun club ? \par
+\textbf{2)} Écrire tous les mots de deux lettres formés avec les lettres de
+$V=\{A;B;C\}$ (répétition autorisée) et en donner le nombre. \par
+\textit{(Réponse attendue : 1) $25$ élèves à au moins un club ; $10$ à aucun ;
+2) $AA$, $AB$, … , $CC$ : $3\times3=9$ mots.)} \\ \hline
+\end{longtable}
+
+\end{document}

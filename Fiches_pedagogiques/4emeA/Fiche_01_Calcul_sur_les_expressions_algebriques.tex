@@ -1,0 +1,559 @@
+% ═══════════════════════════════════════════════════════════════════════
+%  FICHE PEDAGOGIQUE DE MATHEMATIQUES — TERMINISH
+%  Classe : 4ème A — Année scolaire 2026-2027 — 6 séances de 55 min
+%  Thème 2 : Programme de calcul – calcul littéral
+%  LEÇON 2 : CALCUL SUR LES EXPRESSIONS ALGEBRIQUES
+%  Canevas : fiche "Propriété de Thalès" (3ème) — même mise en page.
+%
+%  Plan de cours (trace écrite) :
+%   I) Présentation et vocabulaire : 1) Définition d'une expression
+%      algébrique ; 2) Produits remarquables
+%   II) Opérations sur les expressions algébriques : 1) Produits
+%      remarquables ; 2) Règles de calcul : développement, réduction ;
+%      3) Factorisation ; 4) Valeur numérique
+%   III) Utilisation des définitions et propriétés pour justifier :
+%      1) Équivalence de deux programmes de calcul ; 2) Démontrer une
+%      propriété arithmétique
+%
+%  Structure : Séance 1 = situation-problème + présentation des
+%  productions (7 min) + synthèse (3 min) + trace écrite (5 min).
+%  Séances 2 à 6 : petite activité (2 min), correction de maison (5 min),
+%  leçon du jour (23 min), exercice d'application (20 min), maison (5 min).
+%
+%  Compatible Overleaf (pdflatex/xelatex) ET le moteur local :
+%  packages : article, geometry, xcolor, amsmath, longtable.
+% ═══════════════════════════════════════════════════════════════════════
+\documentclass[10pt]{article}
+
+\usepackage[a4paper,landscape,top=1.5cm,bottom=1.3cm,left=1.1cm,right=1.1cm]{geometry}
+\usepackage{amsmath}
+\usepackage[RGB]{xcolor}
+\usepackage{graphicx}
+\usepackage{longtable}
+
+% ── Couleurs du canevas ────────────────────────────────────────────────
+\definecolor{rougetitre}{RGB}{192,0,0}      % titres rouges soulignés
+\definecolor{rougemaison}{RGB}{160,30,30}   % exercice de maison
+\definecolor{vertentete}{RGB}{215,235,210}  % fond vert pâle (en-têtes)
+\definecolor{bleuseance}{RGB}{46,110,180}   % cadres bleus des séances
+\definecolor{bleufond}{RGB}{222,235,247}    % fond bleu pâle (n° séance)
+\definecolor{jaunesurl}{RGB}{255,230,90}    % surlignage mots-clés
+\definecolor{vertbilan}{RGB}{230,242,225}   % fond vert très pâle
+
+\setlength{\parindent}{0pt}
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.25}
+
+% ── Raccourcis de style ────────────────────────────────────────────────
+\newcommand{\titreR}[1]{\underline{\textcolor{rougetitre}{\bfseries #1}}}
+\newcommand{\app}{\titreR{Exercice d'application}}
+\newcommand{\maison}{\underline{\textcolor{rougemaison}{\bfseries Exercice de maison}}}
+\newcommand{\seance}[1]{\fcolorbox{bleuseance}{bleufond}{\textcolor{bleuseance}{\bfseries #1}}}
+\newcommand{\moment}[1]{\textbf{\itshape #1}}
+\newcommand{\mclef}[1]{\colorbox{jaunesurl}{#1}}
+\newcommand{\prop}[1]{\par\medskip\noindent\fbox{\parbox{0.96\linewidth}{#1}}\par\medskip}
+\newcommand{\rouge}[1]{\textcolor{rougetitre}{\bfseries #1}}
+\newcommand{\ieme}{\textsuperscript{ième}}
+\newcommand{\iere}{\textsuperscript{ière}}
+\newcommand{\ier}{\textsuperscript{er}}
+\newcommand{\ere}{\textsuperscript{ère}}
+
+% ── En-tête, filigramme et pied de page ────────────────────────────────
+\newcommand{\filigrane}{%
+  \rlap{%
+    \raisebox{7.5cm}[0pt][0pt]{%
+      \hbox to 0pt{\hskip 3cm
+        \rotatebox{30}{\scalebox{3}{\textcolor{gray!38}{\bfseries KODJONE Kodjo}}}%
+      \hss}}}}
+\makeatletter
+\def\ps@fiche{%
+  \def\@oddhead{\hfill\underline{\textcolor{rougetitre}{\bfseries FICHE PEDAGOGIQUE DE MATHEMATIQUES}}\hfill}%
+  \def\@oddfoot{\filigrane
+                \hfill\textcolor{bleuseance}{\bfseries M.KODJONE Kodjo Prof de Maths}\hfill
+                \fcolorbox{black}{vertentete}{\arabic{page}}\hfill}%
+}
+\makeatother
+\pagestyle{fiche}
+
+\begin{document}
+
+% ═════════════════════════ CARTOUCHE D'IDENTIFICATION ═════════════════════════
+\begin{tabular}{|p{8.6cm}|p{8.6cm}|p{8.6cm}|}
+\hline
+\textbf{NOM} \; : \; {\bfseries KODJONE} &
+\textbf{DRE} \; : \; {\bfseries PLO} &
+\textbf{FICHE N\textsuperscript{o}} \; : \; {\bfseries 1} \\ \hline
+\textbf{PRÉNOM} \; : \; {\bfseries Kodjo} &
+\textbf{IESG} \; : \; {\bfseries KPALIME} &
+\textbf{DISCIPLINE} \; : \; {\bfseries MATHS} \\ \hline
+\textbf{CONTACT} \; : \; {\bfseries 93 150 178} &
+\textbf{ÉTABLISSEMENT} \; : \; {\bfseries LYCEE KPETA} &
+\textbf{CLASSE} \; : \; {\bfseries 4\ieme{} A} \\ \hline
+\textbf{EFFECTIF} \; : \; \textbf{G} : \dotfill \quad
+                           \textbf{F} : \dotfill \quad
+                           \textbf{T} : \dotfill &
+\textbf{ANNÉE SCOLAIRE} \; : \; {\bfseries 2026 - 2027} &
+\textbf{SEMAINE} \; : \; {\bfseries 1} \\ \hline
+\end{tabular}
+
+\bigskip
+\fcolorbox{black}{vertbilan}{%
+\begin{minipage}{27.1cm}
+\smallskip
+{\bfseries COMPETENCE TERMINALE 2 :} \textit{Résoudre des problèmes de la vie courante faisant appel
+à des programmes de calcul, à l'activité calcul littéral et à l'organisation de calculs
+à l'aide d'expressions algébriques.}\\[3pt]
+{\bfseries THEME 2 :} \hfill {\Large\bfseries PROGRAMME DE CALCUL – CALCUL LITTERAL} \hfill\mbox{}\\[3pt]
+{\bfseries LEÇON 2 :} \hfill \fcolorbox{rougetitre}{white}{\textcolor{rougetitre}{\large\bfseries CALCUL SUR LES EXPRESSIONS ALGEBRIQUES}} \hfill\mbox{}\\[3pt]
+{\bfseries NOMBRE DE SÉANCES :} \; {\bfseries 6} \qquad
+{\bfseries DURÉE D'UNE SÉANCE :} \; {\bfseries 55 min}\\[3pt]
+{\bfseries SUPPORTS DIDACTIQUES PRINCIPAUX :} \; Enoncé de la situation d'apprentissage ; CIAM 4\ieme ; CARGO 4\ieme ; Programme et son guide\\[3pt]
+{\bfseries MATERIEL DIDACTIQUE ORDINAIRE :} \; Régie ; craie ; règle ; cahiers \qquad
+{\bfseries MATERIEL DIDACTIQUE ADAPTÉ :} \; Fiche d'activités ; expressions découpées (étiquettes)\\[3pt]
+{\bfseries CONSIGNE POUR LE PROFESSEUR DE SUIVI :} \; Vérifier le respect des moments didactiques, la synthèse avant la trace écrite et la trace écrite de la leçon.\\[3pt]
+{\bfseries PREREQUIS :} \; Priorités opératoires ; programmes de calcul ; carré d'un nombre ; vocabulaire (somme, différence, produit, terme, facteur) ;
+propriétés de la multiplication (commutativité, associativité, distributivité sur l'addition).
+\smallskip
+\end{minipage}}
+
+\bigskip
+% ═════════════════════════ TABLEAU CAPACITES / CONTENUS ═════════════════════════
+\begin{tabular}{|p{9.4cm}|p{17.3cm}|}
+\hline
+\multicolumn{1}{|c|}{\colorbox{vertentete}{\makebox[9.2cm][c]{\bfseries Capacités}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[17.1cm][c]{\bfseries Contenus}}} \\ \hline
+Reconnaître une expression algébrique et son vocabulaire &
+\small Expressions algébriques : \mclef{variable}, \mclef{constante}, \mclef{terme}, \mclef{coefficient} ; traduction d'un programme de calcul. \\ \hline
+Reconnaître et énoncer les produits remarquables &
+\small $(a+b)^2=a^2+2ab+b^2$ ; \; $(a-b)^2=a^2-2ab+b^2$ ; \; $(a+b)(a-b)=a^2-b^2$. \\ \hline
+Développer et réduire une expression algébrique &
+\small Règles de calcul : distributivité $k\,(a+b)=ka+kb$ ; \; $(a+b)\,(c+d)=ac+ad+bc+bd$ ; produits remarquables ; regroupement des termes semblables. \\ \hline
+Factoriser une expression algébrique &
+\small Facteur commun : $ka+kb=k\,(a+b)$ ; \; identités remarquables inversées. \\ \hline
+Calculer la valeur numérique d'une expression algébrique &
+\small Substitution : remplacer la variable \small par la valeur donnée, en respectant les priorités opératoires. \\ \hline
+Utiliser les définitions et propriétés pour justifier &
+\small Équivalence de deux programmes de calcul ; \small démonstration d'une propriété arithmétique. \\ \hline
+\end{tabular}
+
+\bigskip
+{\bfseries Stratégie pédagogique}
+
+\begin{itemize}
+  \item[] — \; Travail individuel
+  \item[] — \; Travail en groupe
+  \item[] — \; Les discussions
+\end{itemize}
+
+\bigskip
+% ═════════════════════════ DEROULEMENT : TABLEAU A 4 COLONNES ═════════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+% ── en-tête répété sur chaque page ──
+\hline
+\multicolumn{1}{|c|}{\colorbox{vertentete}{\parbox{2.15cm}{\centering\small\bfseries Moment didactique}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[5.2cm][c]{\small\bfseries Activité de l'enseignant}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[4.4cm][c]{\small\bfseries Activité de l'élève}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[13.7cm][c]{\small\bfseries Trace écrite}}} \\
+\hline
+\endfirsthead
+\hline
+\multicolumn{1}{|c|}{\colorbox{vertentete}{\parbox{2.15cm}{\centering\small\bfseries Moment didactique}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[5.2cm][c]{\small\bfseries Activité de l'enseignant}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[4.4cm][c]{\small\bfseries Activité de l'élève}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[13.7cm][c]{\small\bfseries Trace écrite}}} \\
+\hline
+\endhead
+% ═════════════════════ SÉANCE 1 ═════════════════════
+\seance{SEANCE 1} \newline \moment{Prérequis (5 min)} &
+\titreR{Exercice} : Consigne d'effectuer au tableau les calculs
+$A=3\times5+4\times2$, \; $B=2\times(7+3)$, puis de dire, en français, ce qu'on a fait
+(« j'ai multiplié… puis j'ai ajouté… »). Corrige et fait le point. &
+\textbf{Résolution} : les élèves effectuent les calculs en respectant les priorités
+et décrivent oralement le programme de calcul suivi. &
+\titreR{Exercice prérequis} \par $A=3\times5+4\times2=15+8=23$ \par
+$B=2\times(7+3)=2\times10=20$ \par
+\mclef{Programme de calcul} : choisir un nombre, le multiplier par $3$, ajouter $4$. \\ \hline
+
+\moment{Présentation de la situation-problème (5 min)} &
+Recopie la situation au tableau et la lit à haute voix. &
+Recopient la situation dans le cahier et la lisent. &
+\titreR{Situation d'apprentissage} \par
+\textit{Pour agrandir son poulailler, M. ABALO veut construire un nouveau parc
+rectangulaire de longueur $(3x+2)$~m et de largeur $(x+4)$~m. Pour connaître la longueur
+de grillage nécessaire, il demande à ses trois enfants de calculer le périmètre $P$
+du rectangle. Le premier écrit : $P=2\,(3x+2)+2\,(x+4)$ ; le deuxième écrit :
+$P=(3x+2)+(3x+2)+(x+4)+(x+4)$ ; la troisième réduit et écrit : $P=8x+12$.} \par
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(84,26)
+  \put(2,2){\framebox(56,17){}}
+  \put(15,21){\small longueur $=(3x+2)$ m}
+  \put(21,8){\small parc rectangulaire}
+  \put(62,12){\small largeur}
+  \put(62,8){\small $=(x+4)$ m}
+\end{picture}
+\end{center}
+\textbf{Problème :} les trois écritures donnent-elles le même périmètre ? Laquelle est
+la plus simple ? \\ \hline
+
+\moment{Appropriation de la situation-problème et de la tâche (10 min)} &
+Explique les mots difficiles, pose des questions de compréhension et répond aux
+interrogations des élèves. &
+Exploquent la situation, posent des questions et relèvent les mots difficiles. &
+\rouge{Consignes :} \par
+\textbf{1)} Traduire le programme de calcul de chacun des trois enfants. \par
+\textbf{2)} Montrer que les trois écritures donnent le même périmètre. \par
+\textbf{3)} Donner l'écriture la plus simple de $P$, puis calculer ce périmètre pour $x=2$~m. \\ \hline
+
+\moment{Travail individuel (5 min) et travail en groupe (15 min)} &
+Vérifie les productions des élèves, fait des remarques à haute voix, circule et guide
+les groupes sans donner la solution. &
+\textbf{Résolution} : cherchent individuellement puis en groupe ; confrontent leurs
+écritures ; rédigent une production. &
+\titreR{Recherche} \par
+\textbf{1)} $1^{\text{er}}$ enfant : choisir $x$, calculer $3x+2$, le doubler, puis
+calculer $x+4$, le doubler, et ajouter. \par
+$2^{\text{e}}$ enfant : additionner les quatre côtés. \par
+$3^{\text{e}}$ enfant : regrouper les termes semblables. \par
+\textbf{2)} $2\,(3x+2)+2\,(x+4)=6x+4+2x+8=(6x+2x)+(4+8)=8x+12$ ; \par
+$(3x+2)+(3x+2)+(x+4)+(x+4)=(3x+3x+x+x)+(2+2+4+4)=8x+12$. \par
+\textbf{3)} Écriture la plus simple : $P=8x+12$ ; pour $x=2$ : $P=8\times2+12=28$~m. \\ \hline
+
+\moment{Présentation des productions (7 min)} &
+Fait exposer les productions des groupes au tableau, organise la confrontation des
+remarques et apporte des amendements. &
+Exposent leurs productions ; critiquent celles des camarades ; apportent des
+amendements à la présentation. &
+\titreR{Présentation des productions} \par
+Les trois groupes exposent : le programme de calcul du 1\ier{} enfant ;
+la somme des quatre côtés du 2\ieme{} enfant réduite :
+$(3x+3x+x+x)+(2+2+4+4)=8x+12$ ; le développement de l'écriture de la 3\ieme{} enfant :
+$2\,(3x+2)+2\,(x+4)=8x+12$. \par
+\textbf{Constat :} les trois écritures donnent le même périmètre : $8x+12$. \\ \hline
+
+\moment{Synthèse (3 min)} &
+Fait reformuler, en trois minutes, ce que la situation a permis de découvrir ;
+corrige les formulations puis valide. &
+Réforment avec leurs propres mots ; s'écoutent et se corrigent entre eux. &
+\titreR{Synthèse} \par
+\textbf{Données :} longueur $=3x+2$ ; largeur $=x+4$ ; $P$ le périmètre. \par
+\textbf{Calculs :} $P=L+l+L+l=2\,(3x+2)+2\,(x+4)$ \par
+\hfill $=6x+4+2x+8=(6x+2x)+(4+8)=8x+12$. \par
+Pour $x=2$~m : $P=8\times2+12=28$~m. \par
+\textbf{Conclusion :} les trois écritures sont égales ; la plus simple est $P=8x+12$.
+On dit qu'on l'a \mclef{réduite}. \\ \hline
+
+\moment{Trace écrite : institutionalisation (5 min)} &
+Fait recopier la synthèse de la situation et les premières définitions. &
+Recopient la trace écrite de la leçon. &
+\titreR{À retenir (recopié par les élèves)} \par
+\textbf{I) Présentation et vocabulaire} \par
+\textbf{1) Définition d'une expression algébrique} \par
+— Une \mclef{expression algébrique} est une écriture dans laquelle des nombres et des
+lettres sont reliés par des opérations. \par
+— La lettre s'appelle la \mclef{variable} ; chaque morceau ajouté est un
+\mclef{terme}, le nombre devant la variable est son \mclef{coefficient}. \par
+— Une même expression peut s'écrire de plusieurs façons ; on apprendra à
+\textbf{réduire}, \textbf{développer}, \textbf{factoriser} et \textbf{calculer sa
+valeur numérique}. \\ \hline
+\end{longtable}
+
+\begin{center}
+\underline{\textcolor{rougetitre}{\large\bfseries Institutionalisation \; : \; (trace écrite de la leçon par le professeur)}}
+\end{center}
+
+% ═════════════════════ SÉANCE 2 ═════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+\hline
+\seance{SEANCE 2} \newline \moment{Petite activité (2 min)} &
+Dicte les mini-questions, fait répondre à main levée et chronomètre 2 minutes. &
+Répondent individuellement sur ardoise ou cahier de brouillon. &
+\titreR{Petite activité} \par
+De tête : développer $2\,(x+5)$ ; \; $3x\,(x+2)$ ; \; calculer $11^2$ et $12^2$. \par
+\textbf{Réponses :} $2x+10$ ; \; $3x^2+6x$ ; \; $121$ ; \; $144$. \\ \hline
+
+\moment{Correction de l'exercice de maison (5 min)} &
+Fait passer des élèves au tableau, corrige et précise les erreurs. &
+\textbf{Résolution} : deux élèves traitent l'exercice au tableau ; les autres corrigent. &
+\titreR{Correction de l'exercice de maison} \par
+$E=12y-8+3y+8=15y$ ; \; $F=8x^2-4$ ; \; $G=6x+2+x-4=7x-2$. \\ \hline
+
+\moment{Leçon du jour (23 min)} &
+Fait découvrir les trois produits remarquables par développement, présente la figure
+de $(a+b)^2$, énonce la propriété et fait recopier la leçon. &
+Développent sous la dictée, observent la figure, énoncent la propriété et recopient
+la leçon. &
+\titreR{Trace écrite} \par
+\textbf{I) Présentation et vocabulaire} \par
+\textbf{2) Produits remarquables} \par
+Les \mclef{produits remarquables} sont des produits que l'on doit savoir transformer
+par cœur, sans calcul intermédiaire. \par
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(64,48)
+  \put(2,2){\framebox(40,40){}}
+  \put(17,2){\rule{0.35mm}{40mm}}
+  \put(2,17){\rule{40mm}{0.35mm}}
+  \put(7,8){\small $a^2$}
+  \put(28,8){\small $a\,b$}
+  \put(7,28){\small $a\,b$}
+  \put(28,28){\small $b^2$}
+  \put(8,43.5){\small $a$}
+  \put(28,43.5){\small $b$}
+  \put(-1.5,8){\small $a$}
+  \put(-1.5,28){\small $b$}
+  \put(46,30){\small aire $=(a+b)^2$}
+  \put(46,23){\small $=a^2+ab+ab+b^2$}
+  \put(46,16){\small $=a^2+2ab+b^2$}
+\end{picture}
+\end{center}
+\prop{\textbf{\textcolor{rougetitre}{Propriété (produits remarquables)}} \par
+Pour tous nombres $a$ et $b$ :
+\[ (a+b)^2=a^2+2ab+b^2 \quad ; \quad (a-b)^2=a^2-2ab+b^2 \quad ; \quad
+   (a+b)(a-b)=a^2-b^2 . \]}
+\textit{Exemples :} \par
+$(x+4)^2=x^2+8x+16$ ; \; $(3x-2)^2=9x^2-12x+4$ ; \; $(x+7)(x-7)=x^2-49$. \\ \hline
+
+\moment{Exercice d'application (20 min)} &
+Propose l'exercice, fait passer deux élèves au tableau, corrige. &
+\textbf{Résolution} : cherchent puis passent au tableau. &
+\app \par
+Développer : \; $A=(x+3)^2$ ; \; $B=(2x-1)^2$ ; \; $C=(x+5)(x-5)$. \par
+\textbf{Réponses :} $A=x^2+6x+9$ ; \; $B=4x^2-4x+1$ ; \; $C=x^2-25$. \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice de maison. &
+Notent l'exercice. &
+\maison \par
+Développer : \; $D=(x+2)^2$ ; \; $E=(x-3)^2$ ; \; $F=(x+4)(x-4)$. \\ \hline
+\end{longtable}
+
+% ═════════════════════ SÉANCE 3 ═════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+\hline
+\seance{SEANCE 3} \newline \moment{Petite activité (2 min)} &
+Dicte l'activité, fait réciter à voix basse puis interroge à main levée,
+chronomètre 2 minutes. &
+Répondent individuellement sur ardoise ou cahier de brouillon. &
+\titreR{Petite activité} \par
+Réciter de tête : $(a+b)^2=\dots$ ; \; $(a-b)^2=\dots$ ; \; $(a+b)(a-b)=\dots$. \par
+\textbf{Réponses :} $a^2+2ab+b^2$ ; \; $a^2-2ab+b^2$ ; \; $a^2-b^2$. \\ \hline
+
+\moment{Correction de l'exercice de maison (5 min)} &
+Fait corriger l'exercice de maison au tableau. &
+\textbf{Résolution} : correction au tableau. &
+\titreR{Correction de l'exercice de maison} \par
+$D=x^2+4x+4$ ; \; $E=x^2-6x+9$ ; \; $F=x^2-16$. \\ \hline
+
+\moment{Leçon du jour (23 min)} &
+Montre l'utilisation des produits remarquables pour calculer vite, puis structure
+les règles de calcul (développer puis réduire) et fait recopier la leçon. &
+Exécutent les calculs astucieux, décrivent la méthode et recopient la leçon. &
+\titreR{Trace écrite} \par
+\textbf{II) Opérations sur les expressions algébriques} \par
+\textbf{1) Produits remarquables (utilisation)} \par
+\textit{Exemple :} $101^2=(100+1)^2=100^2+2\times100\times1+1^2=10\,201$. \par
+\textit{Exemple :} $51\times49=(50+1)(50-1)=50^2-1=2\,499$. \par
+\textbf{2) Règles de calcul : développement, réduction} \par
+Pour transformer une expression : \par
+— \textbf{développer} avec la distributivité $k\,(a+b)=ka+kb$,
+$(a+b)(c+d)=ac+ad+bc+bd$ et les \mclef{produits remarquables} ; \par
+— puis \textbf{réduire} : regrouper les termes semblables et classer les termes
+par puissances décroissantes. \par
+\textit{Exemple :} $(x+2)^2+(x-1)(x+3)$ \par
+$=x^2+4x+4+x^2+2x-3=2x^2+6x+1$. \\ \hline
+
+\moment{Exercice d'application (20 min)} &
+Propose l'exercice, fait passer deux élèves au tableau, corrige. &
+\textbf{Résolution} : cherchent puis passent au tableau. &
+\app \par
+\textbf{1)} Calculer astucieusement : \; $98^2$ ; \; $52\times48$. \par
+\textbf{2)} Développer puis réduire : \; $U=2\,(x+1)^2-(x+2)(x-2)$ ; \;
+$V=3\,(x-2)+(x+4)^2$. \par
+\textbf{Réponses :} $98^2=(100-2)^2=9\,604$ ; \; $52\times48=(50+2)(50-2)=2\,496$ ; \par
+$U=2x^2+4x+2-x^2+4=x^2+4x+6$ ; \; $V=3x-6+x^2+8x+16=x^2+11x+10$. \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice de maison. &
+Notent l'exercice. &
+\maison \par
+Développer puis réduire : \; $G=5\,(2x-3)+(x+1)(x+2)$ ; \;
+$H=(x+3)^2-(x-1)(x+1)$ ; \; $I=2\,(3x-1)-(2x+5)$. \\ \hline
+\end{longtable}
+
+% ═════════════════════ SÉANCE 4 ═════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+\hline
+\seance{SEANCE 4} \newline \moment{Petite activité (2 min)} &
+Dicte l'activité, fait souligner les facteurs communs à main levée, chronomètre
+2 minutes. &
+Répondent individuellement sur ardoise ou cahier de brouillon. &
+\titreR{Petite activité} \par
+Souligner le facteur commun dans : $4x+4$ ; \; $6x^2-2x$ ; \; $5(x+1)+(x+1)$. \par
+\textbf{Réponses :} $4$ ; \; $2x$ ; \; $(x+1)$. \\ \hline
+
+\moment{Correction de l'exercice de maison (5 min)} &
+Fait corriger l'exercice de maison. &
+\textbf{Résolution} : correction au tableau. &
+\titreR{Correction de l'exercice de maison} \par
+$G=10x-15+x^2+3x+2=x^2+13x-13$ ; \par
+$H=x^2+6x+9-x^2+1=6x+10$ ; \; $I=6x-2-2x-5=4x-7$. \\ \hline
+
+\moment{Leçon du jour (23 min)} &
+Fait remarquer, sur des exemples, qu'on peut passer de $ka+kb$ à $k\,(a+b)$, puis
+présente les identités remarquables lues dans l'autre sens ; fait recopier la leçon. &
+Répondent, identifient le facteur commun et recopient la leçon. &
+\titreR{Trace écrite} \par
+\textbf{3) Factorisation} \par
+\prop{\textbf{\textcolor{rougetitre}{Propriété (factorisation)}} \par
+Factoriser, c'est transformer une somme en produit : \par
+— avec le \textbf{facteur commun} : \; $k\,a+k\,b=k\,(a+b)$ ; \par
+— avec les \textbf{identités remarquables} : \;
+$a^2+2ab+b^2=(a+b)^2$ ; \; $a^2-2ab+b^2=(a-b)^2$ ; \; $a^2-b^2=(a+b)(a-b)$.}
+\textit{Exemples :} \par
+$6x+9=3\,(2x+3)$ ; \; $5x^2-15x=5x\,(x-3)$ ; \par
+$x^2+6x+9=(x+3)^2$ ; \; $x^2-25=(x+5)(x-5)$ ; \; $4x^2+12x+9=(2x+3)^2$. \\ \hline
+
+\moment{Exercice d'application (20 min)} &
+Propose l'exercice, fait passer deux élèves au tableau, corrige. &
+\textbf{Résolution} : cherchent puis passent au tableau. &
+\app \par
+Factoriser : \; $A=7x+21$ ; \; $B=x^2-9$ ; \; $C=(x+3)^2+(x+3)(2x-5)$. \par
+\textbf{Réponses :} $A=7\,(x+3)$ ; \; $B=(x+3)(x-3)$ ; \par
+$C=(x+3)\,\big[(x+3)+(2x-5)\big]=(x+3)(3x-2)$. \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice de maison. &
+Notent l'exercice. &
+\maison \par
+Factoriser : \; $J=9x-12$ ; \; $K=x^2-16$ ; \; $L=(x-2)^2-(x-2)(3x+1)$. \\ \hline
+\end{longtable}
+
+% ═════════════════════ SÉANCE 5 ═════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+\hline
+\seance{SEANCE 5} \newline \moment{Petite activité (2 min)} &
+Pose oralement les trois mini-questions, chronomètre 2 minutes. &
+Répondent à main levée ou sur ardoise. &
+\titreR{Petite activité} \par
+Oralement : que vaut $3^2$ ? \; que vaut $5\times(2)^2$ ? \; remplacer $x$ par $2$ dans
+$x+7$. \par
+\textbf{Réponses :} $9$ ; \; $20$ ; \; $9$. \\ \hline
+
+\moment{Correction de l'exercice de maison (5 min)} &
+Fait corriger l'exercice de maison. &
+\textbf{Résolution} : correction au tableau. &
+\titreR{Correction de l'exercice de maison} \par
+$J=3\,(3x-4)$ ; \; $K=(x+4)(x-4)$ ; \par
+$L=(x-2)\,\big[(x-2)-(3x+1)\big]=(x-2)(-2x-3)$. \\ \hline
+
+\moment{Leçon du jour (23 min)} &
+Présente la méthode de calcul de la valeur numérique d'une expression, insiste sur
+les priorités opératoires et les substitutions avec parenthèses, montre le calcul
+astucieux avec les produits remarquables, puis fait recopier la leçon. &
+Écoutent, exécutent la méthode sur un exemple et recopient la leçon. &
+\titreR{Trace écrite} \par
+\textbf{4) Valeur numérique d'une expression algébrique pour une valeur donnée de
+la variable} \par
+Calculer la \mclef{valeur numérique} d'une expression pour $x=a$, c'est remplacer
+$x$ par $a$ (entre parenthèses) puis effectuer les calculs en respectant les priorités
+opératoires. \par
+\textit{Exemple :} pour $x=2$, \; $A=3x^2-2x+1$ devient \par
+$A=3\times(2)^2-2\times(2)+1=3\times4-4+1=12-4+1=9$. \par
+\textit{Calcul astucieux :} $B=x^2+2x+1$ pour $x=9$ : \par
+$B=(x+1)^2$ donc $B=(9+1)^2=100$. \\ \hline
+
+\moment{Exercice d'application (20 min)} &
+Propose l'exercice, fait passer deux élèves au tableau, corrige. &
+\textbf{Résolution} : cherchent puis passent au tableau. &
+\app \par
+Soit $C=2x^2-3x+4$ et $D=(x+1)(x-2)$. \par
+\textbf{1)} Calculer $C$ pour $x=-1$ puis pour $x=3$. \par
+\textbf{2)} Calculer $D$ pour $x=5$ ; vérifier en développant $D$ d'abord. \par
+\textbf{Réponses :} $C(-1)=2+3+4=9$ ; \; $C(3)=18-9+4=13$ ; \par
+$D(x)=x^2-x-2$ donc $D(5)=25-5-2=18$. \\ \hline
+
+\moment{Exercice de maison (5 min)} &
+Donne l'exercice de maison. &
+Notent l'exercice. &
+\maison \par
+Soit $M=3x^2+2x-5$ et $N=(2x-1)(x+3)$. \par
+\textbf{1)} Calculer $M$ pour $x=-2$ et pour $x=1{,}5$. \par
+\textbf{2)} Développer $N$ puis calculer $N$ pour $x=2$. \\ \hline
+\end{longtable}
+
+% ═════════════════════ SÉANCE 6 ═════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+\hline
+\seance{SEANCE 6} \newline \moment{Petite activité (2 min)} &
+Dicte les trois mini-questions de révision, chronomètre 2 minutes. &
+Répondent individuellement sur ardoise ou cahier de brouillon. &
+\titreR{Petite activité} \par
+De tête : réduire $2x+5x$ ; développer $3\,(x+1)$ ; factoriser $7x+7x^2$. \par
+\textbf{Réponses :} $7x$ ; \; $3x+3$ ; \; $7x\,(1+x)$. \\ \hline
+
+\moment{Correction de l'exercice de maison (5 min)} &
+Fait corriger l'exercice de maison. &
+\textbf{Résolution} : correction au tableau. &
+\titreR{Correction de l'exercice de maison} \par
+$M(-2)=12-4-5=3$ ; \; $M(1{,}5)=6{,}75+3-5=4{,}75$ ; \par
+$N=2x^2+6x-x-3=2x^2+5x-3$ ; \; $N(2)=8+10-3=15$. \\ \hline
+
+\moment{Leçon du jour (23 min)} &
+Présente la notion d'équivalence de deux programmes de calcul et la démarche de
+démonstration d'une propriété arithmétique par le calcul littéral ; fait recopier
+la leçon. &
+Écoutent, participent aux exemples et recopient la leçon. &
+\titreR{Trace écrite} \par
+\textbf{III) Utilisation des définitions et propriétés pour justifier} \par
+\textbf{1) Équivalence de deux programmes de calcul} \par
+Deux programmes de calcul sont \mclef{équivalents} si, pour toute valeur choisie,
+ils donnent le même résultat : on traduit chacun par une expression algébrique, puis
+on montre que les deux écritures réduites sont égales. \par
+\textit{Exemple :} P\textsubscript{1} : « choisir $x$ ; ajouter $3$ ; élever au
+carré » et P\textsubscript{2} : « choisir $x$ ; élever au carré ; ajouter le produit
+de $6$ par $x$ ; ajouter $9$ » donnent : \par
+$(x+3)^2=x^2+6x+9$ : les deux programmes sont équivalents. \par
+\textbf{2) Démontrer une propriété arithmétique} \par
+\textit{Exemple :} pour tout entier naturel $n$ : \par
+$(n+1)^2-n^2=n^2+2n+1-n^2=2n+1$. \par
+Or $2n+1$ est un nombre impair : \textbf{la différence des carrés de deux entiers
+consécutifs est un nombre impair}. \\ \hline
+
+\moment{Exercice d'application (20 min)} &
+Propose l'exercice, fait passer deux élèves au tableau, corrige. &
+\textbf{Résolution} : cherchent puis passent au tableau. &
+\app \par
+\textbf{1)} Montrer que les programmes \textit{« choisir $x$ ; le multiplier par $4$ ;
+ajouter $3$ ; multiplier le résultat par $2$ »} et \textit{« choisir $x$ ; le
+multiplier par $8$ ; ajouter $6$ »} sont équivalents. \par
+\textbf{2)} Démontrer que la somme de trois entiers consécutifs est un multiple de $3$. \par
+\textbf{Réponses :} 1) $2\,(4x+3)=8x+6$ : mêmes écritures réduites, donc programmes
+équivalents. \par
+2) $n+(n+1)+(n+2)=3n+3=3\,(n+1)$ : multiple de $3$. \\ \hline
+
+\moment{Synthèse et trace écrite (5 min)} &
+Dictée du récapitulatif au tableau et fait recopier la synthèse. &
+Recopient la synthèse. &
+\titreR{Synthèse (à retenir)} \par
+— \textbf{Produits remarquables} : $(a+b)^2=a^2+2ab+b^2$ ; \;
+$(a-b)^2=a^2-2ab+b^2$ ; \; $(a+b)(a-b)=a^2-b^2$. \par
+— \textbf{Règles de calcul} : développer (distributivité) puis réduire
+(termes semblables) ; \textbf{factoriser} (facteur commun, identités). \par
+— \textbf{Valeur numérique} : remplacer la variable par sa valeur. \par
+— \textbf{Justifier} : équivalence de programmes ; démonstration par le calcul
+littéral. \\ \hline
+
+\moment{Bilan de la leçon et exercice de maison (5 min)} &
+Fait le bilan de la leçon ; donne l'exercice de synthèse à la maison ; annonce la
+leçon suivante. &
+Notent l'exercice de maison et écoutent l'annonce. &
+\maison \par
+Un champ rectangulaire a pour longueur $(2x+5)$~m et pour largeur $(x+3)$~m. \par
+\textbf{1)} Exprimer le périmètre $P$ et l'aire $S$ du champ en fonction de $x$
+(écritures réduites). \par
+\textbf{2)} Calculer $P$ et $S$ pour $x=4$~m. \par
+\textbf{Leçon suivante :} équations du premier degré à une inconnue. \\ \hline
+\end{longtable}
+
+\end{document}
