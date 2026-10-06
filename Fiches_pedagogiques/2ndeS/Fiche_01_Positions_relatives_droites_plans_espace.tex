@@ -1,0 +1,691 @@
+% ═══════════════════════════════════════════════════════════════════════
+%  FICHE PEDAGOGIQUE DE MATHEMATIQUES — TERMINISH
+%  Classe : 2nde S — Année scolaire 2026-2027 — 2 séances de 55 min
+%  Thème 5 : GÉOMÉTRIE DE L'ESPACE
+%  LEÇON 1 : POSITIONS RELATIVES DE DROITES ET DE PLANS DE L'ESPACE
+%
+%  MOMENTS DIDACTIQUES APC (structure officielle, appliquée à CHAQUE
+%  séance) :
+%   1) Remobilisation des prérequis ou évaluation diagnostique (10 min)
+%   2) Présentation de la situation (5 min)
+%   3) Appropriation de la situation, compréhension de la tâche et de
+%      l'organisation du travail (5 min)
+%   4) Résolution du problème (individuellement 5 min puis en groupes
+%      10 min)
+%   5) Synthèse et bilan du travail (3 min)
+%   6) Institutionnalisation : trace écrite de la leçon (7 min)
+%   7) Réinvestissement / travaux dirigés (5 min)
+%   8) Remédiation éventuelle (3 min)
+%   9) Évaluation (formative) (2 min)
+%   Total : 55 min par séance.
+%
+%  SITUATION D'APPRENTISSAGE : chaque question de la situation est une
+%  « Synthèse » (Synthèse 1 et Synthèse 2) ; elle est le PROBLÈME résolu à
+%  l'étape 4 de la séance correspondante.
+%
+%  STRUCTURE DU COURS (imposée par le programme) :
+%   I)   Présentation de l'espace
+%        1) Axiomatisation de la géométrie de l'espace
+%        2) Différentes déterminations d'un plan
+%   II)  Construction d'une figure de l'espace
+%        1) Perspective cavalière
+%        2) Section plane d'un solide de l'espace
+%   III) Positions relatives
+%        1) Positions relatives de deux droites
+%        2) Positions relatives de deux plans
+%        3) Positions relatives d'une droite et d'un plan
+% ═══════════════════════════════════════════════════════════════════════
+\documentclass[10pt]{article}
+
+\usepackage[a4paper,landscape,top=1.5cm,bottom=1.3cm,left=1.1cm,right=1.1cm]{geometry}
+\usepackage{amsmath}
+\usepackage[RGB]{xcolor}
+\usepackage{graphicx}
+\usepackage{longtable}
+
+% ── Couleurs du canevas ────────────────────────────────────────────────
+\definecolor{rougetitre}{RGB}{192,0,0}      % titres rouges soulignés
+\definecolor{rougemaison}{RGB}{160,30,30}   % exercice de maison
+\definecolor{vertentete}{RGB}{215,235,210}  % fond vert pâle (en-têtes)
+\definecolor{bleuseance}{RGB}{46,110,180}   % cadres bleus des séances
+\definecolor{bleufond}{RGB}{222,235,247}    % fond bleu pâle (n° séance)
+\definecolor{jaunesurl}{RGB}{255,230,90}    % surlignage mots-clés
+\definecolor{vertbilan}{RGB}{230,242,225}   % fond vert très pâle
+
+\setlength{\parindent}{0pt}
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.25}
+
+% ── Raccourcis de style ────────────────────────────────────────────────
+\newcommand{\titreR}[1]{\underline{\textcolor{rougetitre}{\bfseries #1}}}
+\newcommand{\app}{\titreR{Exercice d'application}}
+\newcommand{\maison}{\underline{\textcolor{rougemaison}{\bfseries Exercice de maison}}}
+\newcommand{\seance}[1]{\fcolorbox{bleuseance}{bleufond}{\textcolor{bleuseance}{\bfseries #1}}}
+\newcommand{\moment}[1]{\textbf{\itshape #1}}
+\newcommand{\mclef}[1]{\colorbox{jaunesurl}{#1}}
+\newcommand{\prop}[1]{\par\medskip\noindent\fbox{\parbox{0.96\linewidth}{#1}}\par\medskip}
+\newcommand{\rouge}[1]{\textcolor{rougetitre}{\bfseries #1}}
+\newcommand{\ieme}{\textsuperscript{ième}}
+\newcommand{\iere}{\textsuperscript{ière}}
+\newcommand{\ier}{\textsuperscript{er}}
+\newcommand{\ere}{\textsuperscript{ère}}
+
+% ── En-tête, filigrane et pied de page ────────────────────────────────
+\newcommand{\filigrane}{%
+  \rlap{%
+    \raisebox{7.5cm}[0pt][0pt]{%
+      \hbox to 0pt{\hskip 3cm
+        \rotatebox{30}{\scalebox{3}{\textcolor{gray!38}{\bfseries KODJONE Kodjo}}}%
+      \hss}}}}
+\makeatletter
+\def\ps@fiche{%
+  \def\@oddhead{\hfill\underline{\textcolor{rougetitre}{\bfseries FICHE PEDAGOGIQUE DE MATHEMATIQUES}}\hfill}%
+  \def\@oddfoot{\filigrane
+                \hfill\textcolor{bleuseance}{\bfseries M.KODJONE Kodjo Prof de Maths}\hfill
+                \fcolorbox{black}{vertentete}{\arabic{page}}\hfill}%
+}
+\makeatother
+\pagestyle{fiche}
+
+\begin{document}
+
+% ═════════════════════════ CARTOUCHE D'IDENTIFICATION ═════════════════════════
+\begin{tabular}{|p{8.6cm}|p{8.6cm}|p{8.6cm}|}
+\hline
+\textbf{NOM} \; : \; {\bfseries KODJONE} &
+\textbf{DRE} \; : \; {\bfseries PLO} &
+\textbf{FICHE N\textsuperscript{o}} \; : \; {\bfseries 1} \\ \hline
+\textbf{PRÉNOM} \; : \; {\bfseries Kodjo} &
+\textbf{IESG} \; : \; {\bfseries KPALIME} &
+\textbf{DISCIPLINE} \; : \; {\bfseries MATHS} \\ \hline
+\textbf{CONTACT} \; : \; {\bfseries 93 150 178} &
+\textbf{ÉTABLISSEMENT} \; : \; {\bfseries LYCEE KPETA} &
+\textbf{CLASSE} \; : \; {\bfseries 2nde S} \\ \hline
+\textbf{EFFECTIF} \; : \; \textbf{G} : \dotfill \quad
+                           \textbf{F} : \dotfill \quad
+                           \textbf{T} : \dotfill &
+\textbf{ANNÉE SCOLAIRE} \; : \; {\bfseries 2026 - 2027} &
+\textbf{SEMAINE} \; : \; \dotfill \\ \hline
+\end{tabular}
+
+\bigskip
+\fcolorbox{black}{vertbilan}{%
+\begin{minipage}{27.1cm}
+\smallskip
+{\bfseries COMPETENCE 1 :} \textit{Résoudre des problèmes faisant appel aux configurations de l'espace
+et du plan, aux applications du plan, à l'outil vectoriel et à la géométrie analytique.}\\[3pt]
+{\bfseries THEME 5 :} \hfill {\Large\bfseries GÉOMÉTRIE DE L'ESPACE} \hfill\mbox{}\\[3pt]
+{\bfseries LEÇON 1 :} \hfill \fcolorbox{rougetitre}{white}{\textcolor{rougetitre}{\large\bfseries POSITIONS RELATIVES DE DROITES ET DE PLANS DE L'ESPACE}} \hfill\mbox{}\\[3pt]
+{\bfseries NOMBRE DE SÉANCES :} \; {\bfseries 2} \qquad
+{\bfseries DURÉE D'UNE SÉANCE :} \; {\bfseries 55 min}\\[3pt]
+{\bfseries SITUATION D'APPRENTISSAGE :} \; \mclef{SYNTHESES 1 et 2} (chaque question de la SA est une « Synthèse », résolue à l'étape 4 de la séance ; toutes les capacités sont couvertes)\\[3pt]
+{\bfseries SUPPORTS DIDACTIQUES PRINCIPAUX :} \; Énoncé de la situation d'apprentissage ; manuel de Mathématiques 2nde S ; CARGO 2nde S ; Programme et son guide\\[3pt]
+{\bfseries MATERIEL DIDACTIQUE ORDINAIRE :} \; Régie ; craie ; règle ; cahiers \qquad
+{\bfseries MATERIEL DIDACTIQUE ADAPTÉ :} \; Solides du premier cycle (cube, parallélépipède rectangle, prisme, pyramide, cylindre droit, cône de révolution, sphère) ; piques et carton pour l'activité manuelle de section ; instruments de géométrie ; papier quadrillé\\[3pt]
+{\bfseries CONSIGNE POUR LE PROFESSEUR DE SUIVI :} \; Vérifier le respect des 9 moments didactiques APC (de la remobilisation
+des prérequis à l'évaluation formative) et la trace écrite de la leçon.\\[3pt]
+{\bfseries PREREQUIS :} \; Positions relatives de deux droites du plan ; quadrilatères usuels (rectangle, carré, parallélogramme) ;
+solides du premier cycle (cube, parallélépipède rectangle, prisme, pyramide, cylindre droit, cône de révolution, sphère) ; notations $(AB)$ et $[AB]$.
+\smallskip
+\end{minipage}}
+
+\bigskip
+% ═════════════════════════ TABLEAU CAPACITES / CONTENUS ═════════════════════════
+\begin{tabular}{|p{9.4cm}|p{17.3cm}|}
+\hline
+\multicolumn{1}{|c|}{\colorbox{vertentete}{\makebox[9.2cm][c]{\bfseries Capacités}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[17.1cm][c]{\bfseries Contenus}}} \\ \hline
+Reconnaître les spécificités de l'espace &
+\small \mclef{Axiomatisation de la géométrie de l'espace} ; \mclef{différentes déterminations d'un plan}.
+\hfill \textit{(Synthèse 1)} \\ \hline
+Étudier les positions des configurations &
+\small \mclef{Positions relatives de deux droites} ; \mclef{positions relatives de deux plans} ;
+\mclef{positions relatives d'une droite et d'un plan}. \hfill \textit{(Synthèse 2)} \\ \hline
+Construire une configuration de l'espace &
+\small \mclef{Figure en perspective cavalière} ; \mclef{section plane d'un solide de l'espace}.
+\hfill \textit{(Synthèse 1)} \\ \hline
+Démontrer une propriété &
+\small Positions relatives de deux droites ; positions relatives de deux plans ;
+positions relatives d'une droite et d'un plan. \hfill \textit{(Synthèse 2)} \\ \hline
+\end{tabular}
+
+\bigskip
+{\bfseries Stratégie pédagogique}
+
+\begin{itemize}
+  \item[] — \; Travail individuel ou en petits groupes
+  \item[] — \; Méthode démonstrative
+  \item[] — \; Faire faire (travail individuel)
+\end{itemize}
+
+\bigskip
+% ═════════════════════════ DEROULEMENT : TABLEAU A 4 COLONNES ═════════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+% ── en-tête répété sur chaque page ──
+\hline
+\multicolumn{1}{|c|}{\colorbox{vertentete}{\parbox{2.15cm}{\centering\small\bfseries Moment didactique}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[5.2cm][c]{\small\bfseries Activité de l'enseignant}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[4.4cm][c]{\small\bfseries Activité de l'élève}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[13.7cm][c]{\small\bfseries Trace écrite}}} \\
+\hline
+\endfirsthead
+\hline
+\multicolumn{1}{|c|}{\colorbox{vertentete}{\parbox{2.15cm}{\centering\small\bfseries Moment didactique}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[5.2cm][c]{\small\bfseries Activité de l'enseignant}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[4.4cm][c]{\small\bfseries Activité de l'élève}}} &
+\multicolumn{1}{c|}{\colorbox{vertentete}{\makebox[13.7cm][c]{\small\bfseries Trace écrite}}} \\
+\hline
+\endhead
+% ═══════════════════════════════════════════════════════
+%  SÉANCE 1 — SYNTHESE 1 + I. PRÉSENTATION DE L'ESPACE + II. FIGURE
+% ═══════════════════════════════════════════════════════
+\seance{SEANCE 1} \newline \moment{1) Remobilisation des prérequis ou évaluation diagnostique (10 min)} &
+Le professeur fait réviser les positions relatives de deux droites du plan, les quadrilatères usuels
+et les solides du premier cycle ; il corrige ensuite et fait le point. &
+Les élèves répondent à main levée, puis certains passent au tableau. &
+\titreR{Exercice prérequis} \par
+\textbf{1)} Dans le plan, quelles sont les positions relatives possibles de deux droites ? \quad
+\textbf{2)} Citer quatre solides étudiés au premier cycle. \quad
+\textbf{3)} Tracer un rectangle $ABCD$ de $6$~cm sur $3$~cm. \par
+\mclef{Rappels :} dans le plan, deux droites sont sécantes ou parallèles (confondues) ;
+les solides usuels : cube, parallélépipède rectangle, prisme, pyramide, cylindre, cône, sphère. \par
+(\textit{Réponses : 1) sécantes, parallèles, confondues ; 2) au choix ; 3) tracé aux instruments.}) \\ \hline
+
+\moment{2) Présentation de la situation (5 min)} &
+Le professeur recopie la situation au tableau, présente les solides, fait la figure, puis la lit à
+haute voix. &
+Les élèves recopient la situation dans leur cahier et observent le solide. &
+\titreR{Situation d'apprentissage} \par
+{\itshape Pour équiper la salle du club scientifique du LYCÉE KPETA, un menuisier a fabriqué un
+casier en forme de pavé droit $ABCDEFGH$ : la face avant $ABCD$ est un rectangle de $90$~cm de
+large et de $50$~cm de haut, et le casier a $60$~cm de profondeur. En observant ce casier, les
+élèves du club se posent des questions de géométrie dans l'espace. \textbf{Chaque question de
+cette situation est appelée Synthèse (Synthèse 1, Synthèse 2) et sera résolue à l'étape 4 de la
+séance.}}
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(46,30)
+  \put(2,2){\rule{30mm}{0.35mm}}
+  \put(32,2){\rule{0.35mm}{16mm}}
+  \put(2,18){\rule{30mm}{0.35mm}}
+  \put(2,2){\rule{0.35mm}{16mm}}
+  \put(32,2){\rotatebox[origin=l]{45.00}{\rule{12.02mm}{0.35mm}}}
+  \put(32,18){\rotatebox[origin=l]{45.00}{\rule{12.02mm}{0.35mm}}}
+  \put(2,18){\rotatebox[origin=l]{45.00}{\rule{12.02mm}{0.35mm}}}
+  \put(40.5,10.5){\rule{0.35mm}{16mm}}
+  \put(10.5,26.5){\rule{30mm}{0.35mm}}
+  \put(3.42,3.42){\rule{0.55mm}{0.55mm}}
+  \put(4.83,4.83){\rule{0.55mm}{0.55mm}}
+  \put(6.25,6.25){\rule{0.55mm}{0.55mm}}
+  \put(7.67,7.67){\rule{0.55mm}{0.55mm}}
+  \put(9.08,9.08){\rule{0.55mm}{0.55mm}}
+  \put(12.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(14.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(16.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(18.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(20.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(22.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(24.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(26.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(28.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(30.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(32.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(34.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(36.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(38.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,12.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,14.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,16.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,18.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,20.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,22.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,24.50){\rule{0.55mm}{0.55mm}}
+  \put(1.4,1.4){\rule{1.2mm}{1.2mm}}
+  \put(31.4,1.4){\rule{1.2mm}{1.2mm}}
+  \put(31.4,17.4){\rule{1.2mm}{1.2mm}}
+  \put(1.4,17.4){\rule{1.2mm}{1.2mm}}
+  \put(9.9,9.9){\rule{1.2mm}{1.2mm}}
+  \put(39.9,9.9){\rule{1.2mm}{1.2mm}}
+  \put(39.9,25.9){\rule{1.2mm}{1.2mm}}
+  \put(9.9,25.9){\rule{1.2mm}{1.2mm}}
+  \put(-0.4,-2.6){\small $A$}
+  \put(31.6,-2.6){\small $B$}
+  \put(33.4,17.2){\small $C$}
+  \put(-1.2,18.4){\small $D$}
+  \put(6.0,11.2){\small $E$}
+  \put(41.8,9.2){\small $F$}
+  \put(41.8,26.4){\small $G$}
+  \put(6.8,27.4){\small $H$}
+\end{picture}\\[10pt]
+{\small face avant $ABCD$ : $90$~cm $\times$ $50$~cm ; profondeur : $60$~cm.}
+\end{center} \\ \hline
+
+\moment{3) Appropriation de la situation, compréhension de la tâche et de
+l'organisation du travail (5 min)} &
+Le professeur explique les mots difficiles, pose des questions de compréhension (« Que représente
+la droite $(BF)$ sur le casier ? Que veut dire : trois points non alignés ? Qu'est-ce que la face
+avant ? »), puis organise les groupes et distribue les solides. &
+Les élèves répondent aux questions, relèvent les mots difficiles et s'organisent en groupes. &
+\titreR{Consignes de la Synthèse 1} \par
+\textbf{1)} À partir de l'observation du casier, citer deux spécificités de l'espace que l'on ne
+retrouve pas dans le plan. \par
+\textbf{2)} Rappeler les énoncés (axiomes) qui permettent de déterminer un plan, puis citer les
+différentes déterminations d'un plan de l'espace. \par
+\textbf{3)} Représenter le casier en perspective cavalière (échelle $\frac{1}{10}$). \par
+\textbf{4)} Tracer la section plane du casier par le plan passant par $M$, milieu de $[AB]$,
+$N$, milieu de $[BC]$, et $P$, milieu de $[BF]$. \\ \hline
+
+\moment{4) Résolution du problème : individuellement (5 min) puis en groupes (10 min)} &
+Le professeur vérifie les productions, circule parmi les groupes et les guide sans donner la
+solution. &
+\textbf{Résolution} : les élèves cherchent d'abord individuellement, puis en groupes ; ils
+rédigent une production. &
+\titreR{Synthèse 1 (S1)} \par
+\textbf{Résolution :} \textbf{1)} par les points $A$ et $B$, il passe la droite $(AB)$ mais une
+infinité de plans ; les droites $(AB)$ et $(CG)$ n'ont aucun point commun et aucun plan ne les
+contient toutes les deux : ce sont des \mclef{spécificités de l'espace}. \par
+\textbf{2)} voir les axiomes et les déterminations de la leçon ci-contre. \par
+\textbf{3)} échelle $\frac{1}{10}$ : face avant $9$~cm $\times$ $5$~cm ; arêtes fuyantes à $45^\circ$,
+de longueur $\frac{60}{2}=3$~cm (réduites de moitié) ; arêtes cachées en pointillés. \par
+\textbf{4)} $M\in[AB]$ et $N\in[BC]$ sont sur la face avant, $P\in[BF]$ est sur la face de
+dessous : $[MN]$, $[NP]$ et $[MP]$ sont tracés sur trois faces du casier ; la section est le
+triangle $MNP$.
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(46,30)
+  \put(2,2){\rule{30mm}{0.35mm}}
+  \put(32,2){\rule{0.35mm}{16mm}}
+  \put(2,18){\rule{30mm}{0.35mm}}
+  \put(2,2){\rule{0.35mm}{16mm}}
+  \put(32,2){\rotatebox[origin=l]{45.00}{\rule{12.02mm}{0.35mm}}}
+  \put(32,18){\rotatebox[origin=l]{45.00}{\rule{12.02mm}{0.35mm}}}
+  \put(2,18){\rotatebox[origin=l]{45.00}{\rule{12.02mm}{0.35mm}}}
+  \put(40.5,10.5){\rule{0.35mm}{16mm}}
+  \put(10.5,26.5){\rule{30mm}{0.35mm}}
+  \put(3.42,3.42){\rule{0.55mm}{0.55mm}}
+  \put(4.83,4.83){\rule{0.55mm}{0.55mm}}
+  \put(6.25,6.25){\rule{0.55mm}{0.55mm}}
+  \put(7.67,7.67){\rule{0.55mm}{0.55mm}}
+  \put(9.08,9.08){\rule{0.55mm}{0.55mm}}
+  \put(12.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(14.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(16.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(18.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(20.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(22.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(24.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(26.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(28.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(30.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(32.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(34.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(36.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(38.50,10.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,12.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,14.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,16.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,18.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,20.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,22.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,24.50){\rule{0.55mm}{0.55mm}}
+  \put(17.00,2.00){\rotatebox[origin=l]{28.07}{\rule{17.00mm}{0.35mm}}}
+  \put(32.00,10.00){\rotatebox[origin=l]{-41.42}{\rule{5.67mm}{0.35mm}}}
+  \put(17.00,2.00){\rotatebox[origin=l]{12.45}{\rule{19.71mm}{0.35mm}}}
+  \put(1.4,1.4){\rule{1.2mm}{1.2mm}}
+  \put(31.4,1.4){\rule{1.2mm}{1.2mm}}
+  \put(31.4,17.4){\rule{1.2mm}{1.2mm}}
+  \put(1.4,17.4){\rule{1.2mm}{1.2mm}}
+  \put(9.9,9.9){\rule{1.2mm}{1.2mm}}
+  \put(39.9,9.9){\rule{1.2mm}{1.2mm}}
+  \put(39.9,25.9){\rule{1.2mm}{1.2mm}}
+  \put(9.9,25.9){\rule{1.2mm}{1.2mm}}
+  \put(16.4,1.4){\rule{1.2mm}{1.2mm}}
+  \put(31.4,9.4){\rule{1.2mm}{1.2mm}}
+  \put(35.65,5.65){\rule{1.2mm}{1.2mm}}
+  \put(-0.4,-2.6){\small $A$}
+  \put(31.6,-2.6){\small $B$}
+  \put(33.4,17.2){\small $C$}
+  \put(-1.2,18.4){\small $D$}
+  \put(6.0,11.2){\small $E$}
+  \put(41.8,9.2){\small $F$}
+  \put(41.8,26.4){\small $G$}
+  \put(6.8,27.4){\small $H$}
+  \put(14.6,-2.6){\small $M$}
+  \put(33.6,11.0){\small $N$}
+  \put(37.6,4.4){\small $P$}
+\end{picture}\\[10pt]
+{\small section plane : le triangle $MNP$.}
+\end{center} \\ \hline
+
+\moment{5) Synthèse et bilan du travail (3 min)} &
+Le professeur fait reformuler ce que la situation a permis de découvrir, corrige puis valide. &
+Les élèves reformulent avec leurs propres mots, s'écoutent et se corrigent entre eux. &
+\titreR{Synthèse et bilan} \par
+\textbf{Conclusion :} l'espace n'est pas le plan : il faut des axiomes nouveaux pour y déterminer
+un plan ; la perspective cavalière permet de représenter les solides ; la section plane d'un
+solide se construit en reliant les points d'intersection situés sur une même face. \\ \hline
+
+\moment{6) Institutionnalisation : trace écrite de la leçon par le professeur (7 min)} &
+Le professeur fait recopier la leçon (présentation de l'espace et construction d'une figure de
+l'espace) au tableau et dans les cahiers. &
+Les élèves recopient la trace écrite de la leçon. &
+\titreR{Trace écrite} \par
+\textbf{I) Présentation de l'espace} \par
+\textbf{1) Axiomatisation de la géométrie de l'espace} \par
+— \mclef{Spécificités de l'espace :} par deux points distincts, il passe une droite et une seule,
+mais une infinité de plans ; il existe des droites \mclef{non coplanaires} (aucun plan ne les
+contient toutes les deux) ; deux plans distincts peuvent être parallèles. \par
+— \mclef{Axiomes de la géométrie de l'espace :} \par
+\textbf{A1.} Par deux points distincts $A$ et $B$, il passe une droite et une seule, notée $(AB)$. \par
+\textbf{A2.} Par trois points non alignés $A$, $B$ et $C$, il passe un plan et un seul, noté $(ABC)$. \par
+\textbf{A3.} Si une droite a deux points distincts communs avec un plan, alors elle est entièrement
+contenue dans ce plan. \par
+\textbf{A4.} Par une droite et un point situé hors d'elle, il passe un plan et un seul. \par
+\textbf{A5.} Par deux droites sécantes, il passe un plan et un seul. \par
+\textbf{A6.} Par deux droites parallèles et distinctes, il passe un plan et un seul. \par
+\textbf{2) Différentes déterminations d'un plan} \par
+— Un plan est déterminé dans chacun des cas suivants : \par
+\textbf{1)} par trois points \textbf{non alignés} (plan $(ABC)$) ; \quad
+\textbf{2)} par une droite et un point hors d'elle ; \par
+\textbf{3)} par deux droites \textbf{sécantes} ; \quad
+\textbf{4)} par deux droites \textbf{parallèles} et distinctes. \par
+\textbf{II) Construction d'une figure de l'espace} \par
+\textbf{1) Perspective cavalière} \par
+— \mclef{Règles :} les faces situées dans le plan frontal sont représentées en \textbf{vraie
+grandeur} ; les arêtes fuyantes font un angle de $45^\circ$ avec l'horizontale et leur longueur
+est \textbf{réduite de moitié} (coefficient $0{,}5$) ; les éléments cachés sont représentés en
+traits fins ou en pointillés.
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(32,15)
+  \put(2,3){\rule{12mm}{0.35mm}}
+  \put(14,3){\rotatebox[origin=l]{45.00}{\rule{9mm}{0.35mm}}}
+  \put(1.4,2.4){\rule{1.2mm}{1.2mm}}
+  \put(13.4,2.4){\rule{1.2mm}{1.2mm}}
+  \put(22.4,10.4){\rule{1.2mm}{1.2mm}}
+  \put(0.2,-2.4){\small $A$}
+  \put(13.6,-2.4){\small $B$}
+  \put(23.6,10.4){\small $F$}
+  \put(17.5,9.6){\small $45^\circ$}
+  \put(15.8,4.2){\small $\times\,0{,}5$}
+\end{picture}
+\end{center}
+\textbf{2) Section plane d'un solide de l'espace} \par
+— La \mclef{section plane} d'un solide par un plan est la figure formée par tous les points
+communs du solide et du plan. \par
+— \mclef{Méthode :} \textbf{1)} placer les points d'intersection du plan avec les arêtes du
+solide ; \textbf{2)} relier les points qui appartiennent à une même face ; \textbf{3)} vérifier
+avec les axiomes (par exemple A3). \\ \hline
+
+\moment{7) Ré\-in\-ves\-tis\-se\-ment / travaux dirigés (5 min)} &
+Le professeur propose l'exercice, fait passer un élève au tableau, puis corrige. &
+\textbf{Résolution} : les élèves cherchent, puis passent au tableau. &
+\app \par
+$ABCDEFGH$ est un cube (même figure que la Synthèse 1). \par
+\textbf{1)} Tracer la section plane du cube par le plan $(ACG)$. \par
+\textbf{2)} Quelle est la nature de la section obtenue ? Justifier. \par
+\textbf{Réponses :} \textbf{1)} $[AC]$ sur la face avant, $[CG]$ sur la face de droite, $[AG]$
+à travers le cube (pointillé). \par
+\textbf{2)} $AC=CG$ (diagonales de faces égales) mais $AG$ est la diagonale du cube : la section
+est un \mclef{triangle isocèle en $C$}. \\ \hline
+
+\moment{8) Remédiation éventuelle (3 min)} &
+Le professeur reprend avec les élèves en difficulté : le tracé des fuyantes sur papier quadrillé
+et la reconnaissance de trois points non alignés. &
+Les élèves refont le tracé sur une nouvelle figure avec l'aide du professeur. &
+\titreR{Remédiation} \par
+Refaire : tracer les arêtes fuyantes à $45^\circ$ sur papier quadrillé, puis entourer trois
+points non alignés sur la figure d'un prisme. \\ \hline
+
+\moment{9) Évaluation (formative) (2 min)} &
+Le professeur interroge oralement, puis donne l'exercice de maison. &
+Les élèves répondent à main levée, puis notent l'exercice de maison. &
+\titreR{Évaluation formative} : citer deux déterminations d'un plan de l'espace. \par
+(\textit{Réponse : au choix parmi les quatre déterminations}.) \par
+\maison \par
+\textbf{1)} Représenter un cube d'arête $4$~cm en perspective cavalière (fuyantes à $45^\circ$,
+de longueur $2$~cm). \par
+\textbf{2)} Citer les quatre déterminations d'un plan de l'espace. \par
+\textbf{3)} Vrai ou faux : par deux points distincts, il passe un plan et un seul. Justifier. \par
+\textit{(Réponse attendue : 1) cube correct avec arêtes cachées en pointillés ; 2) les quatre
+cas de la leçon ; 3) faux : il passe par deux points une infinité de plans.)} \\ \hline
+\end{longtable}
+
+\begin{center}
+\underline{\textcolor{rougetitre}{\large\bfseries Institutionalisation \; : \; (trace écrite de la leçon par le professeur)}}
+\end{center}
+
+% ═══════════════════════════════════════════════════════
+%  SÉANCE 2 — SYNTHESE 2 + III. POSITIONS RELATIVES
+% ═══════════════════════════════════════════════════════
+\begin{longtable}{|p{2.35cm}|p{5.35cm}|p{4.55cm}|p{13.85cm}|}
+\hline
+\seance{SEANCE 2} \newline \moment{1) Remobilisation des prérequis ou évaluation diagnostique (10 min)} &
+Le professeur fait corriger l'exercice de maison au tableau, puis fait le point sur les erreurs. &
+\textbf{Résolution} : deux élèves présentent leur cube et les réponses ; les autres corrigent. &
+\titreR{Correction de l'exercice de maison} \par
+\textbf{1)} cube représenté avec fuyantes à $45^\circ$ de $2$~cm et arêtes cachées en pointillés. \par
+\textbf{2)} trois points non alignés ; une droite et un point hors d'elle ; deux droites
+sécantes ; deux droites parallèles et distinctes. \par
+\textbf{3)} faux : par deux points distincts, il passe une infinité de plans (seule la droite est
+unique). \\ \hline
+
+\moment{2) Présentation de la situation (5 min)} &
+Le professeur rappelle la situation (figure du casier au tableau), puis lit l'énoncé de la
+Synthèse 2. &
+Les élèves récapitulent la situation et notent l'énoncé. &
+\titreR{Synthèse 2 (S2)} \par
+Sur la représentation du casier $ABCDEFGH$ : \par
+\textbf{1)} Déterminer la position relative des droites $(AB)$ et $(EF)$, puis des droites $(AB)$
+et $(GH)$, et enfin des droites $(AB)$ et $(CG)$. Justifier chaque réponse. \par
+\textbf{2)} Déterminer la position relative des plans $(ABCD)$ et $(EFGH)$, puis des plans
+$(ABFE)$ et $(BCGF)$. \par
+\textbf{3)} Déterminer la position relative de la droite $(AE)$ et du plan $(ABCD)$, puis de la
+droite $(AB)$ et du plan $(EFGH)$.
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(46,30)
+  \put(2,2){\textcolor{bleuseance}{\rule{30mm}{0.35mm}}}
+  \put(32,2){\rule{0.35mm}{16mm}}
+  \put(2,18){\rule{30mm}{0.35mm}}
+  \put(2,2){\rule{0.35mm}{16mm}}
+  \put(32,2){\rotatebox[origin=l]{45.00}{\rule{12.02mm}{0.35mm}}}
+  \put(32,18){\textcolor{rougetitre}{\rotatebox[origin=l]{45.00}{\rule{12.02mm}{0.35mm}}}}
+  \put(2,18){\rotatebox[origin=l]{45.00}{\rule{12.02mm}{0.35mm}}}
+  \put(40.5,10.5){\rule{0.35mm}{16mm}}
+  \put(10.5,26.5){\textcolor{rougetitre}{\rule{30mm}{0.35mm}}}
+  \put(3.42,3.42){\rule{0.55mm}{0.55mm}}
+  \put(4.83,4.83){\rule{0.55mm}{0.55mm}}
+  \put(6.25,6.25){\rule{0.55mm}{0.55mm}}
+  \put(7.67,7.67){\rule{0.55mm}{0.55mm}}
+  \put(9.08,9.08){\rule{0.55mm}{0.55mm}}
+  \put(12.50,10.50){\textcolor{bleuseance}{\rule{0.55mm}{0.55mm}}}
+  \put(14.50,10.50){\textcolor{bleuseance}{\rule{0.55mm}{0.55mm}}}
+  \put(16.50,10.50){\textcolor{bleuseance}{\rule{0.55mm}{0.55mm}}}
+  \put(18.50,10.50){\textcolor{bleuseance}{\rule{0.55mm}{0.55mm}}}
+  \put(20.50,10.50){\textcolor{bleuseance}{\rule{0.55mm}{0.55mm}}}
+  \put(22.50,10.50){\textcolor{bleuseance}{\rule{0.55mm}{0.55mm}}}
+  \put(24.50,10.50){\textcolor{bleuseance}{\rule{0.55mm}{0.55mm}}}
+  \put(26.50,10.50){\textcolor{bleuseance}{\rule{0.55mm}{0.55mm}}}
+  \put(28.50,10.50){\textcolor{bleuseance}{\rule{0.55mm}{0.55mm}}}
+  \put(30.50,10.50){\textcolor{bleuseance}{\rule{0.55mm}{0.55mm}}}
+  \put(32.50,10.50){\textcolor{bleuseance}{\rule{0.55mm}{0.55mm}}}
+  \put(34.50,10.50){\textcolor{bleuseance}{\rule{0.55mm}{0.55mm}}}
+  \put(36.50,10.50){\textcolor{bleuseance}{\rule{0.55mm}{0.55mm}}}
+  \put(38.50,10.50){\textcolor{bleuseance}{\rule{0.55mm}{0.55mm}}}
+  \put(10.50,12.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,14.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,16.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,18.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,20.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,22.50){\rule{0.55mm}{0.55mm}}
+  \put(10.50,24.50){\rule{0.55mm}{0.55mm}}
+  \put(1.4,1.4){\rule{1.2mm}{1.2mm}}
+  \put(31.4,1.4){\rule{1.2mm}{1.2mm}}
+  \put(31.4,17.4){\rule{1.2mm}{1.2mm}}
+  \put(1.4,17.4){\rule{1.2mm}{1.2mm}}
+  \put(9.9,9.9){\rule{1.2mm}{1.2mm}}
+  \put(39.9,9.9){\rule{1.2mm}{1.2mm}}
+  \put(39.9,25.9){\rule{1.2mm}{1.2mm}}
+  \put(9.9,25.9){\rule{1.2mm}{1.2mm}}
+  \put(-0.4,-2.6){\small $A$}
+  \put(31.6,-2.6){\small $B$}
+  \put(33.4,17.2){\small $C$}
+  \put(-1.2,18.4){\small $D$}
+  \put(6.0,11.2){\small $E$}
+  \put(41.8,9.2){\small $F$}
+  \put(41.8,26.4){\small $G$}
+  \put(6.8,27.4){\small $H$}
+\end{picture}\\[10pt]
+{\small en bleu : $(AB)$ et $(EF)$ ; en rouge : $(GH)$ et $(CG)$.}
+\end{center} \\ \hline
+
+\moment{3) Appropriation de la situation, compréhension de la tâche et de
+l'organisation du travail (5 min)} &
+Le professeur pose des questions de compréhension : « Que veut dire : deux droites coplanaires ?
+Que signifie : deux plans sécants ? Comment reconnaître qu'une droite est parallèle à un plan ? »
+Il organise ensuite les groupes. &
+Les élèves répondent, clarifient la tâche et s'organisent en groupes. &
+\titreR{Consignes} : pour chaque cas, nommer la position, puis justifier en citant un axiome ou
+une propriété de la leçon. \\ \hline
+
+\moment{4) Résolution du problème : individuellement (5 min) puis en groupes (10 min)} &
+Le professeur vérifie les productions, circule parmi les groupes et les guide sans donner la
+solution. &
+\textbf{Résolution} : les élèves cherchent d'abord individuellement, puis en groupes ; ils
+rédigent une production. &
+\titreR{Synthèse 2 (S2) — Résolution} \par
+\textbf{1)} $(AB)$ et $(EF)$ sont coplanaires (dans le plan de la face $ABFE$) et n'ont aucun
+point commun : elles sont \mclef{parallèles}. Les droites $(AB)$ et $(GH)$, ainsi que les droites
+$(AB)$ et $(CG)$, ne sont ni sécantes ni parallèles : elles sont \mclef{non coplanaires}. \par
+\textbf{2)} les plans $(ABCD)$ et $(EFGH)$ (faces avant et arrière) n'ont aucun point commun : ils
+sont \mclef{parallèles}. Les plans $(ABFE)$ et $(BCGF)$ ont en commun les points $B$ et $F$ :
+d'après l'axiome A3, ils sont \mclef{sécants selon la droite $(BF)$}. \par
+\textbf{3)} $(AE)$ contient le point $A$ du plan $(ABCD)$ et le point $E$ hors de ce plan : elle
+est \mclef{sécante en $A$}. La droite $(AB)$ est parallèle à la droite $(EF)$ contenue dans le
+plan $(EFGH)$ et elle n'est pas dans ce plan : elle est \mclef{parallèle au plan $(EFGH)$}.
+ \\ \hline
+
+\moment{5) Synthèse et bilan du travail (3 min)} &
+Le professeur fait reformuler la démarche de justification, corrige puis valide. &
+Les élèves reformulent la démarche (nommer la position, puis justifier). &
+\titreR{Synthèse et bilan} : pour chaque configuration, on nomme la position relative, puis on
+justifie avec un axiome (A3) ou une propriété de la leçon. \\ \hline
+
+\moment{6) Institutionnalisation : trace écrite de la leçon par le professeur (7 min)} &
+Le professeur fait décrire les différentes positions sur les solides, énonce les définitions et
+la propriété admise, puis fait recopier la leçon. &
+Les élèves observent, décrivent les positions, énoncent les définitions et recopient la leçon. &
+\titreR{Trace écrite} \par
+\textbf{III) Positions relatives} \par
+\textbf{1) Positions relatives de deux droites} \par
+— Deux droites de l'espace sont \mclef{coplanaires} s'il existe un plan qui les contient toutes
+les deux. \par
+— Positions possibles : \textbf{sécantes} (un seul point commun) ; \textbf{parallèles} (aucun
+point commun, coplanaires) ; \textbf{confondues} ; \textbf{non coplanaires} (ni sécantes, ni
+parallèles). \par
+— \textit{Exemples (casier) :} $(AB)$ et $(BC)$ sécantes en $B$ ; $(AB)$ et $(EF)$ parallèles ;
+$(AB)$ et $(CG)$ non coplanaires. \par
+\textbf{2) Positions relatives de deux plans} \par
+— Deux plans sont \mclef{parallèles} s'ils sont confondus ou s'ils n'ont aucun point commun ; ils
+sont \mclef{sécants} selon une droite dans le cas contraire.
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(40,19)
+  \put(2,2){\rule{30mm}{0.35mm}}
+  \put(2,2){\rotatebox[origin=l]{33.69}{\rule{7.21mm}{0.35mm}}}
+  \put(32,2){\rotatebox[origin=l]{33.69}{\rule{7.21mm}{0.35mm}}}
+  \put(8,6){\rule{30mm}{0.35mm}}
+  \put(2,11){\rule{30mm}{0.35mm}}
+  \put(2,11){\rotatebox[origin=l]{33.69}{\rule{7.21mm}{0.35mm}}}
+  \put(32,11){\rotatebox[origin=l]{33.69}{\rule{7.21mm}{0.35mm}}}
+  \put(8,15){\rule{30mm}{0.35mm}}
+  \put(34.0,2.4){\small $\alpha$}
+  \put(34.0,11.4){\small $\beta$}
+\end{picture}
+\end{center}
+— \textit{Exemples (casier) :} $(ABCD)$ et $(EFGH)$ parallèles ; $(ABFE)$ et $(BCGF)$ sécants
+selon $(BF)$. \par
+\textbf{3) Positions relatives d'une droite et d'un plan} \par
+— Trois positions possibles : la droite est \textbf{contenue} dans le plan ; la droite et le plan
+sont \textbf{sécants} (un seul point commun) ; la droite et le plan sont \textbf{parallèles}
+(aucun point commun).
+\begin{center}
+\setlength{\unitlength}{1mm}%
+\begin{picture}(118,19)
+  \put(2,2){\rule{26mm}{0.35mm}}
+  \put(2,2){\rotatebox[origin=l]{33.69}{\rule{6.0mm}{0.35mm}}}
+  \put(28,2){\rotatebox[origin=l]{33.69}{\rule{6.0mm}{0.35mm}}}
+  \put(7,5.3){\rule{26mm}{0.35mm}}
+  \put(5,3.2){\rule{18mm}{0.5mm}}
+  \put(29.8,2.2){\small $\alpha$}
+  \put(23.4,3.4){\small $d$}
+  \put(8,-3.2){\small contenue}
+  \put(43,2){\rule{26mm}{0.35mm}}
+  \put(43,2){\rotatebox[origin=l]{33.69}{\rule{6.0mm}{0.35mm}}}
+  \put(69,2){\rotatebox[origin=l]{33.69}{\rule{6.0mm}{0.35mm}}}
+  \put(48,5.3){\rule{26mm}{0.35mm}}
+  \put(46,9){\rule{18mm}{0.5mm}}
+  \put(70.8,2.2){\small $\alpha$}
+  \put(64.4,9.2){\small $d$}
+  \put(51,-3.2){\small parallèle}
+  \put(84,2){\rule{26mm}{0.35mm}}
+  \put(84,2){\rotatebox[origin=l]{33.69}{\rule{6.0mm}{0.35mm}}}
+  \put(110,2){\rotatebox[origin=l]{33.69}{\rule{6.0mm}{0.35mm}}}
+  \put(89,5.3){\rule{26mm}{0.35mm}}
+  \put(86,12){\rotatebox[origin=l]{-30.96}{\rule{14mm}{0.5mm}}}
+  \put(97.4,4.2){\rule{1.2mm}{1.2mm}}
+  \put(111.8,2.2){\small $\alpha$}
+  \put(98.6,4.4){\small $A$}
+  \put(84.6,12.4){\small $d$}
+  \put(92,-3.2){\small sécante en $A$}
+\end{picture}
+\end{center}
+\prop{\textbf{\textcolor{rougetitre}{Propriété (admise)}} \par
+Si une droite $d$ est parallèle à une droite $d'$ contenue dans un plan $P$, et si $d$ n'est pas
+contenue dans $P$, alors $d$ est parallèle à $P$. \par
+\textit{Exemple :} $(AB)$ est parallèle à $(EF)$ contenue dans le plan $(EFGH)$, donc $(AB)$ est
+parallèle au plan $(EFGH)$.} \\ \hline
+
+\moment{7) Ré\-in\-ves\-tis\-se\-ment / travaux dirigés (5 min)} &
+Le professeur propose l'exercice, fait passer un élève au tableau, puis corrige la rédaction. &
+\textbf{Résolution} : les élèves cherchent, puis passent au tableau et rédigent la justification. &
+\app \par
+Dans le casier $ABCDEFGH$, déterminer la position relative : \par
+\textbf{1)} des droites $(EF)$ et $(HG)$ ; \par
+\textbf{2)} des plans $(ABCD)$ et $(DCGH)$ ; \par
+\textbf{3)} de la droite $(AE)$ et du plan $(EFGH)$. \par
+\textbf{Réponses :} \textbf{1)} parallèles (toutes deux dans le plan $(EFGH)$, sans point
+commun) ; \textbf{2)} sécants selon $(DC)$ (ils ont en commun les points $D$ et $C$, axiome A3) ;
+\textbf{3)} sécante en $E$ ($E$ est dans le plan, $A$ n'y est pas). \\ \hline
+
+\moment{8) Remédiation éventuelle (3 min)} &
+Le professeur reprend avec les élèves en difficulté la distinction coplanaire / non coplanaires
+sur le dessin du casier. &
+Les élèves refont la distinction sur deux nouvelles paires de droites avec l'aide du professeur. &
+\titreR{Remédiation} : sur la figure du casier, déterminer la position relative de $(AD)$ et
+$(BC)$ (parallèles), puis de $(AD)$ et $(FG)$ (non coplanaires). \\ \hline
+
+\moment{9) Évaluation (formative) (2 min)} &
+Le professeur pose une dernière question orale, donne l'exercice bilan, annonce l'évaluation
+prévue, puis conclut la leçon. &
+Les élèves répondent, puis notent l'exercice de maison. &
+\titreR{Évaluation formative} : citer les positions relatives possibles de deux plans. \par
+(\textit{Réponse : parallèles (confondus ou sans point commun) ou sécants selon une droite}.) \par
+\maison \par
+\textbf{1)} Citer les positions relatives possibles : de deux droites de l'espace ; d'une droite
+et d'un plan. \par
+\textbf{2)} Dans le casier $ABCDEFGH$, donner la position relative des plans $(ABFE)$ et
+$(DCGH)$, de la droite $(HG)$ et du plan $(ABCD)$, puis de la droite $(DF)$ et du plan $(ABCD)$. \par
+\textbf{3)} Tracer un plan $\alpha$, une droite $d$ contenue dans $\alpha$, puis une droite
+$\Delta$ parallèle à $\alpha$. \par
+\textit{(Réponse attendue : 1) sécantes, parallèles, confondues, non coplanaires ; contenue,
+sécante, parallèle ; 2) plans parallèles ; $(HG)$ parallèle au plan $(ABCD)$ ; $(DF)$ sécante en
+$D$ ; 3) tracés conformes aux figures de la leçon.)} \\ \hline
+\end{longtable}
+
+\begin{center}
+\underline{\textcolor{rougetitre}{\large\bfseries Institutionalisation \; : \; (trace écrite de la leçon par le professeur)}}
+\end{center}
+
+\end{document}
