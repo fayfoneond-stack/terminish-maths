@@ -1,6 +1,6 @@
 # 📋 SUIVI DES FICHES PÉDAGOGIQUES — TERMINISH MATHS
 
-_Mis à jour le 04/10/2026 — branche de travail : `arena/01a0d8b6-terminish-maths` — PR #2 ouverte vers `main`_
+_Mis à jour le 06/10/2026 — branche de travail : `arena/01a0d8b6-terminish-maths` — PR #2 ouverte vers `main`_
 
 ---
 
@@ -11,9 +11,11 @@ _Mis à jour le 04/10/2026 — branche de travail : `arena/01a0d8b6-terminish-ma
 | 1 | **4ème A** — Calcul sur les expressions algébriques | `Fiches_pedagogiques/4emeA/Fiche_01_Calcul_sur_les_expressions_algebriques.tex` + `.pdf` | 5 × 55 min | `24fb16a` → `6806df9` | ✅ Finale (8 p.) |
 | 2 | **1ère D** — Systèmes d'équations linéaires dans IR² et IR³ | `Fiches_pedagogiques/1ereD/Fiche_02_Systemes_lineaires_IR2_IR3.tex` + `.pdf` | 2 × 110 min | `553dc3c` | ✅ Finale (7 p.) |
 | 3 | **2nde A** — Dénombrement (Thème 3 : Organisation des données, Leçon 1) | `Fiches_pedagogiques/2ndeA/Fiche_01_Denombrement.tex` + `.pdf` | 6 × 55 min | `52fa812` | ✅ Finale (10 p.) |
-| 4 | **3ème** — Propriété de Thalès (Thème 2 : Configurations du plan, Leçon 2) | `Fiches_pedagogiques/3eme/Fiche_02_Propriete_de_Thales.tex` + `.pdf` | 8 × 55 min | `516ee0c` | ✅ Finale v4 (17 p.) — moments = 9 étapes APC |
+| 4 | **3ème** — Propriété de Thalès (Thème 2 : Configurations du plan, Leçon 2) | `Fiches_pedagogiques/3eme/Fiche_02_Propriete_de_Thales.tex` + `.pdf` | 8 × 55 min | `516ee0c` + `33ae5e6` | ✅ Finale v5 (17 p.) — moments = 9 étapes APC, formulations humaines |
+| 5 | **2nde S** — Positions relatives de droites et de plans de l'espace (Thème 5 : Géométrie de l'espace, Leçon 1) | `Fiches_pedagogiques/2ndeS/Fiche_01_Positions_relatives_droites_plans_espace.tex` + `.pdf` | 2 × 55 min | `1210dda` | ✅ Finale (8 p.) — SA « casier du club scientifique » en 2 Synthèses |
+| — | 3ème — SA manuscrite Thalès (copie élève, police Patrick Hand) | `Fiches_pedagogiques/3eme/SA_manuscrite_Propriete_de_Thales.tex` + `.pdf` | — | `957d98c` | ✅ Finale (3 p.) |
 
-**Dernier commit distant : `516ee0c`** (branche `arena/01a0d8b6-terminish-maths`, PR #2 : v4 + restauration des 89 fichiers écrasés par l'upload `af4c907` ; les 3 modèles PDF uploadés restent à la racine).
+**Dernier commit distant : `1210dda`** (branche `arena/01a0d8b6-terminish-maths`, PR #2 : v4 + restauration des 89 fichiers écrasés par l'upload `af4c907` ; les 3 modèles PDF uploadés restent à la racine).
 
 ---
 
