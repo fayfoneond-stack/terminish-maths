@@ -1,0 +1,205 @@
+% ═══════════════════════════════════════════════════════════════════════
+%  SITUATION D'APPRENTISSAGE — FICHE MANUSCRITE (copie élève)
+%  3ème — Thème 2 : Configurations du plan — Leçon 2 : Propriété de Thalès
+%  8 séances de 55 min — 8 Synthèses (S1 à S8) — Année scolaire 2026-2027
+%
+%  Style « cahier » : écriture manuscrite (police Patrick Hand, OFL),
+%  encre bleue, titres des Synthèses au stylo rouge souligné, marge rouge,
+%  lignes bleu pâle, filigrane du professeur.
+%  NB : aucun mode mathématique — tout est composé dans la police
+%  manuscrite (fractions en ligne, ex. AM/AB), comme sur une vraie copie.
+% ═══════════════════════════════════════════════════════════════════════
+\documentclass[12pt]{article}
+\usepackage[a4paper,top=1.7cm,bottom=1.6cm,left=1.7cm,right=1.7cm]{geometry}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{fontspec}
+\setmainfont[Path=/fonts/]{PatrickHand-Regular.ttf}
+
+% ── Couleurs « stylo » ─────────────────────────────────────────────────
+\definecolor{encre}{RGB}{29,58,143}        % encre bleue
+\definecolor{rougestylo}{RGB}{200,40,40}   % stylo rouge (titres)
+\definecolor{ligne}{RGB}{168,190,214}      % lignes bleu pâle du cahier
+\definecolor{grisfil}{RGB}{130,130,130}    % filigrane
+
+\linespread{1.32}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\color{encre}
+
+% ── Titre de Synthèse (stylo rouge, souligné) ──────────────────────────
+\newcommand{\synth}[2]{\bigskip{\Large\color{rougestylo}\underline{\textbf{Synthèse #1}} \;\;{\normalsize (#2)}\par}\smallskip}
+% ── Ligne bleu pâle du cahier ──────────────────────────────────────────
+\newcommand{\lignecahier}{\medskip{\color{ligne}\rule{\linewidth}{0.4pt}}\medskip\par}
+% ── Pointillés à compléter ─────────────────────────────────────────────
+\newcommand{\pt}[1]{\textcolor{encre!55}{#1}}
+
+% ── En-tête, marge rouge, filigrane, pied de page ──────────────────────
+\newcommand{\filigrane}{%
+  \rlap{\raisebox{11.5cm}[0pt][0pt]{\hbox to 0pt{\hskip 2.2cm
+    \rotatebox{30}{\scalebox{3}{\textcolor{grisfil!45}{\bfseries KODJONE Kodjo}}}\hss}}}}
+\newcommand{\margerouge}{%
+  \rlap{\raisebox{0cm}[0pt][0pt]{\hbox to 0pt{\hskip -1.05cm
+    \textcolor{rougestylo}{\vrule width 0.8pt height 26.6cm depth 0pt}}\hss}}}
+\makeatletter
+\def\ps@cahier{%
+  \def\@oddhead{\filigrane\margerouge\hfill{\small SA — Propriété de Thalès}\hfill\mbox{}}%
+  \def\@oddfoot{\hfill\textcolor{encre}{M. KODJONE Kodjo — Prof de Maths}\hfill
+                \fbox{\small\arabic{page}}\hfill}%
+}
+\makeatother
+\pagestyle{cahier}
+
+\begin{document}
+\large
+
+% ═══════════════════════ EN-TÊTE DU CAHIER ═══════════════════════
+\begin{center}
+{\LARGE\color{rougestylo}\underline{\textbf{SITUATION D'APPRENTISSAGE}}}\\[6pt]
+Mathématiques — Classe de \textbf{3ème} — Année scolaire \textbf{2026-2027}\\
+Thème 2 : Configurations du plan — Leçon 2 : \textbf{Propriété de Thalès}\\
+Durée : \textbf{8 séances de 55 min} — \textbf{8 Synthèses} (S1 à S8)\\[8pt]
+\pt{Nom : .............................................. \; Prénoms : ..............................................}\\[2pt]
+\pt{Classe : 3ème ........ \; Date : ................................}
+\end{center}
+
+\lignecahier
+
+% ═══════════════════════ LA SITUATION ═══════════════════════
+{\Large\color{rougestylo}\underline{\textbf{La situation}}}\par
+\medskip
+Pour aménager l'entrée du terrain de sport du \textbf{LYCÉE KPETA}, le maçon a
+tracé deux allées rectilignes qui se coupent en A. Sur la première allée, il a
+planté deux piquets B et M, avec AB = 9 m et AM = 6 m. Sur la deuxième allée,
+il a planté deux piquets C et N, avec AC = 7,5 m et AN = 5 m. Il a ensuite
+tendu une corde entre les piquets M et N.
+
+\begin{center}
+{\color{encre}%
+\setlength{\unitlength}{1mm}%
+\begin{picture}(46,36)
+  \put(2,2){\rule{36mm}{0.5mm}}
+  \put(20,28){\rotatebox[origin=l]{-55.30}{\rule{31.62mm}{0.5mm}}}
+  \put(2,2){\rotatebox[origin=l]{55.30}{\rule{31.62mm}{0.5mm}}}
+  \put(8,10.7){\rule{24mm}{0.5mm}}
+  \put(19.4,27.4){\rule{1.3mm}{1.3mm}}
+  \put(1.4,1.4){\rule{1.3mm}{1.3mm}}
+  \put(37.4,1.4){\rule{1.3mm}{1.3mm}}
+  \put(7.4,10.1){\rule{1.3mm}{1.3mm}}
+  \put(31.4,10.1){\rule{1.3mm}{1.3mm}}
+  \put(18.7,28.8){\large A}
+  \put(0,-4){\large B}
+  \put(38.2,-4){\large C}
+  \put(3.2,11.4){\large M}
+  \put(33.4,11.4){\large N}
+  \put(16,-8.2){\large 9 m}
+  \put(5.8,4.0){\large 6 m}
+  \put(30.0,15.4){\large 5 m}
+  \put(33.2,23.2){\large 7,5 m}
+  \put(17.4,11.9){\large corde}
+\end{picture}}
+\end{center}
+
+\textbf{Consigne générale :} chaque question de cette situation est appelée une
+\textbf{Synthèse} (Synthèse 1, Synthèse 2, …, Synthèse 8). Chaque Synthèse sera
+résolue à l'étape 4 de la séance : \textbf{d'abord individuellement (5 min),
+puis en groupes (10 min)}. Rédige chaque solution dans ton cahier.
+
+\lignecahier
+
+% ═══════════════════════ SYNTHESE 1 ═══════════════════════
+\synth{1}{Séance 1}
+\textbf{1)} Citer les triplets de points alignés de la situation, puis repérer
+les segments [MN] et [BC].\par
+\textbf{2)} Quelle configuration géométrique reconnaît-on ? La nommer et la
+décrire (où se trouvent les points M et N ?).
+
+% ═══════════════════════ SYNTHESE 2 ═══════════════════════
+\synth{2}{Séance 2}
+\textbf{1)} Calculer le quotient AM/AB, puis le quotient AN/AC ; simplifier
+chaque quotient.\par
+\textbf{2)} Les points M et N sont-ils placés dans le même ordre que B et C à
+partir de A ?\par
+\textbf{3)} Que peut-on conclure pour les droites (MN) et (BC) ? Citer la
+propriété utilisée.
+
+% ═══════════════════════ SYNTHESE 3 ═══════════════════════
+\synth{3}{Séance 3}
+Le contrôleur mesure la corde : MN = 4 m.\par
+Calculer la distance BC entre les piquets B et C. La rédaction doit comporter :
+la propriété de Thalès écrite, le remplacement par les valeurs connues, puis le
+produit en croix.
+
+% ═══════════════════════ SYNTHESE 4 ═══════════════════════
+\synth{4}{Séance 4}
+\textbf{Deuxième partie de la situation :} pour l'autre accès du terrain, deux
+chemins rectilignes se coupent en O. Des piquets A et B sont plantés sur le
+premier chemin, avec OA = 4 m et OB = 10 m ; des piquets A' et B' sont plantés
+sur le deuxième chemin, avec OA' = 6 m. On sait que (AA') // (BB').
+
+\begin{center}
+{\color{encre}%
+\setlength{\unitlength}{1mm}%
+\begin{picture}(52,28)
+  \put(2,2){\rotatebox[origin=l]{33.69}{\rule{28.84mm}{0.5mm}}}
+  \put(2,2){\rotatebox[origin=l]{19.98}{\rule{46.82mm}{0.5mm}}}
+  \put(14,10){\rule{10mm}{0.5mm}}
+  \put(26,18){\rule{20mm}{0.5mm}}
+  \put(1.4,1.4){\rule{1.3mm}{1.3mm}}
+  \put(13.4,9.4){\rule{1.3mm}{1.3mm}}
+  \put(25.4,17.4){\rule{1.3mm}{1.3mm}}
+  \put(23.4,9.4){\rule{1.3mm}{1.3mm}}
+  \put(45.4,17.4){\rule{1.3mm}{1.3mm}}
+  \put(0,-4){\large O}
+  \put(13.0,11.6){\large A}
+  \put(24.4,6.4){\large A'}
+  \put(23.4,19.6){\large B}
+  \put(45.6,19.6){\large B'}
+\end{picture}}\par
+\smallskip
+{\color{encre}\large (OA = 4 m ; OB = 10 m ; OA' = 6 m)}
+\end{center}
+
+\textbf{1)} Quelle configuration reconnaît-on ? La nommer.\par
+\textbf{2)} Calculer la distance OB'.
+
+% ═══════════════════════ SYNTHESE 5 ═══════════════════════
+\synth{5}{Séance 5}
+Le maçon veut placer la porte P du terrain en partageant le côté [BC], qui
+mesure BC = 6 m, dans la proportion 1 : 2.\par
+\textbf{1)} Calculer les longueurs BP et PC.\par
+\textbf{2)} Écrire le programme de construction qui permet de placer le point P
+aux instruments (demi-droite, reports égaux, parallèle), puis faire la figure.
+
+% ═══════════════════════ SYNTHESE 6 ═══════════════════════
+\synth{6}{Séance 6}
+Sur le second plan du terrain, on donne : OA = 4 m ; OB = 8 m ; OA' = 6 m ;
+OB' = 12 m. Les points sont alignés dans le même ordre.\par
+Le maçon affirme que les cheminements (AA') et (BB') sont parallèles. A-t-il
+raison ? Justifier la réponse : ordre des points, calcul des deux quotients,
+comparaison, conclusion en citant la propriété utilisée.
+
+% ═══════════════════════ SYNTHESE 7 ═══════════════════════
+\synth{7}{Séance 7}
+Sur le plan de l'entrée, on veut une nouvelle configuration vérifiant
+AM/AB = 1/3.\par
+\textbf{1)} Écrire le programme de construction de cette configuration.\par
+\textbf{2)} Réaliser la figure aux instruments.\par
+\textbf{3)} Justifier que la configuration obtenue a bien la propriété
+demandée.
+
+% ═══════════════════════ SYNTHESE 8 ═══════════════════════
+\synth{8}{Séance 8 — question de synthèse}
+Le contrôleur mesure BC = 6 m et la corde MN = 4 m.\par
+\textbf{1)} Vérifier par le calcul que MN/BC = AM/AB = AN/AC.\par
+\textbf{2)} En déduire la position de la droite (MN) par rapport à la droite
+(BC).\par
+\textbf{3)} Que se passerait-il si la corde mesurait MN = 5 m ? Expliquer.
+
+\lignecahier
+
+\begin{center}
+{\Large Bon courage ! Résous chaque Synthèse dans ton cahier.}
+\end{center}
+
+\end{document}
