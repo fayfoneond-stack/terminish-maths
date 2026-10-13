@@ -2,17 +2,7 @@ FICHE PEDAGOGIQUE - BARYCENTRES ET LIGNES DE NIVEAU
 Classe : 1ere D  -  Theme 4 : Geometrie du plan  -  A.S. 2026-2027
 Lycee Kpeta (Kpalime)  -  M. KODJONE Kodjo
 
-CANEVAS : identique a votre fiche de la Lecon 2
-         - A4 PAYSAGE
-         - en-tete rouge "FICHE PEDAGOGIQUE DE MATHEMATIQUES" souligne d'un double filet
-         - filigrane "KODJONE Kodjo" en diagonale
-         - pied de page bleu "M.KODJONE Kodjo Prof de Maths" et numero de page encadre
-         - tableau a 4 colonnes : Moment didactique / Activite de l'enseignant /
-           Activite de l'eleve / Trace ecrite
-         - en-tetes de tableaux en vert pale, mots-reperes de la trace ecrite en ROUGE,
-           surlignages en JAUNE, encadre SEANCE a bordure bleue, exercices en BLEU.
-
-================================ COMMENT COMPILER SUR OVERLEAF ================================
+=============================== COMMENT COMPILER SUR OVERLEAF ==============================
 
 1) Menu "New Project"  ->  "Upload Project"  ->  choisir ce fichier ZIP.
 2) Overleaf ouvre main.tex : cliquez sur "Recompile".
@@ -24,48 +14,55 @@ VARIANTE pour garder votre projet actuel :
    ouvrez main.tex, Ctrl+A puis Supprimer, collez tout le contenu du main.tex
    fourni ici, puis Recompile.
 
-================================ NOUVEAU : LES SOLUTIONS ====================================
+================================== CANEVAS (fiche lecon 2) ==================================
+
+   - A4 PAYSAGE, marges 1,28 cm (bande utile 27,14 cm)
+   - en-tete rouge "FICHE PEDAGOGIQUE DE MATHEMATIQUES" souligne d'un double filet
+   - FILIGRANE "KODJONE Kodjo" en gras 30 pt, gris #CFCFCF, incline a 30 degres,
+     place exactement comme sur votre fiche (8,51 cm de la gauche, 10,42 cm du bas),
+     dessine en ARRIERE-PLAN sur toutes les pages : le texte reste toujours lisible
+   - pied de page bleu "M.KODJONE Kodjo Prof de Maths" et numero de page encadre
+   - tableau a 4 colonnes : Moment didactique (2,12) / Activite de l'enseignant (5,17) /
+     Activite de l'eleve (4,37) / Trace ecrite (13,64)
+   - en-tetes de tableaux vert pale, mots-reperes de la trace ecrite en ROUGE,
+     surlignages JAUNES, encadre SEANCE a bordure bleue, exercices et solutions en BLEU
+   - les moments qui se poursuivent sont etiquetes " (suite) " avec des tirets dans les
+     colonnes 2 et 3, comme votre fiche
+
+====================================== LES SOLUTIONS ========================================
 
 Chaque "Exercice d'application" est suivi d'un bloc bleu "Solution" redige pas a pas
-(donnees, calculs, verification, conclusion), et chaque "Exercice de maison" d'une
-mention "Reponse attendue". Exemples :
+(donnees, calculs, verification, conclusion) ; chaque "Exercice de maison" porte une
+mention "Reponse attendue".
 
-   - Seance 1 : G = bar{(A;1),(B;2),(C;3)} -> G(2 ; 1,5), verifie par barycentre partiel ;
-                G = bar{(A;3),(B;5)} avec AB = 8 cm -> AG = 5 cm et BG = 3 cm.
-   - Seance 2 : AG = (2/3)AI ; G appartient aussi a (BJ) -> les medianes sont concourantes ;
-                3.MA - 2.MB = 0 -> A, M, B alignes.
-   - Seance 3 : MA^2+MB^2 = 26 -> cercle de rayon 2 cm ; = 18 -> {I} ; = 10 -> vide ;
-                MA^2-MB^2 = 8 avec AB = 4 -> droite perpendiculaire a (AB) a 1 cm de I.
-   - Seance 4 : MA.MB = 0 -> cercle de rayon 3 cm (cercle de diametre [AB]) ; MA/MB = 3 ->
-                JA = 3, JB = 1, KA = 6, KB = 2 : centre a 4,5 cm de A, rayon 1,5 cm (Apollonius) ;
-                ||2.MA - 3.MB|| = 10 -> cercle de centre G de rayon 10.
+=============================== PROPRETE DE LA SAISIE ======================================
 
-Mise en page verifiee : aucune ligne de tableau ne depasse la hauteur d'une page
-(hauteur maximale mesuree : 15,2 cm pour 17,6 cm disponibles) ; les longues parties de trace
-ecrite se poursuivent sur des lignes "Trace ecrite (suite)", comme sur votre fiche modele.
+   - aucun nom de couleur obsolete : uniquement cRouge, cBleu, cVert, cJaune, cVertPale,
+     cBleuPale, cFiligrane
+   - typographie soignee : microtype, tolerance et espace d'urgence regles, protection
+     contre les lignes veuves et orphelines, pages non etirees
+   - lignes source courtes et aerees (aucune ligne de plus de 149 caracteres)
+   - aucune ligne de tableau ne depasse une page : hauteur maximale mesuree 15,2 cm
+     pour 17,6 cm disponibles
+   - 0 fichier externe, 0 image, 0 appel \input : le document est autonome
 
-================================ CONTENU DE L'ARCHIVE ========================================
+======================================== CONTENU ============================================
 
-   main.tex                                   LA FICHE COMPLETE, autonome (c'est elle qu'on compile)
-   LISEZMOI.txt                               ce mode d'emploi
-   version_modulaire/fiche_barycentres_lignes_niveau.tex
-   version_modulaire/figures/fig_*.tex        les 14 figures a part, si vous voulez les retoucher
-
-================================ STRUCTURE ===================================================
-
-   Page 1        en-tete administratif ; grand encadre vert (competence terminale, theme,
-                 lecon, nombre de seances, supports, materiel, consigne, prerequis) ;
-                 tableau Capacites / Contenus ; strategie pedagogique.
-   Seance 1      Notion de barycentre : deux points ponderes, puis plus de deux points.
-   Seance 2      Proprietes du barycentre : alignement, droites concourantes, droites paralleles.
-   Seance 3      Notion de ligne de niveau : definition, MA^2+MB^2 = k, MA^2-MB^2 = k.
-   Seance 4      Lignes de niveau de MA.MB = k, de MA/MB = k (cercles d'Apollonius) et de
-                 ||a.MA + b.MB|| = k ; mathématisation d'un probleme ; bilan.
-
-   Chaque seance suit les moments du guide officiel : prerequis, presentation de la situation-
-   probleme, appropriation, travail individuel et en groupe, presentation des productions,
-   synthese, trace ecrite (institutionnalisation), reinvestissement, exercice de maison.
+   Page 1     en-tete administratif ; grand encadre vert (competence terminale, theme,
+              lecon, nombre de seances, supports, materiel, consigne, prerequis) ;
+              tableau Capacites / Contenus ; strategie pedagogique.
+   Seance 1   Notion de barycentre : deux points ponderes, puis plus de deux points.
+   Seance 2   Proprietes du barycentre : alignement, droites concourantes, paralleles.
+   Seance 3   Notion de ligne de niveau : definition, MA^2+MB^2 = k, MA^2-MB^2 = k.
+   Seance 4   Lignes de niveau de MA.MB = k, de MA/MB = k (cercles d'Apollonius) et de
+              ||a.MA + b.MB|| = k ; mathématisation d'un probleme ; bilan.
 
    EFFECTIF et SEMAINE sont laisses en pointilles, comme sur votre fiche modele.
 
-   En cas de message rouge au Recompile : bouton "Logs", copiez les 2-3 lignes en rouge.
+======================================== L'ARCHIVE ==========================================
+
+   main.tex                                   LA FICHE COMPLETE, autonome (a compiler)
+   apercu_canevas.png                         apercu de controle de la mise en page
+   LISEZMOI.txt                               ce mode d'emploi
+   version_modulaire/fiche_barycentres_lignes_niveau.tex
+   version_modulaire/figures/fig_*.tex        les 14 figures a part, si vous voulez les retoucher
