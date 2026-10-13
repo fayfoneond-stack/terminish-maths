@@ -1,0 +1,22 @@
+FICHE PEDAGOGIQUE - BARYCENTRES ET LIGNES DE NIVEAU (1ere D)
+Lycée Kpeta (Kpalimé) - Thème 4 : Géométrie du plan - A.S. 2026-2027
+
+MODE D'EMPLOI SUR OVERLEAF
+1) Menu "New Project" puis "Upload Project" et choisir ce fichier ZIP.
+2) Overleaf ouvre fiche_barycentres_lignes_niveau.tex comme document principal.
+3) Menu "Menu" -> "Compiler" -> verifier que le compilateur est bien "pdfLaTeX".
+4) Cliquer sur "Recompile". Le PDF doit se construire en une vingtaine de secondes.
+   Les figures sont dessinees par TikZ pendant la compilation : aucun fichier image
+   n'est necessaire.
+
+IMPORTANT : le dossier "figures/" doit rester a cote du fichier .tex
+(sinon l'erreur "File `figures/fig_...' not found" apparaît).
+
+VERSION EN UN SEUL FICHIER : le dossier "version_un_seul_fichier" contient
+fiche_barycentres_lignes_niveau_COMPLET.tex, ou les 14 figures sont incluses.
+Ce fichier se compile tout seul (il suffit de le televerser seul).
+
+En cas d'erreur de compilation : ouvrir le journal (bouton "Logs" a cote de
+"Recompile"), copier les lignes en rouge et les communiquer.
+
+EFFECTIF et SEMAINE ont ete laisses en pointilles, comme sur la fiche modele.
