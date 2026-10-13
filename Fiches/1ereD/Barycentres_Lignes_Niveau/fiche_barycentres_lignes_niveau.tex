@@ -1,0 +1,1036 @@
+% =====================================================================================
+%  FICHE PEDAGOGIQUE DE MATHEMATIQUES
+%  Classe : 1ere D   -   Theme 4 : Geometrie du plan
+%  Lecon 1 : BARYCENTRES ET LIGNES DE NIVEAU
+%  Auteur : KODJONE Kodjo  -  Lycee Kpeta (Kpalime)  -  Annee scolaire 2026-2027
+% -------------------------------------------------------------------------------------
+%  COMPILATION (Overleaf) : pdfLaTeX
+%  Fichier principal : fiche_barycentres_lignes_niveau.tex
+%  Les figures sont dans le dossier  figures/  et sont appelees par \input{figures/...}
+% =====================================================================================
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage[a4paper,top=1.15cm,bottom=1.35cm,left=1.3cm,right=1.3cm]{geometry}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{array}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{calc,arrows.meta}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{longtable}
+\usepackage{needspace}
+
+% ------------------------------------------------------------------ COULEURS
+\definecolor{cTitre}{RGB}{0,51,102}      % bleu marine : titre de la fiche
+\definecolor{cPartie}{RGB}{21,71,141}    % bleu : titres de parties (I, II, III)
+\definecolor{cSous}{RGB}{27,79,156}      % bleu : sous-titres
+\definecolor{cDef}{RGB}{106,27,154}      % violet : DEFINITION
+\definecolor{cProp}{RGB}{179,18,60}      % carmin : PROPRIETE / THEOREME
+\definecolor{cMeth}{RGB}{11,110,79}      % vert   : METHODE / DEMONSTRATION
+\definecolor{cEx}{RGB}{194,94,0}         % orange : EXEMPLE / SITUATION
+\definecolor{cApp}{RGB}{0,110,150}       % bleu-vert : APPLICATION / EXERCICE
+\definecolor{cHl}{RGB}{255,240,140}      % jaune : surlignage
+\definecolor{cEntete}{RGB}{222,235,247}  % bleu tres clair : entetes de tableaux
+\definecolor{cLigne}{RGB}{120,140,170}   % gris-bleu : filets de tableaux
+\definecolor{cGris}{RGB}{85,85,85}
+
+% ------------------------------------------------------------------ MACROS
+\providecommand{\iere}{\textsuperscript{ère}}
+\providecommand{\ieme}{\textsuperscript{ème}}
+\providecommand{\hl}[1]{\colorbox{cHl}{#1}}                  % surlignage
+\newcommand{\vc}[1]{\overrightarrow{#1}}                     % vecteur AB
+\newcommand{\barG}[1]{\mathrm{bar}\left\{#1\right\}}          % bar{(A;a),(B;b)}
+
+% ------------------------------------------------------------------ CESURE
+% Evite les debordements des mots longs dans les colonnes etroites des seances.
+\hyphenation{in-sti-tu-tion-na-li-sa-tion in-di-vi-duel-le-ment
+             per-pen-di-cu-laire per-pen-di-cu-laires ap-pro-pria-tion
+             con-cou-rantes con-struc-tion em-pla-ce-ments re-pro-dui-sent
+             ap-pli-ca-tions con-fi-gu-ra-tions in-ter-ro-ga-tions}
+
+% Titre de partie : I. NOTION DE BARYCENTRE
+\newcommand{\partie}[2]{%
+  \par\needspace{5\baselineskip}\addvspace{10pt}%
+  \noindent\colorbox{cPartie}{\parbox{\dimexpr\linewidth-2\fboxsep}{\color{white}\bfseries\large #1.\ \ #2}}\par\addvspace{7pt}}
+
+% Sous-titre : 1. Barycentre de deux points ponderes
+\newcommand{\sous}[1]{\par\needspace{3\baselineskip}\addvspace{7pt}\noindent{\color{cSous}\bfseries #1}\par\addvspace{3pt}}
+
+% Encadre colore :  \begin{encadre}[nb de lignes a reserver]{couleur}{Titre} ... \end{encadre}
+\newsavebox{\encbox}
+\newenvironment{encadre}[3][10]{%
+  \par\needspace{#1\baselineskip}\addvspace{6pt}\noindent
+  \def\encColor{#2}%
+  \begin{lrbox}{\encbox}%
+  \begin{minipage}{\dimexpr\linewidth-2\fboxsep-2\fboxrule-0.5pt\relax}%
+  \raggedright{\color{#2}\bfseries #3}\par\smallskip}%
+  {\end{minipage}\end{lrbox}%
+  \noindent\fcolorbox{\encColor}{\encColor!7}{\usebox{\encbox}}\par\addvspace{6pt}}
+
+% ------------------------------------------------------------------ STYLE
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2pt}
+\renewcommand{\arraystretch}{1.25}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\fancyhead[L]{\footnotesize\color{cTitre}\textbf{FICHE PEDAGOGIQUE DE MATHEMATIQUES} -- \textnormal{1\iere{} D}}
+\fancyhead[R]{\footnotesize\color{cTitre}Barycentres et lignes de niveau}
+\fancyfoot[L]{\footnotesize\color{cGris}M. KODJONE Kodjo -- Professeur de Maths -- Lycee Kpeta}
+\fancyfoot[R]{\footnotesize\color{cGris}Page \thepage}
+
+% Colonnes de tableau a largeur fixe, alignees a gauche
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+\begin{document}
+
+% =====================================================================================
+%  EN-TETE ADMINISTRATIF
+% =====================================================================================
+\begin{center}
+  {\LARGE\bfseries\color{cTitre}FICHE PEDAGOGIQUE DE MATHEMATIQUES}\\[2pt]
+  {\color{cProp}\rule{0.62\linewidth}{1.1pt}}
+\end{center}
+
+\vspace{-2pt}
+{\setlength{\arrayrulewidth}{0.7pt}
+\arrayrulecolor{cLigne}
+\noindent\begin{tabular}{|L{5.5cm}|L{5.5cm}|L{5.5cm}|}
+\hline
+\rowcolor{cEntete}\textbf{NOM} : KODJONE          & \textbf{DRE} : PLO                & \textbf{FICHE N\textsuperscript{o}} : \textbf{2}\\
+\hline
+\textbf{PRENOM} : Kodjo                           & \textbf{IESG} : KPALIME           & \textbf{DISCIPLINE} : MATHS\\
+\hline
+\textbf{CONTACT} : 93 15 01 78                    & \textbf{ETABLISSEMENT} : LYCEE KPETA & \textbf{CLASSE} : 1\iere{} D\\
+\hline
+\textbf{EFFECTIF} : G : \dots\ F : \dots\ T : \dots & \textbf{ANNEE SCOLAIRE} : 2026 -- 2027 & \textbf{SEMAINE} : \dots\dots\dots\\
+\hline
+\end{tabular}}
+
+\vspace{6pt}
+{\setlength{\arrayrulewidth}{0.7pt}
+\arrayrulecolor{cTitre}
+\noindent\fcolorbox{cTitre}{cTitre!5}{\begin{minipage}{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}
+\textbf{\color{cTitre}COMPETENCE TERMINALE} : \textit{\color{cGris}Résoudre des problèmes de la vie courante faisant appel aux configurations du plan, aux lignes de niveau et aux propriétés du barycentre d'un système de points pondérés.}\\[3pt]
+\textbf{\color{cTitre}THEME} : \textbf{GÉOMÉTRIE DU PLAN}\\[3pt]
+\textbf{\color{cTitre}LECON 1} : \hfill{\large\bfseries\color{cProp}BARYCENTRES ET LIGNES DE NIVEAU}\hfill{}\\[3pt]
+\textbf{\color{cTitre}NOMBRE DE SEANCES} : \textbf{4} \qquad\textbf{\color{cTitre}DUREE D'UNE SEANCE} : \textbf{110 min (2 $\times$ 55 min)}\\[3pt]
+\textbf{\color{cTitre}SUPPORTS DIDACTIQUES PRINCIPAUX} : Enoncé de la situation d'apprentissage ; CIAM 1\iere{} D ; CARGO 1\iere{} D ; Programme et son guide.\\[3pt]
+\textbf{\color{cTitre}MATERIEL DIDACTIQUE ORDINAIRE} : Régie ; craie ; règle graduée ; compas ; équerre ; cahiers.\quad
+\textbf{\color{cTitre}MATERIEL DIDACTIQUE ADAPTE} : Fiche d'activités ; papier millimétré ; figures découpées ; fil et petites masses (activité d'introduction).\\[3pt]
+\textbf{\color{cTitre}CONSIGNE POUR LE PROFESSEUR DE SUIVI} : Vérifier le respect des moments didactiques, la synthèse avant la trace écrite et la trace écrite de la leçon.\\[3pt]
+\textbf{\color{cTitre}PREREQUIS} : Vecteurs et opérations sur les vecteurs ; colinéarité de deux vecteurs ; repérage dans le plan ; coordonnées d'un point et d'un milieu ; produit scalaire et carré scalaire ; théorème de Pythagore ; théorème de Thalès ; théorème de la médiane.\\[3pt]
+\textbf{\color{cTitre}USAGE DES INSTRUMENTS} : règle graduée et compas pour construire un barycentre et les lignes de niveau ; papier millimétré pour la lecture des coordonnées.
+\end{minipage}}}
+
+\vspace{8pt}
+% =====================================================================================
+%  TABLEAU DES CAPACITES ET CONTENUS (issu du programme officiel)
+% =====================================================================================
+\begin{center}
+{\large\bfseries\color{cTitre}TABLEAU DES CAPACITES ET CONTENUS}
+\end{center}
+\vspace{2pt}
+
+{\setlength{\arrayrulewidth}{0.7pt}
+\arrayrulecolor{cLigne}
+\noindent\begin{tabular}{|C{0.9cm}|L{4.4cm}|L{11.1cm}|}
+\hline
+\rowcolor{cEntete}\textbf{N\textsuperscript{o}} & \textbf{\color{cTitre}CAPACITES} & \textbf{\color{cTitre}CONTENUS}\\
+\hline
+1 & Reconnaitre une configuration & $\bullet$ \hl{point pondéré} \quad$\bullet$ barycentre d'un système de deux ou trois points pondérés\\
+\hline
+2 & Caractériser un point & $\bullet$ \hl{relation vectorielle} du barycentre d'un système de points pondérés \quad$\bullet$ \hl{coordonnées} du barycentre\\
+\hline
+3 & Construire une configuration & $\bullet$ barycentre d'un système de points pondérés \quad$\bullet$ \hl{lieux géométriques}\\
+\hline
+4 & Démontrer une propriété & $\bullet$ \hl{existence} du barycentre \quad$\bullet$ alignement de points \quad$\bullet$ \hl{droites concourantes} \quad$\bullet$ \hl{droites parallèles}\\
+\hline
+5 & Déterminer un ensemble & $\bullet$ \hl{lieux géométriques} (lignes de niveau)\\
+\hline
+6 & Réduire une expression & $\bullet$ \hl{barycentre partiel} \quad$\bullet$ \hl{homogénéité} du barycentre\\
+\hline
+7 & Mathématiser une situation & $\bullet$ Exemples de situations faisant appel aux barycentres\\
+\hline
+\end{tabular}}
+
+\vspace{8pt}
+% =====================================================================================
+%  STRATEGIE PEDAGOGIQUE
+% =====================================================================================
+\begin{encadre}[12]{cMeth}{Stratégie pédagogique et choix didactiques}
+\begin{itemize}[leftmargin=1.1cm,itemsep=1pt,topsep=2pt]
+  \item Travail individuel ou en petits groupes ; méthode démonstrative ; faire faire (travail individuel).
+  \item Partir d'activités (balance, masses suspendues) pour introduire la notion de barycentre.
+  \item Présenter \hl{différentes méthodes de construction du barycentre} : relation vectorielle, coordonnées, construction géométrique sur un graphique.
+  \item Partir des barycentres pour déterminer les \hl{lignes de niveau} des applications $M\mapsto \alpha MA^2+\beta MB^2$, $M\mapsto \alpha MA^2+\beta MB^2+\gamma MC^2$ et $M\mapsto \dfrac{MA}{MB}$.
+  \item Evaluation : détermination du barycentre de deux (ou plus) points pondérés à partir d'une relation vectorielle ou sur un graphique ; démonstration d'une propriété en utilisant le barycentre partiel ou l'homogénéité ; détermination de droites concourantes, de droites parallèles et de lignes de niveau.
+\end{itemize}
+\end{encadre}
+
+% =====================================================================================
+%  DEROULEMENT -- LES QUATRE SEANCES
+% =====================================================================================
+\begin{center}
+{\large\bfseries\color{cTitre}DEROULEMENT DE LA LECON}
+\end{center}
+\vspace{2pt}
+
+\newcommand{\entetedero}{%
+  \rowcolor{cEntete}\textbf{\color{cTitre}Moment didactique} & \textbf{\color{cTitre}Activité de l'enseignant} &
+  \textbf{\color{cTitre}Activité de l'élève} & \textbf{\color{cTitre}Trace écrite / Support}\\\hline}
+
+% ---------------------------------------------------------------- SEANCE 1
+\clearpage
+{\setlength{\arrayrulewidth}{0.7pt}\arrayrulecolor{cLigne}
+\begin{longtable}{|L{3.0cm}|L{4.5cm}|L{3.5cm}|L{5.5cm}|}
+\hline
+\multicolumn{4}{|c|}{\cellcolor{cPartie}\color{white}\bfseries SEANCE 1 : BARYCENTRE DE DEUX ET DE PLUSIEURS POINTS PONDERES}\\\hline
+\entetedero
+\endfirsthead
+\hline
+\multicolumn{4}{|c|}{\cellcolor{cPartie}\color{white}\bfseries SEANCE 1 (suite) : BARYCENTRE DE DEUX ET DE PLUSIEURS POINTS PONDERES}\\\hline
+\entetedero
+\endhead
+\hline
+\endfoot
+
+\textbf{\color{cMeth}Prérequis\newline(15 min)}
+& Fait réviser au tableau : somme de deux vecteurs, produit d'un vecteur par un réel, colinéarité, coordonnées du milieu d'un segment ; corrige et fait le point.
+& Résolution : effectuent les calculs au tableau et rappellent le critère de colinéarité $\vc{u}=k\vc{v}$.
+& \textbf{\color{cMeth}Exercice prérequis}\par
+$A(-1\,;\,2)$ et $B(3\,;\,6)$. Calculer les coordonnées du milieu $I$ de $[AB]$ et montrer que $\vc{AB}=4\vc{u}$ avec $\vc{u}(1\,;\,1)$.\par
+\textbf{Réponses} : $I(1\,;\,4)$ et $\vc{AB}(4\,;\,4)=4\vc{u}$.
+\\\hline
+
+\textbf{\color{cEx}Présentation de la situation-problème\newline(10 min)}
+& Recopie la situation au tableau et la lit à haute voix.
+& Recopient la situation dans le cahier et la lisent.
+& \textbf{\color{cEx}Situation d'apprentissage}\par
+Une planche rigide de $3$ m repose sur un support au point $G$. On suspend une masse de $12$ kg en $A$ et une masse de $18$ kg en $B$. Où faut-il placer le support pour que la planche reste horizontale ?\par
+\emph{Problème} : déterminer la position du point d'équilibre $G$ du système $\{(A\,;\,12),(B\,;\,18)\}$.\par
+\resizebox{0.96\linewidth}{!}{\input{figures/fig_equilibre}}
+\\\hline
+
+\textbf{\color{cEx}Appropriation de la situation et de la tâche\newline(10 min)}
+& Explique les mots difficiles, pose des questions de compréhension et répond aux interrogations des élèves.
+& Expliquent la situation, posent des questions et relèvent les mots difficiles.
+& \textbf{\color{cEx}Consignes}\par
+1) Placer $G$ sur la figure et conjecturer la position du point d'équilibre.\par
+2) Traduire la situation par une égalité vectorielle faisant intervenir les masses.\par
+3) Vérifier la solution.
+\\\hline
+
+\textbf{\color{cMeth}Travail individuel\newline(10 min)\newline puis travail en groupe\newline(15 min)}
+& Vérifie les productions des élèves, fait des remarques à haute voix, circule et guide les groupes sans donner la solution.
+& Résolution : cherchent individuellement puis en groupe ; confrontent leurs méthodes ; rédigent une production.
+& \textbf{\color{cMeth}Recherche}\par
+Les élèves constatent que la planche reste horizontale si $12\times GA=18\times GB$, c'est-à-dire si $G$ est plus proche de $B$, et traduisent cette observation par $12\,\vc{GA}+18\,\vc{GB}=\vc{0}$.\par
+En divisant par $6$ : $2\vc{GA}+3\vc{GB}=\vc{0}$, soit $5\vc{GA}=-3\vc{AB}$, donc $\vc{AG}=\dfrac{3}{5}\vc{AB}$ : $AG=1{,}8$ m et $BG=1{,}2$ m.
+\\\hline
+
+\textbf{\color{cProp}Présentation des productions\newline(15 min)}
+& Fait exposer les productions des groupes au tableau, organise la confrontation des méthodes et apporte des amendements.
+& Exposent leurs productions ; comparent les méthodes ; apportent des amendements.
+& \textbf{\color{cProp}Constat}\par
+Le point d'équilibre $G$ est l'unique point du plan vérifiant $12\,\vc{GA}+18\,\vc{GB}=\vc{0}$. Un tel point s'appelle le \hl{barycentre} du système $\{(A\,;\,12),(B\,;\,18)\}$ : c'est l'objet de la leçon.
+\\\hline
+
+\textbf{\color{cProp}Synthèse\newline(10 min)}
+& Fait reformuler en dix minutes ce que la situation a permis de découvrir ; corrige les formulations puis valide.
+& Reformulent avec leurs propres mots ; s'écoutent et se corrigent entre eux.
+& \textbf{\color{cProp}Synthèse}\par
+\textbf{Données} : un système de deux points pondérés.\par
+\textbf{Calculs} : $12\,\vc{GA}+18\,\vc{GB}=\vc{0}\Longleftrightarrow \vc{AG}=\dfrac{3}{5}\vc{AB}$.\par
+\textbf{Conclusion} : le barycentre est sur la droite $(AB)$, du côté de $B$ ; il ne dépend que du \emph{rapport} des masses.
+\\\hline
+
+\textbf{\color{cDef}Institutionnalisation\newline(trace écrite)\newline(25 min)}
+& Fait recopier la leçon (définition, existence, propriétés, coordonnées, construction) au tableau et dans les cahiers ; construit les figures.
+& Recopient la trace écrite de la leçon et reproduisent les figures.
+& \textbf{\color{cDef}Trace écrite} : voir la partie \textcolor{cPartie}{I. NOTION DE BARYCENTRE}, \S 1 et \S 2 (figures 1, 2 et 3).
+\\\hline
+
+\textbf{\color{cApp}Réinvestissement\newline(15 min)}
+& Propose les exercices, fait passer deux élèves au tableau, corrige.
+& Résolution : cherchent puis passent au tableau.
+& \textbf{\color{cApp}Applications}\par
+\textbf{1)} $AB=5$ cm. Construire $G=\barG{(A\,;\,2),(B\,;\,3)}$ et calculer $AG$.\newline
+\emph{Réponse} : $\vc{AG}=\dfrac{3}{5}\vc{AB}$ donc $AG=3$ cm.\par
+\textbf{2)} $A(-2\,;\,1)$, $B(4\,;\,7)$. Déterminer $G=\barG{(A\,;\,1),(B\,;\,2)}$ par la relation vectorielle, puis par les coordonnées.\newline
+\emph{Réponse} : $G(2\,;\,5)$.
+\\\hline
+
+\textbf{\color{cApp}Exercice de maison\newline(5 min)}
+& Donne l'exercice à faire à la maison et annonce la suite.
+& Notent l'exercice de maison.
+& \textbf{\color{cApp}Exercice de maison}\par
+$A(1\,;\,1)$, $B(5\,;\,3)$, $C(2\,;\,6)$. Déterminer les coordonnées de $G=\barG{(A\,;\,2),(B\,;\,1),(C\,;\,3)}$ puis vérifier que $A$, $G$ et le milieu $I$ de $[BC]$ sont alignés.\newline
+\emph{Réponse attendue} : $G\left(\dfrac{13}{6}\,;\,\dfrac{23}{6}\right)$.
+\\\hline
+
+\textbf{\color{cDef}Evaluation formative\newline(10 min)}
+& Propose l'exercice d'évaluation, observe les productions et note les difficultés.
+& Cherchent et résolvent l'exercice d'évaluation.
+& \textbf{\color{cDef}Evaluation} -- \emph{Détermination du barycentre de deux (ou plus) points pondérés à partir d'une relation vectorielle ou sur un graphique}.\par
+$A$, $B$ et $C$ sont trois points du plan. Construire $G=\barG{(A\,;\,1),(B\,;\,3)}$ et $H=\barG{(B\,;\,2),(C\,;\,1)}$.
+\\\hline
+\end{longtable}}
+
+% ---------------------------------------------------------------- SEANCE 2
+\clearpage
+{\setlength{\arrayrulewidth}{0.7pt}\arrayrulecolor{cLigne}
+\begin{longtable}{|L{3.0cm}|L{4.5cm}|L{3.5cm}|L{5.5cm}|}
+\hline
+\multicolumn{4}{|c|}{\cellcolor{cPartie}\color{white}\bfseries SEANCE 2 : PROPRIETES DU BARYCENTRE -- BARYCENTRE PARTIEL, ALIGNEMENT, DROITES CONCOURANTES ET PARALLELES}\\\hline
+\entetedero
+\endfirsthead
+\hline
+\multicolumn{4}{|c|}{\cellcolor{cPartie}\color{white}\bfseries SEANCE 2 (suite) : PROPRIETES DU BARYCENTRE}\\\hline
+\entetedero
+\endhead
+\hline
+\endfoot
+
+\textbf{\color{cMeth}Petite activité\newline(10 min)}
+& Dicte les mini-questions de révision (relation vectorielle, coordonnées, homogénéité) ; fait répondre à main levée et chronomètre dix minutes.
+& Répondent individuellement sur ardoise ou cahier de brouillon.
+& \textbf{\color{cMeth}Petite activité}\par
+$A(-1\,;\,3)$, $B(2\,;\,0)$. Donner les coordonnées de $G=\barG{(A\,;\,2),(B\,;\,1)}$ et écrire la relation vectorielle qui définit $G$.\newline
+\emph{Réponses} : $G(0\,;\,2)$ et $2\vc{GA}+\vc{GB}=\vc{0}$.
+\\\hline
+
+\textbf{\color{cMeth}Correction de l'exercice de maison\newline(15 min)}
+& Fait passer des élèves au tableau, corrige et précise les erreurs.
+& Résolution : deux élèves traitent l'exercice au tableau ; les autres corrigent.
+& \textbf{\color{cMeth}Correction}\par
+$G\left(\dfrac{13}{6}\,;\,\dfrac{23}{6}\right)$ ; $\vc{IG}=\dfrac{1}{2}\vc{IA}$ : les points $A$, $G$ et $I$ sont alignés.
+\\\hline
+
+\textbf{\color{cEx}Présentation de la situation-problème\newline(10 min)}
+& Recopie la situation au tableau et la lit à haute voix.
+& Recopient la situation dans le cahier et la lisent.
+& \textbf{\color{cEx}Situation d'apprentissage}\par
+Un atelier de Kpalimé découpe une plaque triangulaire en tôle $ABC$. Pour la suspendre sans qu'elle penche, le contremaître affirme qu'il faut la fixer au point où les trois médianes se coupent, c'est-à-dire au point d'équilibre de la plaque.\par
+\emph{Problème} : construire ce point et démontrer que les trois médianes du triangle sont concourantes.
+\\\hline
+
+\textbf{\color{cEx}Appropriation de la situation et de la tâche\newline(10 min)}
+& Explique les mots difficiles, pose des questions de compréhension et répond aux interrogations des élèves.
+& Expliquent la situation, posent des questions et relèvent les mots difficiles.
+& \textbf{\color{cEx}Consignes}\par
+1) Placer les milieux $I$, $J$, $K$ des côtés $[BC]$, $[CA]$ et $[AB]$.\par
+2) Utiliser un barycentre partiel pour montrer que $G$ appartient à deux médianes.\par
+3) Conclure : que peut-on dire des trois médianes ?
+\\\hline
+
+\textbf{\color{cMeth}Travail individuel\newline(5 min)\newline puis travail en groupe\newline(10 min)}
+& Circule, vérifie les productions, guide sans donner la solution.
+& Cherchent individuellement puis en groupe ; rédigent une production.
+& \textbf{\color{cMeth}Recherche}\par
+$G=\barG{(A\,;\,1),(B\,;\,1),(C\,;\,1)}$. Posons $I=\barG{(B\,;\,1),(C\,;\,1)}$ (barycentre partiel) : alors $G=\barG{(A\,;\,1),(I\,;\,2)}$, donc $A$, $G$ et $I$ sont alignés : $G$ appartient à la médiane $(AI)$. On procède de même avec $(BJ)$ et $(CK)$.
+\\\hline
+
+\textbf{\color{cProp}Présentation des productions\newline(10 min)}
+& Fait exposer les productions, organise la confrontation, apporte des amendements.
+& Exposent leurs productions ; comparent les démarches ; apportent des amendements.
+& \textbf{\color{cProp}Constat}\par
+Le barycentre partiel permet de \emph{réduire} le nombre de points du système. En appliquant cette technique à deux médianes, on prouve que les trois médianes sont concourantes au \hl{centre de gravité} du triangle.
+\\\hline
+
+\textbf{\color{cProp}Synthèse\newline(15 min)}
+& Fait reformuler les propriétés découvertes : homogénéité, barycentre partiel, alignement, parallélisme, concourance ; corrige puis valide.
+& Reformulent avec leurs propres mots ; s'écoutent et se corrigent entre eux.
+& \textbf{\color{cProp}Synthèse}\par
+\textbf{Données} : un triangle $ABC$ et ses trois médianes.\par
+\textbf{Calculs} : $G=\barG{(A\,;\,1),(B\,;\,1),(C\,;\,1)}$ et $I=\barG{(B\,;\,1),(C\,;\,1)}$.\par
+\textbf{Conclusion} : $G$ est sur les trois médianes ; le barycentre partiel et l'homogénéité sont des \hl{outils de démonstration}.
+\\\hline
+
+\textbf{\color{cDef}Institutionnalisation\newline(trace écrite)\newline(35 min)}
+& Fait recopier la leçon (propriétés, barycentre partiel, homogénéité, coordonnées, applications à l'alignement et au parallélisme) ; construit les figures.
+& Recopient la trace écrite de la leçon et reproduisent les figures.
+& \textbf{\color{cDef}Trace écrite} : voir la partie \textcolor{cPartie}{I. NOTION DE BARYCENTRE}, \S 2 (propriétés), \S 3 (applications) et \S 4 (mathématisation) -- figures 2 à 5.
+\\\hline
+
+\textbf{\color{cApp}Réinvestissement\newline(30 min)}
+& Propose les exercices, fait travailler individuellement, fait passer des élèves au tableau, corrige.
+& Résolution : cherchent puis passent au tableau.
+& \textbf{\color{cApp}Applications}\par
+\textbf{1) (Barycentre partiel)} $ABC$ quelconque, $G=\barG{(A\,;\,2),(B\,;\,1),(C\,;\,3)}$. Soit $I=\barG{(A\,;\,2),(B\,;\,1)}$. Montrer que $G=\barG{(I\,;\,3),(C\,;\,3)}$ et en déduire que $G$ est le milieu de $[IC]$.\par
+\textbf{2) (Droites parallèles)} $I=\barG{(A\,;\,1),(B\,;\,1)}$ et $J=\barG{(A\,;\,1),(C\,;\,1)}$. Démontrer que $IJ=\dfrac{1}{2}BC$ et que $(IJ)\parallel(BC)$.\par
+\textbf{3) (Alignement)} $A$, $B$, $C$ alignés : montrer que $\barG{(A\,;\,2),(B\,;\,3)}$ appartient à la droite $(AB)$.
+\\\hline
+
+\textbf{\color{cApp}Exercice de maison\newline(5 min)}
+& Donne l'exercice à faire à la maison et annonce la suite.
+& Notent l'exercice de maison.
+& \textbf{\color{cApp}Exercice de maison}\par
+$A(0\,;\,0)$, $B(6\,;\,0)$, $C(0\,;\,6)$. Déterminer $G=\barG{(A\,;\,1),(B\,;\,1),(C\,;\,1)}$, puis les milieux $I$ de $[AB]$ et $J$ de $[AC]$, et montrer que $G$ appartient aux droites $(CI)$ et $(BJ)$.\newline
+\emph{Réponse attendue} : $G(2\,;\,2)$.
+\\\hline
+
+\textbf{\color{cDef}Evaluation formative\newline(10 min)}
+& Propose l'exercice d'évaluation et note les difficultés rencontrées.
+& Cherchent et résolvent l'exercice d'évaluation.
+& \textbf{\color{cDef}Evaluation} -- \emph{Démonstration d'une propriété en utilisant le barycentre partiel ou l'homogénéité ; détermination de droites concourantes et de droites parallèles}.\par
+Montrer que le barycentre de $\barG{(A\,;\,1),(B\,;\,2),(C\,;\,1)}$ est le milieu du segment joignant $B$ au milieu de $[AC]$.
+\\\hline
+\end{longtable}}
+
+% ---------------------------------------------------------------- SEANCE 3
+\clearpage
+{\setlength{\arrayrulewidth}{0.7pt}\arrayrulecolor{cLigne}
+\begin{longtable}{|L{3.0cm}|L{4.5cm}|L{3.5cm}|L{5.5cm}|}
+\hline
+\multicolumn{4}{|c|}{\cellcolor{cPartie}\color{white}\bfseries SEANCE 3 : LIGNES DE NIVEAU DE $M\mapsto MA^2+MB^2$ ET DE $M\mapsto MA^2-MB^2$}\\\hline
+\entetedero
+\endfirsthead
+\hline
+\multicolumn{4}{|c|}{\cellcolor{cPartie}\color{white}\bfseries SEANCE 3 (suite) : LIGNES DE NIVEAU $\bullet$ $MA^2+MB^2$ ET $MA^2-MB^2$}\\\hline
+\entetedero
+\endhead
+\hline
+\endfoot
+
+\textbf{\color{cMeth}Petite activité\newline(10 min)}
+& Fait réviser et dicte : calculer $\bigl(\vc{MI}+\vc{IA}\bigr)^2$ et $\bigl(\vc{MI}+\vc{IB}\bigr)^2$ où $I$ est le milieu de $[AB]$ ; rappelle le théorème de la médiane.
+& Développent et simplifient sur le cahier de brouillon : ils retrouvent $MA^2+MB^2=2MI^2+\dfrac{AB^2}{2}$.
+& \textbf{\color{cMeth}Petite activité}\par
+$I$ milieu de $[AB]$ : développons $\bigl(\vc{MI}+\vc{IA}\bigr)^2+\bigl(\vc{MI}+\vc{IB}\bigr)^2$.\par
+Comme $\vc{IA}+\vc{IB}=\vc{0}$ et $IA=IB=\dfrac{AB}{2}$, on obtient le \hl{théorème de la médiane} : $MA^2+MB^2=2MI^2+\dfrac{AB^2}{2}$.
+\\\hline
+
+\textbf{\color{cMeth}Correction de l'exercice de maison\newline(10 min)}
+& Fait passer un élève au tableau, corrige et précise les erreurs.
+& Résolution : un élève corrige au tableau ; les autres vérifient.
+& \textbf{\color{cMeth}Correction}\par
+$G(2\,;\,2)$ ; $I(3\,;\,0)$, $J(0\,;\,3)$ et $G\in(CI)$, $G\in(BJ)$ : les médianes sont concourantes.
+\\\hline
+
+\textbf{\color{cEx}Présentation de la situation-problème\newline(10 min)}
+& Recopie la situation au tableau et la lit à haute voix.
+& Recopient la situation dans le cahier et la lisent.
+& \textbf{\color{cEx}Situation d'apprentissage}\par
+Dans un village de la région de Kpalimé, deux mâts $A$ et $B$ distants de $6$ m servent de repères. Le comité de développement veut installer une borne de distribution d'eau en un point $M$ vérifiant $MA^2+MB^2=26$ (en m$^2$).\par
+\emph{Problème} : décrire l'ensemble de tous les emplacements possibles de la borne.
+\\\hline
+
+\textbf{\color{cEx}Appropriation de la situation et de la tâche\newline(10 min)}
+& Explique les mots difficiles, pose des questions de compréhension et répond aux interrogations des élèves.
+& Expliquent la situation, posent des questions et relèvent les mots difficiles.
+& \textbf{\color{cEx}Consignes}\par
+1) Utiliser le théorème de la médiane pour exprimer $MA^2+MB^2$ à l'aide de $MI$, où $I$ est le milieu de $[AB]$.\par
+2) Discuter suivant les valeurs de $k$ l'ensemble $L_k$ des points $M$ tels que $MA^2+MB^2=k$.\par
+3) Construire la ligne de niveau $L_{26}$ dans le cas où $AB=6$ m.
+\\\hline
+
+\textbf{\color{cMeth}Travail individuel\newline(5 min)\newline puis travail en groupe\newline(10 min)}
+& Vérifie les productions, circule et guide les groupes sans donner la solution.
+& Cherchent individuellement puis en groupe ; tracent sur papier millimétré ; rédigent une production.
+& \textbf{\color{cMeth}Recherche}\par
+$MA^2+MB^2=k \Longleftrightarrow 2MI^2+\dfrac{AB^2}{2}=k \Longleftrightarrow MI^2=\dfrac{k}{2}-\dfrac{AB^2}{4}$.\par
+Pour $AB=6$ et $k=26$ : $MI^2=13-9=4$, donc $MI=2$ m : l'ensemble est le cercle de centre $I$ et de rayon $2$ m.
+\\\hline
+
+\textbf{\color{cProp}Présentation des productions\newline(10 min)}
+& Fait exposer les productions, organise la confrontation, apporte des amendements.
+& Exposent leurs productions ; comparent les démarches ; apportent des amendements.
+& \textbf{\color{cProp}Constat}\par
+La relation vectorielle transforme une condition sur les distances $MA$ et $MB$ en une condition sur la seule distance $MI$. On obtient ainsi un \hl{lieu géométrique} remarquable : un cercle. C'est la première \hl{ligne de niveau}.
+\\\hline
+
+\textbf{\color{cProp}Synthèse\newline(10 min)}
+& Fait reformuler la notion de ligne de niveau et la méthode de détermination ; corrige puis valide.
+& Reformulent avec leurs propres mots ; s'écoutent et se corrigent entre eux.
+& \textbf{\color{cProp}Synthèse}\par
+\textbf{Données} : deux points $A$, $B$ et un réel $k$.\par
+\textbf{Calculs} : $MA^2+MB^2=2MI^2+\dfrac{AB^2}{2}$ puis discussion suivant $k$.\par
+\textbf{Conclusion} : la ligne de niveau de $M\mapsto MA^2+MB^2$ est un cercle (ou un point, ou l'ensemble vide).
+\\\hline
+
+\textbf{\color{cDef}Institutionnalisation\newline(trace écrite)\newline(35 min)}
+& Fait recopier la leçon (notion de ligne de niveau, théorème de la médiane, lignes de niveau de $MA^2+MB^2$ et de $MA^2-MB^2$) et construit les figures.
+& Recopient la trace écrite de la leçon et reproduisent les figures.
+& \textbf{\color{cDef}Trace écrite} : voir la partie \textcolor{cPartie}{II. NOTION DE LIGNE DE NIVEAU}, \S 1, \S 2 et \S 3 -- figures 6, 7 et 8.
+\\\hline
+
+\textbf{\color{cApp}Réinvestissement\newline(30 min)}
+& Propose les exercices, fait travailler individuellement, fait passer deux élèves au tableau, corrige.
+& Résolution : cherchent sur papier millimétré puis passent au tableau.
+& \textbf{\color{cApp}Applications}\par
+$A$ et $B$ sont deux points tels que $AB=6$ cm.\par
+\textbf{1)} Déterminer et construire la ligne de niveau $L_k$ de $M\mapsto MA^2+MB^2$ pour $k=26$, $k=18$ et $k=10$.\newline
+\emph{Réponses} : respectivement un cercle de rayon $2$ cm ; le point $I$, milieu de $[AB]$ ; l'ensemble vide.\par
+\textbf{2)} Déterminer et construire la ligne de niveau de $M\mapsto MA^2-MB^2$ pour $k=12$.\newline
+\emph{Réponse} : la droite perpendiculaire à $(AB)$ en $H$ tel que $IH=1$ cm, du côté de $B$.
+\\\hline
+
+\textbf{\color{cApp}Exercice de maison\newline(5 min)}
+& Donne l'exercice à faire à la maison, annonce la suite et conclut.
+& Notent l'exercice de maison.
+& \textbf{\color{cApp}Exercice de maison}\par
+$AB=4$ cm.\newline
+\textbf{1)} Déterminer l'ensemble des points $M$ tels que $MA^2+MB^2=16$.\newline
+\textbf{2)} Déterminer l'ensemble des points $M$ tels que $MA^2-MB^2=8$.\newline
+\emph{Réponses attendues} : 1) cercle de centre $I$, milieu de $[AB]$, et de rayon $2$ cm ; 2) la perpendiculaire à $(AB)$ en $B$.
+\\\hline
+
+\textbf{\color{cDef}Evaluation formative\newline(10 min)}
+& Propose l'exercice d'évaluation et note les difficultés.
+& Cherchent et résolvent l'exercice d'évaluation.
+& \textbf{\color{cDef}Evaluation} -- \emph{Détermination de lignes de niveau des applications $M\mapsto \alpha MA^2+\beta MB^2$ et $M\mapsto MA^2-MB^2$}.\par
+$AB=8$ cm. Déterminer l'ensemble des points $M$ tels que $MA^2+MB^2=40$, puis l'ensemble des points $M$ tels que $MA^2-MB^2=0$.
+\\\hline
+\end{longtable}}
+
+% ---------------------------------------------------------------- SEANCE 4
+\clearpage
+{\setlength{\arrayrulewidth}{0.7pt}\arrayrulecolor{cLigne}
+\begin{longtable}{|L{3.0cm}|L{4.5cm}|L{3.5cm}|L{5.5cm}|}
+\hline
+\multicolumn{4}{|c|}{\cellcolor{cPartie}\color{white}\bfseries SEANCE 4 : LIGNES DE NIVEAU DE $\vc{MA}\cdot\vc{MB}$, DE $\dfrac{MA}{MB}$ ET DE $\lVert a\vc{MA}+b\vc{MB}\rVert$ -- MATHEMATISATION}\\\hline
+\entetedero
+\endfirsthead
+\hline
+\multicolumn{4}{|c|}{\cellcolor{cPartie}\color{white}\bfseries SEANCE 4 (suite) : LIGNES DE NIVEAU ET MATHEMATISATION}\\\hline
+\entetedero
+\endhead
+\hline
+\endfoot
+
+\textbf{\color{cMeth}Rappels\newline(10 min)}
+& Fait rappeler le carré scalaire d'un vecteur et l'identité $\vc{u}\cdot\vc{v}=\dfrac{1}{2}\left(\lVert\vc{u}+\vc{v}\rVert^2-\lVert\vc{u}\rVert^2-\lVert\vc{v}\rVert^2\right)$ ; corrige.
+& Rappellent et appliquent l'identité au calcul de $\vc{MA}\cdot\vc{MB}$.
+& \textbf{\color{cMeth}Rappels}\par
+$\lVert\vc{u}\rVert^2=\vc{u}\cdot\vc{u}$ ; $\vc{u}\cdot\vc{v}=\vc{v}\cdot\vc{u}$ ; produit scalaire et carré scalaire.\par
+Avec $I$ milieu de $[AB]$ : $\vc{MA}\cdot\vc{MB}=MI^2-\dfrac{AB^2}{4}$.
+\\\hline
+
+\textbf{\color{cMeth}Correction de l'exercice de maison\newline(10 min)}
+& Fait passer des élèves au tableau, corrige et précise les erreurs.
+& Résolution : deux élèves corrigent au tableau ; les autres vérifient.
+& \textbf{\color{cMeth}Correction}\par
+1) $MI^2=8-4=4$ : cercle de centre $I$ et de rayon $2$ cm.\par
+2) $IH=\dfrac{k}{2AB}=1$ : perpendiculaire à $(AB)$ en $H$ tel que $BH=1$ cm.
+\\\hline
+
+\textbf{\color{cEx}Présentation de la situation-problème\newline(10 min)}
+& Recopie la situation au tableau et la lit à haute voix.
+& Recopient la situation dans le cahier et la lisent.
+& \textbf{\color{cEx}Situation d'apprentissage}\par
+Deux villages $A$ et $B$ sont distants de $4$ km. Pour alimenter un nouveau quartier, le conseil municipal veut construire un château d'eau en un point $M$ tel que la distance $MA$ soit le triple de la distance $MB$, c'est-à-dire $\dfrac{MA}{MB}=3$.\par
+\emph{Problème} : déterminer l'ensemble des emplacements possibles du château d'eau.
+\\\hline
+
+\textbf{\color{cEx}Appropriation de la situation et de la tâche\newline(10 min)}
+& Explique les mots difficiles, pose des questions de compréhension et répond aux interrogations des élèves.
+& Expliquent la situation, posent des questions et relèvent les mots difficiles.
+& \textbf{\color{cEx}Consignes}\par
+1) Placer sur $(AB)$ les points $J$ et $K$ vérifiant $\dfrac{JA}{JB}=\dfrac{KA}{KB}=3$.\par
+2) Montrer que $M$ appartient au cercle de diamètre $[JK]$.\par
+3) Décrire l'ensemble des emplacements possibles et construire la figure.
+\\\hline
+
+\textbf{\color{cMeth}Travail individuel\newline(5 min)\newline puis travail en groupe\newline(15 min)}
+& Vérifie les productions des élèves, circule et guide les groupes sans donner la solution.
+& Résolution : cherchent individuellement puis en groupe ; construisent sur papier millimétré ; rédigent une production.
+& \textbf{\color{cMeth}Recherche}\par
+$\dfrac{MA}{MB}=3 \Longleftrightarrow MA^2-9MB^2=0$. On introduit les barycentres $J=\barG{(A\,;\,1),(B\,;\,-3)}$ et $K=\barG{(A\,;\,1),(B\,;\,3)}$ : les calculs conduisent à $\vc{MJ}\cdot\vc{MK}=0$ (voir la démonstration de la trace écrite).\par
+Pour $AB=4$ : $AJ=\dfrac{3\times 4}{3-1}=6$ km et $AK=\dfrac{3\times 4}{3+1}=3$ km : le cercle a pour diamètre $[JK]$.
+\\\hline
+
+\textbf{\color{cProp}Présentation des productions\newline(10 min)}
+& Fait exposer les productions, organise la confrontation des méthodes, apporte des amendements.
+& Exposent leurs productions ; comparent les méthodes ; apportent des amendements.
+& \textbf{\color{cProp}Constat}\par
+Les lignes de niveau de $M\mapsto \dfrac{MA}{MB}$ sont des cercles appelés \hl{cercles d'Apollonius}. Lorsque $k=1$, on retrouve la \hl{médiatrice} du segment $[AB]$.
+\\\hline
+
+\textbf{\color{cProp}Synthèse\newline(10 min)}
+& Fait reformuler les quatre familles de lignes de niveau et la méthode générale ; corrige puis valide.
+& Reformulent avec leurs propres mots ; s'écoutent et se corrigent entre eux.
+& \textbf{\color{cProp}Synthèse}\par
+\textbf{Données} : $A$, $B$ et un réel $k$.\par
+\textbf{Calculs} : réduction de l'expression par la relation du barycentre $G$ : $a\vc{MA}+b\vc{MB}=(a+b)\vc{MG}$.\par
+\textbf{Conclusion} : la ligne de niveau se ramène toujours à une condition sur $MG$ : cercle, droite, point ou ensemble vide.
+\\\hline
+
+\textbf{\color{cDef}Institutionnalisation\newline(trace écrite)\newline(20 min)}
+& Fait recopier la leçon (lignes de niveau de $\vc{MA}\cdot\vc{MB}$, de $\dfrac{MA}{MB}$, de $\lVert a\vc{MA}+b\vc{MB}\rVert$, tableau récapitulatif et mathématisation) ; construit les figures.
+& Recopient la trace écrite de la leçon et reproduisent les figures.
+& \textbf{\color{cDef}Trace écrite} : voir la partie \textcolor{cPartie}{II. NOTION DE LIGNE DE NIVEAU}, \S 4, \S 5, \S 6 et \S 7, et la partie \textcolor{cPartie}{III. MATHÉMATISATION D'UN PROBLEME} -- figures 9 à 12.
+\\\hline
+
+\textbf{\color{cApp}Réinvestissement\newline(20 min)}
+& Propose les exercices, fait travailler individuellement, fait passer deux élèves au tableau, corrige.
+& Résolution : cherchent puis passent au tableau.
+& \textbf{\color{cApp}Applications}\par
+\textbf{1)} $AB=6$ cm. Déterminer l'ensemble des points $M$ tels que $\vc{MA}\cdot\vc{MB}=5$.\newline
+\emph{Réponse} : cercle de centre $I$, milieu de $[AB]$, et de rayon $\sqrt{14}$ cm.\par
+\textbf{2)} $AB=4$ cm. Déterminer et construire l'ensemble des points $M$ tels que $\dfrac{MA}{MB}=2$.\par
+\textbf{3)} Déterminer l'ensemble des points $M$ tels que $\lVert 2\vc{MA}-3\vc{MB}\rVert=10$, avec $AB=2$ cm.\newline
+\emph{Réponse} : $G=\barG{(A\,;\,2),(B\,;\,-3)}$ ; cercle de centre $G$ et de rayon $10$ cm.
+\\\hline
+
+\textbf{\color{cApp}Exercice de maison\newline(5 min)}
+& Donne l'exercice à faire à la maison, annonce l'évaluation prévue et conclut.
+& Notent l'exercice de maison.
+& \textbf{\color{cApp}Exercice de maison}\par
+$ABC$ est un triangle tel que $AB=AC=5$ cm et $BC=6$ cm. Soit $G=\barG{(A\,;\,2),(B\,;\,1),(C\,;\,1)}$.\newline
+\textbf{1)} Construire $G$ à l'aide d'un barycentre partiel.\newline
+\textbf{2)} Déterminer l'ensemble des points $M$ tels que $\lVert 2\vc{MA}+\vc{MB}+\vc{MC}\rVert=8$.
+\\\hline
+
+\textbf{\color{cDef}Evaluation formative\newline(20 min)}
+& Propose l'exercice d'évaluation, observe, note les difficultés et prévoit la remédiation.
+& Cherchent et résolvent l'exercice d'évaluation ; posent des questions.
+& \textbf{\color{cDef}Evaluation} -- \emph{Détermination de lignes de niveau des applications $M\mapsto \vc{MA}\cdot\vc{MB}$, $M\mapsto \dfrac{MA}{MB}$ et $M\mapsto \lVert a\vc{MA}+b\vc{MB}\rVert$ ; mathématisation d'une situation faisant appel aux barycentres}.\par
+$ABC$ est un triangle tel que $AB=6$ cm.\newline
+\textbf{1)} Déterminer et construire l'ensemble des points $M$ tels que $\vc{MA}\cdot\vc{MB}=7$.\newline
+\textbf{2)} Déterminer et construire l'ensemble des points $M$ tels que $\dfrac{MA}{MB}=\dfrac{1}{2}$.\newline
+\textbf{3)} Rédiger, en cinq lignes, la mathématisation d'une situation de votre choix faisant appel à un barycentre.
+\\\hline
+\end{longtable}}
+
+\clearpage
+% =====================================================================================
+%  TRACE ECRITE DE LA LECON  (a recopier par les eleves)
+% =====================================================================================
+\begin{center}
+{\LARGE\bfseries\color{cTitre}TRACE ECRITE DE LA LECON}\\[2pt]
+{\large\color{cPartie}THEME 4 : GEOMETRIE DU PLAN\quad--\quad LECON 1 : BARYCENTRES ET LIGNES DE NIVEAU}\\[2pt]
+{\color{cProp}\rule{0.75\linewidth}{1pt}}
+\end{center}
+
+% ------------------------------------------------------------------ I
+\partie{I}{NOTION DE BARYCENTRE}
+
+\sous{1. Barycentre de deux points pondérés}
+
+\begin{encadre}[10]{cDef}{Définition : point pondéré -- système pondéré}
+On appelle \textbf{point pondéré} un couple $(A\,;\,\alpha)$ où $A$ est un point du plan et $\alpha$ un nombre réel appelé \textbf{masse} (ou coefficient) du point $A$.\par
+Un \textbf{système de deux points pondérés} est la donnée de deux points pondérés $(A\,;\,\alpha)$ et $(B\,;\,\beta)$, avec $(\alpha\,;\,\beta)\neq(0\,;\,0)$.
+\end{encadre}
+
+\begin{encadre}[10]{cProp}{Théorème (existence et unicité du barycentre)}
+Soient $(A\,;\,\alpha)$ et $(B\,;\,\beta)$ deux points pondérés tels que $\alpha+\beta\neq 0$.\par
+Il existe un \textbf{unique} point $G$ du plan tel que
+\[
+\alpha\,\vc{GA}+\beta\,\vc{GB}=\vc{0}.
+\]
+Ce point $G$ est appelé \textbf{barycentre} du système $\bigl\{(A\,;\,\alpha),(B\,;\,\beta)\bigr\}$ ; on note $G=\barG{(A\,;\,\alpha),(B\,;\,\beta)}$.
+\end{encadre}
+
+\begin{encadre}[16]{cMeth}{Démonstration et position du barycentre}
+\textbf{1) Existence et unicité.} Supposons qu'un point $G$ convienne. Comme $\vc{GB}=\vc{GA}+\vc{AB}$ :
+\[
+\alpha\vc{GA}+\beta\vc{GB}=\vc{0}\Longleftrightarrow \alpha\vc{GA}+\beta\bigl(\vc{GA}+\vc{AB}\bigr)=\vc{0}\Longleftrightarrow (\alpha+\beta)\,\vc{GA}=-\beta\,\vc{AB}.
+\]
+Comme $\alpha+\beta\neq 0$, cette égalité équivaut à $\vc{AG}=\dfrac{\beta}{\alpha+\beta}\,\vc{AB}$ : cette relation détermine un point $G$ et un seul, situé sur la droite $(AB)$.\par
+\textbf{2) Position.} $G$ est du côté de $B$ si $\dfrac{\beta}{\alpha+\beta}>0$, du côté de $A$ dans le cas contraire.\par
+\textbf{3) Cas particulier.} Si $\alpha=\beta$, alors $\vc{AG}=\dfrac{1}{2}\vc{AB}$ : le barycentre est le \textbf{milieu} du segment $[AB]$ ; on parle alors d'\textbf{isobarycentre}.\par
+\textbf{4) Remarque.} Le barycentre n'existe pas lorsque $\alpha+\beta=0$.
+\end{encadre}
+
+\begin{figure}[htbp]
+\centering
+\input{figures/fig_bary2}
+\caption{Barycentre de deux points pondérés : $G=\barG{(A\,;\,2),(B\,;\,3)}$ et $\vc{AG}=\dfrac{3}{5}\vc{AB}$.}
+\end{figure}
+
+\begin{encadre}[14]{cProp}{Propriétés}
+\textbf{1) Homogénéité.} Pour tout réel $k\neq 0$ :
+\[
+\barG{(A\,;\,\alpha),(B\,;\,\beta)}=\barG{(A\,;\,k\alpha),(B\,;\,k\beta)}.
+\]
+Le barycentre ne dépend donc que du \textbf{rapport} des masses.\par
+\textbf{2) Relation fondamentale.} Pour tout point $M$ du plan :
+\[
+\alpha\,\vc{MA}+\beta\,\vc{MB}=(\alpha+\beta)\,\vc{MG}.
+\]
+En particulier, pour $M=G$, on retrouve $\alpha\vc{GA}+\beta\vc{GB}=\vc{0}$.\par
+\textbf{3) Coordonnées.} Dans un repère du plan, si $A(x_A\,;\,y_A)$ et $B(x_B\,;\,y_B)$, alors :
+\[
+x_G=\dfrac{\alpha x_A+\beta x_B}{\alpha+\beta},\qquad y_G=\dfrac{\alpha y_A+\beta y_B}{\alpha+\beta}.
+\]
+\end{encadre}
+
+\begin{encadre}[12]{cEx}{Exemple rédigé}
+$A(-2\,;\,1)$, $B(4\,;\,7)$. Déterminons $G=\barG{(A\,;\,1),(B\,;\,2)}$.\par
+\textbf{Par la relation vectorielle :} $1\,\vc{GA}+2\,\vc{GB}=\vc{0}$, donc $3\,\vc{GA}=-2\,\vc{AB}$, soit $\vc{AG}=\dfrac{2}{3}\vc{AB}$.\par
+\textbf{Par les coordonnées :} $x_G=\dfrac{1\times(-2)+2\times 4}{3}=\dfrac{6}{3}=2$ et $y_G=\dfrac{1\times 1+2\times 7}{3}=\dfrac{15}{3}=5$.\par
+\textbf{Conclusion :} $G(2\,;\,5)$ et $G$ vérifie bien $3\,\vc{GA}=-2\,\vc{AB}$.
+\end{encadre}
+
+\sous{2. Barycentre de plus de deux points pondérés}
+
+\begin{encadre}[12]{cDef}{Définition}
+Soient $(A_1\,;\,\alpha_1)$, $(A_2\,;\,\alpha_2)$, \dots, $(A_n\,;\,\alpha_n)$ des points pondérés tels que $\alpha_1+\alpha_2+\dots+\alpha_n\neq 0$.\par
+Le \textbf{barycentre} de ce système est l'unique point $G$ tel que
+\[
+\alpha_1\vc{GA_1}+\alpha_2\vc{GA_2}+\dots+\alpha_n\vc{GA_n}=\vc{0}.
+\]
+Pour tout point $M$ du plan : $\alpha_1\vc{MA_1}+\alpha_2\vc{MA_2}+\dots+\alpha_n\vc{MA_n}=(\alpha_1+\dots+\alpha_n)\,\vc{MG}$.
+\end{encadre}
+
+\begin{encadre}[16]{cProp}{Propriétés et coordonnées}
+\textbf{1) Barycentre de trois points.} $G=\barG{(A\,;\,\alpha),(B\,;\,\beta),(C\,;\,\gamma)}$ avec $\alpha+\beta+\gamma\neq 0$. Pour tout point $M$ : $(\alpha+\beta+\gamma)\,\vc{MG}=\alpha\vc{MA}+\beta\vc{MB}+\gamma\vc{MC}$.\par
+\textbf{2) Coordonnées.} Dans un repère : $x_G=\dfrac{\alpha x_A+\beta x_B+\gamma x_C}{\alpha+\beta+\gamma}$ et $y_G=\dfrac{\alpha y_A+\beta y_B+\gamma y_C}{\alpha+\beta+\gamma}$.\par
+\textbf{3) Barycentre partiel.} On peut remplacer une partie des points par son barycentre partiel, affecté de la somme des masses : si $I=\barG{(B\,;\,\beta),(C\,;\,\gamma)}$, alors $G=\barG{(A\,;\,\alpha),(I\,;\,\beta+\gamma)}$.\par
+\textbf{4) Isobarycentre de trois points.} Si $\alpha=\beta=\gamma$, $G$ est le \textbf{centre de gravité} du triangle $ABC$.
+\end{encadre}
+
+\begin{encadre}[12]{cMeth}{Les trois méthodes de construction d'un barycentre}
+$\bullet$ \textbf{Par la relation vectorielle} : calculer $\vc{AG}$ puis placer $G$ sur la droite $(AB)$ ;\par
+$\bullet$ \textbf{Par les coordonnées} : appliquer les formules de $x_G$ et de $y_G$ dans un repère ;\par
+$\bullet$ \textbf{Par le barycentre partiel} : remplacer deux points par leur barycentre, puis construire le barycentre du système réduit.
+\end{encadre}
+
+\begin{figure}[htbp]
+\centering
+\input{figures/fig_bary3}\hspace{3mm}\input{figures/fig_partiel}
+\caption{Barycentre de trois points pondérés (à gauche) et barycentre partiel (à droite).}
+\end{figure}
+
+\begin{encadre}[10]{cEx}{Exemple rédigé}
+$A(1\,;\,1)$, $B(6\,;\,2)$, $C(2\,;\,4{,}5)$. Déterminons $G=\barG{(A\,;\,1),(B\,;\,1),(C\,;\,1)}$.\par
+$x_G=\dfrac{1+6+2}{3}=3$ et $y_G=\dfrac{1+2+4{,}5}{3}=2{,}5$, donc $G(3\,;\,2{,}5)$ : c'est le \textbf{centre de gravité} du triangle $ABC$.
+\end{encadre}
+
+\begin{figure}[htbp]
+\centering
+\input{figures/fig_repere}
+\caption{Coordonnées du barycentre : $G(3\,;\,2{,}5)$ est le centre de gravité du triangle $ABC$.}
+\end{figure}
+
+\sous{3. Applications du barycentre : alignement, droites concourantes et droites parallèles}
+
+\begin{encadre}[14]{cProp}{Propriétés démontrées à l'aide du barycentre}
+\textbf{1) Alignement.} Tout barycentre de deux points est \textbf{aligné} avec ces deux points (il appartient à leur droite).\par
+\textbf{2) Droites concourantes.} Dans un triangle $ABC$, les trois médianes sont concourantes au centre de gravité $G=\barG{(A\,;\,1),(B\,;\,1),(C\,;\,1)}$.\par
+\textbf{3) Droites parallèles.} Si $I=\barG{(A\,;\,1),(B\,;\,1)}$ et $J=\barG{(A\,;\,1),(C\,;\,1)}$, alors $\vc{IJ}=\dfrac{1}{2}\vc{BC}$ : les droites $(IJ)$ et $(BC)$ sont \textbf{parallèles}.
+\end{encadre}
+
+\begin{figure}[htbp]
+\centering
+\input{figures/fig_concourantes}\hspace{3mm}\input{figures/fig_paralleles}
+\caption{Droites concourantes (médianes du triangle) et droites parallèles : $(IJ)\parallel(BC)$.}
+\end{figure}
+
+\begin{encadre}[18]{cMeth}{Démonstration : les trois médianes d'un triangle sont concourantes}
+Soit $G=\barG{(A\,;\,1),(B\,;\,1),(C\,;\,1)}$ et $I=\barG{(B\,;\,1),(C\,;\,1)}$, milieu du côté $[BC]$.\par
+\textbf{1)} En remplaçant $(B\,;\,1)$ et $(C\,;\,1)$ par le barycentre partiel $I$ :
+\[
+1\,\vc{GA}+1\,\vc{GB}+1\,\vc{GC}=\vc{0}\Longleftrightarrow \vc{GA}+2\,\vc{GI}=\vc{0}\Longleftrightarrow \vc{AG}=2\,\vc{GI}.
+\]
+Les points $A$, $G$ et $I$ sont donc alignés : $G$ appartient à la médiane issue de $A$.\par
+\textbf{2)} De même, avec $J$ milieu de $[CA]$, $G$ appartient à la médiane issue de $B$ ; avec $K$ milieu de $[AB]$, $G$ appartient à la médiane issue de $C$.\par
+\textbf{3) Conclusion :} les trois médianes du triangle $ABC$ sont concourantes en $G$, centre de gravité du triangle ; de plus $AG=\dfrac{2}{3}AI$.
+\end{encadre}
+
+\sous{4. Mathématisation d'une situation faisant appel aux barycentres}
+
+\begin{encadre}[18]{cEx}{Situation et modélisation}
+\textbf{Situation.} Trois villages $A$, $B$ et $C$ doivent être desservis par un entrepôt commun $M$ ; les importances respectives des villages sont représentées par les masses $3$, $2$ et $1$. Le point $M$ doit vérifier : $3\,\vc{MA}+2\,\vc{MB}+1\,\vc{MC}=\vc{0}$.\par
+\textbf{Modélisation.} On reconnaît le barycentre $M=\barG{(A\,;\,3),(B\,;\,2),(C\,;\,1)}$, c'est-à-dire $M=\barG{(I\,;\,5),(C\,;\,1)}$ où $I=\barG{(A\,;\,3),(B\,;\,2)}$ est un barycentre partiel.\par
+\textbf{Résolution.} On construit $I$ sur $[AB]$ tel que $\vc{AI}=\dfrac{2}{5}\vc{AB}$, puis $M$ sur $[IC]$ tel que $\vc{IM}=\dfrac{1}{6}\vc{IC}$.\par
+\textbf{Conclusion.} Le point $M$ est l'unique point du plan vérifiant $3\vc{GA}+2\vc{GB}+\vc{GC}=\vc{0}$ ; il est plus proche du village le plus important.
+\end{encadre}
+
+\begin{figure}[htbp]
+\centering
+\input{figures/fig_carte}
+\caption{Mathématisation : entrepôt $M$ associé aux masses $3$, $2$ et $1$ des villages $A$, $B$ et $C$.}
+\end{figure}
+
+% ------------------------------------------------------------------ II
+\clearpage
+\partie{II}{NOTION DE LIGNE DE NIVEAU}
+
+\sous{1. Définition}
+
+\begin{encadre}[10]{cDef}{Définition}
+Soit $f$ une application du plan dans $\mathbb{R}$ et $k$ un nombre réel.\par
+On appelle \textbf{ligne de niveau} $k$ de $f$, et on note $L_k$, l'ensemble des points $M$ du plan tels que
+\[
+L_k=\bigl\{M \text{ du plan}\ /\ f(M)=k\bigr\}.
+\]
+\end{encadre}
+
+\begin{encadre}[12]{cEx}{Exemples de lignes de niveau}
+$\bullet$ $f(M)=MI$ : $L_k$ est le \textbf{cercle} de centre $I$ et de rayon $k$ (si $k>0$) ; si $k=0$, $L_0=\{I\}$.\par
+$\bullet$ $f(M)=MA^2$ : $L_k$ est le cercle de centre $A$ et de rayon $\sqrt{k}$ (si $k\geq 0$) ; $L_k=\varnothing$ si $k<0$.\par
+$\bullet$ $f(M)=\dfrac{MA}{MB}$ : $L_k$ est la \textbf{médiatrice} du segment $[AB]$ si $k=1$.
+\end{encadre}
+
+\begin{encadre}[14]{cMeth}{Outil essentiel : le théorème de la médiane}
+Soient $A$ et $B$ deux points, $I$ le milieu de $[AB]$ et $M$ un point quelconque du plan.\par
+En écrivant $\vc{MA}=\vc{MI}+\vc{IA}$ et $\vc{MB}=\vc{MI}+\vc{IB}$, avec $\vc{IA}+\vc{IB}=\vc{0}$ :
+\[
+MA^2+MB^2=2\,MI^2+\dfrac{AB^2}{2}\qquad\text{et}\qquad \vc{MA}\cdot\vc{MB}=MI^2-\dfrac{AB^2}{4}.
+\]
+Ces deux identités ramènent toute condition portant sur $MA$ et $MB$ à une condition portant sur la seule distance $MI$ : la ligne de niveau est alors un cercle ou une droite.
+\end{encadre}
+
+\begin{figure}[htbp]
+\centering
+\input{figures/fig_mediane}
+\caption{Configuration du théorème de la médiane, avec $I$ milieu de $[AB]$.}
+\end{figure}
+
+\sous{2. Ligne de niveau de $M\mapsto MA^2+MB^2=k$, $k\in\mathbb{R}$}
+
+\begin{encadre}[20]{cProp}{Propriété}
+Soient $A$, $B$ deux points tels que $AB=a$, $I$ le milieu de $[AB]$ et $k\in\mathbb{R}$.
+\[
+MA^2+MB^2=k\Longleftrightarrow 2\,MI^2+\dfrac{a^2}{2}=k\Longleftrightarrow MI^2=\dfrac{k}{2}-\dfrac{a^2}{4}.
+\]
+En posant $r^2=\dfrac{k}{2}-\dfrac{a^2}{4}=\dfrac{2k-a^2}{4}$ :
+\begin{center}
+\renewcommand{\arraystretch}{1.6}
+\begin{tabular}{|L{3.4cm}|L{8.2cm}|}
+\hline
+\rowcolor{cEntete}\textbf{Cas} & \textbf{Ligne de niveau $L_k$}\\
+\hline
+$k<\dfrac{a^2}{2}$ & $L_k=\varnothing$ (ensemble vide)\\
+\hline
+$k=\dfrac{a^2}{2}$ & $L_k=\{I\}$, le milieu de $[AB]$\\
+\hline
+$k>\dfrac{a^2}{2}$ & $L_k$ est le cercle de centre $I$ et de rayon $r=\dfrac{\sqrt{2k-a^2}}{2}$\\
+\hline
+\end{tabular}
+\renewcommand{\arraystretch}{1.25}
+\end{center}
+\end{encadre}
+
+\begin{figure}[htbp]
+\centering
+\input{figures/fig_cercles51}
+\caption{Lignes de niveau de $M\mapsto MA^2+MB^2$ : cercles concentriques de centre $I$, milieu de $[AB]$.}
+\end{figure}
+
+\begin{encadre}[10]{cEx}{Exemple rédigé}
+$AB=6$ cm et $k=26$. Déterminons $L_{26}$.\par
+$MI^2=\dfrac{26}{2}-\dfrac{36}{4}=13-9=4$, donc $MI=2$ cm.\par
+\textbf{Conclusion :} $L_{26}$ est le cercle de centre $I$ et de rayon $2$ cm.
+\end{encadre}
+
+\begin{encadre}[12]{cEx}{Généralisation utile}
+De façon générale, pour $M\mapsto \alpha MA^2+\beta MB^2$ avec $\alpha+\beta\neq 0$, on introduit le barycentre $G=\barG{(A\,;\,\alpha),(B\,;\,\beta)}$ et l'on démontre que :
+\[
+\alpha\,MA^2+\beta\,MB^2=(\alpha+\beta)\,MG^2+\alpha\,GA^2+\beta\,GB^2.
+\]
+La condition $\alpha MA^2+\beta MB^2=k$ se ramène donc encore à $MG^2=\text{constante}$ : la ligne de niveau est un cercle de centre $G$ (ou un point, ou l'ensemble vide).
+\end{encadre}
+
+\sous{3. Ligne de niveau de $M\mapsto MA^2-MB^2=k$, $k\in\mathbb{R}$}
+
+\begin{encadre}[16]{cProp}{Propriété}
+Soient $A$, $B$ deux points tels que $AB=a\neq 0$ et $I$ le milieu de $[AB]$.\par
+En écrivant $\vc{MA}=\vc{MI}+\vc{IA}$ et $\vc{MB}=\vc{MI}+\vc{IB}$ :
+\[
+MA^2-MB^2=\bigl(\vc{MI}+\vc{IA}\bigr)^2-\bigl(\vc{MI}+\vc{IB}\bigr)^2=2\,\vc{AB}\cdot\vc{IM}.
+\]
+Soit $H$ le projeté orthogonal de $M$ sur $(AB)$. Alors $MA^2-MB^2=2\,AB\times \overline{IH}$.\par
+Par conséquent, pour un réel $k$ donné :
+\[
+MA^2-MB^2=k\Longleftrightarrow \overline{IH}=\dfrac{k}{2\,AB}.
+\]
+\textbf{La ligne de niveau $L_k$ est la droite perpendiculaire à $(AB)$ au point $H$} de $(AB)$ tel que $\overline{IH}=\dfrac{k}{2AB}$.
+\end{encadre}
+
+\begin{encadre}[12]{cEx}{Cas particuliers et exemple}
+$\bullet$ Si $k=0$ : $H=I$ et $L_0$ est la \textbf{médiatrice} de $[AB]$.\par
+$\bullet$ Si $k=AB^2$ : $\overline{IH}=\dfrac{AB}{2}$ et $L_k$ est la droite perpendiculaire à $(AB)$ en $B$.\par
+$\bullet$ \textbf{Exemple :} $AB=6$ cm et $k=12$. Alors $\overline{IH}=\dfrac{12}{2\times 6}=1$ cm : $L_{12}$ est la droite perpendiculaire à $(AB)$ au point $H$ de $(AB)$ tel que $IH=1$ cm du côté de $B$.
+\end{encadre}
+
+\begin{figure}[htbp]
+\centering
+\input{figures/fig_droite52}
+\caption{Ligne de niveau de $M\mapsto MA^2-MB^2$ : droite perpendiculaire à $(AB)$ en $H$ tel que $\overline{IH}=\dfrac{k}{2AB}$.}
+\end{figure}
+
+\sous{4. Ligne de niveau de $M\mapsto \vc{MA}\cdot\vc{MB}=k$, $k\in\mathbb{R}$}
+
+\begin{encadre}[16]{cProp}{Propriété}
+Soient $A$, $B$ deux points tels que $AB=a$ et $I$ le milieu de $[AB]$. Un calcul analogue au précédent donne :
+\[
+\vc{MA}\cdot\vc{MB}=MI^2-\dfrac{a^2}{4}.
+\]
+Par conséquent :
+\[
+\vc{MA}\cdot\vc{MB}=k\Longleftrightarrow MI^2=k+\dfrac{a^2}{4}.
+\]
+$\bullet$ Si $k>-\dfrac{a^2}{4}$ : $L_k$ est le \textbf{cercle} de centre $I$ et de rayon $r=\dfrac{\sqrt{4k+a^2}}{2}$.\par
+$\bullet$ Si $k=-\dfrac{a^2}{4}$ : $L_k=\{I\}$.\qquad$\bullet$ Si $k<-\dfrac{a^2}{4}$ : $L_k=\varnothing$.
+\end{encadre}
+
+\begin{encadre}[10]{cEx}{Cas particulier fondamental : $k=0$}
+Si $\vc{MA}\cdot\vc{MB}=0$, alors les droites $(MA)$ et $(MB)$ sont perpendiculaires : le triangle $AMB$ est rectangle en $M$.\par
+D'après la propriété du cercle de diamètre $[AB]$, $L_0$ est le \textbf{cercle de diamètre $[AB]$}.
+\end{encadre}
+
+\begin{figure}[htbp]
+\centering
+\input{figures/fig_cercle53}
+\caption{Ligne de niveau de $M\mapsto \vc{MA}\cdot\vc{MB}$ pour $k=0$ : cercle de diamètre $[AB]$.}
+\end{figure}
+
+\sous{5. Ligne de niveau de $M\mapsto \dfrac{MA}{MB}=k$, $k\in\mathbb{R}$}
+
+\begin{encadre}[16]{cProp}{Propriété (cercles d'Apollonius)}
+Soient $A$, $B$ deux points distincts et $k$ un réel strictement positif.\par
+$\bullet$ Si $k=1$ : l'ensemble des points $M$ tels que $MA=MB$ est la \textbf{médiatrice} de $[AB]$.\par
+$\bullet$ Si $k\neq 1$ : l'ensemble des points $M$ tels que $\dfrac{MA}{MB}=k$ est le \textbf{cercle de diamètre $[JK]$}, où $J$ et $K$ sont les points de $(AB)$ définis par :
+\[
+\dfrac{JA}{JB}=k\qquad\text{et}\qquad\dfrac{KA}{KB}=k
+\]
+($J$ est entre $A$ et $B$ ; $K$ est extérieur au segment $[AB]$). Ces cercles sont appelés \textbf{cercles d'Apollonius}.
+\end{encadre}
+
+\begin{encadre}[16]{cMeth}{Idée de la démonstration}
+On suppose $k>0$, $k\neq 1$ et $M$ tel que $\dfrac{MA}{MB}=k$, soit $MA^2-k^2MB^2=0$.\par
+Considérons les barycentres $J=\barG{(A\,;\,1),(B\,;\,k)}$ et $K=\barG{(A\,;\,1),(B\,;\,-k)}$, qui existent car $1+k\neq 0$ et $1-k\neq 0$.\par
+En écrivant $\vc{MA}=\vc{MJ}+\vc{JA}$ et $\vc{MB}=\vc{MK}+\vc{KB}$ et en utilisant les relations de définition de $J$ et de $K$, on obtient $MA^2-k^2MB^2=c\times\vc{MJ}\cdot\vc{MK}$ où $c$ est une constante non nulle.\par
+La condition $MA^2-k^2MB^2=0$ équivaut donc à $\vc{MJ}\cdot\vc{MK}=0$ : le point $M$ appartient au cercle de diamètre $[JK]$. La réciproque se démontre en remontant les calculs.\par
+\textbf{Construction pratique :} on place $J$ sur $[AB]$ et $K$ sur $(AB)$ à l'extérieur de $[AB]$ vérifiant $\dfrac{JA}{JB}=\dfrac{KA}{KB}=k$, puis on trace le cercle de diamètre $[JK]$.
+\end{encadre}
+
+\begin{encadre}[12]{cEx}{Exemple rédigé}
+$AB=4$ km. Déterminons l'ensemble des points $M$ tels que $MA=3\,MB$.\par
+$J$ est le point de $[AB]$ tel que $JA=3\,JB$ : comme $JA+JB=4$, on obtient $JA=3$ km et $JB=1$ km.\par
+$K$ est le point de $(AB)$ extérieur à $[AB]$ tel que $KA=3\,KB$ : comme $KA-KB=4$, on obtient $KA=6$ km et $KB=2$ km.\par
+\textbf{Conclusion :} l'ensemble cherché est le cercle de diamètre $[JK]$ : centre à $4{,}5$ km de $A$, rayon $1{,}5$ km.
+\end{encadre}
+
+\begin{figure}[htbp]
+\centering
+\input{figures/fig_apollonius}
+\caption{Lignes de niveau de $M\mapsto \dfrac{MA}{MB}$ : cercles d'Apollonius ($k=2$ et $k=\tfrac{1}{2}$) et médiatrice ($k=1$).}
+\end{figure}
+
+\sous{6. Ligne de niveau de $M\mapsto \lVert a\,\vc{MA}+b\,\vc{MB}\rVert=k$, $k\in\mathbb{R}$}
+
+\begin{encadre}[16]{cProp}{Propriété}
+Soient $A$, $B$ deux points, $a$ et $b$ deux réels tels que $a+b\neq 0$, et $k$ un réel positif.\par
+Soit $G=\barG{(A\,;\,a),(B\,;\,b)}$ le barycentre du système. Pour tout point $M$ :
+\[
+a\,\vc{MA}+b\,\vc{MB}=(a+b)\,\vc{MG}\qquad\text{donc}\qquad \lVert a\,\vc{MA}+b\,\vc{MB}\rVert=|a+b|\times MG.
+\]
+Par conséquent :
+\[
+\lVert a\,\vc{MA}+b\,\vc{MB}\rVert=k\Longleftrightarrow MG=\dfrac{k}{|a+b|}.
+\]
+$\bullet$ Si $k>0$ : $L_k$ est le \textbf{cercle} de centre $G$ et de rayon $r=\dfrac{k}{|a+b|}$.\qquad
+$\bullet$ Si $k=0$ : $L_0=\{G\}$.
+\end{encadre}
+
+\begin{encadre}[10]{cEx}{Exemple rédigé}
+$AB=2$ cm. Déterminons l'ensemble des points $M$ tels que $\lVert 2\vc{MA}-3\vc{MB}\rVert=10$.\par
+$G=\barG{(A\,;\,2),(B\,;\,-3)}$ existe car $2+(-3)=-1\neq 0$ ; comme $|2-3|=1$, on a $\lVert 2\vc{MA}-3\vc{MB}\rVert=1\times MG=MG$.\par
+Donc $MG=10$ : l'ensemble cherché est le \textbf{cercle de centre $G$ et de rayon $10$ cm}.
+\end{encadre}
+
+\begin{figure}[htbp]
+\centering
+\input{figures/fig_norme}
+\caption{Ligne de niveau de $M\mapsto \lVert a\,\vc{MA}+b\,\vc{MB}\rVert$ : cercle de centre $G$, barycentre du système, et de rayon $r=\dfrac{k}{|a+b|}$.}
+\end{figure}
+
+\sous{7. Tableau récapitulatif des lignes de niveau}
+
+\needspace{22\baselineskip}
+\begin{center}
+{\setlength{\arrayrulewidth}{0.7pt}\arrayrulecolor{cLigne}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{|L{5.9cm}|L{4.5cm}|L{5.9cm}|}
+\hline
+\rowcolor{cEntete}\textbf{Expression $f(M)$} & \textbf{Nature de $L_k$} & \textbf{Éléments caractéristiques}\\
+\hline
+$MA^2+MB^2$ & cercle, point ou $\varnothing$ & centre $I$ milieu de $[AB]$ ; $r=\dfrac{\sqrt{2k-AB^2}}{2}$\\
+\hline
+$\alpha MA^2+\beta MB^2$ ($\alpha+\beta\neq0$) & cercle, point ou $\varnothing$ & centre $G=\barG{(A\,;\,\alpha),(B\,;\,\beta)}$\\
+\hline
+$MA^2-MB^2$ & droite & perpendiculaire à $(AB)$ en $H$ ; $\overline{IH}=\dfrac{k}{2AB}$\\
+\hline
+$\vc{MA}\cdot\vc{MB}$ & cercle, point ou $\varnothing$ & centre $I$ milieu de $[AB]$ ; $r=\dfrac{\sqrt{4k+AB^2}}{2}$\\
+\hline
+$\dfrac{MA}{MB}$ ($k>0$) & médiatrice ($k=1$) ou cercle d'Apollonius & diamètre $[JK]$ avec $\dfrac{JA}{JB}=\dfrac{KA}{KB}=k$\\
+\hline
+$\lVert a\vc{MA}+b\vc{MB}\rVert$ ($a+b\neq0$) & cercle ou point & centre $G=\barG{(A\,;\,a),(B\,;\,b)}$ ; $r=\dfrac{k}{|a+b|}$\\
+\hline
+\end{tabular}}
+\end{center}
+
+% ------------------------------------------------------------------ III
+\clearpage
+\partie{III}{MATHÉMATISATION D'UN PROBLEME}
+
+\begin{encadre}[14]{cMeth}{Méthode générale : mathématiser une situation}
+\textbf{Étape 1 -- Analyser l'énoncé} : repérer les points fixes, les grandeurs données et la grandeur à optimiser ou à localiser.\par
+\textbf{Étape 2 -- Choisir les outils} : introduire les points pondérés et les masses, ou bien les distances $MA$, $MB$, \dots\ selon la question posée.\par
+\textbf{Étape 3 -- Traduire la situation} : écrire la relation vectorielle (barycentre) ou l'égalité de distances (ligne de niveau).\par
+\textbf{Étape 4 -- Résoudre et interpréter} : déterminer la position du point ou les éléments caractéristiques de l'ensemble trouvé, puis revenir au contexte.
+\end{encadre}
+
+\begin{encadre}[20]{cEx}{Situation 1 (barycentres) -- rédigée}
+\textbf{Énoncé.} Un terrain triangulaire a pour sommets les villages $A$, $B$ et $C$, d'importances respectives $3$, $2$ et $1$. Le point de rassemblement $M$ doit réaliser l'équilibre du système : $3\,\vc{MA}+2\,\vc{MB}+1\,\vc{MC}=\vc{0}$.\par
+\textbf{Étape 1.} Les points $A$, $B$, $C$ sont fixes ; les masses sont $3$, $2$, $1$ ; on cherche $M$.\par
+\textbf{Étape 2.} La relation fait apparaître une somme de vecteurs pondérés : c'est un \textbf{barycentre}.\par
+\textbf{Étape 3.} $M=\barG{(A\,;\,3),(B\,;\,2),(C\,;\,1)}$. Or $3+2+1=6\neq 0$, donc $M$ existe et est unique.\par
+\textbf{Étape 4.} Barycentre partiel : $I=\barG{(A\,;\,3),(B\,;\,2)}$, donc $M=\barG{(I\,;\,5),(C\,;\,1)}$, ce qui donne $\vc{IM}=\dfrac{1}{6}\vc{IC}$.\par
+\textbf{Conclusion :} $M$ est unique ; il est situé sur le segment $[IC]$, au sixième du chemin de $I$ vers $C$, où $I$ est le point de $[AB]$ tel que $\vc{AI}=\dfrac{2}{5}\vc{AB}$.
+\end{encadre}
+
+\begin{encadre}[20]{cEx}{Situation 2 (lignes de niveau) -- rédigée}
+\textbf{Énoncé.} Deux villages $A$ et $B$ sont distants de $4$ km. On veut placer un château d'eau $M$ tel que $MA=3\,MB$.\par
+\textbf{Étape 1.} $A$ et $B$ sont fixes, $AB=4$ km ; la condition porte sur les distances $MA$ et $MB$.\par
+\textbf{Étape 2.} La condition se traduit par $\dfrac{MA}{MB}=3$ : c'est une \textbf{ligne de niveau} de l'application $M\mapsto\dfrac{MA}{MB}$.\par
+\textbf{Étape 3.} On construit les points $J$ de $[AB]$ et $K$ de $(AB)$, extérieur à $[AB]$, tels que $\dfrac{JA}{JB}=\dfrac{KA}{KB}=3$ : $J$ est à $3$ km de $A$ et $K$ est à $6$ km de $A$.\par
+\textbf{Étape 4.} L'ensemble cherché est le cercle de diamètre $[JK]$ : centre à $4{,}5$ km de $A$, rayon $1{,}5$ km.\par
+\textbf{Conclusion :} le château d'eau peut être construit en tout point de ce cercle ; le choix final dépendra du terrain et du relief.
+\end{encadre}
+
+\begin{encadre}[20]{cEx}{Situation 3 (lignes de niveau) -- rédigée}
+\textbf{Énoncé.} Deux mâts $A$ et $B$ sont distants de $6$ m. On veut placer une borne $M$ telle que $MA^2+MB^2=26$ (en m$^2$).\par
+\textbf{Étape 1.} $A$ et $B$ sont fixes, $AB=6$ m ; la condition porte sur les carrés des distances.\par
+\textbf{Étape 2.} On utilise le \textbf{théorème de la médiane} avec $I$ milieu de $[AB]$.\par
+\textbf{Étape 3.} $MI^2=\dfrac{k}{2}-\dfrac{AB^2}{4}=13-9=4$, donc $MI=2$ m.\par
+\textbf{Étape 4.} L'ensemble des emplacements est le cercle de centre $I$ et de rayon $2$ m.\par
+\textbf{Conclusion :} toutes les positions de la borne se trouvent sur ce cercle ; on choisira le point le plus accessible.
+\end{encadre}
+
+\begin{encadre}[16]{cProp}{Bilan de la leçon}
+À l'issue de cette leçon, l'élève doit être capable de :\par
+$\bullet$ reconnaître un point pondéré, un système de points pondérés et son barycentre ;\par
+$\bullet$ écrire la relation vectorielle d'un barycentre, calculer ses coordonnées et le construire ;\par
+$\bullet$ réduire une expression vectorielle à l'aide du barycentre partiel et de l'homogénéité ;\par
+$\bullet$ démontrer l'existence du barycentre, l'alignement de points, la concourance de droites et le parallélisme ;\par
+$\bullet$ déterminer et construire les lignes de niveau des applications $M\mapsto \alpha MA^2+\beta MB^2$, $M\mapsto MA^2-MB^2$, $M\mapsto \vc{MA}\cdot\vc{MB}$, $M\mapsto \dfrac{MA}{MB}$ et $M\mapsto \lVert a\vc{MA}+b\vc{MB}\rVert$ ;\par
+$\bullet$ mathématiser une situation de la vie courante faisant appel aux barycentres et aux lignes de niveau.
+\end{encadre}
+
+\begin{encadre}[14]{cApp}{Exercices de remédiation (séance de renforcement)}
+\textbf{1)} $A(0\,;\,0)$, $B(6\,;\,0)$, $C(0\,;\,3)$. Déterminer les coordonnées de $G=\barG{(A\,;\,2),(B\,;\,1),(C\,;\,1)}$.\par
+\textbf{2)} $AB=8$ cm. Construire $G=\barG{(A\,;\,3),(B\,;\,5)}$ et calculer $AG$ et $BG$.\par
+\textbf{3)} $AB=6$ cm. Déterminer et construire la ligne de niveau $L_k$ de $M\mapsto MA^2+MB^2$ pour $k=20$, puis l'ensemble des points $M$ tels que $MA^2-MB^2=6$.
+\end{encadre}
+
+\vspace{6pt}
+\begin{center}
+{\color{cProp}\rule{0.5\linewidth}{0.8pt}}\\[3pt]
+{\footnotesize\color{cGris}M. KODJONE Kodjo -- Professeur de Mathématiques -- Lycée Kpeta (Kpalimé) -- Année scolaire 2026--2027}
+\end{center}
+
+\end{document}
