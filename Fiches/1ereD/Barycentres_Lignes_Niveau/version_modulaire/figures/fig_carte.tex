@@ -1,0 +1,18 @@
+% ============================================================================
+% Mathematisation : entrepot M (masses 3, 2 et 1)
+% Extrait de la fiche : Barycentres et lignes de niveau (classe de 1ere D)
+% Necessite \usepackage{tikz} et \usetikzlibrary{calc} (charges par le fichier principal)
+% ============================================================================
+\begin{tikzpicture}[scale=0.95,>=latex]
+  \coordinate (A) at (0,0); \coordinate (B) at (6,0.5); \coordinate (C) at (2.5,3.6);
+  \coordinate (G) at (2.4167,0.7667);
+  \draw[gray!55,thick] (A) -- (B) -- (C) -- cycle;
+  \draw[gray!55,dashed] (A) -- (G); \draw[gray!55,dashed] (B) -- (G); \draw[gray!55,dashed] (C) -- (G);
+  \fill[blue!70!black] (A) circle (2.6pt) node[below left=-1pt,font=\small] {$A$};
+  \fill[blue!70!black] (B) circle (2.6pt) node[right=2pt,font=\small] {$B$};
+  \fill[blue!70!black] (C) circle (2.6pt) node[above=1pt,font=\small] {$C$};
+  \draw[red!80!black,thick] ($(G)+(-0.3,-0.24)$) rectangle ($(G)+(0.3,0.24)$);
+  \draw[red!80!black,thick] ($(G)+(-0.36,0.24)$) -- ($(G)+(0,0.66)$) -- ($(G)+(0.36,0.24)$);
+  \node[red!80!black,font=\small] at ($(G)+(0.15,1.0)$) {$M$};
+  \node[font=\small,gray] at (2.4,-0.85) {$(A\,;\,3)$, $(B\,;\,2)$, $(C\,;\,1)$};
+\end{tikzpicture}

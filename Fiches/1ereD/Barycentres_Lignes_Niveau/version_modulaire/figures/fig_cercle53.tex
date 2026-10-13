@@ -1,0 +1,17 @@
+% ============================================================================
+% Ligne de niveau de MA.MB = 0 : cercle de diametre [AB]
+% Extrait de la fiche : Barycentres et lignes de niveau (classe de 1ere D)
+% Necessite \usepackage{tikz} et \usetikzlibrary{calc} (charges par le fichier principal)
+% ============================================================================
+\begin{tikzpicture}[scale=0.9,>=latex]
+  \coordinate (A) at (-2.2,0); \coordinate (B) at (2.2,0); \coordinate (M) at (58:2.2);
+  \draw[thick,green!50!black] (0,0) circle (2.2);
+  \draw[thick] (A) -- (B);
+  \draw[thick,blue!70!black] (M) -- (A); \draw[thick,blue!70!black] (M) -- (B);
+  \draw[gray] ($(M)!0.16cm!(A)$) -- ($(M)!0.16cm!(A)+(0.16,0.16)$) -- ($(M)!0.16cm!(B)$);
+  \fill[blue!70!black] (A) circle (2.2pt) node[below left=-1pt] {$A$};
+  \fill[blue!70!black] (B) circle (2.2pt) node[below right=-1pt] {$B$};
+  \fill[blue!70!black] (M) circle (2.2pt) node[above=1pt] {$M$};
+  \node[green!40!black,font=\small] at (2.4,1.9) {$(L_0)$};
+  \node[font=\small,gray] at (0,-3.0) {$k=0$ : cercle de diam\`etre $[AB]$};
+\end{tikzpicture}

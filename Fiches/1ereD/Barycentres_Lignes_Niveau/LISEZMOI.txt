@@ -10,9 +10,19 @@ Lycee Kpeta (Kpalime)  -  M. KODJONE Kodjo
    - Les 14 figures sont ECRITES DANS le fichier : aucun dossier d'images a
      televerser, donc plus d'erreur "File `figures/...' not found".
 
-VARIANTE pour garder votre projet actuel :
-   ouvrez main.tex, Ctrl+A puis Supprimer, collez tout le contenu du main.tex
-   fourni ici, puis Recompile.
+SI VOUS GARDEZ VOTRE PROJET ACTUEL (recommande si vous avez deja tout tape) :
+   a) dans Overleaf, supprimez l'ancien main.tex : a droite de son nom, "..." ->
+      Delete (le projet doit etre vide de tout ancien main.tex) ;
+   b) icone Upload (la fleche, en haut a gauche) -> "Select from your computer" ->
+      choisissez le NOUVEAU main.tex  ->  "Upload" ;
+   c) Recompile.  Si Overleaf demande quel fichier compiler, menu "Menu" ->
+      "Main document" -> main.tex.
+   ATTENTION : si l'erreur "File `figures/fig_equilibre.tex' not found" revient,
+   c'est que l'ANCIEN main.tex est encore dans le projet (le nouveau, lui, ne
+   contient aucun appel \input ni aucun nom de figure externe).
+
+AUTRE METHODE (copier-coller) : ouvrez main.tex dans le ZIP, Ctrl+A puis Ctrl+C,
+puis dans Overleaf ouvrez main.tex, Ctrl+A, Supprimer, Ctrl+V, Recompile.
 
 ================================== CANEVAS (fiche lecon 2) ==================================
 
@@ -41,10 +51,14 @@ mention "Reponse attendue".
      cBleuPale, cFiligrane
    - typographie soignee : microtype, tolerance et espace d'urgence regles, protection
      contre les lignes veuves et orphelines, pages non etirees
-   - lignes source courtes et aerees (aucune ligne de plus de 149 caracteres)
-   - aucune ligne de tableau ne depasse une page : hauteur maximale mesuree 15,2 cm
-     pour 17,6 cm disponibles
+   - lignes source courtes et aerees
+   - AUCUNE LIGNE DE TABLEAU COUPEE EN DEUX PAR UN SAUT DE PAGE : les 58 lignes du
+     tableau ont ete mesurees une a une, et celles qui depassaient une page (jusqu'a
+     24 cm a l'origine) ont ete scindees en deux avec la mention "(suite)" ; la plus
+     haute mesure aujourd'hui 15 cm pour 17,6 cm disponibles
    - 0 fichier externe, 0 image, 0 appel \input : le document est autonome
+   - compilation verifiee dans le bac a sable : 0 erreur, 0 avertissement de debordement,
+     28 pages A4 paysage
 
 ======================================== CONTENU ============================================
 
@@ -55,7 +69,7 @@ mention "Reponse attendue".
    Seance 2   Proprietes du barycentre : alignement, droites concourantes, paralleles.
    Seance 3   Notion de ligne de niveau : definition, MA^2+MB^2 = k, MA^2-MB^2 = k.
    Seance 4   Lignes de niveau de MA.MB = k, de MA/MB = k (cercles d'Apollonius) et de
-              ||a.MA + b.MB|| = k ; mathématisation d'un probleme ; bilan.
+              ||a.MA + b.MB|| = k ; mathematisation d'un probleme ; bilan.
 
    EFFECTIF et SEMAINE sont laisses en pointilles, comme sur votre fiche modele.
 
