@@ -76,6 +76,9 @@ mention "Reponse attendue".
 ======================================== L'ARCHIVE ==========================================
 
    main.tex                                   LA FICHE COMPLETE, autonome (a compiler)
+   Fiche_Barycentres_Lignes_Niveau.pdf        la fiche DEJA COMPILEE (28 pages A4 paysage),
+                                              a imprimer directement si vous ne voulez pas
+                                              passer par Overleaf
    apercu_canevas.png                         apercu de controle de la mise en page
    LISEZMOI.txt                               ce mode d'emploi
    version_modulaire/fiche_barycentres_lignes_niveau.tex
