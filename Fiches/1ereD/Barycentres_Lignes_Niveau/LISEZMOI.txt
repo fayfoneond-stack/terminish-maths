@@ -1,22 +1,34 @@
 FICHE PEDAGOGIQUE - BARYCENTRES ET LIGNES DE NIVEAU (1ere D)
-Lycée Kpeta (Kpalimé) - Thème 4 : Géométrie du plan - A.S. 2026-2027
+Lycee Kpeta (Kpalime) - Theme 4 : Geometrie du plan - A.S. 2026-2027
 
-MODE D'EMPLOI SUR OVERLEAF
-1) Menu "New Project" puis "Upload Project" et choisir ce fichier ZIP.
-2) Overleaf ouvre fiche_barycentres_lignes_niveau.tex comme document principal.
-3) Menu "Menu" -> "Compiler" -> verifier que le compilateur est bien "pdfLaTeX".
-4) Cliquer sur "Recompile". Le PDF doit se construire en une vingtaine de secondes.
-   Les figures sont dessinees par TikZ pendant la compilation : aucun fichier image
-   n'est necessaire.
+>>> SI VOUS AVEZ L'ERREUR :  File `figures/fig_equilibre.tex' not found  <<<
+C'est que le fichier a ete televerse SEUL, sans le dossier "figures/".
+Deux solutions, au choix :
 
-IMPORTANT : le dossier "figures/" doit rester a cote du fichier .tex
-(sinon l'erreur "File `figures/fig_...' not found" apparaît).
+SOLUTION 1 (la plus simple, rien a televerser)
+   Le fichier main.tex de cette archive est AUTONOME : les 14 figures
+   sont ecrites a l'interieur du fichier (TikZ).
+   - Option a : menu "New Project" -> "Upload Project" -> choisir cette archive ZIP.
+     Overleaf ouvre main.tex et vous cliquez sur "Recompile".
+   - Option b (pour garder votre projet actuel) : ouvrez main.tex sur Overleaf,
+     selectionnez tout (Ctrl+A), supprimez, collez tout le contenu du fichier
+     main.tex fourni ici, puis "Recompile".
 
-VERSION EN UN SEUL FICHIER : le dossier "version_un_seul_fichier" contient
-fiche_barycentres_lignes_niveau_COMPLET.tex, ou les 14 figures sont incluses.
-Ce fichier se compile tout seul (il suffit de le televerser seul).
+SOLUTION 2 (garder le projet decoupe)
+   Televersez AUSSI le dossier "figures" (les 14 fichiers fig_*.tex) en plus du
+   fichier "fiche_barycentres_lignes_niveau.tex" : le dossier doit s'appeler
+   exactement "figures" et se trouver a cote du .tex.
 
-En cas d'erreur de compilation : ouvrir le journal (bouton "Logs" a cote de
-"Recompile"), copier les lignes en rouge et les communiquer.
+A SAVOIR
+   - Compilateur a utiliser : pdfLaTeX (menu "Menu" -> "Compiler").
+     Les deux fichiers contiennent la ligne  % !TEX program = pdflatex
+     qui l'impose automatiquement.
+   - Les figures sont dessinees par TikZ pendant la compilation : aucun
+     fichier image n'est necessaire.
+   - EFFECTIF et SEMAINE ont ete laisses en pointilles, comme sur la fiche modele.
 
-EFFECTIF et SEMAINE ont ete laisses en pointilles, comme sur la fiche modele.
+CONTENU DE L'ARCHIVE
+   main.tex                                  -> fiche complete AUTONOME (a compiler)
+   version_modulaire/fiche_barycentres_lignes_niveau.tex
+   version_modulaire/figures/fig_*.tex       -> 14 figures separees
+   LISEZMOI.txt
