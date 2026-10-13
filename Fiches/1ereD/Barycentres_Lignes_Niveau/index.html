@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fiche Barycentres et lignes de niveau — téléchargement</title>
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         margin: 0; padding: 28px 18px; background: #f4f6f9; color: #1c2733; }
+  .carte { max-width: 760px; margin: 0 auto; background: #fff; border-radius: 14px;
+           box-shadow: 0 4px 22px rgba(20,40,70,.10); padding: 30px 34px 34px; }
+  h1 { font-size: 22px; margin: 0 0 6px; color: #003366; }
+  .sous { color: #5b6b7c; font-size: 14px; margin-bottom: 22px; }
+  h2 { font-size: 16px; margin: 26px 0 10px; color: #0b6e4f; }
+  a.bouton { display: block; text-decoration: none; padding: 15px 18px; border-radius: 10px;
+             margin: 10px 0; font-weight: 600; font-size: 15px; border: 2px solid transparent; }
+  a.principal { background: #c00000; color: #fff; }
+  a.principal:hover { background: #a00000; }
+  a.secondaire { background: #fff; color: #2e6eb4; border-color: #2e6eb4; }
+  a.secondaire:hover { background: #eef4fb; }
+  a small { display: block; font-weight: 400; font-size: 12.5px; opacity: .85; margin-top: 3px; }
+  ol { padding-left: 22px; line-height: 1.65; font-size: 14.5px; }
+  code { background: #eef1f5; padding: 1px 6px; border-radius: 5px; font-size: 13px; }
+  .note { background: #fff8e1; border-left: 4px solid #ffc107; padding: 12px 14px;
+          font-size: 14px; border-radius: 0 8px 8px 0; margin: 18px 0; }
+  .ok { background: #e8f5e9; border-left: 4px solid #2e7d32; padding: 12px 14px;
+        font-size: 14px; border-radius: 0 8px 8px 0; }
+</style>
+</head>
+<body>
+<div class="carte">
+  <h1>Fiche « Barycentres et lignes de niveau » — 1<sup>re</sup> D</h1>
+  <div class="sous">Canevas de la fiche Leçon 2 · A4 paysage · filigrane · 4 séances ·
+  exercices d'application avec solutions rédigées · compilation pdfLaTeX</div>
+
+  <h2>1. Téléchargez le fichier</h2>
+  <a class="bouton principal" href="main.tex" download>⬇︎ Télécharger main.tex
+    <small>Le fichier complet et autonome : les 14 figures sont à l'intérieur, rien d'autre à téléverser.</small></a>
+  <a class="bouton secondaire" href="Fiche_Barycentres_Lignes_Niveau.zip" download>⬇︎ Télécharger l'archive ZIP (main.tex + figures + mode d'emploi)
+    <small>Pratique pour « New Project → Upload Project » sur Overleaf.</small></a>
+  <a class="bouton secondaire" href="apercu_canevas.png" download>⬇︎ Voir l'aperçu de la mise en page (image)</a>
+
+  <h2>2. Mettez-le dans Overleaf — deux méthodes</h2>
+  <ol>
+    <li><b>Remplacer le fichier de votre projet actuel</b> (le plus simple) :
+      <br>Dans Overleaf, cliquez sur l'icône <b>Upload</b> (flèche vers le haut, en haut à gauche du
+      panneau des fichiers) → choisissez le <code>main.tex</code> téléchargé →
+      Overleaf demande de <b>remplacer</b> le fichier existant : acceptez → cliquez sur
+      <b>Recompile</b>.</li>
+    <li><b>Ou créer un projet neuf</b> : menu <b>New Project → Upload Project</b> → déposez
+      l'archive <code>Fiche_Barycentres_Lignes_Niveau.zip</code> → Overleaf ouvre
+      <code>main.tex</code> → <b>Recompile</b>.</li>
+  </ol>
+
+  <div class="note">
+    <b>Pourquoi ça refusait :</b> l'erreur
+    <code>File 'figures/fig_equilibre.tex' not found</code> signifie que le projet compile encore
+    l'ancien fichier, qui appelle des figures rangées dans un dossier <code>figures/</code> absent.
+    Le nouveau <code>main.tex</code> n'appelle plus aucun fichier : les 14 figures sont écrites
+    dans le document lui-même. Après remplacement, l'erreur disparaît.
+  </div>
+
+  <div class="ok">
+    <b>Bon à savoir :</b> la ligne <code>% !TEX program = pdflatex</code> en tête du fichier impose
+    le bon compilateur. Les figures sont dessinées par TikZ pendant la compilation : aucun fichier
+    image n'est nécessaire. <b>EFFECTIF</b> et <b>SEMAINE</b> sont laissés en pointillés, comme sur
+    votre fiche modèle.
+  </div>
+
+  <h2>3. Si un message rouge apparaît encore</h2>
+  <ol>
+    <li>Cliquez sur <b>Logs</b> à côté de <i>Recompile</i>.</li>
+    <li>Copiez les 2 ou 3 lignes en rouge (celles qui commencent par <code>!</code>).</li>
+    <li>Envoyez-les moi : je corrige aussitôt.</li>
+  </ol>
+</div>
+</body>
+</html>

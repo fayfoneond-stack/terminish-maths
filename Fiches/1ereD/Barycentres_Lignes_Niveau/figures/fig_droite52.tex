@@ -1,0 +1,19 @@
+% ============================================================================
+% Ligne de niveau de M -> MA^2 - MB^2 : droite perpendiculaire a (AB)
+% Extrait de la fiche : Barycentres et lignes de niveau (classe de 1ere D)
+% Necessite \usepackage{tikz} et \usetikzlibrary{calc} (charges par le fichier principal)
+% ============================================================================
+\begin{tikzpicture}[scale=0.8,>=latex]
+  \coordinate (A) at (0,0); \coordinate (B) at (6,0); \coordinate (I) at (3,0); \coordinate (H) at (4,0);
+  \draw[thick] (-1.2,0) -- (7.4,0);
+  \draw[very thick,green!50!black] (4,-2.8) -- (4,2.8);
+  \draw[dashed,thick,gray] (3,-2.5) -- (3,2.5);
+  \fill[blue!70!black] (A) circle (2.4pt) node[below left=-1pt] {$A$};
+  \fill[blue!70!black] (B) circle (2.4pt) node[below right=-1pt] {$B$};
+  \fill[red!80!black] (I) circle (2.4pt) node[below=1pt] {$I$};
+  \fill[orange] (H) circle (2.4pt) node[below right=-2pt] {$H$};
+  \draw[<->,red!80!black] (3,-0.95) -- (4,-0.95) node[midway,above,font=\small] {$1$};
+  \node[green!40!black,font=\small] at (5.6,2.35) {$(L_k)$};
+  \node[gray,font=\small] at (1.85,2.3) {$(L_0)$};
+  \node[font=\small,gray] at (2.6,-1.75) {$\overline{IH}=\frac{k}{2AB}$};
+\end{tikzpicture}

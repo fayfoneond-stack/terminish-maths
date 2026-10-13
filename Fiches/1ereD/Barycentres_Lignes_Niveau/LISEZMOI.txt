@@ -1,0 +1,68 @@
+FICHE PEDAGOGIQUE - BARYCENTRES ET LIGNES DE NIVEAU
+Classe : 1ere D  -  Theme 4 : Geometrie du plan  -  A.S. 2026-2027
+Lycee Kpeta (Kpalime)  -  M. KODJONE Kodjo
+
+=============================== COMMENT COMPILER SUR OVERLEAF ==============================
+
+1) Menu "New Project"  ->  "Upload Project"  ->  choisir ce fichier ZIP.
+2) Overleaf ouvre main.tex : cliquez sur "Recompile".
+   - Le compilateur est impose par le fichier :  % !TEX program = pdflatex
+   - Les 14 figures sont ECRITES DANS le fichier : aucun dossier d'images a
+     televerser, donc plus d'erreur "File `figures/...' not found".
+
+VARIANTE pour garder votre projet actuel :
+   ouvrez main.tex, Ctrl+A puis Supprimer, collez tout le contenu du main.tex
+   fourni ici, puis Recompile.
+
+================================== CANEVAS (fiche lecon 2) ==================================
+
+   - A4 PAYSAGE, marges 1,28 cm (bande utile 27,14 cm)
+   - en-tete rouge "FICHE PEDAGOGIQUE DE MATHEMATIQUES" souligne d'un double filet
+   - FILIGRANE "KODJONE Kodjo" en gras 30 pt, gris #CFCFCF, incline a 30 degres,
+     place exactement comme sur votre fiche (8,51 cm de la gauche, 10,42 cm du bas),
+     dessine en ARRIERE-PLAN sur toutes les pages : le texte reste toujours lisible
+   - pied de page bleu "M.KODJONE Kodjo Prof de Maths" et numero de page encadre
+   - tableau a 4 colonnes : Moment didactique (2,12) / Activite de l'enseignant (5,17) /
+     Activite de l'eleve (4,37) / Trace ecrite (13,64)
+   - en-tetes de tableaux vert pale, mots-reperes de la trace ecrite en ROUGE,
+     surlignages JAUNES, encadre SEANCE a bordure bleue, exercices et solutions en BLEU
+   - les moments qui se poursuivent sont etiquetes " (suite) " avec des tirets dans les
+     colonnes 2 et 3, comme votre fiche
+
+====================================== LES SOLUTIONS ========================================
+
+Chaque "Exercice d'application" est suivi d'un bloc bleu "Solution" redige pas a pas
+(donnees, calculs, verification, conclusion) ; chaque "Exercice de maison" porte une
+mention "Reponse attendue".
+
+=============================== PROPRETE DE LA SAISIE ======================================
+
+   - aucun nom de couleur obsolete : uniquement cRouge, cBleu, cVert, cJaune, cVertPale,
+     cBleuPale, cFiligrane
+   - typographie soignee : microtype, tolerance et espace d'urgence regles, protection
+     contre les lignes veuves et orphelines, pages non etirees
+   - lignes source courtes et aerees (aucune ligne de plus de 149 caracteres)
+   - aucune ligne de tableau ne depasse une page : hauteur maximale mesuree 15,2 cm
+     pour 17,6 cm disponibles
+   - 0 fichier externe, 0 image, 0 appel \input : le document est autonome
+
+======================================== CONTENU ============================================
+
+   Page 1     en-tete administratif ; grand encadre vert (competence terminale, theme,
+              lecon, nombre de seances, supports, materiel, consigne, prerequis) ;
+              tableau Capacites / Contenus ; strategie pedagogique.
+   Seance 1   Notion de barycentre : deux points ponderes, puis plus de deux points.
+   Seance 2   Proprietes du barycentre : alignement, droites concourantes, paralleles.
+   Seance 3   Notion de ligne de niveau : definition, MA^2+MB^2 = k, MA^2-MB^2 = k.
+   Seance 4   Lignes de niveau de MA.MB = k, de MA/MB = k (cercles d'Apollonius) et de
+              ||a.MA + b.MB|| = k ; mathématisation d'un probleme ; bilan.
+
+   EFFECTIF et SEMAINE sont laisses en pointilles, comme sur votre fiche modele.
+
+======================================== L'ARCHIVE ==========================================
+
+   main.tex                                   LA FICHE COMPLETE, autonome (a compiler)
+   apercu_canevas.png                         apercu de controle de la mise en page
+   LISEZMOI.txt                               ce mode d'emploi
+   version_modulaire/fiche_barycentres_lignes_niveau.tex
+   version_modulaire/figures/fig_*.tex        les 14 figures a part, si vous voulez les retoucher
