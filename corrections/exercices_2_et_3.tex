@@ -1,0 +1,157 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage[margin=2cm]{geometry}
+
+\title{Corrections : Exercice 2 (fin) et Exercice 3}
+\date{}
+
+\begin{document}
+\maketitle
+
+%% =====================================================================
+\section*{Exercice 2 (questions c. à f.)}
+
+On d\'efinit
+\[
+A=\sqrt{x+1+2\sqrt x}-\sqrt{x+1-2\sqrt x}
+\]
+pour $x\ge0$. Comme $x+1+2\sqrt x=(\sqrt x+1)^2$ et $x+1-2\sqrt x=(\sqrt x-1)^2$, on a
+\[
+A=(\sqrt x+1)-\lvert\sqrt x-1\rvert.
+\]
+\emph{Remarque : la d\'efinition de $A$ n'est pas visible sur la photo ; elle est reconstitu\'ee \`a partir des questions.}
+
+\subsection*{c. Justifier que $A\ge0$}
+Comme $\sqrt x\ge0$, on a $\lvert\sqrt x-1\rvert\le\sqrt x+1$. Donc
+\[
+A=(\sqrt x+1)-\lvert\sqrt x-1\rvert\ge0.
+\]
+
+\subsection*{d. Si $x\in[0;1]$, alors $A=2\sqrt x$}
+Pour $x\in[0;1]$, on a $\sqrt x\le1$, donc $\lvert\sqrt x-1\rvert=1-\sqrt x$. Ainsi
+\[
+A=(\sqrt x+1)-(1-\sqrt x)=2\sqrt x.
+\]
+
+\subsection*{e. Valeur de $\sqrt{\sqrt2+2\sqrt{\sqrt2-1}}-\sqrt{\sqrt2-2\sqrt{\sqrt2-1}}$}
+On pose $x+1=\sqrt2$, soit $x=\sqrt2-1\approx0{,}414\in[0;1]$. L'expression est alors $A$ pour cette valeur de $x$, et d'apr\`es la question d. :
+\[
+\sqrt{\sqrt2+2\sqrt{\sqrt2-1}}-\sqrt{\sqrt2-2\sqrt{\sqrt2-1}}=2\sqrt{\sqrt2-1}.
+\]
+
+\subsection*{f. Calcul de $A$ pour $x\ge1$, puis application}
+Pour $x\ge1$, on a $\sqrt x\ge1$, donc $\lvert\sqrt x-1\rvert=\sqrt x-1$ et
+\[
+A=(\sqrt x+1)-(\sqrt x-1)=2.
+\]
+Pour $x=2024$ : $x+1=2025$ et $2\sqrt x=2\sqrt{2024}$, donc
+\[
+\sqrt{2025+2\sqrt{2024}}-\sqrt{2025-2\sqrt{2024}}=A(2024)=2.
+\]
+
+%% =====================================================================
+\section*{Exercice 3}
+
+\subsection*{1. Calculs}
+
+\paragraph{a. $A$ sous forme de fraction irr\'eductible.}
+\[
+8+\frac73-\frac32=\frac{48+14-9}{6}=\frac{53}{6},\qquad
+\frac15-3\cdot\frac92=\frac15-\frac{27}{2}=-\frac{133}{10}.
+\]
+\[
+A=\frac{53}{6}\times\left(-\frac{133}{10}\right)=-\frac{7049}{60}.
+\]
+Comme $7049=7\times19\times53$ et $60=2^2\times3\times5$, la fraction est irr\'eductible.
+
+\paragraph{b. $B$ simplifi\'e ($a\neq0$, $b\neq0$).}
+\[
+\frac{a^3b^{-2}}{a^4b^{-3}}=a^{-1}b,\qquad \frac{a^2b^3}{a^4b^{-3}}=a^{-2}b^6,
+\]
+donc
+\[
+B=a^{-3}b^{7}=\frac{b^7}{a^3}.
+\]
+
+\paragraph{c. $C$ en puissances de nombres premiers.}
+On \'ecrit $0{,}6=\dfrac35$, $0{,}8=\dfrac{2^2}{5}$ et $0{,}4=\dfrac25$.
+\[
+\text{Num\'erateur : }(0{,}6)^2\times12^5\times54^3=\frac{3^2}{5^2}\times(2^2\cdot3)^5\times(2\cdot3^3)^3=\frac{2^{13}\cdot3^{16}}{5^2},
+\]
+\[
+\text{D\'enominateur : }9^2\times5^3\times(0{,}8)^3\times(0{,}4)^4=3^4\cdot5^3\cdot\frac{2^6}{5^3}\cdot\frac{2^4}{5^4}=\frac{2^{10}\cdot3^4}{5^4}.
+\]
+\[
+C=\frac{2^{13}\cdot3^{16}}{5^2}\times\frac{5^4}{2^{10}\cdot3^4}=2^3\times3^{12}\times5^2.
+\]
+
+\subsection*{2. \'Equations et in\'equations}
+
+\paragraph{$(I_1)$ : $\lvert x+4\rvert\le2$.}
+\[
+-2\le x+4\le2\iff-6\le x\le-2.\qquad S_1=[-6\,;\,-2].
+\]
+
+\paragraph{$(I_2)$ : $\lvert x+6\rvert>2$.}
+\[
+x+6>2\ \text{ou}\ x+6<-2\iff x>-4\ \text{ou}\ x<-8.
+\]
+\[
+S_2=\left]-\infty\,;\,-8\right[\ \cup\ \left]-4\,;\,+\infty\right[.
+\]
+
+\paragraph{(E) : $\lvert8-x\rvert=3$.}
+\[
+8-x=3\ \text{ou}\ 8-x=-3\iff x=5\ \text{ou}\ x=11.\qquad S_E=\{5\,;\,11\}.
+\]
+
+\subsection*{3. In\'egalit\'es avec $x,y,z\ge0$}
+
+\paragraph{a.} $x+y-2\sqrt{xy}=(\sqrt x-\sqrt y)^2\ge0$, donc $x+y\ge2\sqrt{xy}$.
+
+\paragraph{b.} On applique a) aux trois couples :
+$x+y\ge2\sqrt{xy}$, $x+z\ge2\sqrt{xz}$, $y+z\ge2\sqrt{yz}$.
+Ces quantit\'es sont positives, on peut donc les multiplier :
+\[
+(x+y)(x+z)(y+z)\ge8\sqrt{x^2y^2z^2}=8xyz.
+\]
+
+\paragraph{c.} Pour $x,y>0$ : $x^2+y^2\ge2xy>0$, donc $\dfrac{1}{x^2+y^2}\le\dfrac{1}{2xy}$.
+
+\paragraph{d.} Comme $x+y\ge0$, on multiplie c) par $x+y$ :
+\[
+\frac{x+y}{x^2+y^2}\le\frac{x+y}{2xy}=\frac12\left(\frac1x+\frac1y\right).
+\]
+
+\subsection*{4. Encadrements et simplification}
+
+On a $1\le a\le3$ et $-7\le b\le-1$.
+
+\paragraph{a. Encadrements.}
+\begin{itemize}
+  \item $4-a$ : $1\le4-a\le3$.
+  \item $2a-b$ : $2\le2a\le6$ et $1\le-b\le7$, donc $3\le2a-b\le13$.
+  \item $ab-1$ : comme $b<0$, $ab\in[-21\,;\,-1]$, donc $-22\le ab-1\le-2$.
+\end{itemize}
+
+\paragraph{b. Simplification de $D$.}
+$\sqrt{(4-a)^2}=4-a$ (car $4-a>0$), $\sqrt{(2a-b)^2}=2a-b$ (car $2a-b>0$), et $\lvert ab-1\rvert=1-ab$ (car $ab-1<0$). Donc
+\[
+D=(4-a)+(2a-b)-(1-ab)=3+a-b+ab.
+\]
+
+\subsection*{5. Racines et identit\'e}
+
+On utilise $A=\sqrt{x+1+2\sqrt x}-\sqrt{x+1-2\sqrt x}$ (\'enonc\'e peu lisible sur la photo, d\'efinition reconstitu\'ee).
+
+\paragraph{a. D\'eveloppement.} $(\sqrt x-1)^2=x-2\sqrt x+1$.
+
+\paragraph{b. D\'eduction.} Comme $(\sqrt x-1)^2\ge0$, on a $x-2\sqrt x+1\ge0$, soit
+\[
+x+1\ge2\sqrt x.
+\]
+
+\end{document}
