@@ -1,0 +1,522 @@
+\section{Chapitre 1 : Situations d'\'evaluation}
+
+%% ===============================================================
+\subsection{Exercice 1 : Probl\`eme de terrains}
+
+\textbf{Consigne 1.} On pose $X=\cos x$. L'\'equation $(E)$ devient
+$2X^2+(\sqrt3-\sqrt2)X-\dfrac{\sqrt6}{2}=0$.
+
+\medskip\noindent\textbf{Discriminant :}
+$\Delta=(\sqrt3-\sqrt2)^2+4\cdot 2\cdot\dfrac{\sqrt6}{2}=5-2\sqrt6+4\sqrt6=5+2\sqrt6=(\sqrt3+\sqrt2)^2$.
+
+\noindent Donc
+\[
+X=\frac{-(\sqrt3-\sqrt2)\pm(\sqrt3+\sqrt2)}{4}
+\quad\Longrightarrow\quad
+X_1=\frac{\sqrt2}{2},\qquad X_2=-\frac{\sqrt3}{2}.
+\]
+\noindent\textbf{Solutions dans $]-\pi;\pi]$ :}
+\begin{itemize}
+  \item $\cos x=\dfrac{\sqrt2}{2}\iff x=\dfrac{\pi}{4}$ ou $x=-\dfrac{\pi}{4}$ ;
+  \item $\cos x=-\dfrac{\sqrt3}{2}\iff x=\dfrac{5\pi}{6}$ ou $x=-\dfrac{5\pi}{6}$.
+\end{itemize}
+Les quatre sommets, sur le cercle de rayon $R=20$ m, sont dans l'ordre :
+$-\frac{5\pi}{6}$, $-\frac{\pi}{4}$, $\frac{\pi}{4}$, $\frac{5\pi}{6}$.
+
+\medskip\noindent\textbf{Aire.} Pour un polygone inscrit dans un cercle de centre $O$, l'aire est la somme
+des aires des triangles $OS_iS_{i+1}$ : $\mathcal A=\frac12R^2\sum\sin\theta_i$, o\`u $\theta_i$ est l'angle
+au centre entre deux sommets cons\'ecutifs. Ici les angles valent $\frac{7\pi}{12}$, $\frac{\pi}{2}$,
+$\frac{7\pi}{12}$, $\frac{\pi}{3}$ (leur somme vaut bien $2\pi$). Comme
+$\sin\frac{7\pi}{12}=\sin105^\circ=\dfrac{\sqrt6+\sqrt2}{4}$ :
+\[
+\mathcal A=\frac{400}{2}\left(2\cdot\frac{\sqrt6+\sqrt2}{4}+1+\frac{\sqrt3}{2}\right)
+=200+100\sqrt3+100\sqrt6+100\sqrt2\approx 759{,}58\ \text{m}^2 .
+\]
+On retrouve la valeur annonc\'ee : $759{,}575\ \text{m}^2$.
+
+\medskip\noindent\textbf{Consigne 2.}
+
+\emph{Dimensions de $T_2$ :} soient $L$ la longueur et $\ell$ la largeur. On a $L\ell=360$ et
+$(L+6)(\ell+6)=630$. Donc $L\ell+6(L+\ell)+36=630$, soit $L+\ell=39$.
+$L$ et $\ell$ sont racines de $t^2-39t+360=0$ : $\Delta=81$, $t=\frac{39\pm 9}{2}\in\{24;15\}$.
+Le terrain mesure $24$ m sur $15$ m, son p\'erim\`etre vaut $2(24+15)=78$ m.
+
+\emph{Cl\^oture :} deux rang\'ees de fil de fer font le tour du terrain, sauf l'ouverture de 3 m.
+Chaque rang\'ee mesure $78-3=75$ m, donc la longueur totale de fil vaut $2\times 75=150$ m.
+\begin{rem}
+Le texte dit ``2 rang\'ees du fil de fer''. Nous retenons deux fils parall\`eles de $75$ m chacun.
+\end{rem}
+
+\begin{itemize}
+  \item Co\^ut du fil : $150\times 1550=232\,500$ F ;
+  \item Main d'\oe uvre : $25\,650$ F ; co\^ut total de la cl\^oture : $258\,150$ F.
+  \item Vente du terrain $T_1$ : $759{,}575\times 8000=6\,076\,600$ F.
+\end{itemize}
+\textbf{Reste :} $6\,076\,600-258\,150=\mathbf{5\,818\,450\ F}$.
+
+%% ===============================================================
+\subsection{Exercice 2 : \'Elevage de lapins}
+
+\textbf{Consigne 1.} Notons $a$ le nombre de sacs d'aliment A et $b$ celui de sacs B.
+Contraintes de temps de travail :
+\[
+\begin{cases}
+a+3b\le 240 & \text{(groupe 1)}\\
+2a+b\le 250 & \text{(groupe 2)}\\
+a\ge 0,\ b\ge 0.
+\end{cases}
+\]
+Sommets de la r\'egion admissible : $(0;0)$, $(125;0)$, $(0;80)$ et l'intersection des droites
+$a+3b=240$ et $2a+b=250$ : de la seconde, $b=250-2a$ ; on remplace dans la premi\`ere :
+$a+750-6a=240\Rightarrow a=102$, $b=46$.
+Le nombre total de sacs $a+b$ est maximal en $(102;46)$ : $a+b=148$.
+\begin{hyp}un sac permet d'alimenter un lapin ; le nombre maximal de lapins est donc $148$.
+Le co\^ut des sacs n'intervient pas dans cette question.\end{hyp}
+
+\textbf{Consigne 2.} Le polygone a pour sommets les images de la solution de
+$(E)$ : $4\sin^2x+2(\sqrt3-1)\sin x-\sqrt3=0$.
+Posons $Y=\sin x$ : $\Delta=4(\sqrt3-1)^2+16\sqrt3=16+8\sqrt3=(2+2\sqrt3)^2$, d'o\`u
+$Y=\frac{-2(\sqrt3-1)\pm(2+2\sqrt3)}{8}$, soit $Y=\frac12$ ou $Y=-\frac{\sqrt3}{2}$.
+Sur $[0;2\pi[$ : $\sin x=\frac12\iff x\in\{\frac{\pi}{6};\frac{5\pi}{6}\}$ et
+$\sin x=-\frac{\sqrt3}{2}\iff x\in\{\frac{4\pi}{3};\frac{5\pi}{3}\}$.
+
+Les sommets sont $A(\frac{\sqrt3}{2};\frac12)$, $B(-\frac{\sqrt3}{2};\frac12)$, $C(-\frac12;-\frac{\sqrt3}{2})$,
+$D(\frac12;-\frac{\sqrt3}{2})$. Le quadrilat\`ere $ABCD$ est un trap\`eze : $(AB)\parallel(CD)$, avec
+$AB=\sqrt3$, $CD=1$ et une hauteur $h=\frac12+\frac{\sqrt3}{2}$.
+\[
+\mathcal A=\frac{(\sqrt3+1)}{2}\cdot\frac{(1+\sqrt3)}{2}=\frac{(\sqrt3+1)^2}{4}=\frac{2+\sqrt3}{2}\approx 1{,}87\ \text{unit\'es d'aire}.
+\]
+\begin{rem} L'\'enonc\'e ne pr\'ecise pas l'unit\'e de longueur ; l'aire est donn\'ee en unit\'es d'aire.\end{rem}
+
+%% ===============================================================
+\subsection{Exercice 3 : C\'er\'emonie de dot}
+
+Soit $G$ le barycentre de $\{(A;2),(B;3)\}$. Pour tout $M$ :
+$2\vect{MA}+3\vect{MB}=5\vect{MG}$ et $\vect{MA}-\vect{MB}=\vect{BA}$.
+La condition devient $5\,MG=AB=10$, soit $MG=2$ : \textbf{$(C)$ est le cercle de centre $G$ et de rayon $2$ m}
+(\'echelle $1$ cm $\to 1$ m ; $AG=\frac35AB=6$ m et $BG=4$ m).
+
+\medskip\noindent\textbf{Consigne 1.} Posons $Y=\sin x$ dans $(E)$ :
+$-4\cos^2x+2(\sqrt3-\sqrt2)\sin x+4-\sqrt6=0$ devient, avec $\cos^2x=1-Y^2$,
+$4Y^2+2(\sqrt3-\sqrt2)Y-\sqrt6=0$. Le discriminant vaut $4(\sqrt3+\sqrt2)^2$, donc
+$Y=\frac{-(\sqrt3-\sqrt2)\pm(\sqrt3+\sqrt2)}{4}$, soit $Y=\frac{\sqrt2}{2}$ ou $Y=-\frac{\sqrt3}{2}$.
+Les solutions dans $]-\pi;\pi]$ sont $\frac{\pi}{4}$, $\frac{3\pi}{4}$, $-\frac{\pi}{3}$, $-\frac{2\pi}{3}$.
+
+Les sommets sont sur $(C)$, de centre $G$ et de rayon $2$ :
+\begin{hyp}les angles sont mesur\'es depuis le centre $G$ du cercle $(C)$.\end{hyp}
+L'aire du quadrilat\`ere inscrit vaut
+\[
+\mathcal A=\frac12\cdot 2^2\left(\sin\frac{\pi}{3}+\sin\frac{7\pi}{12}+\sin\frac{\pi}{2}+\sin\frac{7\pi}{12}\right)
+=2+\sqrt2+\sqrt3+\sqrt6\approx 7{,}596\ \text{m}^2 .
+\]
+Co\^ut des travaux : $5000\times 7{,}59575=37\,978{,}75$ F, soit environ $37\,979$ F.
+
+\medskip\noindent\textbf{Consigne 2.} Le nombre d'invit\'es n'est pas indiqu\'e dans l'\'enonc\'e.
+\begin{rem} Il manque l'effectif de chaque groupe (A, B, C). Si l'on note $n_A,n_B,n_C$ ces effectifs, le nombre total
+d'invit\'es est $N=n_A+n_B+n_C$ et le co\^ut du repas est $7200n_A+6200n_B+4300n_C$.
+Merci de v\'erifier l'\'enonc\'e original pour obtenir la valeur num\'erique.\end{rem}
+
+%% ===============================================================
+\subsection{Exercice 4 : Am\'enagement sportif}
+
+\textbf{Stade de hand-ball.} La relation $2\sin\theta-1=0$ donne $\sin\theta=\frac12$, soit
+$\theta=\frac{\pi}{6}$ ou $\theta=\frac{5\pi}{6}$ modulo $2\pi$. Ces deux valeurs ne fournissent que deux points.
+\begin{rem} Il faut quatre sommets pour un quadrilat\`ere. L'\'enonc\'e est incomplet (la relation utilis\'ee
+donne deux points seulement). Avec la relation de l'exercice~10 ($2\cos2\theta-1=0$), on obtient quatre points,
+et le rectangle correspondant a une aire de $\sqrt3$ unit\'es (voir exercice~10).
+\end{rem}
+Pour le rectangle $ABCD$ de centre $O$ de rayon $1$ (unit\'e $=10$ m) :
+$\mathcal A=\sqrt3\times 1=\sqrt3$ unit\'es, soit $100\sqrt3\approx 173{,}2$ m$^2$ (car $1\ \text{u.a.}=10^2\ \text{m}^2$).
+
+\textbf{Stade de volley-ball.} La rotation $r$ de centre $H(1;5)$ et d'angle $\frac{\pi}{2}$ envoie $E$ sur $G$.
+On a $\vect{HE}=(-4;-3)$ et la rotation d'angle $\frac{\pi}{2}$ envoie $(x;y)$ sur $(-y;x)$ :
+$\vect{HG}=(3;-4)$, donc $G(4;1)$.
+\[
+\vect{EF}=(3;-4),\qquad \vect{HG}=(3;-4),\qquad \vect{FG}=(4;3).
+\]
+$\vect{EF}=\vect{HG}$ : $EFGH$ est un parall\'elogramme ; $\vect{EF}\cdot\vect{FG}=12-12=0$ et $EF=FG=5$ :
+c'est un \textbf{carr\'e} de c\^ot\'e $5$ unit\'es, soit $50$ m. Aire $=25$ u.a. $=2500$ m$^2$.
+
+\medskip\noindent\textbf{Consigne 2.} Le gazon synthétique co\^ute $3500$ F (par m$^2$, hypoth\`ese) :
+le terrain de volley-ball co\^ute $3500\times2500=8\,750\,000$ F.
+\begin{rem} L'\'enonc\'e ne pr\'ecise pas si le gazon concerne le volley-ball ou le hand-ball, ni l'unit\'e du prix.
+La valeur $n$ solution de $4+\sqrt{x-2}=x$ est : $\sqrt{x-2}=x-4$, donc $x-2=(x-4)^2$, soit $x^2-9x+18=0$, d'o\`u $x\in\{3;6\}$.
+Comme $x-4\ge 0$, $n=6$. Cette valeur n'appara\^it pas clairement dans la suite de l'\'enonc\'e.\end{rem}
+
+\medskip\noindent\textbf{Forage.} Le $k$-i\`eme m\`etre co\^ute $u_k=1000+50(k-1)$ F : suite arithm\'etique de raison $50$.
+\begin{itemize}
+  \item Co\^ut du $50^{\grave e}$ m\`etre : $u_{50}=1000+49\times50=\mathbf{3450\ F}$.
+  \item Co\^ut de $d$ m\`etres : $\displaystyle S_d=\frac{d}{2}\bigl(2\cdot1000+(d-1)50\bigr)=25d^2+975d$.
+  \item On cherche $d$ tel que $25d^2+975d=519\,750$, soit $d^2+39d-20\,790=0$.
+  Discriminant : $\Delta=1521+83\,160=84\,681=291^2$, donc $d=\frac{-39+291}{2}=126$.
+\end{itemize}
+\textbf{La profondeur est de $126$ m.}
+
+%% ===============================================================
+\subsection{Exercice 5 : Coop\'erative agricole}
+
+Soit $G$ le barycentre de $\{(A;2),(B;3)\}$. Comme $AB=10$ : $AG=6$, $BG=4$ et
+$2MA^2+3MB^2=5MG^2+2GA^2+3GB^2=5MG^2+2\cdot36+3\cdot16=5MG^2+120$.
+La condition $2MA^2+3MB^2=2120$ donne $5MG^2=2000$, soit $MG=20$.
+La zone est le disque de centre $G$ et de rayon $20$ m. Son aire :
+\[
+\mathcal A=\pi\cdot20^2=400\times\frac{22}{7}=\frac{8800}{7}\approx 1257{,}14\ \text{m}^2.
+\]
+
+\medskip\noindent\textbf{Consigne 1.} Co\^ut d'am\'enagement : $\frac{8800}{7}\times 3000=\frac{26\,400\,000}{7}\approx 3\,771\,429$ F.
+Co\^ut des terrains : $942\,000+2\,374\,000+1\,004\,000=4\,320\,000$ F.
+\textbf{Budget total :} $4\,320\,000+3\,771\,429\approx \mathbf{8\,091\,429\ F}$.
+
+\medskip\noindent\textbf{Consigne 2.} L'effectif de la coop\'erative n'est pas donn\'e dans l'\'enonc\'e.
+Avec $15\,000$ F par participant, la somme de $1\,000\,000$ F suffit si et seulement si l'effectif $n$ v\'erifie
+$15\,000\,n\le 1\,000\,000$, soit $n\le 66$ (car $1\,000\,000/15\,000\approx 66{,}7$).
+\begin{rem} Il faut conna\^itre l'effectif pour conclure. Le calcul ci-dessus donne le seuil.\end{rem}
+
+%% ===============================================================
+\subsection{Exercice 6 : Jardin potager et probabilit\'es}
+
+\textbf{Consigne 1.} Soit $L$ la longueur (le long du mur) et $\ell$ la largeur. Aire : $L\ell=392$.
+Le grillage couvre une longueur et deux largeurs : $L+2\ell$. Donc $L=\dfrac{392}{\ell}$ et
+\[
+f(\ell)=\frac{392}{\ell}+2\ell,\qquad f'(\ell)=-\frac{392}{\ell^2}+2=\frac{2(\ell^2-196)}{\ell^2}.
+\]
+$f'$ s'annule en $\ell=14$ (n\'egative avant, positive apr\`es) : minimum.
+Alors $L=28$ m, et le grillage mesure $28+2\times14=56$ m.
+\textbf{Dimensions :} $28$ m (le long du mur) $\times\ 14$ m. Co\^ut minimal : $56\times1500=\mathbf{84\,000\ F}$.
+
+\medskip\noindent\textbf{Consigne 2.} Le sac contient $10$ boules : $4$ noires (1 \`a 4), $4$ rouges (1 \`a 4), $2$ blanches (1 \`a 2).
+Gagner : les trois boules sont de la m\^eme couleur, \emph{ou} toutes num\'erot\'ees $2$.
+Il y a trois boules num\'erot\'ees $2$ (une noire, une rouge, une blanche).
+
+\medskip\emph{Tirage simultan\'e} : $\binom{10}{3}=120$ tirages \'equiprobables.
+\begin{itemize}
+  \item M\^eme couleur : noires $\binom43=4$, rouges $\binom43=4$, blanches $\binom23=0$ : $8$ tirages.
+  \item Toutes num\'erot\'ees $2$ : $\binom33=1$ tirage.
+  \item Aucun tirage n'est \`a la fois de m\^eme couleur et tous num\'erot\'es $2$ (les trois couleurs seraient diff\'erentes).
+\end{itemize}
+$P_1=\dfrac{8+1}{120}=\dfrac{9}{120}=\dfrac{3}{40}$.
+
+\medskip\emph{Tirage successif sans remise} : $10\times9\times8=720$ tirages ordonn\'es \'equiprobables.
+\begin{itemize}
+  \item M\^eme couleur : noires $4\times3\times2=24$, rouges $24$, blanches $0$ : $48$ tirages.
+  \item Toutes num\'erot\'ees $2$ : $3!=6$ tirages ordonn\'es.
+\end{itemize}
+$P_2=\dfrac{48+6}{720}=\dfrac{54}{720}=\dfrac{3}{40}$.
+
+\textbf{Conclusion :} les deux modes de tirage donnent la m\^eme probabilit\'e $\frac{3}{40}=0{,}075$. Il n'y a
+\textbf{aucun tirage plus judicieux} ; le fermier a autant de chances dans les deux cas.
+
+%% ===============================================================
+\subsection{Exercice 7 : Route et zone de stockage}
+
+\textbf{Consigne 1 (support de la route).} $f(x)=x^3-3x-1$ d\'efinie sur $\R$.
+\begin{itemize}
+  \item $f(-2)=-8+6-1=-3$ : le point $V(-2;-3)$ est bien sur la courbe.
+  \item $f(2)=8-6-1=1$ : le point $F(2;1)$ est bien sur la courbe.
+\end{itemize}
+La route est l'arc de la courbe $\mathcal C_f$ compris entre $V$ et $F$, c'est-\`a-dire pour $x\in[-2;2]$.
+\begin{rem} La route est un arc d'une courbe cubique : on la construit point par point (tableau de valeurs) sur $[-2;2]$.\end{rem}
+
+\medskip\noindent\textbf{Consigne 2 (zone de stockage).} Plaçons les villes dans un rep\`ere orthonormé d'origine $A$ :
+$A(0;0)$, $B(10;0)$ (car $AB=10$ km). Le point $C(x;y)$ v\'erifie $x^2+y^2=64$ et $(x-10)^2+y^2=36$ ; on obtient $x=6{,}4$, $y=4{,}8$.
+Donc $C(6{,}4;4{,}8)$. (On constate $AC^2+BC^2=100=AB^2$ : le triangle est rectangle en $C$.)
+
+Pour minimiser les co\^uts de trafic, on cherche le barycentre $S$ des villes pond\'er\'ees par leur tonnage
+$650$ (A), $980$ (B), $540$ (C), total $2170$ :
+\[
+x_S=\frac{650\cdot0+980\cdot10+540\cdot6{,}4}{2170}=\frac{13\,256}{2170}\approx 6{,}11,\qquad
+y_S=\frac{540\cdot4{,}8}{2170}=\frac{2592}{2170}\approx 1{,}19.
+\]
+\textbf{La zone de stockage est au point $S(6{,}11\ ;\ 1{,}19)$ (en km).}
+\begin{hyp}le crit\`ere est la minimisation de $\sum m_i\,MM_i^2$ (moindres carr\'es pond\'er\'es), ce qui donne le barycentre.
+Le tonnage le plus \'elev\'e (ville $B$) attire bien $S$ vers elle.\end{hyp}
+
+%% ===============================================================
+\subsection{Exercice 8 : PME et pr\^et bancaire}
+
+Co\^ut $C(x)=x^2+202\,500$, prix de vente $1500$ F, capacit\'e $x\le1300$.
+Recette $R(x)=1500x$ ; b\'en\'efice $B(x)=-x^2+1500x-202\,500$.
+
+\textbf{Consigne 1.}
+\begin{itemize}
+  \item B\'en\'efice positif : $-x^2+1500x-202\,500>0\iff x^2-1500x+202\,500<0$.
+  Discriminant $\Delta=1\,500^2-4\times202\,500=2\,250\,000-810\,000=1\,440\,000$, $\sqrt\Delta=1\,200$.
+  Racines $x=\frac{1500\pm1200}{2}\in\{150;1350\}$. Le b\'en\'efice est positif pour $150<x<1350$.
+  \textbf{Il faut produire au moins $151$ articles} pour gagner de l'argent.
+  \item Maximum : $B(x)=-(x-750)^2+360\,000$, donc le b\'en\'efice est maximal pour $x=750$ (\`a l'int\'erieur de $[0;1300]$) :
+  \textbf{$B_{\max}=360\,000$ F par mois.}
+\end{itemize}
+
+\textbf{Consigne 2.} Montant \`a rembourser : $10\,000\,000\times(1{,}125)^5$ avec capitalisation annuelle compos\'ee.
+$(1{,}125)^5\approx1{,}802032$, donc la somme due est d'environ $18\,020\,320$ F.
+Le titre foncier est estim\'e \emph{environ} \`a $18\,000\,000$ F : il est donc \textbf{tout juste insuffisant}
+(il manque environ $20\,320$ F) ; il faudrait une valeur d'au moins $18\,020\,320$ F pour que la coop\'erative accepte le pr\^et.
+\begin{rem} Le r\'esultat est tr\`es sensible \`a la valeur ``environ $18$ millions''. Si l'on suppose que la valeur est
+exactement $18\,000\,000$ F, la garantie est insuffisante.\end{rem}
+
+%% ===============================================================
+\subsection{Exercice 9 : H\'eritage et minimisation}
+
+\textbf{Consigne 1.} Soient $x$ la longueur et $y$ la largeur, avec $xy=400$. Le p\'erim\`etre vaut
+$P=2(x+y)=2\left(x+\dfrac{400}{x}\right)=\dfrac{2x^2+800}{x}$ (formule demand\'ee).
+
+\textbf{Consigne 2.} $P(x)=2x+\dfrac{800}{x}$ pour $x>0$. Alors
+\[
+P'(x)=2-\frac{800}{x^2}=\frac{2(x^2-400)}{x^2}.
+\]
+$P'(x)<0$ pour $0<x<20$ et $P'(x)>0$ pour $x>20$ : $P$ admet un minimum en $x=20$.
+Alors $y=\dfrac{400}{20}=20$ : le terrain est un \textbf{carr\'e de c\^ot\'e $20$ m}, et son p\'erim\`etre minimal vaut $P_{\min}=80$ m.
+\textbf{Dossou avait raison.}
+
+%% ===============================================================
+\subsection{Exercice 10 : Terrain de handball et d\'ecoration}
+
+\textbf{Terrain de handball.} On a $2\cos2\theta-1=0\iff\cos2\theta=\frac12$, soit $2\theta=\pm\frac{\pi}{3}+2k\pi$,
+donc $\theta\in\left\{\frac{\pi}{6};\frac{5\pi}{6};\frac{7\pi}{6};\frac{11\pi}{6}\right\}$ dans $[0;2\pi[$.
+Les quatre sommets sont $(\pm\frac{\sqrt3}{2};\pm\frac12)$ : c'est un \textbf{rectangle} de c\^ot\'es $\sqrt3$ et $1$ (unit\'e $=10$ m).
+\[
+\mathcal A=\sqrt3\ \text{u.a.}=100\sqrt3\ \text{m}^2\approx173{,}21\ \text{m}^2.
+\]
+Co\^ut du gazon : $6000\times100\sqrt3=600\,000\sqrt3\approx\mathbf{1\,039\,230}$ F.
+
+\medskip\noindent\textbf{Prix d'une planche.} Notons $p$ (planche), $t$ (t\^ole), $c$ (chevron). On a :
+\[
+\begin{cases}
+20p+15t+5c=134\,500\\
+10p+25t+5c=170\,500\\
+10p+20t+5c=143\,500
+\end{cases}
+\]
+La deuxi\`eme moins la troisi\`eme : $5t=27\,000$, donc $t=5\,400$.
+La premi\`ere moins la troisi\`eme : $10p-5t=-9\,000$, donc $10p=18\,000$, soit $p=1\,800$.
+Enfin $5c=143\,500-18\,000-108\,000=17\,500$, donc $c=3\,500$.
+\textbf{Une planche de bois co\^ute $1\,800$ F.}
+
+\medskip\noindent\textbf{Consigne 2 (motif).} $f(x)=\dfrac{x^2+ax+b}{2x-4}$ sur $\R\setminus\{2\}$.
+\begin{itemize}
+  \item $A(0;\frac12)\in\mathcal C$ : $f(0)=\dfrac{b}{-4}=\dfrac12$, donc $b=-2$.
+  \item Tangente horizontale en $0$ : $f'(0)=0$. Or $f'(x)=\dfrac{(2x+a)(2x-4)-2(x^2+ax+b)}{(2x-4)^2}$,
+  donc $f'(0)=\dfrac{-4a-2b}{16}=0\iff a=-\dfrac{b}{2}=1$.
+\end{itemize}
+\textbf{Ainsi $a=1$, $b=-2$ et} $f(x)=\dfrac{x^2+x-2}{2x-4}=\dfrac{(x+2)(x-1)}{2(x-2)}$.
+
+\emph{Trac\'e :} $f(x)=\dfrac{x+3}{2}+\dfrac{2}{x-2}$ (division euclidienne : $x^2+x-2=(x-2)(x+3)+4$).
+\begin{itemize}
+  \item Asymptote verticale : $x=2$ ;
+  \item Asymptote oblique : $y=\dfrac{x}{2}+\dfrac32$ ;
+  \item Points remarquables : $f(0)=\frac12$, $f(1)=0$, $f(-2)=0$.
+\end{itemize}
+Pour $x>2$ la courbe est au-dessus de l'asymptote oblique, pour $x<2$ en dessous.
+
+%% ===============================================================
+\subsection{Exercice 11 : Route et lampadaires (Bac I 2024)}
+
+\textbf{Consigne 1 (support).} $f(x)=\dfrac{x^2-5x+2}{x+2}$, d\'efinie sur $\R\setminus\{-2\}$.
+Division : $x^2-5x+2=(x+2)(x-7)+16$, donc $f(x)=x-7+\dfrac{16}{x+2}$.
+\begin{itemize}
+  \item Asymptote verticale : $x=-2$ ; asymptote oblique : $y=x-7$.
+  \item $f(0)=1$ : $A(0;1)$ est sur la courbe ; $f(6)=\dfrac{8}{8}=1$ : $B(6;1)$ est sur la courbe.
+\end{itemize}
+La route est l'arc de $\mathcal C_f$ pour $x\in[0;6]$.
+
+\medskip\noindent\textbf{Consigne 2 (lampadaires).} $(x^2-1)(x^2-8x+15)=0\iff x\in\{-1;1\}$ ou $x\in\{3;5\}$.
+Sur $[0;6]$ : $x\in\{1;3;5\}$ (le point $x=-1$ est hors de la route).
+\begin{itemize}
+  \item $f(1)=\dfrac{1-5+2}{3}=-\dfrac23$ : lampadaire en $\left(1;-\dfrac23\right)$ ;
+  \item $f(3)=\dfrac{9-15+2}{5}=-\dfrac45$ : lampadaire en $\left(3;-\dfrac45\right)$ ;
+  \item $f(5)=\dfrac{25-25+2}{7}=\dfrac27$ : lampadaire en $\left(5;\dfrac27\right)$.
+\end{itemize}
+
+%% ===============================================================
+\subsection{Exercice 12 : Parcelle et pagnes}
+
+\textbf{Consigne 1 (superficie).} Posons $C=\cos2x$. Comme $\cos4x=2\cos^22x-1$, l'\'equation devient
+$2C^2-1-7C+4=0$, soit $2C^2-7C+3=0$. Racines : $C=\dfrac{7\pm5}{4}\in\{3;\tfrac12\}$.
+$\cos2x\le1$ : on retient $\cos2x=\frac12$, donc $2x=\pm\frac{\pi}{3}+2k\pi$, soit $x=\pm\frac{\pi}{6}+k\pi$.
+Dans $]-\pi;\pi]$ : $x\in\left\{\frac{\pi}{6};-\frac{\pi}{6};\frac{5\pi}{6};-\frac{5\pi}{6}\right\}$.
+Les sommets forment un \textbf{rectangle} de c\^ot\'es $\sqrt3$ et $1$ (unit\'e $=100$ m) :
+\[
+\mathcal A=\sqrt3\ \text{u.a.}=10\,000\sqrt3\ \text{m}^2\approx 17\,300\ \text{m}^2\quad(\sqrt3=1{,}73).
+\]
+
+\textbf{Consigne 2 (pagnes).} Co\^ut en millions : $P(x)=\dfrac{1}{30}x^3-0{,}1x^2-0{,}3x+2$, $x\ge0$ (dizaines de pagnes).
+Budget : $1\,000\,000$ F $=1$ million. Il faut $P(x)\le1$.
+\[
+P'(x)=\frac{x^2}{10}-\frac{x}{5}-\frac{3}{10}=\frac{x^2-2x-3}{10}=\frac{(x-3)(x+1)}{10}.
+\]
+$P$ d\'ecro\^it sur $[0;3]$, cro\^it apr\`es : son minimum est $P(3)=\dfrac{27}{30}-0{,}9-0{,}9+2=1{,}1$.
+\textbf{Le co\^ut minimal est $1\,100\,000$ F $>1\,000\,000$ F.} M. Dodji \textbf{ne peut pas acheter} les pagnes avec sa somme.
+
+%% ===============================================================
+\subsection{Exercice 13 : TOGOTECH et transistors MOS}
+
+\textbf{Consigne 1 (ordinateurs).} En millions de FCFA : co\^ut $C(x)=1120+0{,}00007x^2$, recette $R(x)=0{,}7x$.
+\begin{itemize}
+  \item Seuil de rentabilit\'e : $R=C\iff0{,}00007x^2-0{,}7x+1120=0$. En multipliant par $\frac{1}{0{,}00007}$ :
+  $x^2-10\,000x+16\,000\,000=0$, $\Delta=36\,000\,000$, racines $x=\frac{10\,000\pm6\,000}{2}\in\{2\,000;8\,000\}$.
+  Pas de perte si $2\,000\le x\le 8\,000$ : \textbf{au moins $2\,000$ ordinateurs} par mois.
+  \item B\'en\'efice $B(x)=-0{,}00007x^2+0{,}7x-1120$ : maximal en $x=\dfrac{0{,}7}{2\times0{,}00007}=5\,000$.
+  $B(5\,000)=3\,500-1\,120-1\,750=630$ : \textbf{b\'en\'efice maximal de $630$ millions de FCFA} pour \textbf{$5\,000$ ordinateurs} par mois.
+\end{itemize}
+
+\textbf{Consigne 2 (transistors).} Les temps de production (en secondes) forment une suite arithm\'etique :
+$u_1=180$, raison $2$, donc $u_k=180+2(k-1)$.
+Le temps total pour $n$ composantes est $S_n=\dfrac{n}{2}(2\cdot180+2(n-1))=n(n+179)$.
+Dur\'ee journali\`ere : $3\,h\,59\,min=239\ \text{min}=14\,340$ s.
+On cherche le plus grand $n$ tel que $n^2+179n\le14\,340$ : $\Delta=89\,401=299^2$, racine positive $n=\frac{-179+299}{2}=60$.
+\textbf{Capacit\'e journali\`ere : $60$ composantes par appareil} (on a exactement $S_{60}=60\times239=14\,340$ s).
+
+%% ===============================================================
+\subsection{Exercice 14 : Entreprise de jouets et piscine}
+
+\textbf{Consigne 1 (b\'en\'efice).} Chaque employ\'e produit $t$ jouets par jour ; trois employ\'es : $3t$ jouets.
+Recette $500\times3t=1\,500t$. Co\^ut $3C(t)=30t^2-600t+6\,000$.
+\[
+B(t)=1\,500t-30t^2+600t-6\,000=-30t^2+2\,100t-6\,000.
+\]
+Maximum en $t=\dfrac{2100}{60}=35$. $B(35)=-36\,750+73\,500-6\,000=\mathbf{30\,750\ F}$ par jour,
+pour $t=35$ jouets par employ\'e ($105$ jouets au total).
+\begin{hyp}les trois employ\'es fabriquent la m\^eme quantit\'e $t$.\end{hyp}
+
+\textbf{Consigne 2 (piscine).} L'\'equation devient, avec $Y=\cos x$ : $-4(1-Y^2)+2(\sqrt3-\sqrt2)Y+4-\sqrt6=0$, soit
+$4Y^2+2(\sqrt3-\sqrt2)Y-\sqrt6=0$. Comme dans l'exercice~3, $Y\in\{\frac{\sqrt2}{2};-\frac{\sqrt3}{2}\}$, donc
+$x\in\left\{\pm\frac{\pi}{4};\pm\frac{5\pi}{6}\right\}$ : quadrilat\`ere inscrit dans le cercle de rayon $R=5$ m.
+\[
+\mathcal A=\frac12R^2\left(2\sin105^\circ+1+\sin\frac{\pi}{3}\right)=\frac{25}{2}\left(1+\frac{\sqrt2+\sqrt3+\sqrt6}{2}\right)\approx 47{,}47\ \text{m}^2.
+\]
+
+\emph{Chiffre d'affaires de f\'evrier.} Posons $u=1+\frac{t}{100}$. Le CA de mars vaut $200\,000\cdot u\cdot(u+0{,}1)=312\,000$, soit
+$u^2+0{,}1u-1{,}56=0$. $\Delta=6{,}25=2{,}5^2$, donc $u=\frac{-0{,}1+2{,}5}{2}=1{,}2$, soit $t=20$.
+Le CA de f\'evrier vaut $200\,000\times1{,}2=\mathbf{240\,000\ F}$ (puis $240\,000\times1{,}3=312\,000$ en mars).
+
+%% ===============================================================
+\subsection{Exercice 15 : Taxi, m\'edicament et dispensaire}
+
+\textbf{Consigne 1 (taxi).} Distance une fois : $10$ km.
+\begin{itemize}
+  \item Option 1 : suite g\'eom\'etrique $u_1=200$, $q=0{,}9$, $10$ termes :
+  $\displaystyle S_1=200\,\frac{1-0{,}9^{10}}{1-0{,}9}\approx1\,302{,}64$ F.
+  \item Option 2 : suite arithm\'etique $u_1=200$, raison $-20$, dernier terme $u_{10}=20$ :
+  $\displaystyle S_2=\frac{10(200+20)}{2}=1\,100$ F.
+\end{itemize}
+Aller-retour : option 1 $\approx2\times1\,302{,}64=2\,605{,}29$ F ; option 2 $=2\,200$ F.
+\textbf{Somme \'economis\'ee : environ $405{,}29$ F} avec la deuxi\`eme option.
+
+\medskip\noindent\textbf{Heure du second m\'edicament.} Les mesures sont $(0;9{,}9)$, $(2;7{,}5)$, $(4;5{,}5)$, $(6;3{,}9)$, $(8;3)$.
+Un ajustement exponentiel $y=a\,e^{kx}$ (r\'egression sur $\ln y$) donne $a\approx10$ et $k\approx-0{,}152$, soit $y\approx10\times0{,}86^x$.
+\begin{rem} Le mod\`ele exponentiel ne s'annule jamais : il ne permet pas de d\'eterminer un instant d'\'elimination ``totale''.
+L'\'enonc\'e ne donne pas de seuil d'\'elimination. Un ajustement polyn\^omial du second degr\'e
+($y=0{,}05x^2-1{,}3x+9{,}9$) ne convient pas non plus (il ne s'annule pas et ne reproduit pas $y(8)=3$).
+\textbf{La question est donc mal pos\'ee}. Il faut pr\'eciser le seuil ou le mod\`ele attendu.
+\end{rem}
+
+\medskip\noindent\textbf{Consigne 2 (dispensaire).} Populations : $A=1\,920$, $B=1\,280$, $C=640$, soit un total de $3\,840$.
+L'\'enonc\'e ne fixe pas la position du dispensaire ; on utilise le crit\`ere du barycentre (voir ci-dessous).
+\begin{hyp}le dispensaire est plac\'e au barycentre $D$ des trois villages pond\'er\'es par leur population :
+$D=\mathrm{bar}\{(A;1920),(B;1280),(C;640)\}$, soit $\vect{AD}=\tfrac13\vect{AB}+\tfrac16\vect{AC}$.\end{hyp}
+Les villages sont \'equidistants de $6$ km ($AB=AC=BC=6$, $\vect{AB}\cdot\vect{AC}=18$) :
+\begin{itemize}
+  \item $AD^2=\tfrac19\cdot36+\tfrac1{36}\cdot36+2\cdot\tfrac13\cdot\tfrac16\cdot18=4+1+2=7$, donc $AD=\sqrt7\approx2{,}65$ km ;
+  \item $\vect{BD}=\vect{AD}-\vect{AB}=-\tfrac23\vect{AB}+\tfrac16\vect{AC}$, donc $BD^2=16+1-4=13$ et $BD=\sqrt{13}\approx3{,}61$ km ;
+  \item $\vect{CD}=\vect{AD}-\vect{AC}=\tfrac13\vect{AB}-\tfrac56\vect{AC}$, donc $CD^2=4+25-20=9$ et $CD=3$ km.
+\end{itemize}
+Le village le plus peupl\'e $A$ est bien le plus proche du dispensaire ($\approx2{,}65$ km).
+
+%% ===============================================================
+\subsection{Exercice 16 : Entreprise de jouets et r\'emun\'erations}
+
+\textbf{Consigne 1.} Le b\'en\'efice maximal est le m\^eme que celui de l'exercice~14 : \textbf{$30\,750$ F par jour}, pour $t=35$ jouets par employ\'e.
+
+\medskip\noindent\textbf{Consigne 2.}
+\emph{Chiffre d'affaires de d\'ecembre.} Octobre : $20\,000\,000$ F. Posons $u=1+\frac{t}{100}$ :
+$20\,000\,000\cdot u(u+0{,}1)=23\,712\,000$, soit $u^2+0{,}1u-1{,}1856=0$.
+$\Delta=0{,}01+4{,}7424=4{,}7524=2{,}18^2$, donc $u=\frac{-0{,}1+2{,}18}{2}=1{,}04$ : $t=4$.
+Novembre : $20\,000\,000\times1{,}04=20\,800\,000$ F ; d\'ecembre : $20\,800\,000\times1{,}14=\mathbf{23\,712\,000\ F}$.
+
+\emph{Manœuvre \`a r\'esilier.} On compte $10$ ann\'ees (de 2016 \`a 2025).
+\begin{itemize}
+  \item Abalo (arithm\'etique, premier terme $420\,000$, raison $20\,000$) :
+  $\displaystyle S_A=\frac{10(2\cdot420\,000+9\cdot20\,000)}{2}=5\,100\,000$ F.
+  \item Koudakpo (g\'eom\'etrique, $q=1{,}05$) :
+  $\displaystyle S_K=420\,000\cdot\frac{1{,}05^{10}-1}{0{,}05}\approx5\,282\,715$ F.
+\end{itemize}
+Koudakpo a le plus co\^ut\'e : \textbf{c'est son contrat qui doit \^etre r\'esili\'e}.
+
+%% ===============================================================
+\subsection{Exercice 17 : Parc de loisir et stade de handball}
+
+\textbf{Consigne 1 (d\'elai avant le pr\^et).} $A(\lambda)=3\lambda^2-24\lambda+96$.
+$A$ est minimal en $\lambda=4$ ($A(4)=48$) : le chiffre d'affaires baisse puis remonte.
+Pour $A(\lambda)=60$ : $3\lambda^2-24\lambda+36=0\iff\lambda^2-8\lambda+12=0$, d'o\`u $\lambda\in\{2;6\}$.
+Le chiffre d'affaires d\'epasse $60$ millions pour la premi\`ere fois apr\`es la chute en $\lambda=6$ ans.
+\textbf{Le pr\^et sera accord\'e au bout de $6$ ans}, soit $3$ ans apr\`es le constat de la chute.
+
+\medskip\noindent\textbf{Consigne 2.}
+\begin{rem} L'\'equation $(E)$ donn\'ee dans l'\'enonc\'e,
+$4\cos^3x-2\sqrt3(\sqrt3-1)\sin2x-(\sqrt3+2)\sin x+\sqrt3=0$, ne se factorise pas sous la forme
+$(\sin x+1)\bigl(4\sin^2x-2(\sqrt3+1)\sin x+\sqrt3\bigr)=0$ : en effet $x=\frac{3\pi}{2}$ annule le second membre
+de la factorisation mais pas $(E)$ (on trouve $2+2\sqrt3\neq0$). L'\'enonc\'e doit \^etre v\'erifi\'e.
+\end{rem}
+En admettant la factorisation propos\'ee (sous la forme demand\'ee), les solutions sont :
+\begin{itemize}
+  \item $\sin x=-1\iff x=\frac{3\pi}{2}$ ;
+  \item $4\sin^2x-2(\sqrt3+1)\sin x+\sqrt3=0$ : $\Delta=16-8\sqrt3=(2\sqrt3-2)^2$, donc $\sin x\in\{\frac{\sqrt3}{2};\frac12\}$,
+  soit $x\in\{\frac{\pi}{3};\frac{2\pi}{3};\frac{\pi}{6};\frac{5\pi}{6}\}$.
+\end{itemize}
+Le budget (sable et ciment) ne peut pas \^etre calcul\'e sans conna\^itre le nombre de sommets et la surface du polygone,
+qui d\'ependent de l'\'equation corrig\'ee. \textbf{Il faut v\'erifier l'\'enonc\'e.}
+
+%% ===============================================================
+\subsection{Exercice 18 : Transformations du plan}
+
+\textbf{Donn\'ees.} $A(2;3)$, $B(-2;3)$, $C(-2;0)$, $G=\mathrm{bar}\{(A;2),(B;-3),(C;2)\}$ :
+le poids total vaut $2-3+2=1$, donc $G=2A-3B+2C$ :
+\[
+x_G=2\cdot2-3\cdot(-2)+2\cdot(-2)=6,\qquad y_G=2\cdot3-3\cdot3+2\cdot0=-3.\qquad G(6;-3).
+\]
+
+\textbf{Consigne 1.} Pour tout $M$ : $2\vect{MA}-3\vect{MB}+2\vect{MC}=\vect{MG}$ (car $\sum w=1$).
+L'\'egalit\'e $3\vect{MM'}=\vect{MG}$ donne $\vect{MM'}=\frac13\vect{MG}$, soit
+$\vect{M'}=\frac23\vect{M}+\frac13\vect{G}$ en coordonn\'ees :
+\[
+\begin{cases}
+x'=\frac23x+\frac13\cdot6=\frac23x+2\\[2pt]
+y'=\frac23y+\frac13\cdot(-3)=\frac23y-1.
+\end{cases}
+\]
+C'est bien l'expression annonc\'ee.
+
+\textbf{Consigne 2.} Hypoth\`ese : $h$ est l'homoth\'etie de centre $G$ et de rapport $-3$, et $f$ l'application pr\'ec\'edente,
+de centre $G$ et de rapport $\frac23$. Alors $f\circ h$ est l'homoth\'etie de centre $G$ de rapport $\frac23\times(-3)=-2$.
+\begin{itemize}
+  \item \textbf{Cercle $(C')$ :} centre $\Omega'=h'(B)=G-2\vect{GB}$. $\vect{GB}=(-8;6)$ donc $\Omega'=(6+16;\,-3-12)=(22;-15)$.
+  Rayon $r'=|-2|\times2=4$. \textbf{Cercle de centre $(22;-15)$ et de rayon $4$.}
+  \item \textbf{Droite $(D')$ :} $x'=-2x+18$ et $y'=-2y-9$. On exprime $x=\frac{18-x'}{2}$ et $y=\frac{-9-y'}{2}$,
+  puis on remplace dans $y=-2x+3$ :
+  $\dfrac{-9-y'}{2}=-(18-x')+3=x'-15$, donc $-9-y'=2x'-30$, soit $y'=-2x'+21$.
+  \textbf{Droite $(D')$ : $2x+y-21=0$.}
+\end{itemize}
+\begin{rem} Le texte est partiellement illisible (``$h=f\circ h$''). L'interpr\'etation ci-dessus est la plus coh\'erente.
+V\'erification : le point $(0;3)\in(D)$ a pour image $(18;-15)$, et $2\times18-15-21=0$.\end{rem}
+
+%% ===============================================================
+\subsection{Exercice 19 : Couloir et transformations}
+
+\textbf{Consigne 1.} La figure n'est pas fournie ; la distance $AB$ ne peut donc pas \^etre exprim\'ee en fonction de $\alpha$.
+\begin{rem} Sans la figure ni la relation liant $AB$ et $\alpha$, on ne peut ni trancher entre $GBEZE$ ($\frac{2\pi}{9}$ et $\frac{\pi}{3}$) et
+$AMATSI$ ($\frac{\pi}{3}$ seul), ni valider leurs affirmations. Merci de fournir la figure.\end{rem}
+
+\textbf{Consigne 2.}
+\begin{itemize}
+  \item \textbf{$T_1$ :} $x'=-\frac32x+\frac52$, $y'=-\frac32y+\frac52$. Point invariant : $x=-\frac32x+\frac52\Rightarrow x=1$ ;
+  de m\^eme $y=1$. \textbf{$T_1$ est l'homoth\'etie de centre $\Omega(1;1)$ et de rapport $-\frac32$.}
+  \item \textbf{$T_2$ :} matrice $\begin{pmatrix}-\frac{\sqrt3}{2}&-\frac12\\ \frac12&-\frac{\sqrt3}{2}\end{pmatrix}$.
+  Colonnes orthogonales et normes $1$ : c'est une \textbf{rotation} de centre $O(0;0)$ (pas de translation).
+  Angle $\theta$ : $\cos\theta=-\frac{\sqrt3}{2}$ et $\sin\theta=\frac12$, donc \textbf{$\theta=\frac{5\pi}{6}$}.
+  \item \textbf{$T_3$ :} $G=\mathrm{bar}\{(A;1),(B;-2),(C;2)\}$, poids total $1$ : $G=A-2B+2C$, soit
+  $x_G=1-2(-2)+2(-2)=1$ et $y_G=4-2\cdot1+2\cdot0=2$.
+  \textbf{$G(1;2)$}. On a $-2\vect{MM'}=\vect{MG}$, donc $\vect{MM'}=-\frac12\vect{MG}$ et $\vect{GM'}=\frac32\vect{GM}$.
+  \textbf{$T_3$ est l'homoth\'etie de centre $G(1;2)$ et de rapport $\frac32$.}
+\end{itemize}
+\textbf{Conclusion :} $T_1$ et $T_3$ ont des centres et des rapports diff\'erents ($(1;1)$, $-\frac32$ et $(1;2)$, $\frac32$) :
+\textbf{LAWSON a tort}. Seul $T_2$ est une isom\'etrie, c'est une rotation d'angle $\frac{5\pi}{6}$.

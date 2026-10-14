@@ -1,0 +1,235 @@
+\section{Chapitre 2 : Fonctions et limites}
+
+%% ===============================================================
+\subsection{Exercice 20 : \'Etude de fonction}
+
+\textbf{1.(a)} Le d\'enominateur s'annule en $x=2$ : $\mathcal D_f=\R\setminus\{2\}$.
+
+\textbf{1.(b)} Limites :
+\begin{itemize}
+  \item En $\pm\infty$ : $f(x)\sim\dfrac{2x^2}{x}=2x$, donc $\lim_{x\to+\infty}f=+\infty$ et $\lim_{x\to-\infty}f=-\infty$.
+  \item En $2$ : le num\'erateur vaut $2\cdot4-14+7=1>0$. Donc $\lim_{x\to2^-}f=-\infty$ et $\lim_{x\to2^+}f=+\infty$.
+\end{itemize}
+
+\textbf{2.(a)} Division euclidienne : $2x^2-7x+7=(x-2)(2x-3)+1$. Donc
+\[
+f(x)=2x-3+\frac{1}{x-2} : \qquad a=2,\quad b=-3,\quad c=1.
+\]
+\textbf{2.(b)} $f(x)-(2x-3)=\dfrac{1}{x-2}\xrightarrow[x\to\pm\infty]{}0$ : la droite $(D):y=2x-3$ est asymptote oblique.
+
+\textbf{2.(c)} $\lim_{x\to2}f(x)=\pm\infty$ : la droite $x=2$ est l'autre asymptote (verticale).
+
+\textbf{3.} Soit $h\neq0$. $f(2+h)=2(2+h)-3+\dfrac1h=1+2h+\dfrac1h$, et
+$f(2-h)=1-2h-\dfrac1h$. Donc $f(2+h)+f(2-h)=2$ : le point $A(2;1)$ est un \textbf{centre de sym\'etrie} de $(C)$.
+
+%% ===============================================================
+\subsection{Exercice 21 : Fonction rationnelle}
+
+\textbf{1.} $\mathcal D_f=\R\setminus\{1\}$ ; les limites aux bornes se lisent sur le tableau de variations
+(non reproduit dans le texte extrait) : elles sont $\pm\infty$ de part et d'autre de $x=1$, et la droite
+$(D)$ donne le comportement en $\pm\infty$.
+
+\textbf{2.} Avec $f(x)=\dfrac{ax^2+bx+c}{x-1}$, les coefficients se d\'eduisent du tableau de variations
+(``on suppose'' : $a,b,c$ sont fix\'es par les donn\'ees du tableau).
+\begin{rem} Le tableau n'est pas reproduit dans le texte. Dans la suite, on prend $a=1$, $b=-4$, $c=7$,
+ce qui est coh\'erent avec la question~3.\end{rem}
+
+\textbf{3.} On pose $f(x)=\dfrac{x^2-4x+7}{x-1}$.
+\begin{enumerate}[label=(\alph*)]
+  \item Division : $x^2-4x+7=(x-1)(x-3)+4$, donc $f(x)=x-3+\dfrac{4}{x-1}$.
+  Comme $\dfrac{4}{x-1}\to0$ en $\pm\infty$, la droite $(D):y=x-3$ est asymptote \`a $(C_f)$.
+  \item Position relative : $f(x)-(x-3)=\dfrac{4}{x-1}$.
+  \begin{itemize}
+    \item Si $x>1$, $f(x)-(x-3)>0$ : $(C_f)$ est \textbf{au-dessus} de $(D)$.
+    \item Si $x<1$, $f(x)-(x-3)<0$ : $(C_f)$ est \textbf{en dessous} de $(D)$.
+  \end{itemize}
+  \item Axes : en $x=0$, $f(0)=\dfrac{7}{-1}=-7$ : point $(0;-7)$. Avec l'axe des abscisses, $x^2-4x+7=0$ a un discriminant
+  $16-28<0$ : \textbf{pas de point d'intersection} avec $(Ox)$.
+  \item Centre de sym\'etrie : $f(1+h)+f(1-h)=(1+h-3+\tfrac4h)+(1-h-3-\tfrac4h)=-4$.
+  Donc $I(1;-2)$ est centre de sym\'etrie, puisque $\dfrac{-4}{2}=-2$ est la moyenne des ordonn\'ees.
+\end{enumerate}
+
+\textbf{4.} \emph{Trac\'e :} on place $(D):y=x-3$ (passant par $(3;0)$ et $(0;-3)$), l'asymptote verticale $x=1$, le point $(0;-7)$,
+et le centre $I(1;-2)$. La branche gauche passe sous $(D)$, la branche droite au-dessus.
+
+%% ===============================================================
+\subsection{Exercice 22 : Centre de sym\'etrie}
+
+\textbf{1.(a)} Pour $x\neq4$ : $h(x)=\dfrac{3x+5}{x-4}=3+\dfrac{17}{x-4}$. Donc $h(4+t)+h(4-t)=3+\frac{17}{t}+3-\frac{17}{t}=6$ :
+$\Omega(4;3)$ est centre de sym\'etrie de $(C_h)$.
+
+\textbf{1.(b)} Pour $y\neq3$ : $y=\dfrac{3x+5}{x-4}\iff y(x-4)=3x+5\iff x(y-3)=4y+5\iff x=\dfrac{4y+5}{y-3}$.
+Ainsi $h$ est bijective de $\R\setminus\{4\}$ sur $\R\setminus\{3\}$ et
+$\boxed{h^{-1}(x)=\dfrac{4x+5}{x-3}}$.
+
+\textbf{2.(a)} $g(x)=3x^2-6x$ : $g(-x)=3x^2+6x$, qui n'est ni $g(x)$ ni $-g(x)$. \textbf{$g$ n'est ni paire ni impaire.}
+
+\textbf{2.(b)} $g(1+t)=3(1+2t+t^2)-6(1+t)=3t^2-3$, qui est une fonction paire de $t$. Donc la droite $(\Delta):x=1$
+est un \textbf{axe de sym\'etrie} de $(C_g)$.
+
+\textbf{2.(c)} $\mathcal D_{f\circ g}=\{x\in\R : g(x)\neq4\}$ (en prenant $f=h$, l'\'enonc\'e \'etant peu lisible).
+$3x^2-6x-4=0$ a pour racines $1\pm\dfrac{\sqrt{21}}{3}$ :
+$\mathcal D_{f\circ g}=\R\setminus\left\{1-\tfrac{\sqrt{21}}{3};\,1+\tfrac{\sqrt{21}}{3}\right\}$.
+Puis $(f\circ g)(x)=\dfrac{3g(x)+5}{g(x)-4}=\dfrac{9x^2-18x+5}{3x^2-6x-4}$.
+
+\textbf{3.(a)} $\dfrac{x^2-3x+2}{x-1}=\dfrac{(x-1)(x-2)}{x-1}=x-2$ pour $x\neq1$ : la limite vaut $\mathbf{-1}$.
+
+\textbf{3.(b)} $\dfrac{x^2-3x+2}{2-x}\sim\dfrac{x^2}{-x}=-x$ : $\lim_{x\to+\infty}=\mathbf{-\infty}$.
+
+%% ===============================================================
+\section{Chapitre 3 : Suites num\'eriques}
+
+%% ===============================================================
+\subsection{Exercice 23 : Suite d\'efinie par r\'ecurrence}
+
+$U_0=0$, $U_{n+1}=\frac13U_n+3$.
+
+\textbf{1.} $U_1=3$, $U_2=\dfrac{3}{3}+3=4$. (Les points $(0;0)$, $(1;3)$, $(2;4)$ se placent dans le rep\`ere $(O;I;J)$.)
+
+\textbf{2.} Posons $V_n=U_n-\dfrac92$. Alors
+\[
+V_{n+1}=\tfrac13U_n+3-\tfrac92=\tfrac13U_n-\tfrac32=\tfrac13\left(U_n-\tfrac92\right)=\tfrac13V_n.
+\]
+$(V_n)$ est g\'eom\'etrique de raison $\frac13$ et de premier terme $V_0=-\frac92$.
+
+\textbf{3.} $V_n=-\dfrac92\left(\dfrac13\right)^n$ et $U_n=\dfrac92-\dfrac92\left(\dfrac13\right)^n=\dfrac92\left(1-\left(\tfrac13\right)^n\right)$.
+
+\textbf{4.(a)} $S_n=\sum_{k=0}^nV_k=-\dfrac92\cdot\dfrac{1-(1/3)^{n+1}}{1-1/3}=-\dfrac{27}{4}\left(1-\left(\tfrac13\right)^{n+1}\right)$.
+
+\textbf{4.(b)} $S'_n=\sum_{k=0}^nU_k=\dfrac92(n+1)-\dfrac92\sum_{k=0}^n\left(\tfrac13\right)^k$
+$=\dfrac92(n+1)-\dfrac{27}{4}\left(1-\left(\tfrac13\right)^{n+1}\right)$.
+En d\'eveloppant : $S'_n=\dfrac92n+\dfrac92-\dfrac{27}{4}+\dfrac{9}{4}\left(\tfrac13\right)^n=\dfrac94\left[\left(\tfrac13\right)^n+2n-1\right]$.
+\begin{rem} L'\'enonc\'e \'ecrit ``$-2n-1$''. Le bon signe est $+2n-1$ : pour $n=1$, $S'_1=U_0+U_1=3$ et
+$\frac94\left(\frac13+2-1\right)=3$, alors que la formule avec $-2n$ donnerait $-6$.\end{rem}
+
+%% ===============================================================
+\subsection{Exercice 24 : Suites}
+
+\textbf{1.(a)} $V_0=\dfrac{1}{U_0-3}=\dfrac{1}{4-3}=\mathbf{1}$.
+
+\textbf{1.(b)} $U_{n+1}-3=\dfrac{4U_n-9-3U_n+6}{U_n-2}=\dfrac{U_n-3}{U_n-2}$. Donc
+\[
+V_{n+1}=\frac{U_n-2}{U_n-3}=\frac{(U_n-3)+1}{U_n-3}=1+V_n.
+\]
+$(V_n)$ est \textbf{arithm\'etique} de raison $1$ (et de premier terme $1$) : $V_n=n+1$.
+Ainsi $U_n=3+\dfrac{1}{n+1}=\dfrac{3n+4}{n+1}$. (V\'erification : $U_1=\frac72=\frac{4\cdot4-9}{4-2}$.)
+
+\textbf{2.} $(w_n)$ est g\'eom\'etrique de raison $q=\frac23$ et $w_2=5$.
+
+\textbf{2.(a)} $w_n=w_2\,q^{\,n-2}=\mathbf{5\left(\tfrac23\right)^{n-2}}$ : r\'eponse \textbf{b)}.
+
+\textbf{2.(b)} $S_n=w_2+\cdots+w_n$ compte $n-1$ termes :
+$S_n=5\,\dfrac{1-(2/3)^{n-1}}{1-2/3}=15\left[1-\left(\tfrac23\right)^{n-1}\right]$ : r\'eponse \textbf{d)}.
+
+\textbf{2.(c)} Comme $0<\frac23<1$, $\lim_{n\to+\infty}w_n=\mathbf{0}$ : r\'eponse \textbf{a)}.
+
+%% ===============================================================
+\section{Chapitre 4 : G\'eom\'etrie plane}
+
+%% ===============================================================
+\subsection{Exercice 25 : Transformations du plan}
+
+$f:\ x'=-2x+3,\ y'=-2y+3$.
+
+\textbf{1.} Point invariant : $x=-2x+3\iff x=1$ et $y=-2y+3\iff y=1$. \textbf{$\Omega(1;1)$} est l'unique point invariant.
+
+\textbf{2.} Comme $\Omega$ est invariant : $\vect{\Omega M'}=-2\,\vect{\Omega M}$.
+
+\textbf{3.} $f$ est l'\textbf{homoth\'etie de centre $\Omega(1;1)$ et de rapport $-2$}.
+
+\textbf{4.} Pour inverser : $x'=-2x+3\Rightarrow x=\dfrac{3-x'}{2}$, et de m\^eme $y=\dfrac{3-y'}{2}$.
+\[
+f^{-1}:\quad x'=-\tfrac12x+\tfrac32,\qquad y'=-\tfrac12y+\tfrac32.
+\]
+C'est l'homoth\'etie de centre $\Omega(1;1)$ et de rapport $-\frac12$.
+
+%% ===============================================================
+\subsection{Exercice 26 : Homoth\'etie et barycentre}
+
+\textbf{Partie A.} $h:\ \vect{AM'}=\tfrac32\vect{AM}+\tfrac12\vect{BA}$.
+
+\textbf{1.(a)} $\vect{BM'}=\vect{BA}+\vect{AM'}=\vect{BA}+\tfrac32\vect{AM}+\tfrac12\vect{BA}
+=\tfrac32\left(\vect{BA}+\vect{AM}\right)=\tfrac32\vect{BM}$.
+
+\textbf{1.(b)} Ainsi $\vect{BM'}=\tfrac32\vect{BM}$ : $h$ est l'\textbf{homoth\'etie de centre $B$ et de rapport $\frac32$}.
+
+\textbf{Partie B.} $ABC$ rectangle en $A$, $AB=4$ cm, $AC=6$ cm.
+
+\textbf{2.(a)} Soit $G=\mathrm{bar}\{(A;1),(B;2)\}$ : $\vect{MA}+2\vect{MB}=3\vect{MG}$. La condition devient
+$3\,MG\times MC=10$, soit $MG\times MC=\dfrac{10}{3}$.
+\begin{rem} Cet ensemble n'est pas un cercle ni une droite (produit de deux distances). Il s'agit d'une courbe
+de type ``Cassini'' (ensemble de points dont le produit des distances \`a deux points est constant).
+L'\'enonc\'e attendait sans doute une autre forme ; il faut le v\'erifier.\end{rem}
+
+\textbf{2.(b)} Par l'homoth\'etie $h$ (centre $B$, rapport $\frac32$), l'ensemble $(C')=h(C)$ est l'image de cette courbe.
+\begin{rem} Conform\'ement \`a la remarque ci-dessus, $(C')$ est aussi une courbe de m\^eme type.\end{rem}
+
+%% ===============================================================
+\subsection{Exercice 27 : Barycentre et ensembles de points}
+
+$ABC$ \'equilat\'eral de c\^ot\'e $a$ et de centre $I$. Soit $K$ le milieu de $[AB]$.
+
+\textbf{1.} Pour tout $M$ : $\vect{MA}+\vect{MB}=2\vect{MK}$. La condition devient
+\[
+\vect{MC}\cdot2\vect{MK}=-MC^2\iff\vect{MC}\cdot\left(\vect{MC}+2\vect{MK}\right)=0.
+\]
+Dans le rep\`ere d'origine $K$ : on obtient $|M-\tfrac23C|^2=\tfrac19|C|^2$.
+\textbf{$(E_1)$ est le cercle de centre $\Omega=\mathrm{bar}\{(A;1),(B;1),(C;4)\}$ et de rayon $\dfrac{a\sqrt3}{6}$.}
+Il passe par $C$ et par $I$ (car $KC=a\frac{\sqrt3}{2}$ et $\Omega C=\frac13KC=\frac{a\sqrt3}{6}$).
+
+\textbf{2.(a)} $f(M)=2MA^2+MB^2+MC^2$ :
+\[
+f(A)=0+a^2+a^2=2a^2,\qquad f(B)=2a^2+0+a^2=3a^2,\qquad f(C)=2a^2+a^2+0=3a^2.
+\]
+\textbf{2.(b)} $G=\mathrm{bar}\{(A;2),(B;1),(C;1)\}$ : $\vect{AG}=\tfrac14(\vect{AB}+\vect{AC})$.
+
+\textbf{2.(c)} Dans le rep\`ere $A(0;0)$, $B(a;0)$, $C\left(\tfrac a2;\tfrac{a\sqrt3}{2}\right)$ :
+$G\left(\tfrac{3a}{8};\tfrac{a\sqrt3}{8}\right)$. Alors
+\[
+AG^2=\frac{3a^2}{16},\qquad BG^2=\frac{7a^2}{16},\qquad CG^2=\frac{7a^2}{16}.
+\]
+\textbf{3.} Pour tout $M$, $f(M)=4MG^2+f(G)$ et $f(G)=2\cdot\frac{3a^2}{16}+\frac{7a^2}{16}+\frac{7a^2}{16}=\frac{5a^2}{4}$.
+Donc $f(M)=3a^2\iff 4MG^2=\frac{7a^2}{4}\iff MG=\dfrac{a\sqrt7}{4}$.
+\textbf{$(E_2)$ est le cercle de centre $G$ et de rayon $\dfrac{a\sqrt7}{4}$.}
+
+%% ===============================================================
+\subsection{Exercice 28 : Hom\'eth\'eties}
+
+\textbf{1.} $h:\ x'=2x+8,\ y'=2y-4$ : point fixe $x=-8$, $y=4$ ; \textbf{$h$ est l'homoth\'etie de centre $\Omega(-8;4)$ et de rapport $2$}.
+\\ $h'$ est l'homoth\'etie de centre $A(-8;4)$ et de rapport $4$ : $\ x'=4x+24,\ y'=4y-12$.
+(Tous deux ont le m\^eme centre.)
+
+\textbf{2.} $h\circ h'$ : $(x,y)\mapsto(4x+24,4y-12)\mapsto(2(4x+24)+8,\ 2(4y-12)-4)$, soit
+\[
+(h\circ h')(x,y)=\bigl(8x+56,\ 8y-28\bigr).
+\]
+
+\textbf{3.} Le rapport vaut $2\times4=8$ et le point fixe est $(-8;4)$ (v\'erification : $-8=8(-8)+56$ et $4=8\cdot4-28$).
+\textbf{$h\circ h'$ est l'homoth\'etie de centre $(-8;4)$ et de rapport $8$.}
+
+%% ===============================================================
+\subsection{Exercice 29 : Transformations}
+
+\textbf{Partie A.} $f:\ x'=3x-4,\ y'=3y+2$.
+
+\textbf{1.} Point invariant : $x=3x-4\iff x=2$ ; $y=3y+2\iff y=-1$. \textbf{$\Omega(2;-1)$} est l'unique point invariant.
+
+\textbf{2.} $\vect{\Omega M'}=3\,\vect{\Omega M}$.
+
+\textbf{3.} $f$ est l'\textbf{homoth\'etie de centre $\Omega(2;-1)$ et de rapport $3$}.
+
+\textbf{Partie B.} $G_m=\mathrm{bar}\{(A;1),(B;m^2),(C;1)\}$.
+
+\textbf{1.} $G_m$ existe si la somme des poids est non nulle : $1+m^2+1=m^2+2\ge2>0$. \textbf{Pour tout $m\in\R$.}
+
+\textbf{2.(a)} Soit $I$ le milieu de $[AC]$ : en vecteurs de position, $G_m=\dfrac{A+C+m^2B}{m^2+2}=\dfrac{2I+m^2B}{m^2+2}$.
+C'est le barycentre de $\{(B;m^2),(I;2)\}$ : donc $G_m\in(BI)$.
+
+\textbf{2.(b)} $\vect{BG_m}=\dfrac{\vect{BA}+\vect{BC}}{m^2+2}=\dfrac{2\vect{BI}}{m^2+2}$ (car $\vect{BA}+\vect{BC}=2\vect{BI}$).
+
+\textbf{2.(c)} Pour $m\in\R$, $k=\dfrac{2}{m^2+2}$ d\'ecrit $]0;1]$ :
+\begin{itemize}
+  \item $m=0$ donne $k=1$, donc $G_0=I$ ;
+  \item $|m|\to+\infty$ donne $k\to0$, donc $G_m\to B$ sans jamais l'atteindre.
+\end{itemize}
+\textbf{L'ensemble des points $G_m$ est le segment $]BI]$} (sans $B$, avec $I$).
