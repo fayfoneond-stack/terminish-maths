@@ -5,11 +5,78 @@
 \usepackage{amsmath,amssymb}
 \usepackage[margin=2cm]{geometry}
 
-\title{Corrections : Exercice 2 (fin) et Exercice 3}
+\title{Corrections : Exercice 1, Exercice 2 (fin) et Exercice 3}
 \date{}
 
 \begin{document}
 \maketitle
+
+%% =====================================================================
+\section*{Exercice 1}
+
+\subsection*{Consigne 1 : co\^ut pour les finalistes}
+
+\paragraph{Fraction des \'el\`eves qui redoublent.}
+La moiti\'e entre en seconde A, les $\frac25$ entrent en seconde CD, donc
+\[
+1-\frac12-\frac25=\frac{1}{10}
+\]
+des \'el\`eves redoublent.
+
+\paragraph{Nombre de finalistes.} On part de $80$ candidats.
+\begin{itemize}
+  \item Apr\`es la 1\textsuperscript{re} journ\'ee, il reste $\frac34$ : $80\times\frac34=60$.
+  \item Apr\`es la 2\textsuperscript{e} journ\'ee, il reste $\frac13$ : $60\times\frac13=20$.
+  \item Apr\`es la 3\textsuperscript{e} journ\'ee, les $\frac25$ restants se qualifient : $20\times\frac25=8$.
+\end{itemize}
+Il y a donc \textbf{8 finalistes}, soit $\frac25\times\frac13\times\frac34=\frac1{10}$ des candidats.
+
+\paragraph{Gains.} Le gain est de $500$ F au premier tour, puis triple \`a chaque tour suivant :
+$500$ F, $1\,500$ F, $4\,500$ F. Un finaliste qui reste jusqu'au bout gagne donc
+\[
+500+1\,500+4\,500=6\,500\ \text{F}.
+\]
+\textbf{Co\^ut pour la phase finale :} $8\times6\,500=\mathbf{52\,000\ F}$.
+
+\emph{Remarque : si l'on compte aussi les gains des \'elimin\'es des deux premi\`eres journ\'ees
+($60\times500$ F et $20\times1\,500$ F), le total vers\'e \`a tous les candidats est de
+$30\,000+30\,000+36\,000=96\,000$ F. La question porte sur les finalistes.}
+
+\subsection*{Consigne 2 : production \`a r\'ealiser}
+
+Il faut construire $\varphi=\dfrac{1+\sqrt5}{2}$ \`a la r\`egle et au compas, v\'erifier les
+propri\'et\'es donn\'ees, puis calculer $A$ et $B$.
+
+\paragraph{Construction.}
+\begin{enumerate}
+  \item Tracer une droite gradu\'ee $(x'Ox)$ avec $O(0;0)$ et $I(1;0)$.
+  \item \'Elever la perpendiculaire en $I$ et placer $K$ tel que $IK=2$.
+  \item Tracer $[OK]$ : par Pythagore, $OK=\sqrt{1^2+2^2}=\sqrt5$.
+  \item Tracer le cercle de centre $I$ et de rayon $\sqrt5$ : il coupe $[Ox)$ en $T(1+\sqrt5\,;\,0)$.
+  \item Construire le milieu de $[OT]$ (m\'ediatrice) : son abscisse est $\dfrac{1+\sqrt5}{2}=\varphi$.
+\end{enumerate}
+
+\paragraph{V\'erification des propri\'et\'es.}
+\begin{itemize}
+  \item $\varphi^2=\dfrac{6+2\sqrt5}{4}=\dfrac{3+\sqrt5}{2}=\varphi+1$.
+  \item $\dfrac1\varphi=\dfrac{2}{1+\sqrt5}=\dfrac{\sqrt5-1}{2}=\varphi-1$.
+  \item $\varphi^3=\varphi(\varphi+1)=\varphi^2+\varphi=2\varphi+1$.
+\end{itemize}
+
+\paragraph{Calcul de $A$.} On utilise $\dfrac1{\varphi^2}=(\varphi-1)^2=2-\varphi$. Alors
+\[
+1+\frac{1}{1+\varphi}=1+\frac1{\varphi^2}=3-\varphi,
+\qquad
+A=\frac{1}{3-\varphi}=\frac{2}{5-\sqrt5}=\frac{2(5+\sqrt5)}{20}=\boxed{\frac{5+\sqrt5}{10}}\approx0{,}7236.
+\]
+
+\paragraph{Calcul de $B$.} Comme $1+\varphi=\varphi^2$, on a $\sqrt{1+\varphi}=\varphi$. De l'int\'erieur vers l'ext\'erieur :
+\[
+\sqrt{1+\varphi}=\varphi,\qquad \sqrt{1+\sqrt{1+\varphi}}=\varphi,\qquad B=\sqrt{1+\sqrt{1+\sqrt{1+\varphi}}}=\varphi.
+\]
+\[
+\boxed{B=\varphi=\frac{1+\sqrt5}{2}}
+\]
 
 %% =====================================================================
 \section*{Exercice 2 (questions c. à f.)}
