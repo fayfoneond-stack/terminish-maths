@@ -1,3 +1,31 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage[margin=2cm]{geometry}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+\newcommand{\vect}[1]{\overrightarrow{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newenvironment{rem}{\par\medskip\noindent\textit{Remarque :}\quad}{\par\medskip}
+\newenvironment{hyp}{\par\medskip\noindent\textit{Hypoth\`ese retenue :}\quad}{\par\medskip}
+
+\title{Corrections d\'etaill\'ees\\Recueil TERMINISH -- Tome 1\\Classe de Premi\`ere D}
+\author{Corrig\'e r\'edig\'e pour les \'el\`eves}
+\date{}
+
+\begin{document}
+\maketitle
+
+\noindent\textbf{Comment lire ce document.} Chaque exercice est corrig\'e \'etape par \'etape.
+Lorsque l'\'enonc\'e du recueil est incomplet, ambigu ou contradictoire, la correction le signale
+par une \emph{remarque} et indique l'hypoth\`ese retenue. Ces points sont \`a v\'erifier aupr\`es du professeur.
+
+\tableofcontents
+\newpage
+
 \section{Chapitre 1 : Situations d'\'evaluation}
 
 %% ===============================================================
@@ -520,3 +548,491 @@ $AMATSI$ ($\frac{\pi}{3}$ seul), ni valider leurs affirmations. Merci de fournir
 \end{itemize}
 \textbf{Conclusion :} $T_1$ et $T_3$ ont des centres et des rapports diff\'erents ($(1;1)$, $-\frac32$ et $(1;2)$, $\frac32$) :
 \textbf{LAWSON a tort}. Seul $T_2$ est une isom\'etrie, c'est une rotation d'angle $\frac{5\pi}{6}$.
+
+\section{Chapitre 2 : Fonctions et limites}
+
+%% ===============================================================
+\subsection{Exercice 20 : \'Etude de fonction}
+
+\textbf{1.(a)} Le d\'enominateur s'annule en $x=2$ : $\mathcal D_f=\R\setminus\{2\}$.
+
+\textbf{1.(b)} Limites :
+\begin{itemize}
+  \item En $\pm\infty$ : $f(x)\sim\dfrac{2x^2}{x}=2x$, donc $\lim_{x\to+\infty}f=+\infty$ et $\lim_{x\to-\infty}f=-\infty$.
+  \item En $2$ : le num\'erateur vaut $2\cdot4-14+7=1>0$. Donc $\lim_{x\to2^-}f=-\infty$ et $\lim_{x\to2^+}f=+\infty$.
+\end{itemize}
+
+\textbf{2.(a)} Division euclidienne : $2x^2-7x+7=(x-2)(2x-3)+1$. Donc
+\[
+f(x)=2x-3+\frac{1}{x-2} : \qquad a=2,\quad b=-3,\quad c=1.
+\]
+\textbf{2.(b)} $f(x)-(2x-3)=\dfrac{1}{x-2}\xrightarrow[x\to\pm\infty]{}0$ : la droite $(D):y=2x-3$ est asymptote oblique.
+
+\textbf{2.(c)} $\lim_{x\to2}f(x)=\pm\infty$ : la droite $x=2$ est l'autre asymptote (verticale).
+
+\textbf{3.} Soit $h\neq0$. $f(2+h)=2(2+h)-3+\dfrac1h=1+2h+\dfrac1h$, et
+$f(2-h)=1-2h-\dfrac1h$. Donc $f(2+h)+f(2-h)=2$ : le point $A(2;1)$ est un \textbf{centre de sym\'etrie} de $(C)$.
+
+%% ===============================================================
+\subsection{Exercice 21 : Fonction rationnelle}
+
+\textbf{1.} $\mathcal D_f=\R\setminus\{1\}$ ; les limites aux bornes se lisent sur le tableau de variations
+(non reproduit dans le texte extrait) : elles sont $\pm\infty$ de part et d'autre de $x=1$, et la droite
+$(D)$ donne le comportement en $\pm\infty$.
+
+\textbf{2.} Avec $f(x)=\dfrac{ax^2+bx+c}{x-1}$, les coefficients se d\'eduisent du tableau de variations
+(``on suppose'' : $a,b,c$ sont fix\'es par les donn\'ees du tableau).
+\begin{rem} Le tableau n'est pas reproduit dans le texte. Dans la suite, on prend $a=1$, $b=-4$, $c=7$,
+ce qui est coh\'erent avec la question~3.\end{rem}
+
+\textbf{3.} On pose $f(x)=\dfrac{x^2-4x+7}{x-1}$.
+\begin{enumerate}[label=(\alph*)]
+  \item Division : $x^2-4x+7=(x-1)(x-3)+4$, donc $f(x)=x-3+\dfrac{4}{x-1}$.
+  Comme $\dfrac{4}{x-1}\to0$ en $\pm\infty$, la droite $(D):y=x-3$ est asymptote \`a $(C_f)$.
+  \item Position relative : $f(x)-(x-3)=\dfrac{4}{x-1}$.
+  \begin{itemize}
+    \item Si $x>1$, $f(x)-(x-3)>0$ : $(C_f)$ est \textbf{au-dessus} de $(D)$.
+    \item Si $x<1$, $f(x)-(x-3)<0$ : $(C_f)$ est \textbf{en dessous} de $(D)$.
+  \end{itemize}
+  \item Axes : en $x=0$, $f(0)=\dfrac{7}{-1}=-7$ : point $(0;-7)$. Avec l'axe des abscisses, $x^2-4x+7=0$ a un discriminant
+  $16-28<0$ : \textbf{pas de point d'intersection} avec $(Ox)$.
+  \item Centre de sym\'etrie : $f(1+h)+f(1-h)=(1+h-3+\tfrac4h)+(1-h-3-\tfrac4h)=-4$.
+  Donc $I(1;-2)$ est centre de sym\'etrie, puisque $\dfrac{-4}{2}=-2$ est la moyenne des ordonn\'ees.
+\end{enumerate}
+
+\textbf{4.} \emph{Trac\'e :} on place $(D):y=x-3$ (passant par $(3;0)$ et $(0;-3)$), l'asymptote verticale $x=1$, le point $(0;-7)$,
+et le centre $I(1;-2)$. La branche gauche passe sous $(D)$, la branche droite au-dessus.
+
+%% ===============================================================
+\subsection{Exercice 22 : Centre de sym\'etrie}
+
+\textbf{1.(a)} Pour $x\neq4$ : $h(x)=\dfrac{3x+5}{x-4}=3+\dfrac{17}{x-4}$. Donc $h(4+t)+h(4-t)=3+\frac{17}{t}+3-\frac{17}{t}=6$ :
+$\Omega(4;3)$ est centre de sym\'etrie de $(C_h)$.
+
+\textbf{1.(b)} Pour $y\neq3$ : $y=\dfrac{3x+5}{x-4}\iff y(x-4)=3x+5\iff x(y-3)=4y+5\iff x=\dfrac{4y+5}{y-3}$.
+Ainsi $h$ est bijective de $\R\setminus\{4\}$ sur $\R\setminus\{3\}$ et
+$\boxed{h^{-1}(x)=\dfrac{4x+5}{x-3}}$.
+
+\textbf{2.(a)} $g(x)=3x^2-6x$ : $g(-x)=3x^2+6x$, qui n'est ni $g(x)$ ni $-g(x)$. \textbf{$g$ n'est ni paire ni impaire.}
+
+\textbf{2.(b)} $g(1+t)=3(1+2t+t^2)-6(1+t)=3t^2-3$, qui est une fonction paire de $t$. Donc la droite $(\Delta):x=1$
+est un \textbf{axe de sym\'etrie} de $(C_g)$.
+
+\textbf{2.(c)} $\mathcal D_{f\circ g}=\{x\in\R : g(x)\neq4\}$ (en prenant $f=h$, l'\'enonc\'e \'etant peu lisible).
+$3x^2-6x-4=0$ a pour racines $1\pm\dfrac{\sqrt{21}}{3}$ :
+$\mathcal D_{f\circ g}=\R\setminus\left\{1-\tfrac{\sqrt{21}}{3};\,1+\tfrac{\sqrt{21}}{3}\right\}$.
+Puis $(f\circ g)(x)=\dfrac{3g(x)+5}{g(x)-4}=\dfrac{9x^2-18x+5}{3x^2-6x-4}$.
+
+\textbf{3.(a)} $\dfrac{x^2-3x+2}{x-1}=\dfrac{(x-1)(x-2)}{x-1}=x-2$ pour $x\neq1$ : la limite vaut $\mathbf{-1}$.
+
+\textbf{3.(b)} $\dfrac{x^2-3x+2}{2-x}\sim\dfrac{x^2}{-x}=-x$ : $\lim_{x\to+\infty}=\mathbf{-\infty}$.
+
+%% ===============================================================
+\section{Chapitre 3 : Suites num\'eriques}
+
+%% ===============================================================
+\subsection{Exercice 23 : Suite d\'efinie par r\'ecurrence}
+
+$U_0=0$, $U_{n+1}=\frac13U_n+3$.
+
+\textbf{1.} $U_1=3$, $U_2=\dfrac{3}{3}+3=4$. (Les points $(0;0)$, $(1;3)$, $(2;4)$ se placent dans le rep\`ere $(O;I;J)$.)
+
+\textbf{2.} Posons $V_n=U_n-\dfrac92$. Alors
+\[
+V_{n+1}=\tfrac13U_n+3-\tfrac92=\tfrac13U_n-\tfrac32=\tfrac13\left(U_n-\tfrac92\right)=\tfrac13V_n.
+\]
+$(V_n)$ est g\'eom\'etrique de raison $\frac13$ et de premier terme $V_0=-\frac92$.
+
+\textbf{3.} $V_n=-\dfrac92\left(\dfrac13\right)^n$ et $U_n=\dfrac92-\dfrac92\left(\dfrac13\right)^n=\dfrac92\left(1-\left(\tfrac13\right)^n\right)$.
+
+\textbf{4.(a)} $S_n=\sum_{k=0}^nV_k=-\dfrac92\cdot\dfrac{1-(1/3)^{n+1}}{1-1/3}=-\dfrac{27}{4}\left(1-\left(\tfrac13\right)^{n+1}\right)$.
+
+\textbf{4.(b)} $S'_n=\sum_{k=0}^nU_k=\dfrac92(n+1)-\dfrac92\sum_{k=0}^n\left(\tfrac13\right)^k$
+$=\dfrac92(n+1)-\dfrac{27}{4}\left(1-\left(\tfrac13\right)^{n+1}\right)$.
+En d\'eveloppant : $S'_n=\dfrac92n+\dfrac92-\dfrac{27}{4}+\dfrac{9}{4}\left(\tfrac13\right)^n=\dfrac94\left[\left(\tfrac13\right)^n+2n-1\right]$.
+\begin{rem} L'\'enonc\'e \'ecrit ``$-2n-1$''. Le bon signe est $+2n-1$ : pour $n=1$, $S'_1=U_0+U_1=3$ et
+$\frac94\left(\frac13+2-1\right)=3$, alors que la formule avec $-2n$ donnerait $-6$.\end{rem}
+
+%% ===============================================================
+\subsection{Exercice 24 : Suites}
+
+\textbf{1.(a)} $V_0=\dfrac{1}{U_0-3}=\dfrac{1}{4-3}=\mathbf{1}$.
+
+\textbf{1.(b)} $U_{n+1}-3=\dfrac{4U_n-9-3U_n+6}{U_n-2}=\dfrac{U_n-3}{U_n-2}$. Donc
+\[
+V_{n+1}=\frac{U_n-2}{U_n-3}=\frac{(U_n-3)+1}{U_n-3}=1+V_n.
+\]
+$(V_n)$ est \textbf{arithm\'etique} de raison $1$ (et de premier terme $1$) : $V_n=n+1$.
+Ainsi $U_n=3+\dfrac{1}{n+1}=\dfrac{3n+4}{n+1}$. (V\'erification : $U_1=\frac72=\frac{4\cdot4-9}{4-2}$.)
+
+\textbf{2.} $(w_n)$ est g\'eom\'etrique de raison $q=\frac23$ et $w_2=5$.
+
+\textbf{2.(a)} $w_n=w_2\,q^{\,n-2}=\mathbf{5\left(\tfrac23\right)^{n-2}}$ : r\'eponse \textbf{b)}.
+
+\textbf{2.(b)} $S_n=w_2+\cdots+w_n$ compte $n-1$ termes :
+$S_n=5\,\dfrac{1-(2/3)^{n-1}}{1-2/3}=15\left[1-\left(\tfrac23\right)^{n-1}\right]$ : r\'eponse \textbf{d)}.
+
+\textbf{2.(c)} Comme $0<\frac23<1$, $\lim_{n\to+\infty}w_n=\mathbf{0}$ : r\'eponse \textbf{a)}.
+
+%% ===============================================================
+\section{Chapitre 4 : G\'eom\'etrie plane}
+
+%% ===============================================================
+\subsection{Exercice 25 : Transformations du plan}
+
+$f:\ x'=-2x+3,\ y'=-2y+3$.
+
+\textbf{1.} Point invariant : $x=-2x+3\iff x=1$ et $y=-2y+3\iff y=1$. \textbf{$\Omega(1;1)$} est l'unique point invariant.
+
+\textbf{2.} Comme $\Omega$ est invariant : $\vect{\Omega M'}=-2\,\vect{\Omega M}$.
+
+\textbf{3.} $f$ est l'\textbf{homoth\'etie de centre $\Omega(1;1)$ et de rapport $-2$}.
+
+\textbf{4.} Pour inverser : $x'=-2x+3\Rightarrow x=\dfrac{3-x'}{2}$, et de m\^eme $y=\dfrac{3-y'}{2}$.
+\[
+f^{-1}:\quad x'=-\tfrac12x+\tfrac32,\qquad y'=-\tfrac12y+\tfrac32.
+\]
+C'est l'homoth\'etie de centre $\Omega(1;1)$ et de rapport $-\frac12$.
+
+%% ===============================================================
+\subsection{Exercice 26 : Homoth\'etie et barycentre}
+
+\textbf{Partie A.} $h:\ \vect{AM'}=\tfrac32\vect{AM}+\tfrac12\vect{BA}$.
+
+\textbf{1.(a)} $\vect{BM'}=\vect{BA}+\vect{AM'}=\vect{BA}+\tfrac32\vect{AM}+\tfrac12\vect{BA}
+=\tfrac32\left(\vect{BA}+\vect{AM}\right)=\tfrac32\vect{BM}$.
+
+\textbf{1.(b)} Ainsi $\vect{BM'}=\tfrac32\vect{BM}$ : $h$ est l'\textbf{homoth\'etie de centre $B$ et de rapport $\frac32$}.
+
+\textbf{Partie B.} $ABC$ rectangle en $A$, $AB=4$ cm, $AC=6$ cm.
+
+\textbf{2.(a)} Soit $G=\mathrm{bar}\{(A;1),(B;2)\}$ : $\vect{MA}+2\vect{MB}=3\vect{MG}$. La condition devient
+$3\,MG\times MC=10$, soit $MG\times MC=\dfrac{10}{3}$.
+\begin{rem} Cet ensemble n'est pas un cercle ni une droite (produit de deux distances). Il s'agit d'une courbe
+de type ``Cassini'' (ensemble de points dont le produit des distances \`a deux points est constant).
+L'\'enonc\'e attendait sans doute une autre forme ; il faut le v\'erifier.\end{rem}
+
+\textbf{2.(b)} Par l'homoth\'etie $h$ (centre $B$, rapport $\frac32$), l'ensemble $(C')=h(C)$ est l'image de cette courbe.
+\begin{rem} Conform\'ement \`a la remarque ci-dessus, $(C')$ est aussi une courbe de m\^eme type.\end{rem}
+
+%% ===============================================================
+\subsection{Exercice 27 : Barycentre et ensembles de points}
+
+$ABC$ \'equilat\'eral de c\^ot\'e $a$ et de centre $I$. Soit $K$ le milieu de $[AB]$.
+
+\textbf{1.} Pour tout $M$ : $\vect{MA}+\vect{MB}=2\vect{MK}$. La condition devient
+\[
+\vect{MC}\cdot2\vect{MK}=-MC^2\iff\vect{MC}\cdot\left(\vect{MC}+2\vect{MK}\right)=0.
+\]
+Dans le rep\`ere d'origine $K$ : on obtient $|M-\tfrac23C|^2=\tfrac19|C|^2$.
+\textbf{$(E_1)$ est le cercle de centre $\Omega=\mathrm{bar}\{(A;1),(B;1),(C;4)\}$ et de rayon $\dfrac{a\sqrt3}{6}$.}
+Il passe par $C$ et par $I$ (car $KC=a\frac{\sqrt3}{2}$ et $\Omega C=\frac13KC=\frac{a\sqrt3}{6}$).
+
+\textbf{2.(a)} $f(M)=2MA^2+MB^2+MC^2$ :
+\[
+f(A)=0+a^2+a^2=2a^2,\qquad f(B)=2a^2+0+a^2=3a^2,\qquad f(C)=2a^2+a^2+0=3a^2.
+\]
+\textbf{2.(b)} $G=\mathrm{bar}\{(A;2),(B;1),(C;1)\}$ : $\vect{AG}=\tfrac14(\vect{AB}+\vect{AC})$.
+
+\textbf{2.(c)} Dans le rep\`ere $A(0;0)$, $B(a;0)$, $C\left(\tfrac a2;\tfrac{a\sqrt3}{2}\right)$ :
+$G\left(\tfrac{3a}{8};\tfrac{a\sqrt3}{8}\right)$. Alors
+\[
+AG^2=\frac{3a^2}{16},\qquad BG^2=\frac{7a^2}{16},\qquad CG^2=\frac{7a^2}{16}.
+\]
+\textbf{3.} Pour tout $M$, $f(M)=4MG^2+f(G)$ et $f(G)=2\cdot\frac{3a^2}{16}+\frac{7a^2}{16}+\frac{7a^2}{16}=\frac{5a^2}{4}$.
+Donc $f(M)=3a^2\iff 4MG^2=\frac{7a^2}{4}\iff MG=\dfrac{a\sqrt7}{4}$.
+\textbf{$(E_2)$ est le cercle de centre $G$ et de rayon $\dfrac{a\sqrt7}{4}$.}
+
+%% ===============================================================
+\subsection{Exercice 28 : Hom\'eth\'eties}
+
+\textbf{1.} $h:\ x'=2x+8,\ y'=2y-4$ : point fixe $x=-8$, $y=4$ ; \textbf{$h$ est l'homoth\'etie de centre $\Omega(-8;4)$ et de rapport $2$}.
+\\ $h'$ est l'homoth\'etie de centre $A(-8;4)$ et de rapport $4$ : $\ x'=4x+24,\ y'=4y-12$.
+(Tous deux ont le m\^eme centre.)
+
+\textbf{2.} $h\circ h'$ : $(x,y)\mapsto(4x+24,4y-12)\mapsto(2(4x+24)+8,\ 2(4y-12)-4)$, soit
+\[
+(h\circ h')(x,y)=\bigl(8x+56,\ 8y-28\bigr).
+\]
+
+\textbf{3.} Le rapport vaut $2\times4=8$ et le point fixe est $(-8;4)$ (v\'erification : $-8=8(-8)+56$ et $4=8\cdot4-28$).
+\textbf{$h\circ h'$ est l'homoth\'etie de centre $(-8;4)$ et de rapport $8$.}
+
+%% ===============================================================
+\subsection{Exercice 29 : Transformations}
+
+\textbf{Partie A.} $f:\ x'=3x-4,\ y'=3y+2$.
+
+\textbf{1.} Point invariant : $x=3x-4\iff x=2$ ; $y=3y+2\iff y=-1$. \textbf{$\Omega(2;-1)$} est l'unique point invariant.
+
+\textbf{2.} $\vect{\Omega M'}=3\,\vect{\Omega M}$.
+
+\textbf{3.} $f$ est l'\textbf{homoth\'etie de centre $\Omega(2;-1)$ et de rapport $3$}.
+
+\textbf{Partie B.} $G_m=\mathrm{bar}\{(A;1),(B;m^2),(C;1)\}$.
+
+\textbf{1.} $G_m$ existe si la somme des poids est non nulle : $1+m^2+1=m^2+2\ge2>0$. \textbf{Pour tout $m\in\R$.}
+
+\textbf{2.(a)} Soit $I$ le milieu de $[AC]$ : en vecteurs de position, $G_m=\dfrac{A+C+m^2B}{m^2+2}=\dfrac{2I+m^2B}{m^2+2}$.
+C'est le barycentre de $\{(B;m^2),(I;2)\}$ : donc $G_m\in(BI)$.
+
+\textbf{2.(b)} $\vect{BG_m}=\dfrac{\vect{BA}+\vect{BC}}{m^2+2}=\dfrac{2\vect{BI}}{m^2+2}$ (car $\vect{BA}+\vect{BC}=2\vect{BI}$).
+
+\textbf{2.(c)} Pour $m\in\R$, $k=\dfrac{2}{m^2+2}$ d\'ecrit $]0;1]$ :
+\begin{itemize}
+  \item $m=0$ donne $k=1$, donc $G_0=I$ ;
+  \item $|m|\to+\infty$ donne $k\to0$, donc $G_m\to B$ sans jamais l'atteindre.
+\end{itemize}
+\textbf{L'ensemble des points $G_m$ est le segment $]BI]$} (sans $B$, avec $I$).
+
+\section{Chapitre 5 : Trigonom\'etrie}
+
+%% ===============================================================
+\subsection{Exercice 30 : \'Equations trigonom\'etriques}
+
+\textbf{A) QCM.}
+
+\textbf{1.} On a $\cos x-\sqrt3\sin x=2\cos\left(x+\dfrac{\pi}{3}\right)$. L'\'equation $\cos\left(x+\frac{\pi}{3}\right)=0$ donne
+$x=\dfrac{\pi}{6}+k\pi$. Dans $]-\pi;\pi]$ : $S=\left\{\dfrac{\pi}{6};-\dfrac{5\pi}{6}\right\}$.
+Aucune proposition n'est exacte : \textbf{r\'eponse d)}. (La proposition c) $\{\frac{\pi}{6}\}$ est incompl\`ete.)
+
+\textbf{2.} On retranche un multiple de $2\pi$ : $\dfrac{498\pi}{5}-50\times2\pi=\dfrac{498\pi-500\pi}{5}=-\dfrac{2\pi}{5}$, qui est bien dans $]-\pi;\pi]$.
+\textbf{R\'eponse a)} $-\dfrac{2\pi}{5}$.
+
+\textbf{3.} $\cos x=\dfrac{\sqrt6+\sqrt2}{4}=\cos\dfrac{\pi}{12}$, avec $x\in\left[0;\dfrac{\pi}{2}\right]$ : $x=\dfrac{\pi}{12}$.
+Alors $\cos2x=\cos\dfrac{\pi}{6}=\dfrac{\sqrt3}{2}$ : \textbf{r\'eponse d)}.
+
+\textbf{B) Vrai ou faux.}
+\begin{enumerate}
+  \item \textbf{Faux.} Une application surjective n'est pas forc\'ement injective : par exemple $x\mapsto x^2$ de $\R$ vers $\R_+$ est surjective mais pas injective.
+  \item \textbf{Vrai.} $\cos x=-\frac12$ sur $]-\pi;\pi]$ donne $x=\pm\frac{2\pi}{3}$, soit $S=\left\{-\frac{2\pi}{3};\frac{2\pi}{3}\right\}$.
+\end{enumerate}
+
+%% ===============================================================
+\subsection{Exercice 31 : \'Equations et in\'equations}
+
+Sur $[0;2\pi]$ : $\sqrt3\cos2x-\sin2x=2\cos\left(2x+\dfrac{\pi}{6}\right)$. L'in\'equation (I) devient
+\[
+2\cos\left(2x+\tfrac{\pi}{6}\right)+1<0\iff\cos\left(2x+\tfrac{\pi}{6}\right)<-\frac12.
+\]
+Posons $\theta=2x+\frac{\pi}{6}$, avec $\theta\in\left[\frac{\pi}{6};\frac{25\pi}{6}\right]$. On a $\cos\theta<-\frac12$ sur
+$\left]\frac{2\pi}{3}+2k\pi;\frac{4\pi}{3}+2k\pi\right[$.
+\begin{itemize}
+  \item $k=0$ : $\theta\in\left]\frac{2\pi}{3};\frac{4\pi}{3}\right[$, soit $2x\in\left]\frac{\pi}{2};\frac{7\pi}{6}\right[$, donc $x\in\left]\frac{\pi}{4};\frac{7\pi}{12}\right[$.
+  \item $k=1$ : $\theta\in\left]\frac{8\pi}{3};\frac{10\pi}{3}\right[$, soit $2x\in\left]\frac{5\pi}{2};\frac{19\pi}{6}\right[$, donc $x\in\left]\frac{5\pi}{4};\frac{19\pi}{12}\right[$.
+\end{itemize}
+\textbf{$S=\left]\frac{\pi}{4};\frac{7\pi}{12}\right[\ \cup\ \left]\frac{5\pi}{4};\frac{19\pi}{12}\right[$} : \textbf{r\'eponse a)}
+(\`a l'ouverture pr\`es des intervalles, qui sont ouverts car l'in\'egalit\'e est stricte).
+
+%% ===============================================================
+\subsection{Exercice 32 : \'Equations trigonom\'etriques}
+
+\textbf{(E1)} $\cos x-\sin x=\sqrt2$. Comme $\cos x-\sin x=\sqrt2\cos\left(x+\frac{\pi}{4}\right)$ : $\cos\left(x+\frac{\pi}{4}\right)=1$,
+donc $x=-\dfrac{\pi}{4}+2k\pi$, $k\in\mathbb Z$.
+
+\textbf{(E2)} $\sqrt3\sin x+3\cos x=\sqrt3$. Comme $\sqrt3\sin x+3\cos x=2\sqrt3\sin\left(x+\frac{\pi}{3}\right)$ :
+$\sin\left(x+\frac{\pi}{3}\right)=\frac12$, donc $x+\frac{\pi}{3}=\frac{\pi}{6}+2k\pi$ ou $\frac{5\pi}{6}+2k\pi$.
+\[
+S_{E_2}=\left\{-\frac{\pi}{6}+2k\pi\ ;\ \frac{\pi}{2}+2k\pi\ ;\ k\in\mathbb Z\right\}.
+\]
+
+\textbf{(E3)} $\sqrt3\sin x+\cos x=-1$. Comme $\sqrt3\sin x+\cos x=2\sin\left(x+\frac{\pi}{6}\right)$ :
+$\sin\left(x+\frac{\pi}{6}\right)=-\frac12$, donc $x+\frac{\pi}{6}=-\frac{\pi}{6}+2k\pi$ ou $\frac{7\pi}{6}+2k\pi$.
+\[
+S_{E_3}=\left\{-\frac{\pi}{3}+2k\pi\ ;\ \pi+2k\pi\ ;\ k\in\mathbb Z\right\}.
+\]
+(V\'erification : pour $x=\pi$, $\sqrt3\cdot0+(-1)=-1$.)
+
+%% ===============================================================
+\section{Chapitre 6 : G\'eom\'etrie dans l'espace}
+
+%% ===============================================================
+\subsection{Exercice 33 : Cube et orthogonalit\'e}
+
+On utilise le rep\`ere $\left(A;\vect{AB},\vect{AD},\vect{AE}\right)$ avec le cube de c\^ot\'e $a$ :
+$A(0;0;0)$, $B(a;0;0)$, $C(a;a;0)$, $D(0;a;0)$, $E(0;0;a)$, $F(a;0;a)$, $G(a;a;a)$, $H(0;a;a)$.
+(Figure : face $ABCD$ en bas, face $EFGH$ au-dessus, $E$ au-dessus de $A$.)
+Les milieux : $I$ milieu de $[BF]$ : $I\left(a;0;\frac a2\right)$ ; $J$ milieu de $[AE]$ : $J\left(0;0;\frac a2\right)$.
+
+\textbf{1.} Figure : voir le sch\'ema ci-dessus (cube, puis $I$ et $J$ sur les ar\`etes $[BF]$ et $[AE]$).
+
+\textbf{2.} $\vect{ED}=(0;a;-a)$ et $\vect{BG}=(0;a;a)$. Leur produit scalaire vaut $a^2-a^2=0$.
+\textbf{Donc $(ED)\perp(BG)$.}
+
+\textbf{3.} $\vect{IJ}=\left(-a;0;0\right)$. Le plan $(ADE)$ est le plan $x=0$, de vecteur normal $(1;0;0)$ :
+$\vect{IJ}$ est normal au plan. \textbf{Donc $(IJ)\perp(ADE)$.}
+
+\textbf{4.} Plan $(EAC)$ : il contient $A$, $E$ et $C$, donc un vecteur normal est $\vect n_1=(1;-1;0)$
+(orthogonal \`a $\vect{AE}=(0;0;a)$ et $\vect{AC}=(a;a;0)$).
+Plan $(HDB)$ : $\vect{DB}=(a;-a;0)$ et $\vect{DH}=(0;0;a)$, donc un vecteur normal est $\vect n_2=(1;1;0)$.
+$\vect n_1\cdot\vect n_2=1-1=0$. \textbf{Donc les plans $(EAC)$ et $(HDB)$ sont perpendiculaires.}
+
+\textbf{5.} Plan $(DBF)$ : $\vect{DB}=(a;-a;0)$ et $\vect{DF}=(a;-a;a)$. Le vecteur $(1;1;0)$ est normal ($\vect{DB}\cdot(1;1;0)=0$ et
+$\vect{DF}\cdot(1;1;0)=0$) ; le plan a pour \'equation $x+y=a$ (v\'erifi\'ee en $D$, $B$, $F$).
+\[
+d(A,(DBF))=\frac{|0+0-a|}{\sqrt{1^2+1^2}}=\frac{a}{\sqrt2}=\frac{a\sqrt2}{2}.
+\]
+
+%% ===============================================================
+\section{Chapitre 7 : QCM et questions diverses}
+
+%% ===============================================================
+\subsection{Exercice 34 : QCM}
+
+\textbf{A.1.} $f(x)=\dfrac{5x^3-3x-2}{x^4-x^3}$ (lecture de l'\'enonc\'e). Au voisinage de $+\infty$, $f(x)\sim\dfrac{5x^3}{x^4}=\dfrac5x\to0$.
+La limite vaut $0$ : \textbf{r\'eponse d)} (aucune des trois autres).
+\begin{rem} Si le num\'erateur est diff\'erent, la conclusion peut changer ; v\'erifier l'\'enonc\'e.\end{rem}
+
+\textbf{A.2.} $g(x)=\dfrac{-2x^2-x+1}{x^2+1}$. Le d\'enominateur ne s'annule jamais : \textbf{pas d'asymptote verticale}.
+En $\pm\infty$, $g(x)\to-2$ : la droite $y=-2$ est asymptote horizontale. \textbf{R\'eponse b).}
+
+\textbf{B.1.} La tangente \`a $\mathcal C_f$ au point d'abscisse $a$ a pour \'equation $\boxed{y=f'(a)(x-a)+f(a)}$.
+
+\textbf{B.2.} $\displaystyle\lim_{x\to0}\frac{\sin x}{x}=\mathbf{1}$.
+
+\textbf{B.3.} Rotation de centre $O$ et d'angle $\frac{2\pi}{3}$ : $\cos\frac{2\pi}{3}=-\frac12$ et $\sin\frac{2\pi}{3}=\frac{\sqrt3}{2}$, donc
+\[
+\begin{cases}
+x'=-\dfrac12x-\dfrac{\sqrt3}{2}y\\[6pt]
+y'=\dfrac{\sqrt3}{2}x-\dfrac12y.
+\end{cases}
+\]
+
+%% ===============================================================
+\subsection{Exercice 35 : Vrai/Faux et compl\'ements}
+
+\textbf{Partie A.}
+\begin{enumerate}
+  \item \textbf{Vrai.} Une fonction bijective est injective (et surjective).
+  \item \textbf{Faux.} $\sin x\in[-1;1]$, donc $\sin x=\frac32$ n'a aucune solution.
+\end{enumerate}
+
+\textbf{Partie B.}
+\begin{enumerate}
+  \item Une fonction $f$ est une \textbf{application} si l'ensemble de d\'epart et l'ensemble de d\'efinition coïncident.
+  \item Deux r\'eels de somme $S$ et de produit $P$ sont les solutions de $\boxed{x^2-Sx+P=0}$.
+  \item $f:E\to F$ est \textbf{injective} si chaque \'el\'ement de $F$ admet au plus un ant\'ec\'edent.
+  \item $x+y=\dfrac{2\pi}{3}-\dfrac{\pi}{4}=\dfrac{5\pi}{12}$, d\'ej\`a dans $]-\pi;\pi]$ : \textbf{mesure principale $\dfrac{5\pi}{12}$}.
+  \item $h(M)=M'$ \'equivaut \`a $\boxed{\vect{\Omega M'}=-2\,\vect{\Omega M}}$.
+  \item Si $G=\mathrm{bar}\{(A;\alpha);(B;\beta)\}$ avec $\alpha+\beta=1$, alors $\vect{BG}=\alpha\,\vect{BA}$.
+  Or $\vect{BG}=-\dfrac23\vect{BA}$ donne $\alpha=-\dfrac23$ et $\beta=1-\alpha=\dfrac53$.
+\end{enumerate}
+
+%% ===============================================================
+\subsection{Exercice 36 : QCM}
+
+\textbf{I. Vrai ou faux.}
+\begin{enumerate}
+  \item \textbf{Vrai.} $f(x)=\sin\left(2x-\frac{\pi}{3}\right)$ a pour p\'eriode $\frac{2\pi}{2}=\pi$.
+  \item \textbf{Faux.} $\cos x=\frac14$ et $\cos y=\frac12$ avec $x,y\in\left[0;\frac{\pi}{2}\right]$ : $y=\frac{\pi}{3}$, $\sin x=\frac{\sqrt{15}}{4}$.
+  $\cos2y=-\frac12$, $\sin2y=\frac{\sqrt3}{2}$ et
+  \[
+  \cos(x-2y)=\cos x\cos2y+\sin x\sin2y=-\frac18+\frac{\sqrt{45}}{8}=\frac{3\sqrt5-1}{8}.
+  \]
+  L'\'enonc\'e donne $\frac{3\sqrt5+1}{8}$ : \textbf{l'affirmation est fausse}.
+  \item \textbf{Faux.} $\vect{AB}=3\vect{CA}$ donne $\vect{AB}=-3\vect{AC}$ : $B$ est l'image de $C$ par l'homoth\'etie de centre $A$ et de rapport $-3$ (et non $3$).
+  \item \textbf{Vrai.} $MA^2-MB^2=0\iff MA=MB$ : c'est la m\'ediatrice de $[AB]$.
+\end{enumerate}
+
+\textbf{II. Choix multiple} (\'enonc\'e non reproduit dans le texte).
+
+%% ===============================================================
+\subsection{Exercice 37 : QCM}
+
+\textbf{I.1.} $3x^2-2|x|-1=0$. En posant $t=|x|\ge0$ : $3t^2-2t-1=0$, soit $(3t+1)(t-1)=0$, donc $t=1$ (car $t\ge0$).
+Alors $x=\pm1$ : \textbf{deux solutions distinctes, r\'eponse b)}.
+
+\textbf{I.2.} $\sqrt{x^2-2x}>1-x$ : domaine $x^2-2x\ge0$, soit $x\le0$ ou $x\ge2$.
+\begin{itemize}
+  \item Si $1-x<0$ (donc $x>1$), l'in\'egalit\'e est vraie d\`es que $x\ge2$.
+  \item Si $1-x\ge0$ et $x\le0$ : on \'el\`eve au carr\'e, $x^2-2x>(1-x)^2=1-2x+x^2$, soit $0>1$ : impossible.
+\end{itemize}
+Donc $S=[2;+\infty[$ : \textbf{r\'eponse a)}.
+
+\textbf{I.3.} L'\'enonc\'e \'ecrit $3\vect{BC}-4\vect{AC}=2\vect{BC}$, soit $\vect{BC}=4\vect{AC}$, ce qui s'\'ecrit $4A-B-3C=\vec 0$.
+Cette relation n'est pas de la forme $\sum\alpha_i\vect{GX_i}=\vec 0$ avec les poids des options (les poids de l'\'enonc\'e ne somment pas \`a $0$) :
+\begin{rem} L'\'enonc\'e est incoh\'erent (il manque probablement un point ou une lettre). Aucune des quatre r\'eponses ne se d\'eduit
+directement de la relation \'ecrite ; merci de v\'erifier la formule originale.\end{rem}
+
+%% ===============================================================
+\subsection{Exercice 38 : Ajustement lin\'eaire}
+
+\textbf{Consigne 1.} La production journali\`ere est $h(v)=-v+3300-\dfrac{8100}{v}$ pour $v\in[50;120]$.
+\[
+h'(v)=-1+\frac{8100}{v^2}=\frac{8100-v^2}{v^2}.
+\]
+$h'(v)=0\iff v=90$ (on prend $v>0$) ; $h'>0$ avant, $h'<0$ apr\`es : maximum en $v=90$.
+$h(90)=-90+3300-90=3120$. \textbf{La production maximale est atteinte pour $v=90$, avec $3120$ exemplaires par jour.}
+
+\medskip\noindent\textbf{Consigne 2.} Ajustement par moindres carr\'es de $y$ en fonction de $x$ ($x$ en milliers de FCFA) :
+$\bar x=130$, $\bar y=504$, $\sum(x_i-\bar x)^2=16\,800$, $\sum(x_i-\bar x)(y_i-\bar y)=-100\,060$.
+\[
+a=\frac{-100\,060}{16\,800}\approx-5{,}956,\qquad b=\bar y-a\bar x\approx1\,278{,}27,\qquad \hat y=-5{,}956\,x+1\,278{,}27.
+\]
+\textbf{B\'en\'efice} : chaque exemplaire est vendu $1000x$ F et co\^ute $25\,000$ F ; les frais fixes sont $28\,000\,000$ F. Donc
+\[
+B(x)=\hat y\,(1000x-25\,000)-28\,000\,000.
+\]
+En d\'eveloppant : $B(x)=-5\,956\,x^2+1\,427\,170\,x-59\,956\,750$.
+Le maximum est atteint pour $x=\dfrac{1\,427\,170}{2\times5\,956}\approx119{,}8$.
+\textbf{Le prix de vente optimal est d'environ $119\,800$ F, pour un b\'en\'efice maximal d'environ $25{,}5$ millions de FCFA.}
+\begin{hyp}le mod\`ele lin\'eaire $\hat y(x)$ est utilis\'e pour pr\'evoir le nombre d'exemplaires vendus.\end{hyp}
+
+%% ===============================================================
+\subsection{Exercice 39 : Probabilit\'es}
+
+Une classe de $12$ filles et $9$ gar\c cons, soit $21$ \'el\`eves. Un comit\'e est un arrangement de $3$ \'el\`eves
+(major, adjoint, secr\'etaire).
+
+\textbf{1.} Nombre de comit\'es : $21\times20\times19=\mathbf{7980}$ : \textbf{r\'eponse b)}.
+
+\textbf{2.} Comit\'es de m\^eme sexe : tous filles $12\times11\times10=1320$ ; tous gar\c cons $9\times8\times7=504$.
+Total : $1320+504=\mathbf{1824}$ : \textbf{r\'eponse c)}.
+
+\textbf{3.} $P(\text{que des filles})=\dfrac{1320}{7980}=\dfrac{22}{133}\approx0{,}165$ : \textbf{r\'eponse b)}.
+
+%% ===============================================================
+\subsection{Exercice 40 : Lancers de pi\`ece}
+
+On lance deux fois une pi\`ece : $\Omega=\{(F;F);(F;P);(P;F);(P;P)\}$. Soit $A$ : ``obtenir au moins un pile'',
+donc $A=\{(F;P);(P;F);(P;P)\}$.
+
+\textbf{Appariement :}
+\begin{itemize}
+  \item ``Univers'' $\longleftrightarrow$ $\Omega=\{(F;F);(F;P);(P;F);(P;P)\}$ ;
+  \item ``Obtenir uniquement les c\^ot\'es face'' $\longleftrightarrow$ l'\'ev\'enement $\{(F;F)\}$, qui est un \textbf{\'ev\'enement \'el\'ementaire} ;
+  \item ``\'Ev\'enement incompatible avec $A$'' $\longleftrightarrow$ $\{(F;F)\}$, car $A\cap\{(F;F)\}=\varnothing$ ;
+  \item ``\'Ev\'enement \'el\'ementaire'' $\longleftrightarrow$ $(P;P)$ ;
+  \item ``\'Eventualit\'e'' $\longleftrightarrow$ $(F;P)$.
+\end{itemize}
+\begin{rem} L'\'enonc\'e propose une liste d'appariements dont l'un se recoupe : ``obtenir uniquement face'' est \`a la fois
+\'ev\'enement \'el\'ementaire et incompatible avec $A$. La r\'eponse ci-dessus est la plus coh\'erente.\end{rem}
+
+%% ===============================================================
+\subsection{Exercice 41 : Cercle et repr\'esentation param\'etrique}
+
+$x^2+y^2-12x+6y-4=0\iff(x-6)^2+(y+3)^2=4+36+9=49$.
+\textbf{Centre $\Omega(6;-3)$, rayon $R=7$.}
+\textbf{Repr\'esentation param\'etrique :} $\begin{cases}x=6+7\cos t\\ y=-3+7\sin t\end{cases}$, $t\in[0;2\pi[$.
+
+%% ===============================================================
+\subsection{Exercice 42 : Droites et angles}
+
+Pour deux droites $(\Delta)$ et $(\Delta')$ s\'ecantes en $A$, la compos\'ee de deux sym\'etries d'axes concourants est une rotation de centre $A$ :
+\[
+S_{(\Delta')}\circ S_{(\Delta)}=\text{rotation de centre }A\text{ et d'angle }2\,\mathrm{Mes}(\vect u;\vect u')
+=2\times\left(-\frac{\pi}{6}\right)=-\frac{\pi}{3}.
+\]
+\textbf{R\'eponse : la rotation de centre $A$ et d'angle $-\dfrac{\pi}{3}$.}
+
+%% ===============================================================
+\subsection{Exercice 43 : Compos\'ee de sym\'etries}
+
+\textbf{La compos\'ee de deux sym\'etries d'axes parall\`eles est une \textbf{translation}} ; par contre la compos\'ee de deux
+sym\'etries d'axes perpendiculaires est une \textbf{sym\'etrie centrale} (rotation d'angle $\pi$) de centre le point d'intersection des axes.
+
+\section*{Conclusion}
+Ces corrections couvrent les 43 exercices du recueil. Les points marqu\'es ``remarque'' ou ``hypoth\`ese'' signalent des
+\'enonc\'es incomplets, incoh\'erents ou ambigus : il est conseill\'e de les v\'erifier aupr\`es du professeur avant de les utiliser.
+
+\end{document}
