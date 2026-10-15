@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Section du cube par le plan (ACG) — Géométrie dans l'espace · 3ème</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;line-height:1.68;
+ background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0f172a 100%);color:#e2e8f0;min-height:100vh}
+.wrap{max-width:980px;margin:0 auto;padding:34px 20px 70px}
+header{text-align:center;padding:10px 0 26px}
+.sub{font-size:12px;letter-spacing:4px;text-transform:uppercase;color:#f472b6;margin-bottom:10px}
+h1{font-size:clamp(1.5rem,4vw,2.4rem);font-weight:800;line-height:1.25;
+ background:linear-gradient(90deg,#38bdf8,#818cf8,#f472b6);-webkit-background-clip:text;
+ background-clip:text;-webkit-text-fill-color:transparent}
+.tagline{margin-top:12px;color:#94a3b8;font-size:1rem}
+.chips{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px}
+.chip{background:rgba(244,114,182,0.14);border:1px solid rgba(244,114,182,0.35);color:#f9a8d4;
+ padding:4px 14px;border-radius:20px;font-size:0.82rem;font-weight:600}
+.back{display:inline-block;margin-bottom:6px;color:#38bdf8;text-decoration:none;font-size:0.9rem}
+.card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);
+ border-radius:18px;padding:24px 26px;margin:20px 0}
+h2{color:#38bdf8;font-size:1.22rem;margin:0 0 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+h3{color:#f472b6;font-size:1.02rem;margin:20px 0 8px}
+p{margin:9px 0}
+ul,ol{margin:8px 0 8px 22px}
+li{margin:7px 0}
+b{color:#f8fafc}
+em{color:#7dd3fc;font-style:normal;font-weight:600}
+.box{padding:14px 18px;border-radius:0 12px 12px 0;margin:16px 0}
+.key{background:rgba(56,189,248,0.10);border-left:4px solid #38bdf8}
+.warn{background:rgba(244,114,182,0.10);border-left:4px solid #f472b6}
+.ok{background:rgba(52,211,153,0.10);border-left:4px solid #34d399}
+.tip{background:rgba(251,191,36,0.10);border-left:4px solid #fbbf24}
+.box p:first-child{margin-top:0}.box p:last-child{margin-bottom:0}
+figure{background:rgba(15,23,42,0.55);border:1px solid rgba(255,255,255,0.06);
+ border-radius:14px;padding:10px;margin:18px 0}
+figure svg{width:100%;height:auto;display:block}
+figcaption{color:#94a3b8;font-size:0.84rem;padding:8px 6px 2px;text-align:center}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:0.92rem}
+th,td{border:1px solid rgba(255,255,255,0.10);padding:9px 11px;text-align:left;vertical-align:top}
+th{background:rgba(56,189,248,0.10);color:#7dd3fc;font-weight:600}
+td:first-child{white-space:nowrap;color:#f8fafc;font-weight:600}
+.steps{counter-reset:s;list-style:none;margin-left:0}
+.steps li{counter-increment:s;position:relative;padding-left:44px;margin:14px 0}
+.steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:29px;height:29px;
+ border-radius:9px;background:linear-gradient(135deg,#f472b6,#db2777);color:#fff;
+ font-weight:800;font-size:0.85rem;display:flex;align-items:center;justify-content:center}
+details{background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.18);
+ border-radius:12px;padding:12px 16px;margin:12px 0}
+summary{cursor:pointer;color:#7dd3fc;font-weight:600}
+details p{margin-top:10px;color:#cbd5e1}
+.answer{color:#e2e8f0}
+.recopier{background:rgba(15,23,42,0.6);border:1px dashed rgba(244,114,182,0.45);
+ border-radius:14px;padding:20px 22px}
+.recopier ul{margin-left:18px}
+footer{text-align:center;padding:34px 20px;color:#475569;font-size:0.9rem;
+ border-top:1px solid rgba(255,255,255,0.05);margin-top:26px}
+@media print{body{background:#fff;color:#111}.card{border-color:#ccc}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="sub">Terminish · l'univers de Mathématiques</div>
+  <h1>Section d'un cube par un plan :<br>le plan (ACG)</h1>
+  <div class="tagline">Géométrie dans l'espace — perspective cavalière — <b>3ème</b></div>
+  <div class="chips">
+    <span class="chip">Niveau : 3ème</span>
+    <span class="chip">Durée : 2 séances</span>
+    <span class="chip">Support : boîte transparente + panneau</span>
+  </div>
+</header>
+
+<div class="card">
+  <h2>📋 L'énoncé, recopié proprement</h2>
+  <p><em>Situation d'apprentissage.</em> Une boîte transparente a la forme d'un cube
+  <b>ABCD&nbsp;-&nbsp;EFGH</b>. Un panneau est placé suivant le plan <b>(ACG)</b>. Le menuisier veut
+  représenter correctement le cube, connaître la partie du solide découpée par le panneau et
+  distinguer les droites et les plans qui se rencontrent de ceux qui ne se rencontrent pas.</p>
+  <p><em>Problème.</em> Construire une représentation en perspective cavalière et déterminer la
+  section du cube par le plan <b>(ACG)</b>.</p>
+  <div class="box tip">
+    <p><b>Convention de nommage utilisée ici (celle du schéma).</b> La base est le carré
+    <b>ABCD</b> (A en avant à gauche, B en avant à droite, C en arrière à droite, D en arrière à gauche),
+    le dessus est le carré <b>EFGH</b>, et les arêtes verticales sont <b>[AE]</b>, <b>[BF]</b>,
+    <b>[CG]</b>, <b>[DH]</b>.</p>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🎒 Ce qu'il faut savoir avant de commencer</h2>
+  <ul>
+    <li><b>Perspective cavalière :</b> la face avant est dessinée en vraie grandeur (un vrai carré),
+    les arêtes de fuite sont tracées à 45° avec une longueur réduite de moitié, les verticales
+    restent verticales et gardent leur longueur.</li>
+    <li><b>Les arêtes cachées</b> se tracent en pointillés.</li>
+    <li><b>Trois points non alignés</b> déterminent un plan : c'est pour cela que le plan
+    s'appelle (ACG).</li>
+    <li><b>Une section</b> est l'intersection du plan avec la surface du solide : c'est un
+    polygone convexe dont tous les sommets sont sur des arêtes du solide.</li>
+  </ul>
+  <div class="box key">
+    <p><b>La propriété clé du cours (à connaître par cœur) :</b><br>
+    « Si un plan contient une droite <i>d</i> et un point <i>M</i>, alors il contient
+    <b>toutes les droites passant par M et parallèles à d</b>. »</p>
+    <p>C'est cette phrase qui fait apparaître le 4<sup>e</sup> sommet de la section, celui que
+    l'énoncé ne donne pas.</p>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📐 Étape A — Construire le cube en perspective cavalière</h2>
+  <ol class="steps">
+    <li>Tracer la <b>face avant ABFE</b> : un carré de côté <b>a</b> (ici a = 6 cm),
+    en vraie grandeur.</li>
+    <li>À partir de <b>A</b>, <b>B</b>, <b>E</b> et <b>F</b>, tracer les <b>4 arêtes de fuite</b> à 45°
+    vers le haut et la droite, de longueur <b>a/2 = 3 cm</b>. On obtient <b>D</b>, <b>C</b>, <b>H</b>
+    et <b>G</b>.</li>
+    <li>Relier <b>D-C</b>, <b>C-G</b>, <b>G-H</b> et <b>H-D</b> : c'est la face arrière
+    <b>DCGH</b>.</li>
+    <li>Mettre en <b>pointillés</b> les trois arêtes cachées : <b>[AD]</b>, <b>[DC]</b> et
+    <b>[DH]</b> (elles sont derrière le cube, on ne les voit pas).</li>
+    <li>Placer le panneau : tracer <b>[AC]</b> (diagonale de la base), <b>[EG]</b> (diagonale du
+    dessus), puis colorier le quadrilatère <b>ACGE</b>.</li>
+  </ol>
+  <figure>
+    <svg viewBox="0 0 780 300" xmlns="http://www.w3.org/2000/svg" role="img">
+<polygon points="55.0,215.0 165.0,215.0 165.0,105.0 55.0,105.0" fill="rgba(226,232,240,0.05)" stroke="#e2e8f0" stroke-width="2"/>
+<text x="39.0" y="235.0" font-size="13" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >A</text>
+<text x="181.0" y="235.0" font-size="13" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >B</text>
+<text x="177.0" y="117.0" font-size="13" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >F</text>
+<text x="39.0" y="97.0" font-size="13" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >E</text>
+<text x="140.0" y="258.0" font-size="13" font-weight="700" fill="#e2e8f0" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >1. La face avant ABFE</text>
+<text x="140.0" y="276.0" font-size="11" font-weight="400" fill="#94a3b8" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >carré de côté a, en vraie grandeur</text>
+<polygon points="315.0,215.0 425.0,215.0 425.0,105.0 315.0,105.0" fill="rgba(226,232,240,0.05)" stroke="#e2e8f0" stroke-width="2"/>
+<line x1="315.0" y1="215.0" x2="353.9" y2="176.1" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/>
+<line x1="425.0" y1="215.0" x2="463.9" y2="176.1" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/>
+<line x1="315.0" y1="105.0" x2="353.9" y2="66.1" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/>
+<line x1="425.0" y1="105.0" x2="463.9" y2="66.1" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/>
+<circle cx="463.9" cy="176.1" r="3.2" fill="#38bdf8"/>
+<circle cx="353.9" cy="176.1" r="3.2" fill="#38bdf8"/>
+<circle cx="353.9" cy="66.1" r="3.2" fill="#38bdf8"/>
+<circle cx="463.9" cy="66.1" r="3.2" fill="#38bdf8"/>
+<text x="299.0" y="235.0" font-size="13" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >A</text>
+<text x="441.0" y="235.0" font-size="13" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >B</text>
+<text x="481.9" y="190.1" font-size="13" font-weight="700" fill="#38bdf8" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >C</text>
+<text x="367.9" y="190.1" font-size="13" font-weight="700" fill="#38bdf8" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >D</text>
+<text x="299.0" y="97.0" font-size="13" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >E</text>
+<text x="437.0" y="117.0" font-size="13" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >F</text>
+<text x="481.9" y="58.1" font-size="13" font-weight="700" fill="#38bdf8" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >G</text>
+<text x="349.9" y="50.1" font-size="13" font-weight="700" fill="#38bdf8" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >H</text>
+<text x="400.0" y="258.0" font-size="13" font-weight="700" fill="#e2e8f0" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >2. Les 4 arêtes de fuite</text>
+<text x="400.0" y="276.0" font-size="11" font-weight="400" fill="#94a3b8" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >à 45°, longueur a/2</text>
+<polygon points="575.0,215.0 685.0,215.0 685.0,105.0 575.0,105.0" fill="rgba(226,232,240,0.05)" stroke="#e2e8f0" stroke-width="2"/>
+<line x1="575.0" y1="215.0" x2="613.9" y2="176.1" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/>
+<line x1="685.0" y1="215.0" x2="723.9" y2="176.1" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/>
+<line x1="575.0" y1="105.0" x2="613.9" y2="66.1" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/>
+<line x1="685.0" y1="105.0" x2="723.9" y2="66.1" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/>
+<circle cx="723.9" cy="176.1" r="3.2" fill="#38bdf8"/>
+<circle cx="613.9" cy="176.1" r="3.2" fill="#38bdf8"/>
+<circle cx="613.9" cy="66.1" r="3.2" fill="#38bdf8"/>
+<circle cx="723.9" cy="66.1" r="3.2" fill="#38bdf8"/>
+<polygon points="575.0,105.0 685.0,105.0 723.9,66.1 613.9,66.1" fill="rgba(56,189,248,0.10)" stroke="#e2e8f0" stroke-width="2"/>
+<polygon points="685.0,215.0 723.9,176.1 723.9,66.1 685.0,105.0" fill="rgba(226,232,240,0.02)" stroke="#e2e8f0" stroke-width="2"/>
+<line x1="613.9" y1="176.1" x2="723.9" y2="176.1" stroke="#7c8ba1" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="6 5"/>
+<line x1="613.9" y1="176.1" x2="613.9" y2="66.1" stroke="#7c8ba1" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="6 5"/>
+<line x1="575.0" y1="215.0" x2="613.9" y2="176.1" stroke="#7c8ba1" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="6 5"/>
+<text x="559.0" y="235.0" font-size="13" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >A</text>
+<text x="701.0" y="235.0" font-size="13" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >B</text>
+<text x="741.9" y="190.1" font-size="13" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >C</text>
+<text x="627.9" y="190.1" font-size="13" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >D</text>
+<text x="559.0" y="97.0" font-size="13" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >E</text>
+<text x="697.0" y="117.0" font-size="13" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >F</text>
+<text x="741.9" y="58.1" font-size="13" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >G</text>
+<text x="609.9" y="50.1" font-size="13" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >H</text>
+<text x="660.0" y="258.0" font-size="13" font-weight="700" fill="#e2e8f0" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >3. La face arrière + les cachés</text>
+<text x="660.0" y="276.0" font-size="11" font-weight="400" fill="#94a3b8" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >en pointillés : [AD], [DC], [DH]</text>
+</svg>
+    <figcaption>Les trois temps de la construction. Les arêtes de fuite (en bleu) partent de A, B, E, F.</figcaption>
+  </figure>
+</div>
+
+<div class="card">
+  <h2>🔪 Étape B — Déterminer la section</h2>
+  <p>On cherche l'intersection du plan (ACG) avec la <b>surface</b> du cube. Méthode : on avance
+  de face en face, jusqu'à revenir au point de départ.</p>
+  <ol class="steps">
+    <li><b>Les points acquis.</b> A, C et G appartiennent au plan (ACG) par définition. Donc le plan
+    contient déjà les droites <b>(AC)</b> et <b>(CG)</b>.</li>
+    <li><b>Trouver le 4<sup>e</sup> point (l'étape décisive).</b> Dans le cube, les quatre arêtes
+    verticales sont parallèles : <b>(AE) ∥ (BF) ∥ (CG) ∥ (DH)</b>. Or le plan (ACG) contient
+    l'arête <b>(CG)</b> et le point <b>A</b>. D'après la propriété clé, il contient donc la
+    parallèle à (CG) passant par A, c'est-à-dire <b>(AE)</b>. Donc <b>E appartient au plan
+    (ACG)</b>. 🎯</li>
+    <li><b>Passer en revue les 6 faces.</b><br>
+    • Base ABCD : A et C → la coupe suit <b>[AC]</b> (diagonale de la base).<br>
+    • Dessus EFGH : E et G → la coupe suit <b>[EG]</b> (diagonale du dessus).<br>
+    • Face avant ABFE : A et E → la coupe suit <b>[AE]</b> (arête entière).<br>
+    • Face arrière DCGH : C et G → la coupe suit <b>[CG]</b> (arête entière).<br>
+    • Face gauche ADHE : rien de plus, elle touche déjà le plan le long de [AE].<br>
+    • Face droite BCGF : rien de plus, elle touche déjà le plan le long de [CG].</li>
+    <li><b>Fermer le contour.</b> On obtient A → C → G → E → A : la section est le quadrilatère
+    <b>ACGE</b>.</li>
+  </ol>
+  <div class="box warn">
+    <p><b>⚠️ Le piège n°1 (et c'est tout l'intérêt de l'exercice).</b> Le plan s'appelle
+    <b>(ACG)</b>, mais la section n'est <b>pas</b> le triangle ACG ! Le nom d'un plan dit
+    seulement par quels points il passe ; il ne dit jamais la forme de la découpe. Ici le plan
+    « emporte » une arête entière, [AE], et la section a <b>4</b> sommets, pas 3.</p>
+  </div>
+  <figure>
+    <svg viewBox="0 0 372 350" xmlns="http://www.w3.org/2000/svg" role="img">
+<polygon points="50.0,300.0 240.0,300.0 307.2,232.8 117.2,232.8" fill="rgba(226,232,240,0.02)"/>
+<polygon points="50.0,300.0 240.0,300.0 240.0,110.0 50.0,110.0" fill="rgba(226,232,240,0.05)"/>
+<polygon points="240.0,300.0 307.2,232.8 307.2,42.8 240.0,110.0" fill="rgba(226,232,240,0.02)"/>
+<polygon points="50.0,110.0 240.0,110.0 307.2,42.8 117.2,42.8" fill="rgba(56,189,248,0.10)"/>
+<line x1="50.0" y1="300.0" x2="117.2" y2="232.8" stroke="#7c8ba1" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="7 6"/>
+<line x1="117.2" y1="232.8" x2="307.2" y2="232.8" stroke="#7c8ba1" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="7 6"/>
+<line x1="117.2" y1="232.8" x2="117.2" y2="42.8" stroke="#7c8ba1" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="7 6"/>
+<line x1="50.0" y1="300.0" x2="240.0" y2="300.0" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"/>
+<line x1="240.0" y1="300.0" x2="307.2" y2="232.8" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"/>
+<line x1="50.0" y1="300.0" x2="50.0" y2="110.0" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"/>
+<line x1="240.0" y1="300.0" x2="240.0" y2="110.0" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"/>
+<line x1="307.2" y1="232.8" x2="307.2" y2="42.8" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"/>
+<line x1="50.0" y1="110.0" x2="240.0" y2="110.0" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"/>
+<line x1="240.0" y1="110.0" x2="307.2" y2="42.8" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"/>
+<line x1="307.2" y1="42.8" x2="117.2" y2="42.8" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"/>
+<line x1="117.2" y1="42.8" x2="50.0" y2="110.0" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"/>
+<polygon points="50.0,300.0 307.2,232.8 307.2,42.8 50.0,110.0" fill="rgba(244,114,182,0.22)" stroke="#f472b6" stroke-width="3"/>
+<line x1="50.0" y1="300.0" x2="307.2" y2="232.8" stroke="#f472b6" stroke-width="3.2" stroke-linecap="round"/>
+<line x1="307.2" y1="232.8" x2="307.2" y2="42.8" stroke="#f472b6" stroke-width="3.2" stroke-linecap="round"/>
+<line x1="307.2" y1="42.8" x2="50.0" y2="110.0" stroke="#f472b6" stroke-width="3.2" stroke-linecap="round"/>
+<line x1="50.0" y1="110.0" x2="50.0" y2="300.0" stroke="#f472b6" stroke-width="3.2" stroke-linecap="round"/>
+<text x="178.0" y="176.0" font-size="13" font-weight="700" fill="#f9a8d4" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >section ACGE</text>
+<text x="34.0" y="322.0" font-size="16" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >A</text>
+<text x="258.0" y="322.0" font-size="16" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >B</text>
+<text x="327.2" y="246.8" font-size="16" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >C</text>
+<text x="136.2" y="251.8" font-size="16" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >D</text>
+<text x="33.0" y="103.0" font-size="16" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >E</text>
+<text x="257.0" y="127.0" font-size="16" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >F</text>
+<text x="327.2" y="33.8" font-size="16" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >G</text>
+<text x="111.2" y="25.8" font-size="16" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >H</text>
+</svg>
+    <figcaption>La section du cube par le plan (ACG) : le rectangle ACGE (en rose). Les arêtes
+    cachées [AD], [DC] et [DH] sont en pointillés.</figcaption>
+  </figure>
+</div>
+
+<div class="card">
+  <h2>📏 Étape C — Nature et dimensions de la section</h2>
+  <p>On note <b>a</b> l'arête du cube.</p>
+  <ul>
+    <li><b>Nature :</b> ACGE est un <b>rectangle</b>. En effet, l'arête [AE] est verticale donc
+    perpendiculaire à la base, donc (AE) ⊥ (AC) ; et (CG) ∥ (AE), (EG) ∥ (AC).</li>
+    <li><b>Côtés :</b> AE = CG = <b>a</b> (deux arêtes du cube) et AC = EG = <b>a√2</b>
+    (deux diagonales de faces).</li>
+    <li><b>Aire de la section :</b> a × a√2 = <b>a²√2</b>.</li>
+    <li><b>Repère :</b> c'est un <b>plan diagonal</b> du cube : il contient deux arêtes
+    opposées, [AE] et [CG].</li>
+    <li><b>Centre :</b> les diagonales [AG] et [CE] du rectangle se coupent au <b>centre Ω du
+    cube</b>.</li>
+  </ul>
+  <div class="box ok">
+    <p><b>Application numérique (a = 6 cm).</b> AC = 6√2 ≈ <b>8,49 cm</b>, AE = <b>6 cm</b>,
+    aire de la section = 36√2 ≈ <b>50,9 cm²</b>.</p>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🧊 Étape D — Les deux parties découpées par le panneau</h2>
+  <p>Le panneau partage la boîte en <b>deux solides identiques</b> : deux
+  <b>prismes droits</b> dont la base est un triangle rectangle isocèle (la moitié du carré de
+  base).</p>
+  <figure>
+    <svg viewBox="0 0 620 330" xmlns="http://www.w3.org/2000/svg" role="img">
+<line x1="70.0" y1="250.0" x2="190.0" y2="250.0" stroke="rgba(226,232,240,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="190.0" y1="250.0" x2="232.4" y2="207.6" stroke="rgba(226,232,240,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="70.0" y1="250.0" x2="70.0" y2="130.0" stroke="rgba(226,232,240,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="190.0" y1="250.0" x2="190.0" y2="130.0" stroke="rgba(226,232,240,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="232.4" y1="207.6" x2="232.4" y2="87.6" stroke="rgba(226,232,240,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="70.0" y1="130.0" x2="190.0" y2="130.0" stroke="rgba(226,232,240,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="190.0" y1="130.0" x2="232.4" y2="87.6" stroke="rgba(226,232,240,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="232.4" y1="87.6" x2="112.4" y2="87.6" stroke="rgba(226,232,240,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="112.4" y1="87.6" x2="70.0" y2="130.0" stroke="rgba(226,232,240,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="70.0" y1="250.0" x2="112.4" y2="207.6" stroke="rgba(124,139,161,0.5)" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="5 5"/>
+<line x1="112.4" y1="207.6" x2="232.4" y2="207.6" stroke="rgba(124,139,161,0.5)" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="5 5"/>
+<line x1="112.4" y1="207.6" x2="112.4" y2="87.6" stroke="rgba(124,139,161,0.5)" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="5 5"/>
+<polygon points="70.0,250.0 190.0,250.0 232.4,207.6" fill="#38bdf8" fill-opacity="0.17" stroke="#38bdf8" stroke-width="1.4"/>
+<polygon points="70.0,130.0 190.0,130.0 232.4,87.6" fill="#38bdf8" fill-opacity="0.17" stroke="#38bdf8" stroke-width="1.4"/>
+<polygon points="70.0,250.0 190.0,250.0 190.0,130.0 70.0,130.0" fill="#38bdf8" fill-opacity="0.17" stroke="#38bdf8" stroke-width="1.4"/>
+<polygon points="190.0,250.0 232.4,207.6 232.4,87.6 190.0,130.0" fill="#38bdf8" fill-opacity="0.17" stroke="#38bdf8" stroke-width="1.4"/>
+<polygon points="70.0,250.0 232.4,207.6 232.4,87.6 70.0,130.0" fill="rgba(244,114,182,0.22)" stroke="#f472b6" stroke-width="3"/>
+<line x1="70.0" y1="250.0" x2="190.0" y2="250.0" stroke="#38bdf8" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="190.0" y1="250.0" x2="232.4" y2="207.6" stroke="#38bdf8" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="232.4" y1="207.6" x2="70.0" y2="250.0" stroke="#38bdf8" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="70.0" y1="130.0" x2="190.0" y2="130.0" stroke="#38bdf8" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="190.0" y1="130.0" x2="232.4" y2="87.6" stroke="#38bdf8" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="232.4" y1="87.6" x2="70.0" y2="130.0" stroke="#38bdf8" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="70.0" y1="250.0" x2="70.0" y2="130.0" stroke="#38bdf8" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="190.0" y1="250.0" x2="190.0" y2="130.0" stroke="#38bdf8" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="232.4" y1="207.6" x2="232.4" y2="87.6" stroke="#38bdf8" stroke-width="2.6" stroke-linecap="round"/>
+<text x="54.0" y="270.0" font-size="12" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >A</text>
+<text x="206.0" y="270.0" font-size="12" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >B</text>
+<text x="250.4" y="220.6" font-size="12" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >C</text>
+<text x="126.4" y="221.6" font-size="12" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >D</text>
+<text x="54.0" y="122.0" font-size="12" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >E</text>
+<text x="206.0" y="122.0" font-size="12" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >F</text>
+<text x="250.4" y="78.6" font-size="12" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >G</text>
+<text x="106.4" y="70.6" font-size="12" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >H</text>
+<text x="160.0" y="288.0" font-size="13" font-weight="700" fill="#38bdf8" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >Partie 1 : prisme A B C – E F G</text>
+<text x="160.0" y="305.0" font-size="11" font-weight="400" fill="#94a3b8" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >il contient l’arête [BF]</text>
+<line x1="390.0" y1="250.0" x2="510.0" y2="250.0" stroke="rgba(226,232,240,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="510.0" y1="250.0" x2="552.4" y2="207.6" stroke="rgba(226,232,240,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="390.0" y1="250.0" x2="390.0" y2="130.0" stroke="rgba(226,232,240,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="510.0" y1="250.0" x2="510.0" y2="130.0" stroke="rgba(226,232,240,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="552.4" y1="207.6" x2="552.4" y2="87.6" stroke="rgba(226,232,240,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="390.0" y1="130.0" x2="510.0" y2="130.0" stroke="rgba(226,232,240,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="510.0" y1="130.0" x2="552.4" y2="87.6" stroke="rgba(226,232,240,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="552.4" y1="87.6" x2="432.4" y2="87.6" stroke="rgba(226,232,240,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="432.4" y1="87.6" x2="390.0" y2="130.0" stroke="rgba(226,232,240,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="390.0" y1="250.0" x2="432.4" y2="207.6" stroke="rgba(124,139,161,0.5)" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="5 5"/>
+<line x1="432.4" y1="207.6" x2="552.4" y2="207.6" stroke="rgba(124,139,161,0.5)" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="5 5"/>
+<line x1="432.4" y1="207.6" x2="432.4" y2="87.6" stroke="rgba(124,139,161,0.5)" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="5 5"/>
+<polygon points="390.0,250.0 552.4,207.6 432.4,207.6" fill="#fbbf24" fill-opacity="0.17" stroke="#fbbf24" stroke-width="1.4"/>
+<polygon points="390.0,130.0 552.4,87.6 432.4,87.6" fill="#fbbf24" fill-opacity="0.17" stroke="#fbbf24" stroke-width="1.4"/>
+<polygon points="390.0,250.0 432.4,207.6 432.4,87.6 390.0,130.0" fill="#fbbf24" fill-opacity="0.17" stroke="#fbbf24" stroke-width="1.4"/>
+<polygon points="552.4,207.6 432.4,207.6 432.4,87.6 552.4,87.6" fill="#fbbf24" fill-opacity="0.17" stroke="#fbbf24" stroke-width="1.4"/>
+<polygon points="390.0,250.0 552.4,207.6 552.4,87.6 390.0,130.0" fill="rgba(244,114,182,0.22)" stroke="#f472b6" stroke-width="3"/>
+<line x1="390.0" y1="250.0" x2="552.4" y2="207.6" stroke="#fbbf24" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="552.4" y1="207.6" x2="432.4" y2="207.6" stroke="#fbbf24" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="432.4" y1="207.6" x2="390.0" y2="250.0" stroke="#fbbf24" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="390.0" y1="130.0" x2="552.4" y2="87.6" stroke="#fbbf24" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="552.4" y1="87.6" x2="432.4" y2="87.6" stroke="#fbbf24" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="432.4" y1="87.6" x2="390.0" y2="130.0" stroke="#fbbf24" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="390.0" y1="250.0" x2="390.0" y2="130.0" stroke="#fbbf24" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="432.4" y1="207.6" x2="432.4" y2="87.6" stroke="#fbbf24" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="552.4" y1="207.6" x2="552.4" y2="87.6" stroke="#fbbf24" stroke-width="2.6" stroke-linecap="round"/>
+<text x="374.0" y="270.0" font-size="12" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >A</text>
+<text x="526.0" y="270.0" font-size="12" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >B</text>
+<text x="570.4" y="220.6" font-size="12" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >C</text>
+<text x="446.4" y="221.6" font-size="12" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >D</text>
+<text x="374.0" y="122.0" font-size="12" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >E</text>
+<text x="526.0" y="146.0" font-size="12" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >F</text>
+<text x="570.4" y="78.6" font-size="12" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >G</text>
+<text x="426.4" y="70.6" font-size="12" font-weight="700" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >H</text>
+<text x="480.0" y="288.0" font-size="13" font-weight="700" fill="#fbbf24" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >Partie 2 : prisme A C D – E G H</text>
+<text x="480.0" y="305.0" font-size="11" font-weight="400" fill="#94a3b8" stroke="#0f172a" stroke-width="4" paint-order="stroke" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" >il contient l’arête [DH]</text>
+</svg>
+    <figcaption>Les deux parties. Chacune est un prisme droit : 6 sommets, 9 arêtes, 5 faces.
+    Le rectangle rose (la section) est une face commune aux deux.</figcaption>
+  </figure>
+  <ul>
+    <li><b>Partie 1 :</b> prisme <b>ABC – EFG</b> (il contient l'arête [BF]).<br>
+    Faces : 2 triangles (ABC et EFG) + 3 rectangles (ABFE, BCGF, et <b>ACGE</b> la section).</li>
+    <li><b>Partie 2 :</b> prisme <b>ACD – EGH</b> (il contient l'arête [DH]).<br>
+    Faces : 2 triangles (ACD et EGH) + 3 rectangles (ADHE, CDHG, et <b>ACGE</b> la section).</li>
+    <li><b>Volume de chacune :</b> (a²/2) × a = <b>a³/2</b> → <b>exactement la moitié du cube</b>.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h2>🔎 Étape E — Droites et plans : qui se rencontre, qui ne se rencontre pas ?</h2>
+  <p>C'est la dernière consigne de l'énoncé. On classe les <b>12 arêtes</b> du cube par rapport au
+  plan (ACG) — puis quelques diagonales intéressantes, pour aller au bout de la question.</p>
+  <table>
+    <tr><th>Situation</th><th>Droites concernées</th><th>Pourquoi</th></tr>
+    <tr>
+      <td>✅ Dans le plan</td>
+      <td>(AC), (CG), (GE), (EA) puis (AG), (CE)</td>
+      <td>Les 4 premières bordent la section ; (AG) et (CE) sont ses diagonales.</td>
+    </tr>
+    <tr>
+      <td>✅ Rencontre en 1 point</td>
+      <td>(AB), (AD) → en A<br>(BC), (CD) → en C<br>(EF), (EH) → en E<br>(FG), (GH) → en G</td>
+      <td>Ces arêtes « arrivent » sur un sommet de la section.</td>
+    </tr>
+    <tr>
+      <td>✅ Rencontre en 1 point (cas subtils)</td>
+      <td>(BD) → en O, centre de la base<br>(FH) → en O', centre du dessus<br>(BH), (DF) → en Ω, centre du cube</td>
+      <td>(BD) coupe (AC) en O ; (FH) coupe (EG) en O' ; (BH) et (DF) traversent le cube de part en part.</td>
+    </tr>
+    <tr>
+      <td>❌ Ne se rencontrent pas</td>
+      <td><b>(BF)</b> et <b>(DH)</b></td>
+      <td>(BF) ∥ (AE) et (AE) est <b>dans</b> (ACG), donc (BF) ∥ (ACG). Idem pour (DH) ∥ (CG).
+      Et B ∉ (ACG), sinon le plan (ACG) serait le plan de la base et ne contiendrait pas G.</td>
+    </tr>
+  </table>
+  <h3>Et les plans ?</h3>
+  <ul>
+    <li><b>Les 6 plans des faces rencontrent tous</b> le plan (ACG) : la base le long de (AC),
+    le dessus le long de (EG), les faces avant et gauche le long de (AE), les faces droite et
+    arrière le long de (CG).</li>
+    <li><b>Le plan (BDH)</b>, l'autre plan diagonal du cube, <b>rencontre</b> (ACG) suivant la
+    droite <b>(OO')</b>, axe vertical du cube.</li>
+    <li><b>Des plans qui ne le rencontrent jamais</b> existent : ce sont tous les plans
+    <b>parallèles</b> à (ACG), par exemple le plan qui contient l'arête [BF] et qui est parallèle
+    à (ACG). Aucun d'eux n'est un plan de face du cube.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h2>🗣️ Comment l'expliquer à un élève de 3ème</h2>
+  <p class="answer"><b>Le script à dire à voix haute (≈ 3 minutes).</b></p>
+  <div class="box tip">
+    <p>« Prends une boîte à chaussures en plastique transparent. Glisse une feuille de carton
+    bien droite à l'intérieur. Je veux qu'elle touche <b>le coin en bas devant à gauche</b>
+    (A), et <b>toute l'arête verticale du fond à droite</b> (celle qui monte de C à G). La
+    feuille est donc coincée : elle passe par A, par C et par G.</p>
+    <p>Maintenant, la question piège : <b>où la feuille touche-t-elle la boîte sur le devant ?</b>
+    Regarde : dans un cube, les quatre arêtes verticales sont parallèles, comme quatre poteaux.
+    Notre feuille contient le poteau [CG], et elle passe par A. Or une feuille qui contient un
+    poteau contient aussi <b>tous les poteaux parallèles</b> qui passent par les points qu'elle
+    touche… donc elle contient le poteau qui monte de A : c'est [AE] ! La feuille remonte
+    <b>toute l'arête avant-gauche</b>, jusqu'en haut, jusqu'à E.</p>
+    <p>Donc la découpe, ce n'est pas un triangle : c'est un <b>rectangle</b> A-C-G-E. Deux
+    diagonales de carré (en bas et en haut) et deux arêtes verticales. Et si tu coupes pour de
+    vrai, tu obtiens <b>deux morceaux identiques</b> en forme de prisme, chacun la moitié de la
+    boîte. »</p>
+  </div>
+  <h3>Les 3 points à marteler</h3>
+  <ol>
+    <li><b>« Le nom du plan n'est pas la forme de la section. »</b> (ACG) → section ACGE, quatre
+    lettres. Le répéter deux fois, c'est le piège de l'exercice.</li>
+    <li><b>« Je ne calcule pas, j'avance de face en face. »</b> Face par face : la coupe entre
+    par où ? Elle sort par où ? Je passe à la voisine. Quand je reviens au départ, j'ai fini.</li>
+    <li><b>« Je vérifie que mon polygone est fermé. »</b> A → C → G → E → A. Si on ne revient pas
+    au point de départ, il manque un sommet.</li>
+  </ol>
+  <h3>Erreurs fréquentes à surveiller</h3>
+  <ul>
+    <li>Répondre « triangle ACG » (le piège n°1).</li>
+    <li>Oublier les pointillés sur les arêtes cachées [AD], [DC], [DH].</li>
+    <li>Croire que la section est un carré (non : a × a√2, c'est un rectangle).</li>
+    <li>Penser que (BF) rencontre le plan : non, il lui est <b>parallèle</b>.</li>
+    <li>Confondre « une droite est dans le plan » et « une droite coupe le plan ».</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h2>✍️ Trace écrite à recopier dans le cahier</h2>
+  <div class="recopier">
+    <p><b>Dans un cube ABCD - EFGH d'arête a, le plan (ACG) :</b></p>
+    <ul>
+      <li>contient les deux arêtes opposées [AE] et [CG] : c'est un <b>plan diagonal</b> ;</li>
+      <li>coupe le cube suivant le <b>rectangle ACGE</b>, avec AE = CG = <b>a</b> et
+      AC = EG = <b>a√2</b> ;</li>
+      <li>l'aire de la section est <b>a²√2</b> ;</li>
+      <li>partage le cube en <b>deux prismes droits de même volume a³/2</b> ;</li>
+      <li>les droites <b>(BF)</b> et <b>(DH)</b> lui sont <b>parallèles</b> ; toutes les autres
+      arêtes le rencontrent ;</li>
+      <li>les 6 plans des faces le rencontrent tous.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+  <h2>✅ Pour vérifier que c'est compris</h2>
+  <p><b>Question 1.</b> Cite les deux arêtes du cube qui ne rencontrent jamais le plan (ACG).
+  Justifie en une phrase.</p>
+  <details><summary>Voir la réponse</summary>
+  <p><b>(BF)</b> et <b>(DH)</b>. En effet (BF) ∥ (AE), (AE) est contenue dans (ACG) et B
+  n'appartient pas à (ACG) : donc (BF) est parallèle au plan (ACG). Même raisonnement avec
+  (DH) ∥ (CG).</p></details>
+
+  <p><b>Question 2.</b> Quelle est la nature de la section ? Donne ses dimensions et son aire
+  pour un cube d'arête a = 5 cm.</p>
+  <details><summary>Voir la réponse</summary>
+  <p>C'est un <b>rectangle</b> de 5 cm par 5√2 ≈ 7,07 cm. Aire = 25√2 ≈ <b>35,4 cm²</b>.</p>
+  </details>
+
+  <p><b>Question 3.</b> Quel volume occupe chacune des deux parties découpées si a = 6 cm ?</p>
+  <details><summary>Voir la réponse</summary>
+  <p>Volume du cube = 6³ = 216 cm³. Chaque partie = 216 / 2 = <b>108 cm³</b> (a³/2).</p>
+  </details>
+
+  <p><b>Question 4 (transfert).</b> Dans le même cube, détermine la section par le plan
+  <b>(BEG)</b>. Compare avec la section par (ACG).</p>
+  <details><summary>Voir la réponse</summary>
+  <p>Le plan (BEG) ne contient aucune arête du cube : il entre par les trois sommets B, E et G
+  et n'en contient aucun autre. La section est le <b>triangle BEG</b>, dont les trois côtés
+  [BE], [EG] et [GB] sont des diagonales de faces : c'est un <b>triangle équilatéral de côté
+  a√2</b>.</p>
+  <p><b>Différence avec (ACG) :</b> (BEG) « coupe un coin » du cube (section triangulaire),
+  alors que (ACG) le « tranche en deux » (section rectangulaire, et deux parties de même
+  volume).</p></details>
+</div>
+
+<div class="card">
+  <h2>👨‍🏫 Fiche professeur</h2>
+  <h3>Objectifs</h3>
+  <ul>
+    <li>Construire une représentation en perspective cavalière d'un cube (faces, arêtes
+    cachées).</li>
+    <li>Déterminer une section plane dans un cas où <b>le plan contient une arête</b>.</li>
+    <li>Utiliser la propriété : « un plan qui contient une droite et un point contient la
+    parallèle à cette droite passant par ce point ».</li>
+    <li>Classer droites et plans : appartenance, intersection, parallélisme.</li>
+  </ul>
+  <h3>Déroulé conseillé</h3>
+  <ol>
+    <li><b>Manipulation (10 min) :</b> boîte transparente + carton, ou cube en paille/plastiline.
+    Faire <b>deviner</b> où sort le panneau avant tout raisonnement.</li>
+    <li><b>Recherche (15 min) :</b> laisser les élèves proposer « triangle ACG », puis les
+    laisser se contredire entre eux.</li>
+    <li><b>Institutionnalisation (15 min) :</b> la propriété clé, la section ACGE, la trace
+    écrite.</li>
+    <li><b>Entraînement (15 min) :</b> questions 1 à 4.</li>
+  </ol>
+  <h3>Pour aller plus loin</h3>
+  <ul>
+    <li>Même cube, plan passant par les <b>milieux</b> de six arêtes : la section est un
+    <b>hexagone régulier</b>.</li>
+    <li>Section par le plan <b>(BDH)</b> : même méthode, on trouve le <b>rectangle BDHF</b>
+    (il contient les arêtes [BF] et [DH]). Les deux plans diagonaux (ACG) et (BDH) se coupent
+    suivant l'axe vertical (OO') du cube et partagent celui-ci en <b>4</b> quartiers égaux.</li>
+    <li>Comparer les aires : triangle équilatéral a√2 (section BEG) vs rectangle a × a√2
+    (section ACG).</li>
+  </ul>
+</div>
+
+<footer>
+  <p>© 2026 <strong style="color:#38bdf8">Terminish l'univers de Mathématiques</strong> — by
+  <strong>KODJO</strong></p>
+  <p style="margin-top:8px;font-size:0.8rem;color:#334155">Fiche 3ème — Géométrie dans l'espace —
+  Section du cube par le plan (ACG)</p>
+</footer>
+
+</div>
+</body>
+</html>
