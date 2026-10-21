@@ -2268,72 +2268,281 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     reseau: { nom: 'Réseau', prix: null, desc: 'Plusieurs établissements, console centrale et accompagnement.' }
   };
 
+  const OP_STYLE = {
+    mixx: { bg: '#fdecef', border: '#f7c9d2', color: '#b3122e', short: 'MIX' },
+    moov: { bg: '#eaf1fa', border: '#c6d9f0', color: '#00508f', short: 'MOOV' },
+    manuel: { bg: '#f1f4f3', border: '#dde6e1', color: '#4b6459', short: 'CASH' },
+    cinetpay: { bg: '#fdf6e7', border: '#f3e3bb', color: '#8a5a05', short: 'CP' }
+  };
+  function badgeOperateur(op) {
+    const st = OP_STYLE[op] || OP_STYLE.manuel;
+    const label = op === 'mixx' ? 'Mixx by Yas' : op === 'moov' ? 'Moov Money' : op === 'cinetpay' ? 'CinetPay' : (op ? esc(op) : '—');
+    return `<span class="tag" style="background:${st.bg};border:1px solid ${st.border};color:${st.color};font-weight:700">${label}</span>`;
+  }
+  function badgePaiementStatut(statut) {
+    const map = {
+      paye: ['vert', 'Payé'], en_attente: ['or', 'À vérifier'],
+      rejete: ['rouge', 'Rejeté'], annule: ['gris', 'Annulé'], echoue: ['rouge', 'Échoué']
+    };
+    const [c, l] = map[statut] || ['gris', statut || '—'];
+    return `<span class="tag ${c}">${esc(l)}</span>`;
+  }
+
   V.abonnement = {
     async render() {
-      const e = await api('/api/etablissement');
+      const [e, options, paiements] = await Promise.all([
+        api('/api/etablissement'),
+        api('/api/paiement/options'),
+        api('/api/paiements')
+      ]);
       S.etab = e;
-      let paiements = [];
-      try { paiements = await api('/api/paiements'); } catch { paiements = []; }
+      S.payOpts = options;
+      S.payForm = S.payForm || { plan: e.plan === 'essentiel' ? 'essentiel' : 'standard', mois: 12, operateur: 'mixx' };
+      const f = S.payForm;
+      const plan = options.plans.find(x => x.code === f.plan) || options.plans.find(x => !x.sur_devis) || options.plans[0];
+      const dureeChoisie = plan.montants.find(m => m.mois === Number(f.mois)) || plan.montants[0];
+      const montant = dureeChoisie ? dureeChoisie.montant : 0;
       const jours = e.date_fin_abonnement ? Math.ceil((new Date(e.date_fin_abonnement) - Date.now()) / 864e5) : null;
+      const enAttente = paiements.filter(p => p.statut === 'en_attente');
+      const operateursDispo = options.operateurs.filter(o => o.actif);
+      const aucunOperateur = operateursDispo.length === 0;
+
+      const cartesFormules = options.plans.map(p => {
+        const mensuel = p.sur_devis ? 'Sur devis' : (p.prix_mensuel ? money(p.prix_mensuel) + ' / mois' : 'Prix à définir');
+        return `<button type="button" class="plan-select ${p.code === f.plan ? 'on' : ''} ${p.sur_devis ? 'devis' : ''}"
+            data-plan="${p.code}" ${p.sur_devis ? 'disabled' : ''}>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <b>${esc(p.nom)}</b>${p.code === e.plan ? '<span class="tag vert">Actuelle</span>' : ''}
+          </div>
+          <div class="small muted" style="margin-top:2px">${esc((PLANS[p.code] || {}).desc || '')}</div>
+          <div style="margin-top:7px;font-weight:800;color:var(--vert-fonce);font-size:15px">${mensuel}</div>
+          ${p.sur_devis ? '<div class="small muted" style="margin-top:4px">Nous contacter</div>' : ''}
+        </button>`;
+      }).join('');
+
+      const cartesDuree = plan.montants.map(m => `
+        <button type="button" class="duree-select ${Number(f.mois) === m.mois ? 'on' : ''}" data-mois="${m.mois}">
+          <b>${esc(m.libelle)}</b>
+          <div class="small muted">${money(m.montant)}</div>
+          ${m.remise ? '<span class="tag or" style="margin-top:3px">2 mois offerts</span>' : ''}
+        </button>`).join('');
+
+      const cartesOperateur = options.operateurs.map(o => {
+        const st = OP_STYLE[o.code] || OP_STYLE.manuel;
+        return `<button type="button" class="op-select ${o.code === f.operateur ? 'on' : ''}" data-op="${o.code}"
+            ${o.actif ? '' : 'disabled title="Opérateur non configuré"'}>
+          <span class="op-logo" style="background:${st.bg};color:${st.color};border-color:${st.border}">${st.short}</span>
+          <span style="flex:1;text-align:left">
+            <b>${esc(o.nom)}</b>
+            <div class="small muted">${esc(o.ancien)}</div>
+          </span>
+          ${o.actif ? '' : '<span class="tag gris">Indisponible</span>'}
+        </button>`;
+      }).join('');
+
+      const opSel = options.operateurs.find(o => o.code === f.operateur) || operateursDispo[0] || null;
+
       return `
         <div class="two-col">
           <div class="panel">
-            <div class="panel-head"><div><h2>Votre formule</h2><div class="sub">Abonnement de ${esc(e.nom)}</div></div><div class="right">${badgeStatut(e.statut)}</div></div>
+            <div class="panel-head"><div><h2>Votre formule</h2><div class="sub">Abonnement de ${esc(e.nom)}</div></div>
+              <div class="right">${badgeStatut(e.statut)}</div></div>
             <div class="plan-current" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
               <div style="flex:1">
                 <div class="small muted">Formule actuelle</div>
                 <div style="font-size:22px;font-weight:800;color:var(--vert-fonce)">${esc((PLANS[e.plan] || {}).nom || e.plan)}</div>
                 <div class="small muted">${jours == null ? '' : jours >= 0 ? `${jours} jour(s) restant(s)` : '<span style="color:#b91c1c">Abonnement expiré</span>'}</div>
               </div>
-              <div style="text-align:right">
-                <div class="small muted">Échéance</div>
-                <div style="font-weight:700">${dateFr(e.date_fin_abonnement)}</div>
-              </div>
+              <div style="text-align:right"><div class="small muted">Échéance</div><div style="font-weight:700">${dateFr(e.date_fin_abonnement)}</div></div>
             </div>
+            ${enAttente.length ? `<div class="notice warn" style="margin-top:12px">
+              <b>${enAttente.length} paiement(s) en attente de vérification.</b>
+              Référence : ${enAttente.map(p => `<b>${esc(p.reference)}</b>`).join(', ')}. L’activation est automatique dès validation par l’éditeur.
+            </div>` : ''}
             <div class="notice ${jours !== null && jours <= 10 ? 'warn' : 'info'}" style="margin-top:12px">
               ${jours !== null && jours <= 10
-                ? '<b>Votre échéance approche.</b> Contactez-nous pour renouveler et éviter toute interruption de service.'
-                : 'Pour renouveler ou changer de formule, contactez notre équipe : activation sous 24 h après paiement mobile money ou virement.'}
+                ? '<b>Votre échéance approche.</b> Réglez par Mixx by Yas ou Moov Money : l’activation suit la vérification du paiement.'
+                : 'Payez par <b>Mixx by Yas</b> ou <b>Moov Money</b>. L’abonnement est prolongé dès la validation du paiement.'}
             </div>
-            <div style="display:grid;gap:8px;margin-top:12px">
-              <a class="btn btn-primary" href="https://wa.me/22890000000?text=${encodeURIComponent('Bonjour, je souhaite activer/renouveler l’abonnement Terminish École de ' + e.nom)}" target="_blank" rel="noopener">💬 Contacter par WhatsApp</a>
-              <button class="btn btn-ghost" onclick="App.demanderActivation()">✉️ Demander l'activation par email</button>
-            </div>
+            <a class="btn btn-ghost btn-sm" href="https://wa.me/22890000000?text=${encodeURIComponent('Bonjour, abonnement Terminish École — ' + e.nom)}" target="_blank" rel="noopener" style="margin-top:4px">💬 Une question ? WhatsApp</a>
           </div>
 
           <div class="panel">
-            <div class="panel-head"><div><h2>Historique des paiements</h2></div></div>
+            <div class="panel-head"><div><h2>Historique des paiements</h2><div class="sub">${paiements.length} opération(s)</div></div></div>
             ${paiements.length ? `<div class="table-wrap"><table class="data">
-              <thead><tr><th>Date</th><th>Formule</th><th class="right">Montant</th><th class="center">Statut</th><th>Référence</th></tr></thead>
+              <thead><tr><th>Date</th><th>Formule</th><th>Moyen</th><th class="right">Montant</th><th class="center">Statut</th></tr></thead>
               <tbody>${paiements.map(p => `<tr>
-                <td class="small">${dateFr(p.cree_le)}</td>
-                <td class="small" style="text-transform:capitalize">${esc(p.plan || '—')}</td>
+                <td class="small nowrap">${dateFr(p.cree_le)}</td>
+                <td class="small" style="text-transform:capitalize">${esc(p.plan || '—')}${p.mois ? ` · ${p.mois} mois` : ''}</td>
+                <td class="small">${badgeOperateur(p.operateur || (p.canal === 'cinetpay' ? 'cinetpay' : 'manuel'))}</td>
                 <td class="right strong">${money(p.montant, p.devise)}</td>
-                <td class="center">${badgeStatut(p.statut)}</td>
-                <td class="small muted">${esc(p.reference || '—')}</td>
+                <td class="center">${badgePaiementStatut(p.statut)}</td>
               </tr>`).join('')}</tbody>
             </table></div>` : emptyState('💳', 'Aucun paiement enregistré pour le moment.')}
           </div>
         </div>
 
         <div class="panel">
-          <div class="panel-head"><div><h2>Formules disponibles</h2><div class="sub">Tarifs en francs CFA · réduction de 2 mois en paiement annuel</div></div></div>
+          <div class="panel-head">
+            <div><h2>💳 Payer mon abonnement</h2><div class="sub">Mixx by Yas · Moov Money${options.cinetpay.actif ? ' · CinetPay' : ''}</div></div>
+            <div class="right"><span class="tag vert">Paiement sécurisé</span></div>
+          </div>
+
+          <div class="grid2" style="gap:0 18px">
+            <div>
+              <div class="field"><label>1. Formule souhaitée</label>
+                <div class="plan-selects">${cartesFormules}</div>
+              </div>
+              <div class="field"><label>2. Durée</label>
+                <div class="duree-selects">${cartesDuree}</div>
+              </div>
+              <div class="field"><label>3. Moyen de paiement</label>
+                <div class="op-selects">${cartesOperateur}</div>
+                ${aucunOperateur ? '<div class="notice warn" style="margin-top:8px">Les numéros marchands ne sont pas encore configurés par l’éditeur. Contactez-le pour activer le paiement.</div>' : ''}
+              </div>
+            </div>
+
+            <div>
+              <div class="pay-total">
+                <div class="small muted">Montant à payer</div>
+                <div class="amount" id="pay-amount">${money(montant)}</div>
+                <div class="small muted" id="pay-detail">${esc(plan.nom)} · ${esc(dureeChoisie ? dureeChoisie.libelle : '')}${dureeChoisie && dureeChoisie.remise ? ' (2 mois offerts)' : ''}</div>
+                ${options.cinetpay.actif ? `<button class="btn btn-gold btn-block" id="btn-cinetpay" style="margin-top:12px">Payer en ligne maintenant</button>
+                  <div class="small muted center" style="margin-top:5px">CinetPay — Mobile Money &amp; carte bancaire</div>` : ''}
+              </div>
+
+              ${opSel && opSel.actif ? `
+                <div class="pay-instructions" data-op="${opSel.code}">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                    ${badgeOperateur(opSel.code)}
+                    <span class="small muted">Numéro marchand</span>
+                  </div>
+                  <div class="merchant-line">
+                    <span class="merchant-num" id="merchant-num">${esc(opSel.numero || '—')}</span>
+                    <button class="icon-btn" type="button" data-copy="${esc(opSel.numero || '')}" title="Copier">📋</button>
+                  </div>
+                  ${opSel.nom_marchand ? `<div class="small muted">Bénéficiaire : <b>${esc(opSel.nom_marchand)}</b></div>` : ''}
+                  <div class="ussd-line"><span>Code USSD</span><b>${esc(opSel.ussd_paiement)}</b></div>
+                  <div class="small" style="margin-top:8px;line-height:1.55">${opSel.comment_payer}</div>
+                  <div class="small" style="margin-top:8px"><b>Montant exact : ${money(montant)}</b> — ajoutez la référence <b>${esc(e.nom).slice(0, 18)}</b> si l’opérateur la demande.</div>
+                </div>
+
+                <form id="pay-form" style="margin-top:12px">
+                  <div class="field"><label>Numéro utilisé pour payer *</label>
+                    <input name="telephone_payeur" required placeholder="+228 90 12 34 56" value="${esc(e.telephone || '')}"></div>
+                  <div class="field"><label>ID / référence de la transaction *</label>
+                    <input name="transaction_ref" required minlength="4" placeholder="Ex. MP260521.1042.C12345">
+                    <div class="hint">Copiez l’identifiant reçu par SMS après le paiement.</div></div>
+                  <div class="field"><label>Note (facultatif)</label>
+                    <input name="note" placeholder="Paiement du 1er trimestre"></div>
+                  <button class="btn btn-primary btn-block" type="submit" id="btn-declarer">✅ J’ai payé — déclarer mon paiement</button>
+                </form>` : `
+                <div class="notice info" style="margin-top:10px">Sélectionnez un moyen de paiement disponible à gauche.</div>`}
+            </div>
+          </div>
+
+          <div class="notice info" style="margin-top:14px">
+            <b>Comment ça marche ?</b> Vous payez par Mobile Money vers le numéro marchand, puis vous déclarez ici l’identifiant
+            de la transaction. L’éditeur vérifie et votre abonnement est prolongé automatiquement. Aucun numéro de carte n’est demandé.
+            ${options.cinetpay.actif ? 'Le paiement CinetPay, lui, est confirmé automatiquement en quelques secondes.' : ''}
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><div><h2>Formules disponibles</h2><div class="sub">Tarifs en francs CFA · 2 mois offerts sur 12 mois</div></div></div>
           <div class="plans" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">
-            ${Object.entries(PLANS).filter(([k]) => k !== 'essai').map(([k, p]) => `
-              <div class="plan ${k === e.plan ? 'pop' : ''}">
-                ${k === 'standard' ? '<span class="tag">Le plus choisi</span>' : ''}
-                <h3>${p.nom}</h3>
-                <div class="desc">${p.desc}</div>
-                <div class="price">${p.prix ? p.prix.toLocaleString('fr-FR') + ' F<small> / mois</small>' : 'Sur devis'}</div>
+            ${options.plans.filter(p => !p.sur_devis).map(p => `
+              <div class="plan ${p.code === e.plan ? 'pop' : ''}">
+                ${p.code === 'standard' ? '<span class="tag">Le plus choisi</span>' : ''}
+                <h3>${esc(p.nom)}</h3>
+                <div class="desc">${esc((PLANS[p.code] || {}).desc || '')}</div>
+                <div class="price">${p.prix_mensuel ? p.prix_mensuel.toLocaleString('fr-FR') + ' F<small> / mois</small>' : 'Sur devis'}</div>
                 <ul>
-                  ${k === 'essentiel' ? '<li>Jusqu’à 300 élèves</li><li>Bulletins &amp; statistiques</li><li>3 enseignants</li><li>Logo de l’école</li><li class="off">Examens blancs</li>'
-                    : k === 'standard' ? '<li>Élèves illimités</li><li>Enseignants illimités</li><li>Examens blancs</li><li>Espace familles</li><li>Support prioritaire</li>'
-                    : '<li>Plusieurs établissements</li><li>Console centrale</li><li>Consolidation</li><li>Formation sur site</li>'}
+                  ${p.code === 'essentiel' ? '<li>Jusqu’à 300 élèves</li><li>Bulletins &amp; statistiques</li><li>3 enseignants</li><li>Logo de l’école</li><li class="off">Examens blancs</li>'
+                    : '<li>Élèves illimités</li><li>Enseignants illimités</li><li>Examens blancs</li><li>Espace familles</li><li>Support prioritaire</li>'}
                 </ul>
-                <button class="btn ${k === e.plan ? 'btn-primary' : 'btn-ghost'} btn-block" onclick="App.demanderActivation('${esc(k)}')" ${k === e.plan ? 'disabled' : ''}>${k === e.plan ? 'Formule actuelle' : 'Choisir cette formule'}</button>
+                <button class="btn ${p.code === f.plan ? 'btn-primary' : 'btn-ghost'} btn-block" data-plan-choose="${p.code}" ${p.code === f.plan ? 'disabled' : ''}>
+                  ${p.code === f.plan ? 'Formule sélectionnée' : 'Choisir cette formule'}
+                </button>
               </div>`).join('')}
           </div>
         </div>`;
+    },
+
+    async mount() {
+      const options = S.payOpts || await api('/api/paiement/options');
+      const f = S.payForm;
+      const recalcul = () => {
+        const plan = options.plans.find(x => x.code === f.plan) || options.plans[0];
+        const d = plan.montants.find(m => m.mois === Number(f.mois)) || plan.montants[0];
+        const amt = document.getElementById('pay-amount');
+        if (amt) amt.textContent = money(d ? d.montant : 0);
+        const det = document.getElementById('pay-detail');
+        if (det) det.textContent = `${plan.nom} · ${d ? d.libelle : ''}${d && d.remise ? ' (2 mois offerts)' : ''}`;
+      };
+      $$('[data-plan]').forEach(b => b.onclick = () => {
+        f.plan = b.dataset.plan;
+        S.payForm = f;
+        renderRoute();
+      });
+      $$('[data-plan-choose]').forEach(b => b.onclick = () => {
+        f.plan = b.dataset.planChoose;
+        S.payForm = f;
+        renderRoute();
+      });
+      $$('[data-mois]').forEach(b => b.onclick = () => {
+        f.mois = Number(b.dataset.mois);
+        S.payForm = f;
+        renderRoute();
+      });
+      $$('[data-op]').forEach(b => b.onclick = () => {
+        f.operateur = b.dataset.op;
+        S.payForm = f;
+        renderRoute();
+      });
+      $$('[data-copy]').forEach(b => b.onclick = async () => {
+        try { await navigator.clipboard.writeText(b.dataset.copy); toast('Numéro copié'); }
+        catch { toast('Copie impossible : notez le numéro affiché', 'err'); }
+      });
+
+      const form = document.getElementById('pay-form');
+      if (form) form.onsubmit = async (ev) => {
+        ev.preventDefault();
+        const btn = document.getElementById('btn-declarer');
+        const data = Object.fromEntries(new FormData(form).entries());
+        btn.disabled = true; btn.textContent = 'Enregistrement…';
+        try {
+          const res = await api('/api/paiement/declarer', { method: 'POST', body: {
+            plan: f.plan, mois: f.mois, operateur: f.operateur,
+            telephone_payeur: data.telephone_payeur, transaction_ref: data.transaction_ref, note: data.note
+          }});
+          toast(`Paiement déclaré — réf. ${res.reference}. Activation après vérification.`);
+          renderRoute();
+        } catch (e) {
+          toast(e.message, 'err');
+          btn.disabled = false; btn.textContent = '✅ J’ai payé — déclarer mon paiement';
+        }
+      };
+
+      const cp = document.getElementById('btn-cinetpay');
+      if (cp) cp.onclick = async () => {
+        cp.disabled = true; cp.textContent = 'Connexion à CinetPay…';
+        try {
+          const res = await api('/api/paiement/cinetpay/initier', { method: 'POST', body: { plan: f.plan, mois: f.mois } });
+          window.location.href = res.url;
+        } catch (e) {
+          toast(e.message, 'err');
+          cp.disabled = false; cp.textContent = 'Payer en ligne maintenant';
+        }
+      };
+
+      const ref = new URLSearchParams(location.hash.split('?')[1] || '').get('paiement');
+      if (ref) {
+        const paiements = await api('/api/paiements');
+        const p = paiements.find(x => x.reference === ref);
+        if (p && p.statut === 'paye') toast('Paiement confirmé — abonnement activé ✅');
+        else if (p) toast('Paiement en cours de vérification par l’éditeur.');
+      }
     }
   };
 
@@ -2431,6 +2640,10 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     async render() {
       const [st, ecoles] = await Promise.all([api('/api/admin/statistiques'), api('/api/admin/etablissements')]);
       return `
+        ${st.paiementsEnAttente ? `<div class="notice warn" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <span style="flex:1"><b>${st.paiementsEnAttente} paiement(s) Mobile Money à vérifier.</b> Validez-les pour activer les abonnements correspondants.</span>
+          <button class="btn btn-primary btn-sm" onclick="App.go('admin-paiements')">Vérifier maintenant →</button>
+        </div>` : ''}
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px">
           <div style="flex:1"><h2 style="margin:0 0 3px;font-size:21px">Console de la plateforme</h2>
             <div class="muted small">Pilotage des établissements clients et des revenus</div></div>
@@ -2461,7 +2674,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
           <div class="panel">
             <div class="panel-head"><div><h2>Derniers paiements</h2></div></div>
             ${st.paiements.length ? st.paiements.slice(0, 6).map(p => `
-              <div class="stat-line"><span><b>${esc(p.ecole_nom)}</b><br><span class="muted small">${dateFr(p.cree_le)} · ${esc(p.plan || '')}</span></span>
+              <div class="stat-line"><span><b>${esc(p.ecole_nom)}</b><br><span class="muted small">${dateFr(p.cree_le)} · ${esc(p.plan || '')} · ${esc(p.operateur || p.canal || '')}</span></span>
                 <b>${money(p.montant, p.devise)}</b></div>`).join('')
               : emptyState('💳', 'Aucun paiement enregistré.')}
             <div class="notice info" style="margin-top:12px">Les abonnements se renouvellent manuellement après réception du paiement (mobile money, virement ou espèces).</div>
@@ -2536,31 +2749,170 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
 
   V['admin-paiements'] = {
     async render() {
-      const st = await api('/api/admin/statistiques');
-      const ecoles = await api('/api/admin/etablissements');
+      const [d, ecoles, reg] = await Promise.all([
+        api('/api/admin/paiements'),
+        api('/api/admin/etablissements'),
+        api('/api/admin/reglages')
+      ]);
+      S.adminReglages = reg;
+      const rows = d.paiements;
+      const attente = rows.filter(p => p.statut === 'en_attente');
+      const parOperateur = rows.filter(p => p.statut === 'paye').reduce((a, p) => {
+        const k = p.operateur || (p.canal === 'cinetpay' ? 'cinetpay' : 'manuel');
+        a[k] = (a[k] || 0) + Number(p.montant || 0);
+        return a;
+      }, {});
       return `
+        <div class="cards">
+          <div class="kpi accent"><div class="lbl">Encaissé</div><div class="val" style="font-size:22px">${money(d.encaisse)}</div><div class="sub">paiements validés</div></div>
+          <div class="kpi"><div class="lbl">À vérifier</div><div class="val" style="font-size:22px">${d.en_attente}</div><div class="sub">déclarations Mobile Money</div></div>
+          <div class="kpi"><div class="lbl">Mixx by Yas</div><div class="val" style="font-size:19px">${money(parOperateur.mixx || 0)}</div><div class="sub">encaissé</div></div>
+          <div class="kpi"><div class="lbl">Moov Money</div><div class="val" style="font-size:19px">${money(parOperateur.moov || 0)}</div><div class="sub">encaissé</div></div>
+          <div class="kpi"><div class="lbl">CinetPay</div><div class="val" style="font-size:19px">${money(parOperateur.cinetpay || 0)}</div><div class="sub">${reg.cinetpay.actif ? 'en ligne actif' : 'non activé'}</div></div>
+        </div>
+
         <div class="panel">
-          <div class="panel-head"><div><h2>Paiements et abonnements</h2><div class="sub">${money(st.revenus)} encaissés au total</div></div>
-            <div class="right"><button class="btn btn-primary btn-sm" onclick="App.paiementEcole()">➕ Enregistrer un paiement</button></div>
+          <div class="panel-head">
+            <div><h2>Demandes de paiement</h2><div class="sub">Vérifiez la transaction dans votre relevé Mobile Money avant de valider</div></div>
+            <div class="right"><button class="btn btn-primary btn-sm" onclick="App.paiementEcole()">➕ Encaisser manuellement</button></div>
           </div>
-          ${ecoles.filter(e => e.expire || e.statut === 'essai').length ? `<div class="notice warn">
-            <b>${ecoles.filter(e => e.expire || e.statut === 'essai').length} établissement(s)</b> en essai ou arrivant à échéance :
-            ${ecoles.filter(e => e.statut === 'essai' || e.expire).map(e => esc(e.nom)).join(', ')}.</div>` : ''}
-          ${st.paiements.length ? `<div class="table-wrap"><table class="data">
-            <thead><tr><th>Date</th><th>Établissement</th><th>Formule</th><th class="right">Montant</th><th class="center">Statut</th><th>Référence</th><th>Période couverte</th></tr></thead>
-            <tbody>${st.paiements.map(p => `<tr>
-              <td class="small">${dateFr(p.cree_le)}</td>
-              <td class="strong small">${esc(p.ecole_nom)}</td>
-              <td class="small" style="text-transform:capitalize">${esc(p.plan || '—')}</td>
-              <td class="right strong">${money(p.montant, p.devise)}</td>
-              <td class="center">${badgeStatut(p.statut)}</td>
-              <td class="small muted">${esc(p.reference || '—')}</td>
-              <td class="small muted">${dateFr(p.periode_debut)} → ${dateFr(p.periode_fin)}</td>
-            </tr>`).join('')}</tbody>
+          ${attente.length ? `<div class="notice warn"><b>${attente.length} paiement(s) en attente.</b> La validation prolonge automatiquement l’abonnement de l’établissement.</div>` : ''}
+          ${rows.length ? `<div class="table-wrap"><table class="data">
+            <thead><tr><th>Date</th><th>Établissement</th><th>Formule</th><th>Moyen</th><th>Transaction</th><th class="right">Montant</th><th class="center">Statut</th><th>Actions</th></tr></thead>
+            <tbody>${rows.map(p => `
+              <tr>
+                <td class="small nowrap">${dateFr(p.cree_le)}<div class="muted">${heureFr(p.cree_le)}</div></td>
+                <td><div class="strong small">${esc(p.ecole_nom)}</div><div class="muted small">${esc(p.ecole_ville || '')}${p.demandeur ? ' · ' + esc(p.demandeur) : ''}</div></td>
+                <td class="small" style="text-transform:capitalize">${esc(p.plan || '—')}<div class="muted">${p.mois || 1} mois</div></td>
+                <td class="small">${badgeOperateur(p.operateur || (p.canal === 'cinetpay' ? 'cinetpay' : 'manuel'))}
+                  ${p.telephone_payeur ? `<div class="muted" style="font-size:11px">${esc(p.telephone_payeur)}</div>` : ''}</td>
+                <td class="small" style="max-width:180px">
+                  <div style="font-family:monospace;font-size:11.5px">${esc(p.transaction_ref || '—')}</div>
+                  <div class="muted" style="font-size:10.5px">${esc(p.reference || '')}</div>
+                  ${p.note ? `<div class="muted" style="font-size:10.5px;font-style:italic">${esc(p.note)}</div>` : ''}
+                </td>
+                <td class="right strong nowrap">${money(p.montant, p.devise)}</td>
+                <td class="center">${badgePaiementStatut(p.statut)}
+                  ${p.valide_le ? `<div class="muted" style="font-size:10px">${dateFr(p.valide_le)}</div>` : ''}</td>
+                <td class="right"><div class="row-actions">
+                  ${p.statut === 'en_attente' ? `
+                    <button class="btn btn-primary btn-sm" onclick="App.validerPaiement(${p.id})">✓ Valider</button>
+                    <button class="btn btn-danger btn-sm" onclick="App.rejeterPaiement(${p.id})">✗</button>` : `
+                    <span class="small muted">${esc(p.valideur || '')}</span>`}
+                </div></td>
+              </tr>`).join('')}</tbody>
           </table></div>` : emptyState('💳', 'Aucun paiement enregistré.')}
+          <div class="notice info" style="margin-top:14px"><b>Bon réflexe :</b> comparez la référence de transaction avec le SMS reçu
+            sur le compte marchand et le montant exact. En cas de doute, rejetez avec une note.</div>
+        </div>
+
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-head"><div><h2>Numéros marchands</h2><div class="sub">Affichés aux établissements sur la page d’abonnement</div></div></div>
+            <form id="mm-form">
+              <h4 style="margin:0 0 8px;font-size:13px">🔴 Mixx by Yas <span class="tag gris">ex T-Money · *145*5#</span></h4>
+              <div class="grid2">
+                <div class="field"><label>Numéro marchand Mixx</label><input name="mixx_numero" value="${esc(reg.mixx_numero)}" placeholder="+228 90 00 00 00"></div>
+                <div class="field"><label>Nom du bénéficiaire</label><input name="mixx_nom" value="${esc(reg.mixx_nom)}" placeholder="TERMINISH ECOLE"></div>
+              </div>
+              <label class="switch" style="margin-bottom:14px"><input type="checkbox" name="mixx_actif" ${reg.mixx_actif ? 'checked' : ''}> Accepter les paiements Mixx by Yas</label>
+
+              <h4 style="margin:6px 0 8px;font-size:13px">🔵 Moov Money <span class="tag gris">Flooz · *155*2*2#</span></h4>
+              <div class="grid2">
+                <div class="field"><label>Numéro marchand Moov</label><input name="moov_numero" value="${esc(reg.moov_numero)}" placeholder="+228 91 00 00 00"></div>
+                <div class="field"><label>Nom du bénéficiaire</label><input name="moov_nom" value="${esc(reg.moov_nom)}" placeholder="TERMINISH ECOLE"></div>
+              </div>
+              <label class="switch" style="margin-bottom:14px"><input type="checkbox" name="moov_actif" ${reg.moov_actif ? 'checked' : ''}> Accepter les paiements Moov Money</label>
+
+              <h4 style="margin:6px 0 8px;font-size:13px">💰 Tarifs mensuels</h4>
+              <div class="grid2">
+                <div class="field"><label>Essentiel (FCFA / mois)</label><input type="number" name="prix_essentiel" min="0" step="500" value="${reg.prix_essentiel}"></div>
+                <div class="field"><label>Standard (FCFA / mois)</label><input type="number" name="prix_standard" min="0" step="500" value="${reg.prix_standard}"></div>
+              </div>
+              <div class="field"><label>Autoriser le paiement en ligne CinetPay</label>
+                <select name="cinetpay_mode">
+                  <option value="test" ${reg.cinetpay.mode === 'test' ? 'selected' : ''}>Mode test</option>
+                  <option value="live" ${reg.cinetpay.mode === 'live' ? 'selected' : ''}>Mode production</option>
+                </select>
+                <div class="hint">Les clés CinetPay se configurent par variables d’environnement <code>CINETPAY_APIKEY</code> et <code>CINETPAY_SITE_ID</code>, ou ci-dessous.</div>
+              </div>
+              <div class="grid2">
+                <div class="field"><label>Clé API CinetPay</label><input name="cinetpay_apikey" placeholder="${reg.cinetpay.actif ? '•••• (déjà configurée)' : 'non configurée'}" autocomplete="off"></div>
+                <div class="field"><label>Site ID CinetPay</label><input name="cinetpay_site_id" placeholder="${reg.cinetpay.site_id || 'non configuré'}" autocomplete="off"></div>
+              </div>
+              <button class="btn btn-primary btn-sm" type="submit">💾 Enregistrer la configuration</button>
+            </form>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><div><h2>État de la configuration</h2></div></div>
+            <div class="stat-line"><span class="muted">Mixx by Yas</span>${reg.mixx_numero ? `<b>${esc(reg.mixx_numero)}</b>` : '<span class="tag or">Numéro manquant</span>'}</div>
+            <div class="stat-line"><span class="muted">Moov Money</span>${reg.moov_numero ? `<b>${esc(reg.moov_numero)}</b>` : '<span class="tag or">Numéro manquant</span>'}</div>
+            <div class="stat-line"><span class="muted">CinetPay</span>${reg.cinetpay.actif
+              ? `<span class="tag vert">Actif (${esc(reg.cinetpay.mode)})</span>`
+              : '<span class="tag gris">Non configuré</span>'}</div>
+            <div class="stat-line"><span class="muted">Source des clés</span><b class="small">${esc(reg.cinetpay.source)}</b></div>
+            <div class="notice info" style="margin-top:12px">
+              <b>Pour passer en automatique :</b> ouvrez un compte marchand CinetPay (Tmoney &amp; Flooz du Togo), puis renseignez
+              les clés. Les paiements seront confirmés en quelques secondes, sans vérification manuelle.
+            </div>
+            <div class="notice warn" style="margin-top:8px">
+              <b>Devenir marchand :</b> un numéro marchand s’obtient auprès de Yas (Mixx) et de Moov Africa avec une carte d’opérateur
+              économique, une pièce d’identité et un contrat marchand. L’éditeur peut aussi encaisser sur son compte personnel au démarrage.
+            </div>
+            <div class="notice" style="margin-top:8px;background:#f4f7f5;color:#41584e;border:1px solid #e2ebe6">
+              ℹ️ Aucun frais de plateforme n’est prélevé : le montant payé par l’école arrive directement sur le compte marchand.
+            </div>
+          </div>
         </div>`;
+    },
+
+    async mount() {
+      const form = document.getElementById('mm-form');
+      if (!form) return;
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData(form);
+        const body = {
+          mixx_numero: fd.get('mixx_numero'), mixx_nom: fd.get('mixx_nom'), mixx_actif: !!fd.get('mixx_actif'),
+          moov_numero: fd.get('moov_numero'), moov_nom: fd.get('moov_nom'), moov_actif: !!fd.get('moov_actif'),
+          prix_essentiel: fd.get('prix_essentiel'), prix_standard: fd.get('prix_standard'),
+          cinetpay_mode: fd.get('cinetpay_mode')
+        };
+        if (fd.get('cinetpay_apikey')) body.cinetpay_apikey = fd.get('cinetpay_apikey');
+        if (fd.get('cinetpay_site_id')) body.cinetpay_site_id = fd.get('cinetpay_site_id');
+        try {
+          await api('/api/admin/reglages', { method: 'PUT', body });
+          toast('Configuration enregistrée');
+          renderRoute();
+        } catch (err) { toast(err.message, 'err'); }
+      };
     }
   };
+
+  Object.assign(window.App, {
+    async validerPaiement(id) {
+      const ok = await confirmer('Confirmer que le paiement a bien été reçu ?<br><span class="small">L’abonnement de l’établissement sera prolongé automatiquement.</span>', {
+        titre: 'Valider le paiement', danger: false, ok: 'Valider et activer'
+      });
+      if (!ok) return;
+      try {
+        const r = await api('/api/admin/paiements/' + id, { method: 'PATCH', body: { action: 'valider' } });
+        toast(`Paiement validé — abonnement jusqu’au ${dateFr(r.date_fin_abonnement)}`);
+        renderRoute();
+      } catch (e) { toast(e.message, 'err'); }
+    },
+
+    async rejeterPaiement(id) {
+      const raison = prompt('Motif du rejet (visible par l’établissement) :', 'Transaction introuvable sur le relevé');
+      if (raison === null) return;
+      try {
+        await api('/api/admin/paiements/' + id, { method: 'PATCH', body: { action: 'rejeter', note: raison } });
+        toast('Paiement rejeté');
+        renderRoute();
+      } catch (e) { toast(e.message, 'err'); }
+    }
+  });
 
   Object.assign(window.App, {
     creerEcoleAdmin() {

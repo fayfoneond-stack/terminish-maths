@@ -58,7 +58,7 @@ démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimest
   résultats comparables aux bulletins de période.
 - Paramètres : identité, **logo importé**, titre du chef, année scolaire, devise, formule de calcul des
   moyennes, ouverture/clôture des périodes, changement de mot de passe.
-- Abonnement : formule, échéance, historique des paiements, demande d'activation.
+- Abonnement : formule, échéance, **paiement par Mixx by Yas ou Moov Money**, historique des paiements.
 
 ### Enseignant
 - Connexion à distance depuis n'importe quel appareil.
@@ -76,7 +76,10 @@ démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimest
 - Console multi-établissements : nombre d'écoles, élèves, revenus, essais en cours.
 - Création d'un établissement client + compte direction.
 - Suivi des demandes entrantes du site vitrine.
-- Enregistrement des paiements, activation/renouvellement des abonnements, changement de formule.
+- **Validation des paiements Mobile Money** déclarés par les écoles (Mixx by Yas / Moov Money),
+  prolongation automatique de l'abonnement à la validation.
+- Configuration des **numéros marchands**, des tarifs et de CinetPay.
+- Enregistrement des paiements hors ligne, création d'établissements, suivi des demandes.
 
 ---
 
@@ -94,7 +97,51 @@ démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimest
 
 ---
 
-## 4. Architecture
+## 4. Paiements Mobile Money (Togo)
+
+Trois moyens sont proposés aux établissements depuis **Abonnement** :
+
+| Moyen | Comment l'école paie | Activation |
+|---|---|---|
+| **Mixx by Yas** (ex T-Money, Yas Togo) | Paiement marchand `*145*5#` vers le numéro de l'éditeur | L'école déclare l'ID de transaction → l'éditeur valide |
+| **Moov Money** (Flooz, Moov Africa) | `*155#` → option 2 (marchand), ou `*155*2*2*numéro*montant*code#` | idem |
+| **CinetPay** (optionnel) | Page de paiement CinetPay (Mobile Money + carte) | **automatique** via notification |
+
+### Mode manuel (fonctionne immédiatement, sans contrat)
+1. L'éditeur renseigne ses numéros marchands dans **Console → Paiements → Numéros marchands**.
+2. Sur la page Abonnement, l'école choisit sa formule, sa durée (1, 3 ou 12 mois), son opérateur, puis paie
+   vers le numéro marchand affiché.
+3. Elle colle l'**ID de transaction reçu par SMS**.
+4. L'éditeur vérifie (relevé Mobile Money) et clique **Valider** : l'établissement passe « actif » et
+   l'échéance est prolongée du nombre de mois payés. Un rejet est possible avec un motif.
+
+Durées : 1 mois, 3 mois, ou 12 mois **facturés 10 mois** (2 mois offerts). Les prix sont modifiables
+dans la console ; par défaut Essentiel 15 000 F et Standard 25 000 F par mois.
+
+### Mode automatique CinetPay (optionnel)
+CinetPay couvre Tmoney (Mixx) et Flooz (Moov) au Togo. Il faut un compte marchand CinetPay, puis :
+
+```bash
+export CINETPAY_APIKEY="..."
+export CINETPAY_SITE_ID="..."
+export CINETPAY_MODE="live"      # test | live
+npm start
+```
+
+(ou renseigner les clés dans la console éditeur). Le serveur crée alors un lien de paiement ; la
+notification `POST /api/webhooks/cinetpay` **revérifie la transaction auprès de l'API CinetPay** avant
+de valider (le contenu de la notification n'est jamais pris pour argent comptant), et contrôle que le
+montant reçu couvre bien le montant attendu.
+
+### Devenir marchand
+Un numéro marchand s'obtient auprès de **Yas (Mixx by Yas)** et de **Moov Africa** avec une carte
+d'opérateur économique / CFE (NIF), une pièce d'identité et la signature d'un contrat marchand.
+En attendant, l'éditeur peut encaisser sur son numéro personnel et valider manuellement.
+Les montants arrivent directement sur le compte marchand : **la plateforme ne prélève aucune commission**.
+
+---
+
+## 5. Architecture
 
 Monolithe léger, sans étape de build :
 
@@ -125,7 +172,7 @@ ecole/
 
 `etablissements`, `utilisateurs`, `sessions`, `classes`, `matieres`, `classe_matieres`, `eleves`,
 `periodes`, `affectations`, `examens`, `epreuves`, `evaluations`, `notes`, `bulletins`, `paiements`,
-`demandes`.
+`demandes`, `reglages` (numéros marchands, tarifs, clés CinetPay).
 
 ### API (aperçu)
 
@@ -144,12 +191,17 @@ ecole/
 | GET | `/api/stats/classe`, `/api/stats/etablissement` | personnel |
 | CRUD | `/api/examens`, `/api/examens/:id/epreuves` | direction |
 | GET | `/api/eleve/espace` | élève |
+| GET | `/api/paiement/options` | direction (opérateurs, tarifs) |
+| POST | `/api/paiement/declarer` | direction (déclaration Mobile Money) |
+| POST | `/api/paiement/cinetpay/initier` | direction (si CinetPay configuré) |
+| POST | `/api/webhooks/cinetpay` | CinetPay (public, vérifié côté API) |
+| GET/PATCH | `/api/admin/paiements`, `/api/admin/reglages` | super administrateur |
 | GET | `/api/admin/*` | super administrateur |
-| GET | `/print/bulletin/:id`, `/print/classe/:id` | personnel / élève concerné |
+| GET | `/print/bulletin/:id`, `/print/classe/:id`, `/print/examen/:id` | personnel / élève concerné |
 
 ---
 
-## 5. Déploiement
+## 6. Déploiement
 
 1. Serveur Linux avec Node.js ≥ 22.5.
 2. `npm install --omit=dev`, puis `pm2 start server/index.js --name terminish-ecole`.
@@ -157,16 +209,18 @@ ecole/
    cookie de session soit protégé.
 4. **Sauvegarde** : copier régulièrement `ecole/data/` (base SQLite en mode WAL). Un simple `rsync` ou une
    tâche `sqlite3 .backup` suffit.
-5. Variables : `PORT` (défaut 3000).
+5. Variables : `PORT` (défaut 3000), et pour CinetPay : `CINETPAY_APIKEY`, `CINETPAY_SITE_ID`,
+   `CINETPAY_MODE` (`test`/`live`).
 
 Pour un réseau de plusieurs écoles, la console super-admin crée les établissements ; chaque école reste
 cloisonnée par `ecole_id`.
 
 ---
 
-## 6. Limites connues / pistes d'évolution
+## 7. Limites connues / pistes d'évolution
 
-- Paiement en ligne (Mobile Money / carte) non branché : l'éditeur enregistre les paiements manuellement.
+- Le mode Mobile Money manuel dépend d'une vérification humaine (pas de rapprochement automatique des
+  relevés) ; le mode CinetPay automatise cette étape mais demande un compte marchand.
 - Pas d'envoi automatique de SMS/WhatsApp aux parents (les demandes partent vers WhatsApp en un clic).
 - Import des notes depuis Excel non prévu (la grille de saisie est l'interface principale).
 - Bulletins au format PDF côté serveur : l'impression navigateur (« Enregistrer en PDF ») est utilisée.
@@ -176,3 +230,15 @@ cloisonnée par `ecole_id`.
 ---
 
 © 2026 Terminish École — Lomé, Togo.
+
+---
+
+## 8. À compléter avant la mise en vente
+
+Quelques valeurs sont des exemples, à remplacer par les vôtres :
+
+- **numéros marchands** Mixx by Yas / Moov Money : Console → Paiements → Numéros marchands ;
+- **numéro WhatsApp / téléphone** affiché sur le site et sur la page Abonnement (`/app`, `ecole/public/index.html`,
+  `ecole/public/js/app.js`, `+228 90 00 00 00`) ;
+- **tarifs** : Console → Paiements (ils alimentent la page Abonnement) et section Tarifs du site public ;
+- **mentions légales / nom commercial** de l'éditeur dans le pied de page du site.

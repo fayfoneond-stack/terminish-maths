@@ -179,6 +179,11 @@ CREATE TABLE IF NOT EXISTS paiements (
   cree_le TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS reglages (
+  cle TEXT PRIMARY KEY,
+  valeur TEXT
+);
+
 CREATE TABLE IF NOT EXISTS demandes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nom TEXT, etablissement TEXT, ville TEXT,
@@ -188,10 +193,44 @@ CREATE TABLE IF NOT EXISTS demandes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_eleves_ecole ON eleves(ecole_id, classe_id);
+CREATE INDEX IF NOT EXISTS idx_paiements_ecole ON paiements(ecole_id, cree_le);
 CREATE INDEX IF NOT EXISTS idx_notes_eval ON notes(evaluation_id);
 CREATE INDEX IF NOT EXISTS idx_evals_scope ON evaluations(ecole_id, classe_id, periode_id);
 CREATE INDEX IF NOT EXISTS idx_affect_ens ON affectations(enseignant_id);
 `);
+
+/* ------------------------------------------------------------------ */
+/* Migrations légères (colonnes ajoutées après coup)                   */
+/* ------------------------------------------------------------------ */
+function ensureColumn(table, column, decl) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all().map(c => c.name);
+  if (!cols.includes(column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${decl}`);
+}
+ensureColumn('paiements', 'operateur', 'TEXT');
+ensureColumn('paiements', 'telephone_payeur', 'TEXT');
+ensureColumn('paiements', 'transaction_ref', 'TEXT');
+ensureColumn('paiements', 'demande_par', 'INTEGER');
+ensureColumn('paiements', 'valide_par', 'INTEGER');
+ensureColumn('paiements', 'valide_le', 'TEXT');
+ensureColumn('paiements', 'note', 'TEXT');
+ensureColumn('paiements', 'mois', 'INTEGER DEFAULT 1');
+ensureColumn('paiements', 'canal', "TEXT DEFAULT 'manuel'");
+
+db.prepare('CREATE INDEX IF NOT EXISTS idx_paiements_statut ON paiements(statut)').run();
+
+/* Réglages de la plateforme (Mobile Money, tarifs, CinetPay) */
+const REGLAGES_DEFAUT = {
+  mixx_numero: '',
+  mixx_nom: '',
+  mixx_actif: '1',
+  moov_numero: '',
+  moov_nom: '',
+  moov_actif: '1',
+  prix_essentiel: '15000',
+  prix_standard: '25000'
+};
+const insertReglage = db.prepare('INSERT OR IGNORE INTO reglages (cle, valeur) VALUES (?,?)');
+Object.entries(REGLAGES_DEFAUT).forEach(([k, v]) => insertReglage.run(k, v));
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -461,9 +500,25 @@ function seedDemo() {
   });
   createUser({ ecole_id: ecole2, nom: 'Mme Afiavi SEDDOH', email: 'direction@saintesprit.tg', password: 'demo1234', role: 'directeur' });
 
+  // Une demande de paiement en attente de vérification (démo du module Mobile Money)
+  db.prepare(`INSERT INTO paiements (ecole_id, montant, devise, plan, reference, statut, periode_debut, periode_fin,
+    operateur, telephone_payeur, transaction_ref, canal, mois, note, cree_le)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(ecole2, 15000, 'FCFA', 'essentiel', 'PAY-DEMO-002', 'en_attente',
+    today(), addDays(30).slice(0, 10), 'moov', '+228 91 78 22 10', 'FLOOZ-784512', 'manuel', 1,
+    'Renouvellement Essentiel 1 mois', now());
+
   // Paiement de démonstration
-  db.prepare(`INSERT INTO paiements (ecole_id, montant, devise, plan, reference, statut, periode_debut, periode_fin, cree_le)
-    VALUES (?,?,?,?,?,?,?,?,?)`).run(ecoleId, 25000, 'FCFA', 'standard', 'PAY-DEMO-001', 'paye', today(), addDays(240).slice(0, 10), now());
+  db.prepare(`INSERT INTO paiements (ecole_id, montant, devise, plan, reference, statut, periode_debut, periode_fin,
+    operateur, telephone_payeur, transaction_ref, canal, mois, cree_le, valide_le)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(ecoleId, 25000, 'FCFA', 'standard', 'PAY-DEMO-001', 'paye',
+    today(), addDays(240).slice(0, 10), 'mixx', '+228 90 11 22 33', 'MP251021.1432.A12345', 'manuel', 1, now(), now());
+
+  // Numéros marchands de démonstration (remplaçables dans la console éditeur)
+  const setReg = db.prepare('UPDATE reglages SET valeur = ? WHERE cle = ?');
+  setReg.run('+228 90 12 34 56', 'mixx_numero');
+  setReg.run('TERMINISH ÉCOLE', 'mixx_nom');
+  setReg.run('+228 91 45 67 89', 'moov_numero');
+  setReg.run('TERMINISH ÉCOLE', 'moov_nom');
 
   // Demandes entrantes (leads)
   const leads = [
@@ -477,4 +532,4 @@ function seedDemo() {
 
 seedDemo();
 
-module.exports = { db, hashPassword, verifyPassword, createEtablissement, createUser, seedPeriodes, now, today, addDays };
+module.exports = { db, hashPassword, verifyPassword, createEtablissement, createUser, seedPeriodes, now, today, addDays, ensureColumn };

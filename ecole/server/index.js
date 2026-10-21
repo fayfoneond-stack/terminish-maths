@@ -4,6 +4,7 @@ const crypto = require('node:crypto');
 const path = require('node:path');
 const { db, hashPassword, verifyPassword, createEtablissement, createUser, now, today, addDays } = require('./db');
 const { computeClasse, bulletinData } = require('./stats');
+const P = require('./paiements');
 const { renderBulletin, renderBulletinBatch, renderExamen } = require('./print');
 
 const app = express();
@@ -65,6 +66,11 @@ function ecoleOf(req, res) {
   if (!id) { res.status(400).json({ error: 'Établissement introuvable' }); return null; }
   return id;
 }
+function baseUrl(req) {
+  const proto = req.get('x-forwarded-proto') || req.protocol || 'http';
+  return `${proto}://${req.get('host')}`;
+}
+
 const canSaisir = (req, classeId, matiereId) => {
   if (req.user.role !== 'enseignant') return true;
   return !!db.prepare('SELECT 1 FROM affectations WHERE enseignant_id = ? AND classe_id = ? AND matiere_id = ?')
@@ -876,8 +882,11 @@ app.post('/api/admin/paiements', auth, roles('super_admin'), (req, res) => {
   const e = db.prepare('SELECT * FROM etablissements WHERE id = ?').get(ecole_id);
   if (!e) return res.status(404).json({ error: 'Établissement introuvable' });
   const fin = addDays(Number(duree_jours) || 365);
-  db.prepare(`INSERT INTO paiements (ecole_id, montant, devise, plan, reference, statut, periode_debut, periode_fin, cree_le)
-    VALUES (?,?,?,?,?, 'paye', ?,?,?)`).run(ecole_id, montant || 0, 'FCFA', plan || e.plan, reference || `PAY-${Date.now()}`, today(), fin.slice(0, 10), now());
+  db.prepare(`INSERT INTO paiements (ecole_id, montant, devise, plan, reference, statut, periode_debut, periode_fin,
+    operateur, canal, mois, valide_par, valide_le, cree_le)
+    VALUES (?,?,?,?,?, 'paye', ?,?,?,?,?,?,?,?)`).run(ecole_id, montant || 0, 'FCFA', plan || e.plan,
+    reference || `PAY-${Date.now()}`, today(), fin.slice(0, 10), req.body.operateur || 'manuel', 'manuel',
+    Math.max(1, Math.round((Number(duree_jours) || 365) / 30)), req.user.id, now(), now());
   db.prepare("UPDATE etablissements SET statut = 'actif', plan = ?, date_fin_abonnement = ? WHERE id = ?").run(plan || e.plan, fin, e.id);
   res.json({ ok: true });
 });
@@ -896,7 +905,225 @@ app.get('/api/admin/statistiques', auth, roles('super_admin'), (req, res) => {
   const revenus = db.prepare("SELECT COALESCE(SUM(montant),0) AS s FROM paiements WHERE statut = 'paye'").get().s;
   const leads = db.prepare("SELECT COUNT(*) AS n FROM demandes WHERE statut = 'nouveau'").get().n;
   const paiements = db.prepare(`SELECT p.*, e.nom AS ecole_nom FROM paiements p JOIN etablissements e ON e.id = p.ecole_id ORDER BY p.cree_le DESC LIMIT 20`).all();
-  res.json({ nbEcoles, actives, essais, eleves, revenus, leads, paiements });
+  const paiementsEnAttente = db.prepare("SELECT COUNT(*) AS n FROM paiements WHERE statut = 'en_attente'").get().n;
+  res.json({ nbEcoles, actives, essais, eleves, revenus, leads, paiements, paiementsEnAttente });
+});
+
+
+/* ------------------------------------------------------------------ */
+/* Paiements Mobile Money (Mixx by Yas, Moov Money) & CinetPay         */
+/* ------------------------------------------------------------------ */
+function prolonger(ecoleId, mois, plan) {
+  const e = db.prepare('SELECT * FROM etablissements WHERE id = ?').get(ecoleId);
+  if (!e) return null;
+  const actuel = e.date_fin_abonnement ? new Date(e.date_fin_abonnement) : null;
+  const base = actuel && actuel.getTime() > Date.now() ? actuel : new Date();
+  const fin = new Date(base.getTime() + Math.max(1, Number(mois) || 1) * 30 * 864e5);
+  db.prepare("UPDATE etablissements SET statut = 'actif', plan = ?, date_fin_abonnement = ? WHERE id = ?")
+    .run(plan || e.plan, fin.toISOString(), e.id);
+  return fin.toISOString();
+}
+
+function validerPaiement(paiement, validePar) {
+  db.prepare(`UPDATE paiements SET statut = 'paye', valide_par = ?, valide_le = ? WHERE id = ?`)
+    .run(validePar, now(), paiement.id);
+  const fin = prolonger(paiement.ecole_id, paiement.mois, paiement.plan);
+  return fin;
+}
+
+app.get('/api/paiements', auth, directionOnly, (req, res) => {
+  const id = ecoleOf(req, res); if (!id) return;
+  res.json(db.prepare('SELECT * FROM paiements WHERE ecole_id = ? ORDER BY cree_le DESC').all(id));
+});
+
+app.post('/api/auth/password', auth, (req, res) => {
+  const { ancien, nouveau } = req.body || {};
+  if (!ancien || !nouveau) return res.status(400).json({ error: 'Ancien et nouveau mot de passe requis' });
+  if (String(nouveau).length < 6) return res.status(400).json({ error: 'Le nouveau mot de passe doit contenir au moins 6 caractères' });
+  const user = db.prepare('SELECT * FROM utilisateurs WHERE id = ?').get(req.user.id);
+  if (!verifyPassword(ancien, user.mot_de_passe)) return res.status(400).json({ error: 'Mot de passe actuel incorrect' });
+  db.prepare('UPDATE utilisateurs SET mot_de_passe = ? WHERE id = ?').run(hashPassword(nouveau), user.id);
+  res.json({ ok: true });
+});
+
+app.get('/api/paiement/options', auth, directionOnly, (req, res) => {
+  const reglages = P.lireReglages(db);
+  const cp = P.cinetpayConfig(reglages);
+  res.json({
+    operateurs: Object.values(P.OPERATEURS).map(o => ({
+      code: o.code, nom: o.nom, ancien: o.ancien, reseau: o.reseau, ussd_menu: o.ussd_menu,
+      ussd_paiement: o.ussd_paiement, comment_payer: o.comment_payer, couleur: o.couleur,
+      numero: o.code === 'mixx' ? reglages.mixx_numero : reglages.moov_numero,
+      nom_marchand: o.code === 'mixx' ? (reglages.mixx_nom || '') : (reglages.moov_nom || ''),
+      actif: (o.code === 'mixx' ? reglages.mixx_actif : reglages.moov_actif) === '1'
+        && !!(o.code === 'mixx' ? reglages.mixx_numero : reglages.moov_numero)
+    })),
+    plans: Object.values(P.PLANS).map(p => ({
+      code: p.code, nom: p.nom,
+      prix_mensuel: P.prixMensuel(reglages, p.code),
+      sur_devis: p.code === 'reseau',
+      montants: P.DUREES.map(d => ({ mois: d.mois, libelle: d.libelle, remise: d.remise, montant: P.montantPour(reglages, p.code, d.mois) }))
+    })),
+    durees: P.DUREES,
+    cinetpay: { actif: cp.actif, mode: cp.mode }
+  });
+});
+
+app.post('/api/paiement/declarer', auth, directionOnly, (req, res) => {
+  const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
+  const { plan, mois, operateur, telephone_payeur, transaction_ref, note } = req.body || {};
+  const reglages = P.lireReglages(db);
+  if (!P.PLANS[plan] || plan === 'reseau') return res.status(400).json({ error: 'Formule invalide (Réseau : sur devis)' });
+  if (!P.OPERATEURS[operateur]) return res.status(400).json({ error: 'Opérateur Mobile Money invalide' });
+  const op = P.OPERATEURS[operateur];
+  const numero = operateur === 'mixx' ? reglages.mixx_numero : reglages.moov_numero;
+  const actif = (operateur === 'mixx' ? reglages.mixx_actif : reglages.moov_actif) === '1';
+  if (!actif || !numero) return res.status(400).json({ error: `${op.nom} n’est pas encore configuré. Contactez l’éditeur.` });
+  const montant = P.montantPour(reglages, plan, mois);
+  if (montant == null || montant <= 0) return res.status(400).json({ error: 'Montant introuvable pour cette formule' });
+  const ref = String(transaction_ref || '').trim();
+  if (ref.length < 4) return res.status(400).json({ error: 'Indiquez l’identifiant (ID) de la transaction reçu par SMS' });
+  if (!String(telephone_payeur || '').trim()) return res.status(400).json({ error: 'Indiquez le numéro de téléphone utilisé pour payer' });
+  const doublon = db.prepare('SELECT id FROM paiements WHERE operateur = ? AND transaction_ref = ?').get(operateur, ref);
+  if (doublon) return res.status(409).json({ error: 'Cette transaction a déjà été déclarée. Contactez l’éditeur si ce n’est pas vous.' });
+
+  const reference = P.referencePaiement(operateur);
+  const duree = P.DUREES.find(d => d.mois === Number(mois)) || P.DUREES[0];
+  const info = db.prepare(`INSERT INTO paiements (ecole_id, montant, devise, plan, reference, statut,
+    periode_debut, periode_fin, operateur, telephone_payeur, transaction_ref, canal, mois, note, demande_par, cree_le)
+    VALUES (?,?,?,?,?, 'en_attente', ?,?,?,?,?, 'manuel', ?,?,?,?)`).run(
+    ecoleId, montant, 'FCFA', plan, reference, today(),
+    new Date(Date.now() + duree.mois * 30 * 864e5).toISOString().slice(0, 10),
+    operateur, String(telephone_payeur).trim(), ref, duree.mois, note || '', req.user.id, now());
+  res.json({
+    ok: true, id: Number(info.lastInsertRowid), reference, montant, statut: 'en_attente',
+    message: 'Paiement déclaré. L’éditeur vérifie la transaction et active votre abonnement (généralement sous quelques heures).'
+  });
+});
+
+app.post('/api/paiement/cinetpay/initier', auth, directionOnly, async (req, res) => {
+  const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
+  const { plan, mois } = req.body || {};
+  const reglages = P.lireReglages(db);
+  const cfg = P.cinetpayConfig(reglages);
+  if (!cfg.actif) return res.status(400).json({ error: 'Le paiement en ligne CinetPay n’est pas activé. Utilisez le paiement Mobile Money manuel.' });
+  if (!P.PLANS[plan] || plan === 'reseau') return res.status(400).json({ error: 'Formule invalide' });
+  const montant = P.montantPour(reglages, plan, mois);
+  if (!montant) return res.status(400).json({ error: 'Montant introuvable' });
+  const etab = db.prepare('SELECT * FROM etablissements WHERE id = ?').get(ecoleId);
+  const duree = P.DUREES.find(d => d.mois === Number(mois)) || P.DUREES[0];
+  const reference = P.referencePaiement('cinetpay');
+  const info = db.prepare(`INSERT INTO paiements (ecole_id, montant, devise, plan, reference, statut,
+    periode_debut, periode_fin, canal, mois, demande_par, cree_le)
+    VALUES (?,?,?,?,?, 'en_attente', ?,?, 'cinetpay', ?,?,?)`).run(
+    ecoleId, montant, 'FCFA', plan, reference, today(),
+    new Date(Date.now() + duree.mois * 30 * 864e5).toISOString().slice(0, 10),
+    duree.mois, req.user.id, now());
+  const id = Number(info.lastInsertRowid);
+  try {
+    const { url } = await P.initierCinetPay(cfg, {
+      montant, devise: 'FCFA', transactionId: reference,
+      description: `Abonnement ${P.PLANS[plan].nom} — ${duree.libelle} — ${etab.nom}`,
+      ecole: etab, telephone: req.body.telephone || etab.telephone, email: req.user.email,
+      nom: req.user.nom, baseUrl: baseUrl(req)
+    });
+    res.json({ ok: true, url, reference, montant, id });
+  } catch (e) {
+    db.prepare("UPDATE paiements SET statut = 'rejete', note = ? WHERE id = ?").run(String(e.message).slice(0, 300), id);
+    res.status(502).json({ error: e.message });
+  }
+});
+
+/** Notification CinetPay — on ne fait jamais confiance au corps : on interroge l'API. */
+app.post('/api/webhooks/cinetpay', async (req, res) => {
+  const transactionId = (req.body && (req.body.cpm_trans_id || req.body.transaction_id)) || req.query.transaction_id;
+  if (!transactionId) return res.status(400).json({ error: 'transaction_id manquant' });
+  const paiement = db.prepare('SELECT * FROM paiements WHERE reference = ?').get(transactionId);
+  if (!paiement) return res.status(404).json({ error: 'Paiement inconnu' });
+  if (paiement.statut === 'paye') return res.json({ ok: true, deja: true });
+  const cfg = P.cinetpayConfig(P.lireReglages(db));
+  if (!cfg.actif) return res.status(400).json({ error: 'CinetPay non configuré' });
+  try {
+    const etat = await P.verifierCinetPay(cfg, transactionId);
+    if (etat.statut === 'ACCEPTED') {
+      if (etat.montant != null && Math.round(etat.montant) < Math.round(paiement.montant)) {
+        db.prepare("UPDATE paiements SET statut = 'rejete', note = ? WHERE id = ?")
+          .run(`Montant reçu (${etat.montant}) inférieur au montant attendu (${paiement.montant})`, paiement.id);
+        return res.status(400).json({ error: 'Montant insuffisant' });
+      }
+      db.prepare("UPDATE paiements SET operateur = ?, transaction_ref = ? WHERE id = ?")
+        .run(etat.operateur ? String(etat.operateur).toLowerCase() : null, etat.moyen || '', paiement.id);
+      validerPaiement(paiement, null);
+      return res.json({ ok: true });
+    }
+    db.prepare("UPDATE paiements SET statut = 'rejete', note = ? WHERE id = ?")
+      .run(`CinetPay : ${etat.statut}`, paiement.id);
+    res.json({ ok: true, statut: etat.statut });
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
+/* --------------------------- Admin : réglages & validation --------- */
+app.get('/api/admin/reglages', auth, roles('super_admin'), (req, res) => {
+  const r = P.lireReglages(db);
+  const cfg = P.cinetpayConfig(r);
+  res.json({
+    mixx_numero: r.mixx_numero || '', mixx_nom: r.mixx_nom || '', mixx_actif: r.mixx_actif === '1',
+    moov_numero: r.moov_numero || '', moov_nom: r.moov_nom || '', moov_actif: r.moov_actif === '1',
+    prix_essentiel: Number(r.prix_essentiel) || 15000,
+    prix_standard: Number(r.prix_standard) || 25000,
+    cinetpay: {
+      actif: cfg.actif, mode: cfg.mode,
+      source: process.env.CINETPAY_APIKEY ? 'variables d’environnement' : (r.cinetpay_apikey ? 'base de données' : 'non configuré'),
+      site_id: cfg.actif ? cfg.siteId.replace(/^(.{2}).*(.{2})$/, '$1••••$2') : ''
+    }
+  });
+});
+
+app.put('/api/admin/reglages', auth, roles('super_admin'), (req, res) => {
+  const b = req.body || {};
+  const valeurs = {};
+  ['mixx_numero', 'mixx_nom', 'moov_numero', 'moov_nom'].forEach(k => { if (b[k] !== undefined) valeurs[k] = String(b[k]).trim(); });
+  ['mixx_actif', 'moov_actif'].forEach(k => { if (b[k] !== undefined) valeurs[k] = b[k] ? '1' : '0'; });
+  if (b.prix_essentiel !== undefined) valeurs.prix_essentiel = Math.max(0, Number(b.prix_essentiel) || 0);
+  if (b.prix_standard !== undefined) valeurs.prix_standard = Math.max(0, Number(b.prix_standard) || 0);
+  if (b.cinetpay_apikey !== undefined) valeurs.cinetpay_apikey = String(b.cinetpay_apikey).trim();
+  if (b.cinetpay_site_id !== undefined) valeurs.cinetpay_site_id = String(b.cinetpay_site_id).trim();
+  if (b.cinetpay_mode !== undefined) valeurs.cinetpay_mode = b.cinetpay_mode === 'live' ? 'live' : 'test';
+  P.ecrireReglages(db, valeurs);
+  res.json({ ok: true, reglages: P.lireReglages(db) });
+});
+
+app.get('/api/admin/paiements', auth, roles('super_admin'), (req, res) => {
+  const statut = req.query.statut;
+  let rows = db.prepare(`SELECT p.*, e.nom AS ecole_nom, e.ville AS ecole_ville, e.statut AS ecole_statut,
+      u.nom AS demandeur, v.nom AS valideur
+    FROM paiements p JOIN etablissements e ON e.id = p.ecole_id
+    LEFT JOIN utilisateurs u ON u.id = p.demande_par
+    LEFT JOIN utilisateurs v ON v.id = p.valide_par
+    ORDER BY CASE p.statut WHEN 'en_attente' THEN 0 ELSE 1 END, p.cree_le DESC`).all();
+  if (statut) rows = rows.filter(r => r.statut === statut);
+  const enAttente = db.prepare("SELECT COUNT(*) AS n FROM paiements WHERE statut = 'en_attente'").get().n;
+  const encaisse = db.prepare("SELECT COALESCE(SUM(montant),0) AS s FROM paiements WHERE statut = 'paye'").get().s;
+  res.json({ paiements: rows, en_attente: enAttente, encaisse });
+});
+
+app.patch('/api/admin/paiements/:id', auth, roles('super_admin'), (req, res) => {
+  const p = db.prepare('SELECT * FROM paiements WHERE id = ?').get(req.params.id);
+  if (!p) return res.status(404).json({ error: 'Paiement introuvable' });
+  const action = (req.body && req.body.action) || '';
+  if (p.statut === 'paye' && action === 'valider') return res.json({ ok: true, deja: true });
+  if (action === 'valider') {
+    const fin = validerPaiement(p, req.user.id);
+    return res.json({ ok: true, statut: 'paye', date_fin_abonnement: fin });
+  }
+  if (action === 'rejeter') {
+    db.prepare("UPDATE paiements SET statut = 'rejete', note = ?, valide_par = ?, valide_le = ? WHERE id = ?")
+      .run(String((req.body && req.body.note) || 'Transaction non retrouvée').slice(0, 300), req.user.id, now(), p.id);
+    return res.json({ ok: true, statut: 'rejete' });
+  }
+  res.status(400).json({ error: 'Action inconnue (valider ou rejeter)' });
 });
 
 /* ------------------------------------------------------------------ */

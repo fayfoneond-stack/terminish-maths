@@ -1,0 +1,181 @@
+'use strict';
+/**
+ * Module de paiement — Mobile Money Togo (Mixx by Yas, Moov Money) + CinetPay.
+ *
+ * Deux modes :
+ *  1. « manuel »  : l'école paie par paiement marchand / transfert Mobile Money vers le numéro
+ *     de l'éditeur, puis déclare sa transaction. L'éditeur vérifie et valide → activation immédiate.
+ *     Fonctionne sans contrat marchand, dès aujourd'hui.
+ *  2. « cinetpay » : paiement en ligne automatique (USSD push sur le téléphone du payeur).
+ *     Activé uniquement si CINETPAY_APIKEY et CINETPAY_SITE_ID sont configurés.
+ */
+const crypto = require('node:crypto');
+
+const OPERATEURS = {
+  mixx: {
+    code: 'mixx',
+    nom: 'Mixx by Yas',
+    ancien: 'ex T-Money · Yas Togo',
+    reseau: 'Yas (Togocom)',
+    prefixe: '+228 9',
+    ussd_menu: '*145#',
+    ussd_paiement: '*145*5#',
+    couleur: '#e4022d',
+    logo: 'mixx',
+    comment_payer: 'Composez <b>*145*5#</b> (Paiement marchand), saisissez le numéro marchand puis le montant, et validez avec votre code secret Mixx. Vous pouvez aussi utiliser l’application Mixx by Yas.',
+    cinetpay_code: 'TMOBILE'
+  },
+  moov: {
+    code: 'moov',
+    nom: 'Moov Money',
+    ancien: 'Flooz · Moov Africa',
+    reseau: 'Moov Africa Togo',
+    prefixe: '+228 9',
+    ussd_menu: '*155#',
+    ussd_paiement: '*155*2*2#',
+    couleur: '#005baa',
+    logo: 'moov',
+    comment_payer: 'Composez <b>*155#</b> puis choisissez l’option <b>2 (Paiement marchand)</b>, saisissez le numéro marchand et le montant, puis validez avec votre code Flooz. Vous pouvez aussi composer directement <b>*155*2*2*numéro marchand*montant*code secret#</b>.',
+    cinetpay_code: 'FLOOZ'
+  }
+};
+
+const PLANS = {
+  essentiel: { code: 'essentiel', nom: 'Essentiel', cle_prix: 'prix_essentiel', defaut: 15000 },
+  standard: { code: 'standard', nom: 'Standard', cle_prix: 'prix_standard', defaut: 25000 },
+  reseau: { code: 'reseau', nom: 'Réseau', cle_prix: null, defaut: null }
+};
+
+const DUREES = [
+  { mois: 1, libelle: '1 mois', remise: 0 },
+  { mois: 3, libelle: '3 mois', remise: 0 },
+  { mois: 12, libelle: '12 mois', remise: 2 } // 2 mois offerts
+];
+
+function lireReglages(db) {
+  const out = {};
+  db.prepare('SELECT cle, valeur FROM reglages').all().forEach(r => { out[r.cle] = r.valeur; });
+  return out;
+}
+
+function ecrireReglages(db, valeurs) {
+  const stmt = db.prepare(`INSERT INTO reglages (cle, valeur) VALUES (?,?)
+    ON CONFLICT(cle) DO UPDATE SET valeur = excluded.valeur`);
+  Object.entries(valeurs).forEach(([k, v]) => {
+    if (v !== undefined && v !== null) stmt.run(k, String(v));
+  });
+}
+
+function prixMensuel(reglages, plan) {
+  const p = PLANS[plan];
+  if (!p) return null;
+  if (p.reseau) return null;
+  const v = Number(reglages[p.cle_prix]);
+  return Number.isFinite(v) && v > 0 ? v : p.defaut;
+}
+
+/** Montant à payer pour un plan et une durée. Le 12 mois facture 10 mois. */
+function montantPour(reglages, plan, mois) {
+  const mensuel = prixMensuel(reglages, plan);
+  if (mensuel == null) return null;
+  const d = DUREES.find(x => x.mois === Number(mois)) || DUREES[0];
+  return Math.max(0, (d.mois - d.remise) * mensuel);
+}
+
+function cinetpayConfig(reglages) {
+  const apikey = process.env.CINETPAY_APIKEY || reglages.cinetpay_apikey || '';
+  const siteId = process.env.CINETPAY_SITE_ID || reglages.cinetpay_site_id || '';
+  return {
+    actif: !!(apikey && siteId),
+    apikey,
+    siteId,
+    mode: process.env.CINETPAY_MODE || reglages.cinetpay_mode || 'test',
+    base: process.env.CINETPAY_BASE || 'https://api-checkout.cinetpay.com/v2'
+  };
+}
+
+function referencePaiement(operateur) {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  const alea = crypto.randomBytes(3).toString('hex').toUpperCase();
+  return `${String(operateur || 'PAY').toUpperCase()}-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${alea}`;
+}
+
+/**
+ * Initialise un paiement CinetPay (paiement en ligne, USSD push ou carte).
+ * Retourne { url } ou lève une erreur explicite.
+ */
+async function initierCinetPay(cfg, { montant, devise, transactionId, description, ecole, telephone, email, nom, baseUrl }) {
+  if (!cfg.actif) throw new Error('CinetPay n’est pas configuré sur cette plateforme');
+  const body = {
+    apikey: cfg.apikey,
+    site_id: cfg.siteId,
+    transaction_id: transactionId,
+    amount: Math.round(montant),
+    currency: devise === 'FCFA' ? 'XOF' : devise,
+    description: String(description).slice(0, 100),
+    notify_url: `${baseUrl}/api/webhooks/cinetpay`,
+    return_url: `${baseUrl}/app#/abonnement?paiement=${encodeURIComponent(transactionId)}`,
+    channels: 'MOBILE_MONEY',
+    lang: 'fr',
+    metadata: JSON.stringify({ ecole_id: ecole.id, ecole: ecole.nom }),
+    customer_name: nom || ecole.nom,
+    customer_email: email || ecole.email || 'contact@terminish-ecole.com',
+    customer_phone_number: telephone || ecole.telephone || '',
+    customer_address: ecole.adresse || '',
+    customer_city: ecole.ville || 'Lomé',
+    customer_country: 'TG'
+  };
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 15000);
+  let json;
+  try {
+    const res = await fetch(`${cfg.base}/payment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(body),
+      signal: ctrl.signal
+    });
+    json = await res.json();
+  } catch (e) {
+    throw new Error('Impossible de joindre CinetPay (vérifiez la connexion du serveur). Utilisez le paiement Mobile Money manuel.');
+  } finally {
+    clearTimeout(t);
+  }
+  if (!json || String(json.code) !== '201' || !json.data || !json.data.payment_url) {
+    throw new Error((json && (json.message || json.description)) || 'CinetPay a refusé la demande de paiement');
+  }
+  return { url: json.data.payment_url, token: json.data.payment_token };
+}
+
+/** Vérifie l'état réel d'une transaction auprès de CinetPay (source de vérité). */
+async function verifierCinetPay(cfg, transactionId) {
+  if (!cfg.actif) throw new Error('CinetPay non configuré');
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res = await fetch(`${cfg.base}/payment/check`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ apikey: cfg.apikey, site_id: cfg.siteId, transaction_id: transactionId }),
+      signal: ctrl.signal
+    });
+    const json = await res.json();
+    const d = (json && json.data) || {};
+    return {
+      statut: d.status || (json && json.code === '00' ? 'ACCEPTED' : 'UNKNOWN'),
+      montant: d.amount != null ? Number(d.amount) : null,
+      moyen: d.payment_method || '',
+      operateur: d.operator_id || '',
+      brut: json
+    };
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+module.exports = {
+  OPERATEURS, PLANS, DUREES,
+  lireReglages, ecrireReglages, prixMensuel, montantPour,
+  cinetpayConfig, initierCinetPay, verifierCinetPay, referencePaiement
+};
