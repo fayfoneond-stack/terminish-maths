@@ -201,9 +201,10 @@ ecole/
 │   ├── css/styles.css
 │   └── js/util.js, js/app.js  SPA (vanilla JS, routage par hash)
 ├── data/            base SQLite (ignorée par Git)
-├── deploy/          Caddyfile, nginx.conf, service systemd
+├── deploy/          Caddyfile, nginx.conf, service systemd, gratuit/demarrer.js
 ├── Dockerfile, docker-compose.yml, render.yaml
-└── DEPLOIEMENT.md   guide de mise en ligne pas à pas
+├── DEPLOIEMENT.md   guide de mise en ligne pas à pas
+└── DEPLOIEMENT-GRATUIT.md  mise en ligne à 0 F (ordinateur + Cloudflare Tunnel)
 ```
 
 - Sessions : cookie `HttpOnly` + table `sessions` (30 jours).
@@ -255,8 +256,17 @@ ecole/
 
 ## 6. Déploiement
 
-Guide complet : **[DEPLOIEMENT.md](DEPLOIEMENT.md)** (VPS + Docker + HTTPS automatique, Render, PC + Cloudflare
-Tunnel, systemd/Nginx, sauvegardes, dépannage, coûts).
+**Budget zéro ?** Suivez **[DEPLOIEMENT-GRATUIT.md](DEPLOIEMENT-GRATUIT.md)** : le site tourne sur votre
+ordinateur et devient accessible en HTTPS via Cloudflare Tunnel (gratuit, sans compte).
+
+```bash
+npm run partage          # site + lien public https://xxx.trycloudflare.com
+npm run partage:demo     # idem avec l'école de démonstration
+npm run local            # serveur seul (localhost / réseau Wi-Fi)
+```
+
+Guide complet pour un hébergement permanent : **[DEPLOIEMENT.md](DEPLOIEMENT.md)** (VPS + Docker + HTTPS
+automatique, Render, Cloudflare Tunnel, systemd/Nginx, sauvegardes, dépannage, coûts).
 
 Résumé :
 

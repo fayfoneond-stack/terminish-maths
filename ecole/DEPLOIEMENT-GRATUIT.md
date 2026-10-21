@@ -1,0 +1,290 @@
+# Déployer sans un franc
+
+Objectif : un site **en ligne, en HTTPS**, que vous pouvez montrer à une école dès aujourd'hui,
+**sans payer ni hébergement, ni domaine, ni service**.
+
+C'est possible, et voici comment. Le principe :
+
+> Le site tourne sur **votre ordinateur**. Cloudflare (gratuit, sans compte) lui donne une adresse
+> `https://…trycloudflare.com` accessible depuis n'importe quel téléphone ou ordinateur au Togo.
+> Aucun port à ouvrir sur votre box, aucune IP publique à louer.
+
+Durée : **10 minutes** la première fois, puis **une commande** à chaque démonstration.
+
+---
+
+## 1. Ce qu'il vous faut (et ce que ça coûte)
+
+| Élément | Coût |
+|---|---|
+| Un ordinateur (Windows, Mac ou Linux) | celui que vous avez déjà |
+| Une connexion Internet | celle que vous avez déjà (une clé 4G suffit) |
+| Node.js 22 | **0 F** — logiciel libre |
+| Cloudflare Tunnel (`cloudflared`) | **0 F**, aucune carte bancaire, aucun compte |
+| Hébergement, domaine, certificat HTTPS | **0 F** |
+| **Total** | **0 F** |
+
+C'est exactement comme si vous ouvriez votre site depuis votre salon, mais avec une adresse publique
+et un cadenas de sécurité.
+
+---
+
+## 2. Voie 1 — Votre ordinateur, lien public (recommandé pour démarrer)
+
+### Étape 1 — Installer Node.js
+
+Téléchargez la version **LTS** sur <https://nodejs.org> et installez-la (Suivant → Suivant).
+Vérifiez ensuite dans un terminal :
+
+```bash
+node -v      # doit afficher v22.x ou plus
+```
+
+- Windows : touche Windows → tapez `powershell` → Entrée.
+- macOS : Spotlight → `Terminal`.
+- Linux : votre terminal habituel.
+
+### Étape 2 — Récupérer le site
+
+```bash
+git clone https://github.com/fayfoneond-stack/terminish-maths.git
+cd terminish-maths/ecole
+npm install --omit=dev
+```
+
+(Pas de `git` ? Téléchargez l'archive ZIP du dépôt sur GitHub → bouton vert **Code** → *Download ZIP*,
+décompressez, puis ouvrez le dossier `terminish-maths/ecole` dans le terminal.)
+
+### Étape 3 — Installer le tunnel
+
+| Système | Commande |
+|---|---|
+| **Windows** | `winget install --id Cloudflare.cloudflared` |
+| **macOS** | `brew install cloudflared` |
+| **Linux (Debian/Ubuntu)** | voir ci-dessous |
+
+```bash
+# Linux — paquet officiel Cloudflare
+curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main" \
+  | sudo tee /etc/apt/sources.list.d/cloudflared.list
+sudo apt update && sudo apt install -y cloudflared
+```
+
+Alternative sans installation : téléchargez le binaire sur
+<https://github.com/cloudflare/cloudflared/releases> et placez-le dans un dossier du `PATH`
+(sous Windows, le fichier `cloudflared.exe` peut simplement être posé dans `C:\Windows\`).
+
+Vérification : `cloudflared --version`.
+
+### Étape 4 — Démarrer et récupérer votre lien
+
+```bash
+npm run partage
+```
+
+Au bout de 3 secondes :
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│ VOTRE SITE EST EN LIGNE                                        │
+└────────────────────────────────────────────────────────────────┘
+  🌍 Lien public  : https://joli-nuage-rapide-42.trycloudflare.com
+  💻 Sur place    : http://localhost:3000
+
+  Console admin   : admin@terminish.tg
+  Mot de passe    : palmier-clair-4821
+```
+
+Envoyez le lien à l'école par WhatsApp : le site s'ouvre, **avec le cadenas HTTPS**.
+La console administrateur est sur `/app` avec l'identifiant et le mot de passe affichés
+(ils sont aussi enregistrés dans `data/compte-administrateur.txt`).
+
+**Laissez la fenêtre ouverte.** Fermer la fenêtre = fermer le site.
+
+### Les trois commandes à retenir
+
+| Commande | Effet |
+|---|---|
+| `npm run partage` | site + lien public HTTPS (site vide, prêt pour une vraie école) |
+| `npm run partage:demo` | idem, avec l'école de démonstration (élèves, notes, bulletins) — pour montrer le produit |
+| `npm run local` | site accessible uniquement sur votre ordinateur et votre réseau Wi-Fi |
+
+---
+
+## 3. Comment faire une démonstration convaincante
+
+1. `npm run partage:demo` → vous obtenez un lien et l'école fictive « Complexe Scolaire Les Palmiers ».
+2. Connectez-vous sur `/app` avec **`directeur@demo.tg` / `demo1234`** :
+   montrez la saisie des notes, les statistiques, un bulletin imprimé avec logo.
+3. Avec **`admin@terminish.tg` / `admin1234`**, montrez la console éditeur (écoles, paiements, réglages).
+4. Envoyez le lien à la direction **juste avant** l'appel : il reste valable quelques heures,
+   tant que votre fenêtre est ouverte.
+
+> ⚠️ Ne laissez jamais tourner `partage:demo` en permanence : les comptes `demo1234` / `admin1234`
+> seraient accessibles à Internet. Pour un site « sérieux », utilisez `npm run partage`.
+
+**Astuce démo sans Internet** : `npm run partage:demo`, puis ouvrez le site sur votre écran et
+projetez-le en salle avec un vidéoprojecteur, ou utilisez `npm run local` et connectez les téléphones
+au même Wi-Fi que votre ordinateur (`http://VOTRE-IP:3000`).
+
+---
+
+## 4. Voie 2 — Une adresse stable, gratuitement (quand vous voulez faire sérieux)
+
+Le lien `trycloudflare.com` change à chaque redémarrage. Pour une adresse fixe sans payer de domaine,
+utilisez la **machine virtuelle gratuite à vie d'Oracle Cloud** (offre « Always Free »).
+
+| Point | Détail |
+|---|---|
+| Ce que vous obtenez | une VM Linux 24 h/24, IP publique fixe, disque persistant |
+| Coût | **0 F**, sans limite de durée |
+| Ce qu'il faut | un compte Oracle Cloud (une carte est demandée **pour vérifier votre identité**, sans débit) |
+| Adresse | `https://ecole.<votre-ip>.sslip.io` — gratuit, HTTPS automatique, ne dépend d'aucun achat de domaine |
+
+Marche à suivre (20 minutes) :
+
+1. Créez un compte sur <https://www.oracle.com/cloud/free/> et choisissez la région la plus proche
+   (Europe : Paris, Francfort, Marseille).
+2. **Instances → Create instance** → image *Ubuntu 24.04*, forme *VM.Standard.A1.Flex* (ARM, offre gratuite)
+   ou *VM.Standard.E2.1.Micro*. Ajoutez votre clé SSH, créez.
+3. Notez l'**IP publique** (ex. `141.94.x.x`). Elle ne change pas.
+4. Ouvrez les ports 80 et 443 dans la *Security List* du réseau virtuel.
+5. Sur la machine :
+
+```bash
+sudo apt update && sudo apt install -y docker.io docker-compose-v2 git
+git clone https://github.com/fayfoneond-stack/terminish-maths.git /srv/app
+cd /srv/app/ecole
+cp .env.example .env
+nano .env      # DOMAIN=ecole.141.94.x.x.sslip.io  + ADMIN_EMAIL + ADMIN_PASSWORD
+sudo docker compose up -d --build
+```
+
+Caddy démarre, obtient un vrai certificat Let's Encrypt pour `ecole.<ip>.sslip.io`, et votre site est
+en ligne **en permanence**, même quand votre ordinateur est éteint.
+
+> Le jour où vous achèterez un domaine (`ecole.votre-ecole.tg`), il suffira de changer la ligne `DOMAIN=`
+> et de relancer : le certificat se renouvelle tout seul.
+
+### Autres options gratuites (si Oracle est refusé)
+
+| Service | Durée | Limite | Adapté ? |
+|---|---|---|---|
+| **Google Cloud** (300 $ de crédits, 90 jours) | 3 mois | carte requise | oui pour démarrer, puis à payer |
+| **GitHub Codespaces** (60 h/mois) | illimité | machine éteinte quand vous fermez l'onglet | démonstrations seulement |
+| **Ordinateur d'une école partenaire** | illimitée | dépend de leur électricité/Internet | bon plan si une école pilote vous fait confiance |
+| Ancien smartphone Android (Termux) | illimitée | fragile | à éviter |
+
+---
+
+## 5. Sauvegarder vos données, gratuitement
+
+Votre base est un fichier. Sauvegarde en une commande :
+
+```bash
+npm run backup
+```
+
+→ crée `data/sauvegardes/terminish-ecole-AAAA-MM-JJ-HH-MM-SS.db` (les 14 dernières sont gardées).
+
+Puis **copiez ce fichier ailleurs** : Google Drive (15 Go gratuits), une clé USB, ou un second ordinateur.
+Une sauvegarde qui reste sur la machine qui tombe en panne ne sert à rien.
+
+Automatisation Windows (tous les jours à 20 h) : *Planificateur de tâches* → créer une tâche →
+action « Démarrer un programme » → `cmd.exe` → arguments :
+`/c cd /d C:\chemin\terminish-maths\ecole && npm run backup`.
+
+Linux/macOS : `crontab -e` puis
+`0 20 * * * cd /chemin/terminish-maths/ecole && npm run backup`.
+
+---
+
+## 6. Rester en ligne : les 5 réflexes
+
+1. **Empêcher la mise en veille** : Windows → Paramètres → Système → Alimentation → « Jamais »
+   (ou `powercfg /change standby-timeout-ac 0`). Un PC endormi = site hors ligne.
+2. **Brancher sur secteur** et, si possible, onduleur.
+3. **Internet stable** : préférez la fibre/adsl à une clé 4G, ou gardez la 4G en secours.
+4. **Ne pas éteindre la fenêtre** du terminal (`npm run partage`). Fermer = couper le site.
+5. **Redémarrer proprement** : `Ctrl+C` dans la fenêtre, puis relancer la commande.
+
+Pour que le site redémarre automatiquement après une coupure de courant :
+- Linux/macOS : le service systemd de `deploy/terminish-ecole.service` (adapté avec `TERMINISH_SEED=prod`) ;
+- Windows : *Planificateur de tâches* → « Au démarrage de l'ordinateur » → `npm run partage`.
+
+---
+
+## 7. Sécurité : le minimum vital quand le site est public
+
+Même gratuit, un site exposé à Internet doit être protégé :
+
+- [ ] mot de passe administrateur long (celui généré fait très bien l'affaire) et **noté** ;
+- [ ] `npm run partage` (et non `:demo`) pour toute adresse que vous laissez ouverte ;
+- [ ] une seule école de test au début, avec des données fictives ;
+- [ ] sauvegarde quotidienne copiée hors de l'ordinateur ;
+- [ ] ne jamais publier la clé de votre routeur, ni votre IP, ni `data/compte-administrateur.txt`.
+
+Les mots de passe sont chiffrés (scrypt), les sessions sont signées et expirables, et chaque école
+ne voit que ses propres données. Le HTTPS du tunnel protège les échanges.
+
+---
+
+## 8. Et les paiements, sans compte marchand ?
+
+Rien à payer : l'application fonctionne en **mode manuel**, déjà configuré.
+
+1. L'école paie sur votre **numéro marchand** : Mixx by Yas **+228 93 15 01 78**
+   (`*145*5#`) ou Moov Money **+228 97 24 30 86** (`*155#` option 2).
+2. Elle déclare le paiement dans son espace (montant, référence SMS).
+3. Vous validez dans la console → l'abonnement est prolongé et le **reçu PDF** est généré.
+
+Aucun frais, aucun abonnement marchand. Quand vous aurez plusieurs écoles et un compte PayDunya ou
+CinetPay, l'encaissement deviendra automatique (les champs sont déjà prêts dans la console).
+
+---
+
+## 9. Quand vous gagnerez votre première école
+
+Rien ne presse, mais voici l'ordre logique :
+
+| Étape | Coût | Pourquoi |
+|---|---|---|
+| 1. Un vrai nom de domaine (`terminish.tg` ou `.com`) | 8 000–20 000 F/an | crédibilité, adresse stable, e-mails pro |
+| 2. Un VPS à 5 000 F/mois | 5 000 F/mois | le site ne dépend plus de votre ordinateur |
+| 3. Compte marchand PayDunya | 0 F d'abonnement | encaissement automatique, reçus sans validation manuelle |
+| 4. Sauvegarde hors site (stockage objet) | ~1 500 F/mois | dormir tranquille |
+
+**Jusque-là, tout ce qui précède est gratuit.** Le logiciel, l'application, les bulletins, les reçus,
+les sauvegardes : aucun frais caché, aucune limite d'écoles, aucun quota.
+
+---
+
+## 10. Dépannage
+
+| Symptôme | Cause | Solution |
+|---|---|---|
+| `node : commande introuvable` | Node.js absent ou terminal non rouvert | réinstallez Node 22, fermez puis rouvrez le terminal |
+| `EADDRINUSE : port 3000` | une autre instance tourne déjà | `npm run partage -- --port 3001`, ou fermez l'autre fenêtre |
+| Le lien `trycloudflare` ne s'ouvre pas | tunnel pas encore prêt / réseau | attendez 10 s, rechargez ; vérifiez que la fenêtre affiche bien l'URL |
+| « Aucun lien public » dans la console | `cloudflared` non installé ou bloqué | `cloudflared --version` ; antivirus → autoriser |
+| Le lien change tout le temps | comportement normal du tunnel rapide | voir voie 2 (Oracle Cloud) pour une adresse fixe |
+| Site inaccessible depuis le téléphone | PC en veille / Internet coupé | réveillez le PC, relancez `npm run partage` |
+| Mot de passe administrateur oublié | — | il est dans `data/compte-administrateur.txt` |
+| Données perdues | mauvais dossier de données | vérifiez `TERMINISH_DATA_DIR` : toujours le même |
+
+---
+
+## 11. Récapitulatif en 6 lignes
+
+```bash
+# une fois
+winget install --id Cloudflare.cloudflared     # (ou brew / apt)
+git clone https://github.com/fayfoneond-stack/terminish-maths.git
+cd terminish-maths/ecole && npm install --omit=dev
+
+# à chaque démonstration
+npm run partage:demo      # ou npm run partage
+```
+
+Vous avez un site HTTPS, un lien à envoyer, une console d'administration, et zéro facture.

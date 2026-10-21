@@ -9,6 +9,13 @@ et l'application accessible en HTTPS à vos écoles.
 
 ---
 
+> **Vous n'avez pas de budget pour l'instant ?** Il existe une voie entièrement gratuite :
+> **[DEPLOIEMENT-GRATUIT.md](DEPLOIEMENT-GRATUIT.md)** — le site tourne sur votre ordinateur et Cloudflare
+> Tunnel lui donne une adresse HTTPS publique, sans carte bancaire ni domaine. Revenez ici le jour où vous
+> aurez votre premier client.
+
+---
+
 ## 1. Ce que l'application demande
 
 | Élément | Valeur |
