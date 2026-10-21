@@ -6,6 +6,7 @@ const { db, hashPassword, verifyPassword, createEtablissement, createUser, now, 
 const { computeClasse, bulletinData } = require('./stats');
 const P = require('./paiements');
 const { genererRecuPDF } = require('./recu');
+const cloudinary = require('./cloudinary');
 const { renderBulletin, renderBulletinBatch, renderExamen } = require('./print');
 
 const app = express();
@@ -182,7 +183,7 @@ app.get('/api/etablissement', auth, (req, res) => {
   res.json(etab);
 });
 
-app.put('/api/etablissement', auth, directionOnly, (req, res) => {
+app.put('/api/etablissement', auth, directionOnly, async (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
   const allowed = ['nom', 'type', 'ville', 'adresse', 'bp', 'telephone', 'email', 'devise', 'logo',
     'chef_nom', 'chef_titre', 'annee_scolaire', 'formule_moyenne'];
@@ -190,9 +191,36 @@ app.put('/api/etablissement', auth, directionOnly, (req, res) => {
   allowed.forEach(k => {
     if (req.body[k] !== undefined) { sets.push(`${k} = ?`); vals.push(req.body[k]); }
   });
+
+  // Miroir Cloudinary (facultatif) : la data URL reste enregistrée en base,
+  // l'URL du CDN n'est qu'un bonus pour l'affichage. Tout échec est silencieux.
+  let avertissement = null;
+  if (req.body.logo !== undefined) {
+    const logo = String(req.body.logo || '');
+    if (!logo) {
+      sets.push('logo_url = ?', 'logo_public_id = ?'); vals.push(null, null);
+    } else if (cloudinary.config().actif) {
+      try {
+        const envoye = await cloudinary.envoyerLogo(logo, `ecole-${id}`);
+        sets.push('logo_url = ?', 'logo_public_id = ?');
+        vals.push(envoye ? envoye.url : null, envoye ? envoye.publicId : null);
+      } catch (err) {
+        console.warn(`Cloudinary (école ${id}) : ${err.message}`);
+        // On oublie l'ancienne URL : elle pointerait vers le logo précédent.
+        sets.push('logo_url = ?', 'logo_public_id = ?'); vals.push(null, null);
+        avertissement = 'Logo enregistré, mais la copie sur le CDN a échoué (le logo local reste utilisé).';
+      }
+    }
+  }
+
   if (!sets.length) return res.json({ ok: true });
   db.prepare(`UPDATE etablissements SET ${sets.join(', ')} WHERE id = ?`).run(...vals, id);
-  res.json({ ok: true, etablissement: db.prepare('SELECT * FROM etablissements WHERE id = ?').get(id) });
+  res.json({
+    ok: true,
+    avertissement,
+    cloudinary: cloudinary.config().actif,
+    etablissement: db.prepare('SELECT * FROM etablissements WHERE id = ?').get(id)
+  });
 });
 
 /* ------------------------------------------------------------------ */
@@ -1215,6 +1243,10 @@ app.get('/api/admin/reglages', auth, roles('super_admin'), (req, res) => {
       token: pd.actif ? pd.token.replace(/^(.{2}).*(.{2})$/, '$1••••$2') : ''
     },
     passerelles: P.passerelles(r),
+    cloudinary: (() => {
+      const c = cloudinary.config();
+      return { actif: c.actif, cloud: c.cloud, source: c.source };
+    })(),
     editeur: {
       nom: r.editeur_nom || '', sous_titre: r.editeur_sous_titre || '',
       ville: r.editeur_ville || '', telephone: r.editeur_telephone || '', email: r.editeur_email || '',

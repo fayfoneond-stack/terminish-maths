@@ -216,6 +216,10 @@ ensureColumn('paiements', 'valide_le', 'TEXT');
 ensureColumn('paiements', 'note', 'TEXT');
 ensureColumn('paiements', 'mois', 'INTEGER DEFAULT 1');
 ensureColumn('paiements', 'canal', "TEXT DEFAULT 'manuel'");
+// Miroir Cloudinary du logo d'établissement (facultatif) : la data URL reste
+// la source de vérité, `logo_url` n'est qu'une copie optimisée sur le CDN.
+ensureColumn('etablissements', 'logo_url', 'TEXT');
+ensureColumn('etablissements', 'logo_public_id', 'TEXT');
 
 db.prepare('CREATE INDEX IF NOT EXISTS idx_paiements_statut ON paiements(statut)').run();
 

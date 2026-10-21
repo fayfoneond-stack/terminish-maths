@@ -96,7 +96,7 @@ function renderBulletin({ promo, ligne, bulletin, eleve }) {
 <div class="page">
   <div class="watermark">${esc(etab.nom)}</div>
   <div class="head">
-    ${etab.logo ? `<img class="logo" src="${etab.logo}" alt="logo">` : `<div class="logo-ph">${esc((etab.nom || 'E').slice(0, 1))}</div>`}
+    ${(etab.logo_url || etab.logo) ? `<img class="logo" src="${etab.logo_url || etab.logo}" alt="logo">` : `<div class="logo-ph">${esc((etab.nom || 'E').slice(0, 1))}</div>`}
     <div class="ecole">
       <div class="ministry">République Togolaise · Ministère des Enseignements</div>
       <h1>${esc(etab.nom)}</h1>
@@ -261,7 +261,7 @@ function renderExamen(promo) {
   <div class="noprint"><button onclick="window.print()">🖨️ Imprimer / Enregistrer en PDF</button></div>
   <div class="page">
     <div class="head">
-      ${etab.logo ? `<img src="${etab.logo}" alt="logo">` : `<div class="ph">${esc((etab.nom || 'E').slice(0, 1))}</div>`}
+      ${(etab.logo_url || etab.logo) ? `<img src="${etab.logo_url || etab.logo}" alt="logo">` : `<div class="ph">${esc((etab.nom || 'E').slice(0, 1))}</div>`}
       <div><h1>${esc(etab.nom)}</h1>
         <div class="meta">${esc(etab.ville || '')}${etab.telephone ? ' · Tél. ' + esc(etab.telephone) : ''} · Année ${esc(etab.annee_scolaire)}</div></div>
       <div class="right">Classe : <b>${esc(classe.nom)}</b><br>Effectif : <b>${promo.resultats.length}</b><br>Moyenne de classe : <b>${fmt(promo.stats.moyenne)}</b></div>

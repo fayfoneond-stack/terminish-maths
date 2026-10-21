@@ -273,7 +273,7 @@
     `).join('');
     const ecoleBloc = S.etab ? `
       <div class="sb-ecole">
-        ${S.etab.logo ? `<img src="${S.etab.logo}" alt="logo">` : `<div class="ph">${esc((S.etab.nom || 'E').slice(0, 1))}</div>`}
+        ${(S.etab.logo_url || S.etab.logo) ? `<img src="${S.etab.logo_url || S.etab.logo}" alt="logo">` : `<div class="ph">${esc((S.etab.nom || 'E').slice(0, 1))}</div>`}
         <div style="min-width:0"><b>${esc(S.etab.nom)}</b><span>${esc(S.etab.annee_scolaire || '')} · ${esc(S.etab.ville || '')}</span></div>
       </div>` : '';
 
@@ -2867,6 +2867,13 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                   <option value="test" ${reg.paydunya.mode === 'test' ? 'selected' : ''}>Test (sandbox)</option>
                   <option value="live" ${reg.paydunya.mode === 'live' ? 'selected' : ''}>Production</option>
                 </select></div>
+              </div>
+
+              <h4 style="margin:14px 0 8px;font-size:13px">🖼️ Cloudinary <span class="tag gris">logos des écoles</span></h4>
+              <div class="notice ${reg.cloudinary && reg.cloudinary.actif ? 'ok' : 'info'}" style="margin-bottom:10px">
+                ${reg.cloudinary && reg.cloudinary.actif
+                  ? `Copie des logos active sur le compte <b>${esc(reg.cloudinary.cloud)}</b>. Le logo reste enregistré en base : il s’imprime même si le CDN est injoignable.`
+                  : 'Non configuré : les logos restent dans la base (aucun envoi externe). Renseignez <code>CLOUDINARY_CLOUD_NAME</code>, <code>CLOUDINARY_API_KEY</code> et <code>CLOUDINARY_API_SECRET</code> pour activer la copie CDN.'}
               </div>
 
               <h4 style="margin:14px 0 8px;font-size:13px">🧾 Identité sur les reçus</h4>

@@ -126,6 +126,21 @@ dans la console éditeur) : montant, formule, durée, moyen de paiement, référ
 identité de l'éditeur, mention légale et empreinte de vérification. L'identité imprimée (nom commercial,
 ville, téléphone, email) se règle dans la console.
 
+### Logos et Cloudinary (optionnel)
+
+Le logo de l'établissement est stocké en **data URL dans la base** : il s'imprime sur les bulletins et les
+relevés même hors ligne, et rien ne dépend d'un service externe.
+
+Si `CLOUDINARY_URL` (ou les trois variables `CLOUDINARY_*`) sont renseignées, une copie optimisée du logo
+est en plus envoyée sur le CDN ; son URL est enregistrée dans `etablissements.logo_url` et utilisée en priorité
+pour l'affichage. La data URL reste en base et sert de **repli automatique** si le CDN est injoignable.
+
+- Seuls PNG, JPEG et WebP sont envoyés (le SVG reste local : quelques Ko, aucun intérêt à le déporter).
+- Un identifiant stable (`ecole-<id>`) est réutilisé : un nouveau logo remplace l'ancien, sans doublon.
+- Tout échec réseau ou de quota est silencieux : le logo local reste utilisé, un avertissement est renvoyé à
+  l'interface et journalisé côté serveur.
+- État visible dans Console → Paiements → Cloudinary.
+
 ### Mode automatique PayDunya (optionnel)
 PayDunya couvre **t-money-togo** et **moov-togo** via une page de paiement (et les cartes bancaires).
 
@@ -176,6 +191,9 @@ ecole/
 │   ├── db.js        schéma SQLite, helpers, jeu de démonstration
 │   ├── stats.js     moteur de calcul (moyennes, rangs, statistiques)
 │   ├── print.js     génération des bulletins HTML imprimables (A4)
+│   ├── recu.js      reçu de paiement PDF (A4)
+│   ├── paiements.js Mobile Money, CinetPay, PayDunya
+│   ├── cloudinary.js miroir optionnel des logos sur le CDN
 │   └── index.js     API REST, authentification, contrôle d'accès
 ├── public/
 │   ├── index.html   site commercial (fonctionnalités, tarifs, contact)
@@ -264,6 +282,7 @@ derrière Nginx (`deploy/nginx.conf`) ou Caddy.
 | `COOKIE_SECURE` | `1` pour marquer le cookie de session `Secure` (obligatoire derrière HTTPS) |
 | `CINETPAY_APIKEY`, `CINETPAY_SITE_ID`, `CINETPAY_MODE` | paiement automatique CinetPay |
 | `PAYDUNYA_MASTER_KEY`, `PAYDUNYA_PRIVATE_KEY`, `PAYDUNYA_TOKEN`, `PAYDUNYA_MODE` | paiement automatique PayDunya |
+| `CLOUDINARY_URL` **ou** `CLOUDINARY_CLOUD_NAME` + `CLOUDINARY_API_KEY` + `CLOUDINARY_API_SECRET` | copie optionnelle des logos sur le CDN Cloudinary |
 
 ### Sauvegarde
 
