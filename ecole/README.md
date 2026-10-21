@@ -58,7 +58,8 @@ démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimest
   résultats comparables aux bulletins de période.
 - Paramètres : identité, **logo importé**, titre du chef, année scolaire, devise, formule de calcul des
   moyennes, ouverture/clôture des périodes, changement de mot de passe.
-- Abonnement : formule, échéance, **paiement par Mixx by Yas ou Moov Money**, historique des paiements.
+- Abonnement : formule, échéance, **paiement par Mixx by Yas ou Moov Money**, paiement en ligne
+  (CinetPay/PayDunya si activés), historique et **reçus PDF**.
 
 ### Enseignant
 - Connexion à distance depuis n'importe quel appareil.
@@ -77,7 +78,7 @@ démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimest
 - Création d'un établissement client + compte direction.
 - Suivi des demandes entrantes du site vitrine.
 - **Validation des paiements Mobile Money** déclarés par les écoles (Mixx by Yas / Moov Money),
-  prolongation automatique de l'abonnement à la validation.
+  prolongation automatique de l'abonnement à la validation, **reçus PDF**.
 - Configuration des **numéros marchands**, des tarifs et de CinetPay.
 - Enregistrement des paiements hors ligne, création d'établissements, suivi des demandes.
 
@@ -106,6 +107,7 @@ Trois moyens sont proposés aux établissements depuis **Abonnement** :
 | **Mixx by Yas** (ex T-Money, Yas Togo) | Paiement marchand `*145*5#` vers le numéro de l'éditeur | L'école déclare l'ID de transaction → l'éditeur valide |
 | **Moov Money** (Flooz, Moov Africa) | `*155#` → option 2 (marchand), ou `*155*2*2*numéro*montant*code#` | idem |
 | **CinetPay** (optionnel) | Page de paiement CinetPay (Mobile Money + carte) | **automatique** via notification |
+| **PayDunya** (optionnel) | Page de paiement PayDunya (T-Money/Mixx, Flooz/Moov, cartes) | **automatique** via IPN |
 
 ### Mode manuel (fonctionne immédiatement, sans contrat)
 1. L'éditeur renseigne ses numéros marchands dans **Console → Paiements → Numéros marchands**.
@@ -117,6 +119,29 @@ Trois moyens sont proposés aux établissements depuis **Abonnement** :
 
 Durées : 1 mois, 3 mois, ou 12 mois **facturés 10 mois** (2 mois offerts). Les prix sont modifiables
 dans la console ; par défaut Essentiel 15 000 F et Standard 25 000 F par mois.
+
+### Reçus PDF
+Chaque paiement validé génère un **reçu PDF A4** téléchargeable (bouton 📄 dans l'historique de l'école ou
+dans la console éditeur) : montant, formule, durée, moyen de paiement, référence opérateur, période couverte,
+identité de l'éditeur, mention légale et empreinte de vérification. L'identité imprimée (nom commercial,
+ville, téléphone, email) se règle dans la console.
+
+### Mode automatique PayDunya (optionnel)
+PayDunya couvre **t-money-togo** et **moov-togo** via une page de paiement (et les cartes bancaires).
+
+```bash
+export PAYDUNYA_MASTER_KEY="..."
+export PAYDUNYA_PRIVATE_KEY="..."
+export PAYDUNYA_TOKEN="..."
+export PAYDUNYA_MODE="live"      # test | live
+npm start
+```
+
+L'IPN `POST /api/webhooks/paydunya` contrôle l'empreinte SHA-512 de la master key puis **confirme la facture
+auprès de l'API PayDunya** avant validation ; le montant confirmé doit couvrir le montant attendu. Les liens
+de paiement renvoyés sont refusés s'ils ne sont pas en HTTPS. Les clés peuvent aussi être saisies dans la
+console (elles priment sur les variables d'environnement par ordre inverse : les variables d'environnement
+ont la priorité).
 
 ### Mode automatique CinetPay (optionnel)
 CinetPay couvre Tmoney (Mixx) et Flooz (Moov) au Togo. Il faut un compte marchand CinetPay, puis :
@@ -194,7 +219,11 @@ ecole/
 | GET | `/api/paiement/options` | direction (opérateurs, tarifs) |
 | POST | `/api/paiement/declarer` | direction (déclaration Mobile Money) |
 | POST | `/api/paiement/cinetpay/initier` | direction (si CinetPay configuré) |
+| POST | `/api/paiement/paydunya/initier` | direction (si PayDunya configuré) |
 | POST | `/api/webhooks/cinetpay` | CinetPay (public, vérifié côté API) |
+| POST | `/api/webhooks/paydunya` | PayDunya (public, empreinte + confirmation API) |
+| GET | `/api/paiements/:id/recu.pdf` | direction (reçu PDF de son école) |
+| GET | `/api/admin/paiements/:id/recu.pdf` | super administrateur |
 | GET/PATCH | `/api/admin/paiements`, `/api/admin/reglages` | super administrateur |
 | GET | `/api/admin/*` | super administrateur |
 | GET | `/print/bulletin/:id`, `/print/classe/:id`, `/print/examen/:id` | personnel / élève concerné |
@@ -209,8 +238,9 @@ ecole/
    cookie de session soit protégé.
 4. **Sauvegarde** : copier régulièrement `ecole/data/` (base SQLite en mode WAL). Un simple `rsync` ou une
    tâche `sqlite3 .backup` suffit.
-5. Variables : `PORT` (défaut 3000), et pour CinetPay : `CINETPAY_APIKEY`, `CINETPAY_SITE_ID`,
-   `CINETPAY_MODE` (`test`/`live`).
+5. Variables : `PORT` (défaut 3000), et pour les paiements en ligne :
+   `CINETPAY_APIKEY`, `CINETPAY_SITE_ID`, `CINETPAY_MODE` ; `PAYDUNYA_MASTER_KEY`, `PAYDUNYA_PRIVATE_KEY`,
+   `PAYDUNYA_TOKEN`, `PAYDUNYA_MODE` (`test`/`live`).
 
 Pour un réseau de plusieurs écoles, la console super-admin crée les établissements ; chaque école reste
 cloisonnée par `ecole_id`.
@@ -220,7 +250,9 @@ cloisonnée par `ecole_id`.
 ## 7. Limites connues / pistes d'évolution
 
 - Le mode Mobile Money manuel dépend d'une vérification humaine (pas de rapprochement automatique des
-  relevés) ; le mode CinetPay automatise cette étape mais demande un compte marchand.
+  relevés) ; CinetPay ou PayDunya automatisent cette étape mais demandent un compte marchand.
+- Pas de paiement récurrent automatique (renouvellement à l'initiative de l'école).
+- Les reçus sont des PDF simples (pas de facturation électronique certifiée ni de numérotation fiscale).
 - Pas d'envoi automatique de SMS/WhatsApp aux parents (les demandes partent vers WhatsApp en un clic).
 - Import des notes depuis Excel non prévu (la grille de saisie est l'interface principale).
 - Bulletins au format PDF côté serveur : l'impression navigateur (« Enregistrer en PDF ») est utilisée.
@@ -238,6 +270,7 @@ cloisonnée par `ecole_id`.
 Quelques valeurs sont des exemples, à remplacer par les vôtres :
 
 - **numéros marchands** Mixx by Yas / Moov Money : Console → Paiements → Numéros marchands ;
+- **identité sur les reçus** (nom commercial, ville, téléphone, email) : Console → Paiements → Identité sur les reçus ;
 - **numéro WhatsApp / téléphone** affiché sur le site et sur la page Abonnement (`/app`, `ecole/public/index.html`,
   `ecole/public/js/app.js`, `+228 90 00 00 00`) ;
 - **tarifs** : Console → Paiements (ils alimentent la page Abonnement) et section Tarifs du site public ;

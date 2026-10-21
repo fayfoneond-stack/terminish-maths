@@ -5,6 +5,7 @@ const path = require('node:path');
 const { db, hashPassword, verifyPassword, createEtablissement, createUser, now, today, addDays } = require('./db');
 const { computeClasse, bulletinData } = require('./stats');
 const P = require('./paiements');
+const { genererRecuPDF } = require('./recu');
 const { renderBulletin, renderBulletinBatch, renderExamen } = require('./print');
 
 const app = express();
@@ -965,7 +966,8 @@ app.get('/api/paiement/options', auth, directionOnly, (req, res) => {
       montants: P.DUREES.map(d => ({ mois: d.mois, libelle: d.libelle, remise: d.remise, montant: P.montantPour(reglages, p.code, d.mois) }))
     })),
     durees: P.DUREES,
-    cinetpay: { actif: cp.actif, mode: cp.mode }
+    cinetpay: { actif: cp.actif, mode: cp.mode },
+    passerelles: P.passerelles(reglages)
   });
 });
 
@@ -1064,10 +1066,125 @@ app.post('/api/webhooks/cinetpay', async (req, res) => {
   }
 });
 
+/** Initialisation d'un paiement PayDunya (T-Money / Flooz / carte). */
+app.post('/api/paiement/paydunya/initier', auth, directionOnly, async (req, res) => {
+  const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
+  const { plan, mois } = req.body || {};
+  const reglages = P.lireReglages(db);
+  const cfg = P.paydunyaConfig(reglages);
+  if (!cfg.actif) return res.status(400).json({ error: 'PayDunya n’est pas activé. Utilisez le paiement Mobile Money manuel.' });
+  if (!P.PLANS[plan] || plan === 'reseau') return res.status(400).json({ error: 'Formule invalide' });
+  const montant = P.montantPour(reglages, plan, mois);
+  if (!montant) return res.status(400).json({ error: 'Montant introuvable' });
+  const etab = db.prepare('SELECT * FROM etablissements WHERE id = ?').get(ecoleId);
+  const duree = P.DUREES.find(d => d.mois === Number(mois)) || P.DUREES[0];
+  const reference = P.referencePaiement('paydunya');
+  const info = db.prepare(`INSERT INTO paiements (ecole_id, montant, devise, plan, reference, statut,
+    periode_debut, periode_fin, canal, mois, telephone_payeur, demande_par, cree_le)
+    VALUES (?,?,?,?,?, 'en_attente', ?,?, 'paydunya', ?,?,?,?)`).run(
+    ecoleId, montant, 'FCFA', plan, reference, today(),
+    new Date(Date.now() + duree.mois * 30 * 864e5).toISOString().slice(0, 10),
+    duree.mois, req.body.telephone || etab.telephone || '', req.user.id, now());
+  const id = Number(info.lastInsertRowid);
+  try {
+    const { url, token } = await P.initierPaydunya(cfg, {
+      montant, description: `Abonnement ${P.PLANS[plan].nom} — ${duree.libelle} — ${etab.nom}`,
+      ecole: etab, telephone: req.body.telephone || etab.telephone, email: req.user.email,
+      nom: req.user.nom, baseUrl: baseUrl(req)
+    });
+    db.prepare('UPDATE paiements SET transaction_ref = ? WHERE id = ?').run(token, id);
+    res.json({ ok: true, url, reference, token, montant, id });
+  } catch (e) {
+    db.prepare("UPDATE paiements SET statut = 'rejete', note = ? WHERE id = ?").run(String(e.message).slice(0, 300), id);
+    res.status(502).json({ error: e.message });
+  }
+});
+
+/** IPN PayDunya : on vérifie l'empreinte HMAC puis on confirme auprès de l'API. */
+app.post('/api/webhooks/paydunya', async (req, res) => {
+  const body = req.body || {};
+  const token = (body.invoice && (body.invoice.token || body.invoice.invoice_token))
+    || body.token || body.invoice_token || (req.query && req.query.token);
+  if (!token) return res.status(400).json({ error: 'token manquant' });
+  const paiement = db.prepare("SELECT * FROM paiements WHERE canal = 'paydunya' AND transaction_ref = ?").get(String(token));
+  if (!paiement) return res.status(404).json({ error: 'Paiement inconnu' });
+  if (paiement.statut === 'paye') return res.json({ ok: true, deja: true });
+  const cfg = P.paydunyaConfig(P.lireReglages(db));
+  if (!cfg.actif) return res.status(400).json({ error: 'PayDunya non configuré' });
+  // Contrôle facultatif de l'empreinte fournie par PayDunya (SHA-512 de la master key)
+  if (body.hash) {
+    const attendu = crypto.createHash('sha512').update(cfg.master).digest('hex');
+    if (String(body.hash).toLowerCase() !== attendu) return res.status(403).json({ error: 'Empreinte invalide' });
+  }
+  try {
+    const etat = await P.verifierPaydunya(cfg, token);
+    if (etat.statut === 'completed') {
+      if (etat.montant != null && Math.round(etat.montant) < Math.round(paiement.montant)) {
+        db.prepare("UPDATE paiements SET statut = 'rejete', note = ? WHERE id = ?")
+          .run(`Montant reçu (${etat.montant}) inférieur au montant attendu (${paiement.montant})`, paiement.id);
+        return res.status(400).json({ error: 'Montant insuffisant' });
+      }
+      db.prepare('UPDATE paiements SET operateur = ? WHERE id = ?')
+        .run(etat.operateur || null, paiement.id);
+      validerPaiement(paiement, null);
+      return res.json({ ok: true });
+    }
+    if (etat.statut === 'canceled' || etat.statut === 'cancelled' || etat.statut === 'fail') {
+      db.prepare("UPDATE paiements SET statut = 'rejete', note = ? WHERE id = ?")
+        .run(`PayDunya : ${etat.statut}`, paiement.id);
+    }
+    res.json({ ok: true, statut: etat.statut });
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
+/* ------------------------------- Reçus PDF ------------------------- */
+function envoyerRecu(res, paiement) {
+  const ecole = db.prepare('SELECT * FROM etablissements WHERE id = ?').get(paiement.ecole_id);
+  if (!ecole) return res.status(404).json({ error: 'Établissement introuvable' });
+  if (paiement.statut !== 'paye') return res.status(400).json({ error: 'Le reçu n’est disponible qu’après validation du paiement' });
+  const r = P.lireReglages(db);
+  const editeur = {
+    nom: r.editeur_nom || 'Terminish École',
+    sous_titre: r.editeur_sous_titre || '',
+    ville: r.editeur_ville || 'Lomé, Togo',
+    telephone: r.editeur_telephone || '',
+    email: r.editeur_email || ''
+  };
+  genererRecuPDF(paiement, ecole, { editeur })
+    .then(buffer => {
+      const nom = `recu-${(paiement.reference || 'paiement').replace(/[^A-Za-z0-9_-]/g, '')}.pdf`;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${nom}"`);
+      res.setHeader('Content-Length', buffer.length);
+      res.end(buffer);
+    })
+    .catch(e => {
+      console.error('Reçu PDF :', e);
+      res.status(500).json({ error: 'Impossible de générer le reçu' });
+    });
+}
+
+app.get('/api/paiements/:id/recu.pdf', auth, (req, res) => {
+  const paiement = db.prepare('SELECT * FROM paiements WHERE id = ?').get(req.params.id);
+  if (!paiement) return res.status(404).json({ error: 'Paiement introuvable' });
+  const autorise = req.user.role === 'super_admin' || Number(paiement.ecole_id) === Number(req.user.ecole_id);
+  if (!autorise) return res.status(403).json({ error: 'Accès refusé' });
+  envoyerRecu(res, paiement);
+});
+
+app.get('/api/admin/paiements/:id/recu.pdf', auth, roles('super_admin'), (req, res) => {
+  const paiement = db.prepare('SELECT * FROM paiements WHERE id = ?').get(req.params.id);
+  if (!paiement) return res.status(404).json({ error: 'Paiement introuvable' });
+  envoyerRecu(res, paiement);
+});
+
 /* --------------------------- Admin : réglages & validation --------- */
 app.get('/api/admin/reglages', auth, roles('super_admin'), (req, res) => {
   const r = P.lireReglages(db);
   const cfg = P.cinetpayConfig(r);
+  const pd = P.paydunyaConfig(r);
   res.json({
     mixx_numero: r.mixx_numero || '', mixx_nom: r.mixx_nom || '', mixx_actif: r.mixx_actif === '1',
     moov_numero: r.moov_numero || '', moov_nom: r.moov_nom || '', moov_actif: r.moov_actif === '1',
@@ -1077,6 +1194,16 @@ app.get('/api/admin/reglages', auth, roles('super_admin'), (req, res) => {
       actif: cfg.actif, mode: cfg.mode,
       source: process.env.CINETPAY_APIKEY ? 'variables d’environnement' : (r.cinetpay_apikey ? 'base de données' : 'non configuré'),
       site_id: cfg.actif ? cfg.siteId.replace(/^(.{2}).*(.{2})$/, '$1••••$2') : ''
+    },
+    paydunya: {
+      actif: pd.actif, mode: pd.mode,
+      source: process.env.PAYDUNYA_MASTER_KEY ? 'variables d’environnement' : (r.paydunya_master_key ? 'base de données' : 'non configuré'),
+      token: pd.actif ? pd.token.replace(/^(.{2}).*(.{2})$/, '$1••••$2') : ''
+    },
+    passerelles: P.passerelles(r),
+    editeur: {
+      nom: r.editeur_nom || '', sous_titre: r.editeur_sous_titre || '',
+      ville: r.editeur_ville || '', telephone: r.editeur_telephone || '', email: r.editeur_email || ''
     }
   });
 });
@@ -1091,6 +1218,13 @@ app.put('/api/admin/reglages', auth, roles('super_admin'), (req, res) => {
   if (b.cinetpay_apikey !== undefined) valeurs.cinetpay_apikey = String(b.cinetpay_apikey).trim();
   if (b.cinetpay_site_id !== undefined) valeurs.cinetpay_site_id = String(b.cinetpay_site_id).trim();
   if (b.cinetpay_mode !== undefined) valeurs.cinetpay_mode = b.cinetpay_mode === 'live' ? 'live' : 'test';
+  if (b.paydunya_master_key !== undefined) valeurs.paydunya_master_key = String(b.paydunya_master_key).trim();
+  if (b.paydunya_private_key !== undefined) valeurs.paydunya_private_key = String(b.paydunya_private_key).trim();
+  if (b.paydunya_token !== undefined) valeurs.paydunya_token = String(b.paydunya_token).trim();
+  if (b.paydunya_mode !== undefined) valeurs.paydunya_mode = b.paydunya_mode === 'live' ? 'live' : 'test';
+  ['editeur_nom', 'editeur_sous_titre', 'editeur_ville', 'editeur_telephone', 'editeur_email'].forEach(k => {
+    if (b[k] !== undefined) valeurs[k] = String(b[k]).slice(0, 200);
+  });
   P.ecrireReglages(db, valeurs);
   res.json({ ok: true, reglages: P.lireReglages(db) });
 });

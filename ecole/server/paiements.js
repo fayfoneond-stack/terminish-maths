@@ -94,6 +94,120 @@ function cinetpayConfig(reglages) {
   };
 }
 
+function paydunyaConfig(reglages) {
+  const master = process.env.PAYDUNYA_MASTER_KEY || reglages.paydunya_master_key || '';
+  const priv = process.env.PAYDUNYA_PRIVATE_KEY || reglages.paydunya_private_key || '';
+  const token = process.env.PAYDUNYA_TOKEN || reglages.paydunya_token || '';
+  const mode = (process.env.PAYDUNYA_MODE || reglages.paydunya_mode || 'test') === 'live' ? 'live' : 'test';
+  return {
+    actif: !!(master && priv && token),
+    master, priv, token, mode,
+    base: process.env.PAYDUNYA_BASE
+      || (mode === 'live' ? 'https://app.paydunya.com/api/v1' : 'https://app.paydunya.com/sandbox-api/v1'),
+    checkout: mode === 'live' ? 'https://app.paydunya.com/checkout/invoice/' : 'https://app.paydunya.com/sandbox-checkout/invoice/'
+  };
+}
+
+/** Passerelles de paiement en ligne réellement utilisables. */
+function passerelles(reglages) {
+  const cp = cinetpayConfig(reglages);
+  const pd = paydunyaConfig(reglages);
+  return [
+    { code: 'cinetpay', nom: 'CinetPay', actif: cp.actif, mode: cp.mode,
+      description: 'Mobile Money & carte bancaire · confirmation automatique' },
+    { code: 'paydunya', nom: 'PayDunya', actif: pd.actif, mode: pd.mode,
+      description: 'T-Money (Mixx), Flooz (Moov), cartes · confirmation automatique' }
+  ];
+}
+
+const OPERATEURS_PAYDUNYA = { mixx: 't-money-togo', moov: 'moov-togo' };
+
+/**
+ * Crée une facture PayDunya (redirection checkout).
+ * @returns {{url:string, token:string}}
+ */
+async function initierPaydunya(cfg, { montant, description, ecole, telephone, email, nom, baseUrl, operateur }) {
+  if (!cfg.actif) throw new Error('PayDunya n’est pas configuré sur cette plateforme');
+  const payload = {
+    invoice: {
+      total_amount: Math.round(montant),
+      description: String(description).slice(0, 190)
+    },
+    store: { name: (nom || ecole.nom || 'Terminish École').slice(0, 30) },
+    custom_data: { ecole_id: ecole.id, ecole: ecole.nom },
+    actions: {
+      cancel_url: `${baseUrl}/app#/abonnement`,
+      return_url: `${baseUrl}/app#/abonnement`,
+      callback_url: `${baseUrl}/api/webhooks/paydunya`
+    }
+  };
+  if (email) payload.invoice.customer = { name: nom || ecole.nom, email, phone: telephone || '' };
+  else if (telephone) payload.invoice.customer = { name: nom || ecole.nom, phone: telephone };
+
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 15000);
+  let json;
+  try {
+    const res = await fetch(`${cfg.base}/checkout-invoice/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'PAYDUNYA-MASTER-KEY': cfg.master,
+        'PAYDUNYA-PRIVATE-KEY': cfg.priv,
+        'PAYDUNYA-TOKEN': cfg.token
+      },
+      body: JSON.stringify(payload),
+      signal: ctrl.signal
+    });
+    json = await res.json();
+  } catch {
+    throw new Error('Impossible de joindre PayDunya (vérifiez la connexion du serveur). Utilisez le paiement Mobile Money manuel.');
+  } finally {
+    clearTimeout(t);
+  }
+  if (!json || String(json.response_code) !== '00' || !json.token) {
+    throw new Error(json && (json.response_text || json.description) || 'PayDunya a refusé la création de la facture');
+  }
+  const url = typeof json.response_text === 'string' && /^https:\/\//.test(json.response_text)
+    ? json.response_text
+    : cfg.checkout + json.token;
+  return { url, token: json.token };
+}
+
+/** Vérifie une facture PayDunya (source de vérité). */
+async function verifierPaydunya(cfg, token) {
+  if (!cfg.actif) throw new Error('PayDunya non configuré');
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res = await fetch(`${cfg.base}/checkout-invoice/confirm/${encodeURIComponent(token)}`, {
+      headers: {
+        Accept: 'application/json',
+        'PAYDUNYA-MASTER-KEY': cfg.master,
+        'PAYDUNYA-PRIVATE-KEY': cfg.priv,
+        'PAYDUNYA-TOKEN': cfg.token
+      },
+      signal: ctrl.signal
+    });
+    const json = await res.json();
+    const inv = (json && json.invoice) || {};
+    const brut = JSON.stringify(json).toLowerCase();
+    const operateur = brut.includes('t-money') || brut.includes('tmoney') ? 'mixx'
+      : brut.includes('moov') || brut.includes('flooz') ? 'moov' : '';
+    return {
+      statut: (json && json.status) || 'unknown',
+      montant: inv.total_amount != null ? Number(inv.total_amount) : null,
+      moyen: (json && json.payment_method) || '',
+      operateur,
+      recu: (json && json.receipt_url) || inv.receipt_url || '',
+      brut: json
+    };
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 function referencePaiement(operateur) {
   const d = new Date();
   const p = (n) => String(n).padStart(2, '0');
@@ -175,7 +289,9 @@ async function verifierCinetPay(cfg, transactionId) {
 }
 
 module.exports = {
-  OPERATEURS, PLANS, DUREES,
+  OPERATEURS, PLANS, DUREES, OPERATEURS_PAYDUNYA,
   lireReglages, ecrireReglages, prixMensuel, montantPour,
-  cinetpayConfig, initierCinetPay, verifierCinetPay, referencePaiement
+  cinetpayConfig, initierCinetPay, verifierCinetPay,
+  paydunyaConfig, initierPaydunya, verifierPaydunya, passerelles,
+  referencePaiement
 };

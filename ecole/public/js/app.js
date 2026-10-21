@@ -1658,6 +1658,10 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       window.open(`/print/classe/${classeId}?periode_id=${periodeId}`, '_blank');
     },
 
+    telechargerRecu(paiementId) {
+      window.open(`/api/paiements/${paiementId}/recu.pdf`, '_blank');
+    },
+
     imprimerExamen(examenId, classeId) {
       window.open(`/print/examen/${examenId}?classe_id=${classeId}`, '_blank');
     },
@@ -2272,11 +2276,16 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     mixx: { bg: '#fdecef', border: '#f7c9d2', color: '#b3122e', short: 'MIX' },
     moov: { bg: '#eaf1fa', border: '#c6d9f0', color: '#00508f', short: 'MOOV' },
     manuel: { bg: '#f1f4f3', border: '#dde6e1', color: '#4b6459', short: 'CASH' },
-    cinetpay: { bg: '#fdf6e7', border: '#f3e3bb', color: '#8a5a05', short: 'CP' }
+    cinetpay: { bg: '#fdf6e7', border: '#f3e3bb', color: '#8a5a05', short: 'CP' },
+    paydunya: { bg: '#fff1e6', border: '#f8d3b6', color: '#9a4b00', short: 'PD' }
+  };
+  const OP_LABELS = {
+    mixx: 'Mixx by Yas', moov: 'Moov Money', cinetpay: 'CinetPay',
+    paydunya: 'PayDunya', manuel: 'Espèces / virement'
   };
   function badgeOperateur(op) {
     const st = OP_STYLE[op] || OP_STYLE.manuel;
-    const label = op === 'mixx' ? 'Mixx by Yas' : op === 'moov' ? 'Moov Money' : op === 'cinetpay' ? 'CinetPay' : (op ? esc(op) : '—');
+    const label = OP_LABELS[op] || (op ? esc(op) : '—');
     return `<span class="tag" style="background:${st.bg};border:1px solid ${st.border};color:${st.color};font-weight:700">${label}</span>`;
   }
   function badgePaiementStatut(statut) {
@@ -2370,13 +2379,15 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
           <div class="panel">
             <div class="panel-head"><div><h2>Historique des paiements</h2><div class="sub">${paiements.length} opération(s)</div></div></div>
             ${paiements.length ? `<div class="table-wrap"><table class="data">
-              <thead><tr><th>Date</th><th>Formule</th><th>Moyen</th><th class="right">Montant</th><th class="center">Statut</th></tr></thead>
+              <thead><tr><th>Date</th><th>Formule</th><th>Moyen</th><th class="right">Montant</th><th class="center">Statut</th><th></th></tr></thead>
               <tbody>${paiements.map(p => `<tr>
                 <td class="small nowrap">${dateFr(p.cree_le)}</td>
                 <td class="small" style="text-transform:capitalize">${esc(p.plan || '—')}${p.mois ? ` · ${p.mois} mois` : ''}</td>
-                <td class="small">${badgeOperateur(p.operateur || (p.canal === 'cinetpay' ? 'cinetpay' : 'manuel'))}</td>
+                <td class="small">${badgeOperateur(p.operateur || (p.canal === 'cinetpay' || p.canal === 'paydunya' ? p.canal : 'manuel'))}</td>
                 <td class="right strong">${money(p.montant, p.devise)}</td>
                 <td class="center">${badgePaiementStatut(p.statut)}</td>
+                <td class="right">${p.statut === 'paye'
+                  ? `<button class="icon-btn" title="Télécharger le reçu PDF" onclick="App.telechargerRecu(${p.id})">📄</button>` : ''}</td>
               </tr>`).join('')}</tbody>
             </table></div>` : emptyState('💳', 'Aucun paiement enregistré pour le moment.')}
           </div>
@@ -2407,8 +2418,9 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                 <div class="small muted">Montant à payer</div>
                 <div class="amount" id="pay-amount">${money(montant)}</div>
                 <div class="small muted" id="pay-detail">${esc(plan.nom)} · ${esc(dureeChoisie ? dureeChoisie.libelle : '')}${dureeChoisie && dureeChoisie.remise ? ' (2 mois offerts)' : ''}</div>
-                ${options.cinetpay.actif ? `<button class="btn btn-gold btn-block" id="btn-cinetpay" style="margin-top:12px">Payer en ligne maintenant</button>
-                  <div class="small muted center" style="margin-top:5px">CinetPay — Mobile Money &amp; carte bancaire</div>` : ''}
+                ${(options.passerelles || []).filter(p => p.actif).map(g => `
+                  <button class="btn btn-gold btn-block" data-gateway="${g.code}" style="margin-top:12px">Payer en ligne — ${esc(g.nom)}</button>
+                  <div class="small muted center" style="margin-top:5px">${esc(g.description)}${g.mode === 'test' ? ' · mode test' : ''}</div>`).join('')}
               </div>
 
               ${opSel && opSel.actif ? `
@@ -2524,17 +2536,18 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         }
       };
 
-      const cp = document.getElementById('btn-cinetpay');
-      if (cp) cp.onclick = async () => {
-        cp.disabled = true; cp.textContent = 'Connexion à CinetPay…';
+      $$('[data-gateway]').forEach(btn => btn.onclick = async () => {
+        const g = btn.dataset.gateway;
+        const libelle = btn.textContent;
+        btn.disabled = true; btn.textContent = 'Connexion à ' + (g === 'paydunya' ? 'PayDunya' : 'CinetPay') + '…';
         try {
-          const res = await api('/api/paiement/cinetpay/initier', { method: 'POST', body: { plan: f.plan, mois: f.mois } });
+          const res = await api(`/api/paiement/${g}/initier`, { method: 'POST', body: { plan: f.plan, mois: f.mois } });
           window.location.href = res.url;
         } catch (e) {
           toast(e.message, 'err');
-          cp.disabled = false; cp.textContent = 'Payer en ligne maintenant';
+          btn.disabled = false; btn.textContent = libelle;
         }
-      };
+      });
 
       const ref = new URLSearchParams(location.hash.split('?')[1] || '').get('paiement');
       if (ref) {
@@ -2799,6 +2812,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                     <button class="btn btn-primary btn-sm" onclick="App.validerPaiement(${p.id})">✓ Valider</button>
                     <button class="btn btn-danger btn-sm" onclick="App.rejeterPaiement(${p.id})">✗</button>` : `
                     <span class="small muted">${esc(p.valideur || '')}</span>`}
+                  ${p.statut === 'paye' ? `<button class="icon-btn" title="Reçu PDF" onclick="window.open('/api/admin/paiements/${p.id}/recu.pdf','_blank')">📄</button>` : ''}
                 </div></td>
               </tr>`).join('')}</tbody>
           </table></div>` : emptyState('💳', 'Aucun paiement enregistré.')}
@@ -2840,6 +2854,31 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                 <div class="field"><label>Clé API CinetPay</label><input name="cinetpay_apikey" placeholder="${reg.cinetpay.actif ? '•••• (déjà configurée)' : 'non configurée'}" autocomplete="off"></div>
                 <div class="field"><label>Site ID CinetPay</label><input name="cinetpay_site_id" placeholder="${reg.cinetpay.site_id || 'non configuré'}" autocomplete="off"></div>
               </div>
+
+              <h4 style="margin:14px 0 8px;font-size:13px">🟠 PayDunya <span class="tag gris">T-Money · Flooz · cartes</span></h4>
+              <div class="grid2">
+                <div class="field"><label>Master key</label><input name="paydunya_master_key" placeholder="${reg.paydunya.actif ? '•••• (déjà configurée)' : 'non configurée'}" autocomplete="off"></div>
+                <div class="field"><label>Private key</label><input name="paydunya_private_key" placeholder="${reg.paydunya.actif ? '•••• (déjà configurée)' : 'non configurée'}" autocomplete="off"></div>
+              </div>
+              <div class="grid2">
+                <div class="field"><label>Token</label><input name="paydunya_token" placeholder="${reg.paydunya.token || 'non configuré'}" autocomplete="off"></div>
+                <div class="field"><label>Mode PayDunya</label><select name="paydunya_mode">
+                  <option value="test" ${reg.paydunya.mode === 'test' ? 'selected' : ''}>Test (sandbox)</option>
+                  <option value="live" ${reg.paydunya.mode === 'live' ? 'selected' : ''}>Production</option>
+                </select></div>
+              </div>
+
+              <h4 style="margin:14px 0 8px;font-size:13px">🧾 Identité sur les reçus</h4>
+              <div class="grid2">
+                <div class="field"><label>Nom commercial</label><input name="editeur_nom" value="${esc(reg.editeur.nom)}" placeholder="Terminish École"></div>
+                <div class="field"><label>Ville</label><input name="editeur_ville" value="${esc(reg.editeur.ville)}" placeholder="Lomé, Togo"></div>
+              </div>
+              <div class="field"><label>Sous-titre</label><input name="editeur_sous_titre" value="${esc(reg.editeur.sous_titre)}"></div>
+              <div class="grid2">
+                <div class="field"><label>Téléphone</label><input name="editeur_telephone" value="${esc(reg.editeur.telephone)}"></div>
+                <div class="field"><label>Email</label><input name="editeur_email" value="${esc(reg.editeur.email)}"></div>
+              </div>
+
               <button class="btn btn-primary btn-sm" type="submit">💾 Enregistrer la configuration</button>
             </form>
           </div>
@@ -2851,7 +2890,10 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
             <div class="stat-line"><span class="muted">CinetPay</span>${reg.cinetpay.actif
               ? `<span class="tag vert">Actif (${esc(reg.cinetpay.mode)})</span>`
               : '<span class="tag gris">Non configuré</span>'}</div>
-            <div class="stat-line"><span class="muted">Source des clés</span><b class="small">${esc(reg.cinetpay.source)}</b></div>
+            <div class="stat-line"><span class="muted">PayDunya</span>${reg.paydunya.actif
+              ? `<span class="tag vert">Actif (${esc(reg.paydunya.mode)})</span>`
+              : '<span class="tag gris">Non configuré</span>'}</div>
+            <div class="stat-line"><span class="muted">Source des clés</span><b class="small">CinetPay : ${esc(reg.cinetpay.source)} · PayDunya : ${esc(reg.paydunya.source)}</b></div>
             <div class="notice info" style="margin-top:12px">
               <b>Pour passer en automatique :</b> ouvrez un compte marchand CinetPay (Tmoney &amp; Flooz du Togo), puis renseignez
               les clés. Les paiements seront confirmés en quelques secondes, sans vérification manuelle.
@@ -2881,6 +2923,12 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         };
         if (fd.get('cinetpay_apikey')) body.cinetpay_apikey = fd.get('cinetpay_apikey');
         if (fd.get('cinetpay_site_id')) body.cinetpay_site_id = fd.get('cinetpay_site_id');
+        if (fd.get('paydunya_master_key')) body.paydunya_master_key = fd.get('paydunya_master_key');
+        if (fd.get('paydunya_private_key')) body.paydunya_private_key = fd.get('paydunya_private_key');
+        if (fd.get('paydunya_token')) body.paydunya_token = fd.get('paydunya_token');
+        body.paydunya_mode = fd.get('paydunya_mode');
+        ['editeur_nom', 'editeur_ville', 'editeur_sous_titre', 'editeur_telephone', 'editeur_email']
+          .forEach(k => { if (fd.get(k) !== null) body[k] = fd.get(k); });
         try {
           await api('/api/admin/reglages', { method: 'PUT', body });
           toast('Configuration enregistrée');

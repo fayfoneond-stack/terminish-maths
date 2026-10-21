@@ -227,7 +227,16 @@ const REGLAGES_DEFAUT = {
   moov_nom: '',
   moov_actif: '1',
   prix_essentiel: '15000',
-  prix_standard: '25000'
+  prix_standard: '25000',
+  paydunya_master_key: '',
+  paydunya_private_key: '',
+  paydunya_token: '',
+  paydunya_mode: 'test',
+  editeur_nom: 'Terminish École',
+  editeur_sous_titre: 'Plateforme de gestion scolaire · Bulletins, notes et statistiques',
+  editeur_ville: 'Lomé, Togo',
+  editeur_telephone: '+228 90 00 00 00',
+  editeur_email: 'contact@terminish-ecole.com'
 };
 const insertReglage = db.prepare('INSERT OR IGNORE INTO reglages (cle, valeur) VALUES (?,?)');
 Object.entries(REGLAGES_DEFAUT).forEach(([k, v]) => insertReglage.run(k, v));
