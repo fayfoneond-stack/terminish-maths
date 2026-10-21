@@ -10,7 +10,8 @@
     "seed:demo": "TERMINISH_SEED=demo node server/index.js",
     "partage": "node deploy/gratuit/demarrer.js",
     "partage:demo": "node deploy/gratuit/demarrer.js --demo",
-    "local": "node deploy/gratuit/demarrer.js --sans-tunnel"
+    "local": "node deploy/gratuit/demarrer.js --sans-tunnel",
+    "installer": "bash deploy/gratuit/installer-linux.sh"
   },
   "keywords": [],
   "author": "",

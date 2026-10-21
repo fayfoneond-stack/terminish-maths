@@ -108,6 +108,19 @@ const env = {
   ADMIN_PASSWORD: compte.password
 };
 
+// Le port est-il libre ? (message clair au lieu d'une trace Node illisible)
+const testPort = spawnSync(process.execPath, ['-e',
+  `const net=require('net');const s=net.createServer();s.once('error',()=>process.exit(1));` +
+  `s.once('listening',()=>{s.close();process.exit(0)});s.listen(${PORT},'0.0.0.0');`], { stdio: 'ignore' });
+if (testPort.status !== 0) {
+  console.error(`\n❌ Le port ${PORT} est déjà utilisé (une autre instance tourne probablement).`);
+  console.error('   Solutions :');
+  console.error(`   • fermez l'autre fenêtre/l'ancien processus (Ctrl+C), ou`);
+  console.error(`   • lancez sur un autre port : --port ${PORT + 1}`);
+  console.error('');
+  process.exit(1);
+}
+
 console.log('\n🚀 Démarrage de Terminish École…');
 const serveur = spawn(process.execPath, [path.join(RACINE, 'server', 'index.js')], {
   cwd: RACINE, env, stdio: 'inherit'

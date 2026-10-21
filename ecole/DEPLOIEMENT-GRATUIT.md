@@ -13,6 +13,47 @@ Durée : **10 minutes** la première fois, puis **une commande** à chaque démo
 
 ---
 
+## 0. Démarrage rapide sur Linux (vous êtes ici)
+
+Un seul script fait tout : vérifie Node.js 22, installe les dépendances, installe `cloudflared`
+dans `~/.local/bin` (**sans sudo**), puis démarre le site et affiche votre lien HTTPS.
+
+```bash
+git clone https://github.com/fayfoneond-stack/terminish-maths.git
+cd terminish-maths/ecole
+bash deploy/gratuit/installer-linux.sh            # site propre + lien public
+# ou
+bash deploy/gratuit/installer-linux.sh --demo     # avec l'école de démonstration
+```
+
+Options utiles :
+
+| Commande | Effet |
+|---|---|
+| `bash deploy/gratuit/installer-linux.sh --verifier` | contrôle tout **sans rien installer** ni démarrer |
+| `... --local` | pas de lien public (site sur votre réseau Wi-Fi seulement) |
+| `... --port 3001` | si le port 3000 est déjà pris |
+| `npm run installer` | raccourci du script |
+
+Sortie attendue :
+
+```
+✔ Node.js v22.x
+✔ Dépendances en place
+✔ cloudflared installé (sans sudo)
+
+┌────────────────────────────────────────────────────────────────┐
+│ VOTRE SITE EST EN LIGNE                                        │
+└────────────────────────────────────────────────────────────────┘
+  🌍 Lien public  : https://joli-nuage-rapide-42.trycloudflare.com
+  Console admin   : admin@terminish.tg
+  Mot de passe    : palmier-clair-4821
+```
+
+Les sections 2 et 3 détaillent chaque étape si le script rencontre un problème.
+
+---
+
 ## 1. Ce qu'il vous faut (et ce que ça coûte)
 
 | Élément | Coût |
@@ -49,6 +90,7 @@ node -v      # doit afficher v22.x ou plus
 ```bash
 git clone https://github.com/fayfoneond-stack/terminish-maths.git
 cd terminish-maths/ecole
+bash deploy/gratuit/installer-linux.sh --verifier   # contrôle sans rien installer
 npm install --omit=dev
 ```
 
@@ -178,6 +220,32 @@ en ligne **en permanence**, même quand votre ordinateur est éteint.
 
 ---
 
+## 4 bis. Linux : redémarrer le site tout seul après une coupure
+
+Sans droits administrateur, avec un service utilisateur systemd :
+
+```bash
+mkdir -p ~/.config/systemd/user
+cp deploy/gratuit/terminish-partage.service ~/.config/systemd/user/
+nano ~/.config/systemd/user/terminish-partage.service   # ajuster WorkingDirectory
+systemctl --user daemon-reload
+systemctl --user enable --now terminish-partage
+loginctl enable-linger "$USER"        # démarre même sans session ouverte
+```
+
+Voir le lien public à tout moment :
+
+```bash
+journalctl --user -u terminish-partage -f | grep -o 'https://[a-z0-9-]*\.trycloudflare\.com'
+```
+
+Arrêt : `systemctl --user stop terminish-partage`.
+
+> Le lien change à chaque redémarrage. Pour une adresse fixe, passez à la section 4
+> (VM Oracle Cloud gratuite + `sslip.io`).
+
+---
+
 ## 5. Sauvegarder vos données, gratuitement
 
 Votre base est un fichier. Sauvegarde en une commande :
@@ -265,7 +333,8 @@ les sauvegardes : aucun frais caché, aucune limite d'écoles, aucun quota.
 | Symptôme | Cause | Solution |
 |---|---|---|
 | `node : commande introuvable` | Node.js absent ou terminal non rouvert | réinstallez Node 22, fermez puis rouvrez le terminal |
-| `EADDRINUSE : port 3000` | une autre instance tourne déjà | `npm run partage -- --port 3001`, ou fermez l'autre fenêtre |
+| `Le port 3000 est déjà utilisé` | une autre instance tourne déjà | `--port 3001`, ou `pkill -f deploy/gratuit/demarrer.js` |
+| `Permission denied` au lancement du script | bit exécutable absent | `bash deploy/gratuit/installer-linux.sh` (sans `./`) |
 | Le lien `trycloudflare` ne s'ouvre pas | tunnel pas encore prêt / réseau | attendez 10 s, rechargez ; vérifiez que la fenêtre affiche bien l'URL |
 | « Aucun lien public » dans la console | `cloudflared` non installé ou bloqué | `cloudflared --version` ; antivirus → autoriser |
 | Le lien change tout le temps | comportement normal du tunnel rapide | voir voie 2 (Oracle Cloud) pour une adresse fixe |
@@ -278,13 +347,14 @@ les sauvegardes : aucun frais caché, aucune limite d'écoles, aucun quota.
 ## 11. Récapitulatif en 6 lignes
 
 ```bash
-# une fois
-winget install --id Cloudflare.cloudflared     # (ou brew / apt)
+# une fois (Linux — tout est automatique, sans sudo)
 git clone https://github.com/fayfoneond-stack/terminish-maths.git
-cd terminish-maths/ecole && npm install --omit=dev
+cd terminish-maths/ecole
+bash deploy/gratuit/installer-linux.sh --demo
 
 # à chaque démonstration
-npm run partage:demo      # ou npm run partage
+npm run partage:demo      # site de démo + lien HTTPS
+npm run partage           # site propre
 ```
 
 Vous avez un site HTTPS, un lien à envoyer, une console d'administration, et zéro facture.

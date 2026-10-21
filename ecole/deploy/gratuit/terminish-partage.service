@@ -1,0 +1,30 @@
+# Service utilisateur systemd — relance automatique du site après une coupure
+# de courant ou une déconnexion. Aucun droit administrateur nécessaire.
+#
+#   mkdir -p ~/.config/systemd/user
+#   cp deploy/gratuit/terminish-partage.service ~/.config/systemd/user/
+#   # adapter WorkingDirectory (chemin du dossier ecole) et ExecStart
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now terminish-partage
+#   loginctl enable-linger "$USER"      # démarre même sans session ouverte
+#   journalctl --user -u terminish-partage -f   # voir le lien public
+#
+# Pour arrêter :  systemctl --user stop terminish-partage
+
+[Unit]
+Description=Terminish Ecole - site + lien public (Cloudflare Tunnel)
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/terminish-maths/ecole
+Environment=TERMINISH_SEED=prod
+ExecStart=/usr/bin/env node deploy/gratuit/demarrer.js
+Restart=always
+RestartSec=5
+# Le lien public change à chaque redémarrage : il est visible dans le journal.
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

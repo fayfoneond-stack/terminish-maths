@@ -201,7 +201,7 @@ ecole/
 │   ├── css/styles.css
 │   └── js/util.js, js/app.js  SPA (vanilla JS, routage par hash)
 ├── data/            base SQLite (ignorée par Git)
-├── deploy/          Caddyfile, nginx.conf, service systemd, gratuit/demarrer.js
+├── deploy/          Caddyfile, nginx.conf, service systemd, gratuit/ (lanceur + installateur Linux)
 ├── Dockerfile, docker-compose.yml, render.yaml
 ├── DEPLOIEMENT.md   guide de mise en ligne pas à pas
 └── DEPLOIEMENT-GRATUIT.md  mise en ligne à 0 F (ordinateur + Cloudflare Tunnel)
@@ -260,6 +260,7 @@ ecole/
 ordinateur et devient accessible en HTTPS via Cloudflare Tunnel (gratuit, sans compte).
 
 ```bash
+bash deploy/gratuit/installer-linux.sh --demo   # Linux : tout installer (sans sudo) et démarrer
 npm run partage          # site + lien public https://xxx.trycloudflare.com
 npm run partage:demo     # idem avec l'école de démonstration
 npm run local            # serveur seul (localhost / réseau Wi-Fi)
