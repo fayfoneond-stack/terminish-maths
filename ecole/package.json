@@ -1,0 +1,19 @@
+{
+  "name": "terminish-ecole",
+  "version": "1.0.0",
+  "description": "Terminish École — plateforme SaaS de gestion scolaire (bulletins, notes, statistiques, examens blancs)",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.22.3"
+  },
+  "engines": {
+    "node": ">=22.5"
+  }
+}
