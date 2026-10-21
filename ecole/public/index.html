@@ -235,9 +235,9 @@
       <h2>Prêt à supprimer les bulletins manuscrits ?</h2>
       <p style="color:#a7c8ba;line-height:1.7;max-width:460px">Laissez-nous vos coordonnées : nous vous rappelons sous 24 h pour une démonstration guidée, adaptée à votre effectif et à votre organisation.</p>
       <ul class="contact-list">
-        <li><b>WhatsApp / Téléphone :</b> +228 90 00 00 00</li>
-        <li><b>Email :</b> contact@terminish-ecole.com</li>
-        <li><b>Adresse :</b> Lomé, Togo</li>
+        <li><b>WhatsApp / Téléphone :</b> <a id="contact-tel" href="tel:+22890000000" style="color:#f0b429">+228 90 00 00 00</a></li>
+        <li><b>Email :</b> <a id="contact-email" href="mailto:contact@terminish-ecole.com" style="color:#f0b429">contact@terminish-ecole.com</a></li>
+        <li><b>Adresse :</b> <span id="contact-ville">Lomé, Togo</span></li>
         <li><b>Déjà client ?</b> <a href="/app" style="color:#f0b429">Accéder à mon espace</a></li>
       </ul>
     </div>
@@ -276,6 +276,31 @@
 <div class="toasts" id="toasts"></div>
 <script src="/js/util.js"></script>
 <script>
+// Coordonnées de l'éditeur : lues dans la console (Réglages), avec repli sur les valeurs ci-dessus
+(async () => {
+  try {
+    const r = await fetch('/api/public/contact');
+    if (!r.ok) return;
+    const c = await r.json();
+    const tel = document.getElementById('contact-tel');
+    if (c.telephone) { tel.textContent = c.telephone; tel.href = 'tel:' + c.telephone.replace(/[^+\d]/g, ''); }
+    if (c.email) { const m = document.getElementById('contact-email'); m.textContent = c.email; m.href = 'mailto:' + c.email; }
+    if (c.ville) document.getElementById('contact-ville').textContent = c.ville;
+    // Le numéro WhatsApp de la console prime sur le numéro affiché
+    if (c.whatsapp) {
+      tel.textContent = c.telephone || ('+' + c.whatsapp);
+      const a = document.createElement('a');
+      a.href = 'https://wa.me/' + c.whatsapp;
+      a.target = '_blank'; a.rel = 'noopener';
+      a.style.color = '#f0b429';
+      a.textContent = '💬 Écrire sur WhatsApp';
+      const li = document.createElement('li');
+      li.appendChild(a);
+      tel.closest('li').insertAdjacentElement('afterend', li);
+    }
+  } catch (_) { /* page statique : on garde les valeurs par défaut */ }
+})();
+
 document.getElementById('lead-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const f = e.target, msg = document.getElementById('lead-msg');

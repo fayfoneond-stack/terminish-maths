@@ -236,7 +236,8 @@ const REGLAGES_DEFAUT = {
   editeur_sous_titre: 'Plateforme de gestion scolaire · Bulletins, notes et statistiques',
   editeur_ville: 'Lomé, Togo',
   editeur_telephone: '+228 90 00 00 00',
-  editeur_email: 'contact@terminish-ecole.com'
+  editeur_email: 'contact@terminish-ecole.com',
+  editeur_whatsapp: '22890000000'
 };
 const insertReglage = db.prepare('INSERT OR IGNORE INTO reglages (cle, valeur) VALUES (?,?)');
 Object.entries(REGLAGES_DEFAUT).forEach(([k, v]) => insertReglage.run(k, v));

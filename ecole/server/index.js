@@ -146,6 +146,18 @@ app.post('/api/inscription', (req, res) => {
   res.json({ ok: true, ecole_id: ecoleId });
 });
 
+// Coordonnées publiques de l'éditeur (page d'accueil, pied de page)
+app.get('/api/public/contact', (req, res) => {
+  const r = P.lireReglages(db);
+  res.json({
+    nom: r.editeur_nom || 'Terminish École',
+    telephone: r.editeur_telephone || '',
+    whatsapp: String(r.editeur_whatsapp || '').replace(/\D/g, ''),
+    email: r.editeur_email || '',
+    ville: r.editeur_ville || ''
+  });
+});
+
 app.post('/api/demandes', (req, res) => {
   const { nom, etablissement, ville, email, telephone, effectif, message } = req.body || {};
   if (!nom || !etablissement || !telephone) return res.status(400).json({ error: 'Nom, établissement et téléphone sont requis' });
@@ -1203,7 +1215,8 @@ app.get('/api/admin/reglages', auth, roles('super_admin'), (req, res) => {
     passerelles: P.passerelles(r),
     editeur: {
       nom: r.editeur_nom || '', sous_titre: r.editeur_sous_titre || '',
-      ville: r.editeur_ville || '', telephone: r.editeur_telephone || '', email: r.editeur_email || ''
+      ville: r.editeur_ville || '', telephone: r.editeur_telephone || '', email: r.editeur_email || '',
+      whatsapp: r.editeur_whatsapp || ''
     }
   });
 });
@@ -1225,6 +1238,7 @@ app.put('/api/admin/reglages', auth, roles('super_admin'), (req, res) => {
   ['editeur_nom', 'editeur_sous_titre', 'editeur_ville', 'editeur_telephone', 'editeur_email'].forEach(k => {
     if (b[k] !== undefined) valeurs[k] = String(b[k]).slice(0, 200);
   });
+  if (b.editeur_whatsapp !== undefined) valeurs.editeur_whatsapp = String(b.editeur_whatsapp).replace(/\D/g, '').slice(0, 15);
   P.ecrireReglages(db, valeurs);
   res.json({ ok: true, reglages: P.lireReglages(db) });
 });

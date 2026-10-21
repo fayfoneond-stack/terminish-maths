@@ -205,6 +205,7 @@ ecole/
 |---|---|---|
 | POST | `/api/auth/login`, `/api/auth/logout`, `/api/auth/password` | tous |
 | POST | `/api/inscription` | création d'un établissement (essai 30 j) |
+| GET | `/api/public/contact` | public (coordonnées de l'éditeur : téléphone, WhatsApp, email, ville) |
 | GET/PUT | `/api/etablissement` | direction |
 | GET/PUT | `/api/periodes` | direction |
 | CRUD | `/api/eleves`, `/api/classes`, `/api/matieres`, `/api/enseignants` | direction (lecture élargie) |
@@ -270,8 +271,10 @@ cloisonnée par `ecole_id`.
 Quelques valeurs sont des exemples, à remplacer par les vôtres :
 
 - **numéros marchands** Mixx by Yas / Moov Money : Console → Paiements → Numéros marchands ;
-- **identité sur les reçus** (nom commercial, ville, téléphone, email) : Console → Paiements → Identité sur les reçus ;
-- **numéro WhatsApp / téléphone** affiché sur le site et sur la page Abonnement (`/app`, `ecole/public/index.html`,
-  `ecole/public/js/app.js`, `+228 90 00 00 00`) ;
+- **identité sur les reçus** (nom commercial, ville, téléphone, email, **WhatsApp**) : Console → Paiements →
+  Identité sur les reçus. Ces valeurs alimentent les reçus PDF, le bouton « Une question ? WhatsApp » de la page
+  Abonnement et le bloc Contact du site public (servi par `GET /api/public/contact`) ;
+- **numéro WhatsApp par défaut** `+228 90 00 00 00` (réglage `editeur_whatsapp`, valeur de repli dans
+  `ecole/server/db.js` et `ecole/public/index.html`) : à remplacer par le vôtre dans la console ;
 - **tarifs** : Console → Paiements (ils alimentent la page Abonnement) et section Tarifs du site public ;
 - **mentions légales / nom commercial** de l'éditeur dans le pied de page du site.

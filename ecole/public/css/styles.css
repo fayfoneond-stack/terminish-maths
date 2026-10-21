@@ -379,6 +379,23 @@ table.data .strong { font-weight: 700; }
 .grille input.note.filled { background: #eef9f3; border-color: #bfe0d1; }
 .grille input.note.error { border-color: #f0a7a7; background: #fef5f5; }
 .grille .calc { font-weight: 800; color: var(--vert); font-variant-numeric: tabular-nums; }
+/* Grille de notes sur petit écran : colonne élève figée + défilement horizontal */
+@media (max-width: 720px) {
+  .grille { font-size: 12px; }
+  .grille th, .grille td { padding: 4px 3px; }
+  .grille input.note { width: 50px; padding: 5px 2px; }
+  .grille th:first-child, .grille td:first-child {
+    position: sticky; left: 0; z-index: 1; background: #fff;
+    box-shadow: 1px 0 0 #eef3f0; min-width: 118px; max-width: 150px; white-space: normal;
+  }
+  .grille th:first-child { background: #0b3d2e; z-index: 3; }
+  .grille tr:nth-child(even) td:first-child { background: #fbfdfc; }
+  .grille .appr-cell { display: none; }
+  .table-wrap { -webkit-overflow-scrolling: touch; }
+  .sticky-save { flex-wrap: wrap; gap: 8px; }
+  .sticky-save .muted.small { order: 3; flex-basis: 100%; }
+  .keystat { margin-left: 0; }
+}
 .sticky-save {
   position: sticky; bottom: 0; background: rgba(255,255,255,.94); backdrop-filter: blur(8px);
   border-top: 1px solid var(--bord); padding: 10px 4px; display: flex; gap: 10px; align-items: center; z-index: 5;

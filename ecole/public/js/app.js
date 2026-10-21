@@ -2299,10 +2299,11 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
 
   V.abonnement = {
     async render() {
-      const [e, options, paiements] = await Promise.all([
+      const [e, options, paiements, contact] = await Promise.all([
         api('/api/etablissement'),
         api('/api/paiement/options'),
-        api('/api/paiements')
+        api('/api/paiements'),
+        api('/api/public/contact').catch(() => ({ whatsapp: '' }))
       ]);
       S.etab = e;
       S.payOpts = options;
@@ -2373,7 +2374,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                 ? '<b>Votre échéance approche.</b> Réglez par Mixx by Yas ou Moov Money : l’activation suit la vérification du paiement.'
                 : 'Payez par <b>Mixx by Yas</b> ou <b>Moov Money</b>. L’abonnement est prolongé dès la validation du paiement.'}
             </div>
-            <a class="btn btn-ghost btn-sm" href="https://wa.me/22890000000?text=${encodeURIComponent('Bonjour, abonnement Terminish École — ' + e.nom)}" target="_blank" rel="noopener" style="margin-top:4px">💬 Une question ? WhatsApp</a>
+            ${String(contact.whatsapp || '').replace(/\D/g, '') ? `<a class="btn btn-ghost btn-sm" href="https://wa.me/${String(contact.whatsapp).replace(/\D/g, '')}?text=${encodeURIComponent('Bonjour, abonnement Terminish École — ' + e.nom)}" target="_blank" rel="noopener" style="margin-top:4px">💬 Une question ? WhatsApp</a>` : ''}
           </div>
 
           <div class="panel">
@@ -2878,6 +2879,8 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                 <div class="field"><label>Téléphone</label><input name="editeur_telephone" value="${esc(reg.editeur.telephone)}"></div>
                 <div class="field"><label>Email</label><input name="editeur_email" value="${esc(reg.editeur.email)}"></div>
               </div>
+              <div class="field"><label>WhatsApp (indicatif + numéro, sans espace)</label><input name="editeur_whatsapp" value="${esc(reg.editeur.whatsapp || '')}" placeholder="22890112233" inputmode="numeric"></div>
+              <div class="small muted" style="margin:-4px 0 10px">Utilisé pour le bouton « Une question ? WhatsApp » de l’espace abonnement.</div>
 
               <button class="btn btn-primary btn-sm" type="submit">💾 Enregistrer la configuration</button>
             </form>
@@ -2927,7 +2930,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         if (fd.get('paydunya_private_key')) body.paydunya_private_key = fd.get('paydunya_private_key');
         if (fd.get('paydunya_token')) body.paydunya_token = fd.get('paydunya_token');
         body.paydunya_mode = fd.get('paydunya_mode');
-        ['editeur_nom', 'editeur_ville', 'editeur_sous_titre', 'editeur_telephone', 'editeur_email']
+        ['editeur_nom', 'editeur_ville', 'editeur_sous_titre', 'editeur_telephone', 'editeur_email', 'editeur_whatsapp']
           .forEach(k => { if (fd.get(k) !== null) body[k] = fd.get(k); });
         try {
           await api('/api/admin/reglages', { method: 'PUT', body });
