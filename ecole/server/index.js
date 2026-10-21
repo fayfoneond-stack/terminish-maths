@@ -26,11 +26,13 @@ function parseCookies(req) {
   });
   return out;
 }
+// Mettre COOKIE_SECURE=1 derrière HTTPS (obligatoire en production)
+const COOKIE_SECURE = process.env.COOKIE_SECURE === '1' || process.env.COOKIE_SECURE === 'true';
 function setSessionCookie(res, token) {
-  res.setHeader('Set-Cookie', `${COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 24 * 30}`);
+  res.setHeader('Set-Cookie', `${COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax${COOKIE_SECURE ? '; Secure' : ''}; Max-Age=${60 * 60 * 24 * 30}`);
 }
 function clearSessionCookie(res) {
-  res.setHeader('Set-Cookie', `${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
+  res.setHeader('Set-Cookie', `${COOKIE}=; Path=/; HttpOnly; SameSite=Lax${COOKIE_SECURE ? '; Secure' : ''}; Max-Age=0`);
 }
 function auth(req, res, next) {
   const token = parseCookies(req)[COOKIE];
@@ -1327,6 +1329,29 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erreur interne du serveur' });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+// Sonde de santé (Docker, Render, Fly, load-balancers)
+app.get('/api/health', (req, res) => {
+  try {
+    db.prepare('SELECT 1').get();
+    res.json({ ok: true, uptime: Math.round(process.uptime()), version: require('../package.json').version });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: 'base de données indisponible' });
+  }
+});
+
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Terminish École — serveur démarré sur http://0.0.0.0:${PORT}`);
+  console.log(`Données : ${process.env.TERMINISH_DATA_DIR || path.join(__dirname, '..', 'data')}`);
+});
+
+// Arrêt propre (docker stop, systemctl stop, redéploiement)
+['SIGTERM', 'SIGINT'].forEach(sig => {
+  process.on(sig, () => {
+    console.log(`\n${sig} reçu — arrêt du serveur...`);
+    server.close(() => {
+      try { db.close(); } catch (_) {}
+      process.exit(0);
+    });
+    setTimeout(() => process.exit(0), 8000).unref();
+  });
 });

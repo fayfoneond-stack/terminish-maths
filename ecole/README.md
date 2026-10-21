@@ -182,7 +182,10 @@ ecole/
 │   ├── app.html     coquille de l'application
 │   ├── css/styles.css
 │   └── js/util.js, js/app.js  SPA (vanilla JS, routage par hash)
-└── data/            base SQLite (ignorée par Git)
+├── data/            base SQLite (ignorée par Git)
+├── deploy/          Caddyfile, nginx.conf, service systemd
+├── Dockerfile, docker-compose.yml, render.yaml
+└── DEPLOIEMENT.md   guide de mise en ligne pas à pas
 ```
 
 - Sessions : cookie `HttpOnly` + table `sessions` (30 jours).
@@ -203,6 +206,7 @@ ecole/
 
 | Méthode | Route | Rôle |
 |---|---|---|
+| GET | `/api/health` | public (sonde de supervision) |
 | POST | `/api/auth/login`, `/api/auth/logout`, `/api/auth/password` | tous |
 | POST | `/api/inscription` | création d'un établissement (essai 30 j) |
 | GET | `/api/public/contact` | public (coordonnées de l'éditeur : téléphone, WhatsApp, email, ville) |
@@ -233,15 +237,44 @@ ecole/
 
 ## 6. Déploiement
 
-1. Serveur Linux avec Node.js ≥ 22.5.
-2. `npm install --omit=dev`, puis `pm2 start server/index.js --name terminish-ecole`.
-3. Reverse proxy Nginx (HTTPS) vers le port 3000. En production, servez uniquement en HTTPS pour que le
-   cookie de session soit protégé.
-4. **Sauvegarde** : copier régulièrement `ecole/data/` (base SQLite en mode WAL). Un simple `rsync` ou une
-   tâche `sqlite3 .backup` suffit.
-5. Variables : `PORT` (défaut 3000), et pour les paiements en ligne :
-   `CINETPAY_APIKEY`, `CINETPAY_SITE_ID`, `CINETPAY_MODE` ; `PAYDUNYA_MASTER_KEY`, `PAYDUNYA_PRIVATE_KEY`,
-   `PAYDUNYA_TOKEN`, `PAYDUNYA_MODE` (`test`/`live`).
+Guide complet : **[DEPLOIEMENT.md](DEPLOIEMENT.md)** (VPS + Docker + HTTPS automatique, Render, PC + Cloudflare
+Tunnel, systemd/Nginx, sauvegardes, dépannage, coûts).
+
+Résumé :
+
+```bash
+cp .env.example .env      # DOMAIN, ADMIN_EMAIL, ADMIN_PASSWORD, TERMINISH_SEED=prod
+docker compose up -d --build
+```
+
+Le `Dockerfile` (Node 22, utilisateur non-root, sonde `/api/health`), le `docker-compose.yml`
+(application + Caddy pour le HTTPS) et `render.yaml` sont fournis.
+
+Sans Docker : `npm ci --omit=dev` puis le service systemd de `deploy/terminish-ecole.service`,
+derrière Nginx (`deploy/nginx.conf`) ou Caddy.
+
+### Variables d'environnement
+
+| Variable | Rôle |
+|---|---|
+| `PORT` | port d'écoute (3000 par défaut) |
+| `TERMINISH_DATA_DIR` | dossier de la base SQLite (ex. `/data` sur un volume) |
+| `TERMINISH_SEED` | `demo` (défaut) = école + comptes de démonstration ; `prod` = uniquement le compte admin |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NOM` | compte super-admin créé au premier démarrage (mot de passe aléatoire affiché si absent) |
+| `COOKIE_SECURE` | `1` pour marquer le cookie de session `Secure` (obligatoire derrière HTTPS) |
+| `CINETPAY_APIKEY`, `CINETPAY_SITE_ID`, `CINETPAY_MODE` | paiement automatique CinetPay |
+| `PAYDUNYA_MASTER_KEY`, `PAYDUNYA_PRIVATE_KEY`, `PAYDUNYA_TOKEN`, `PAYDUNYA_MODE` | paiement automatique PayDunya |
+
+### Sauvegarde
+
+```bash
+npm run backup            # copie cohérente (VACUUM INTO) dans data/sauvegardes/, rotation 14 fichiers
+```
+
+À planifier en cron une fois par jour et à copier hors du serveur (voir DEPLOIEMENT.md, section 8).
+
+> ⚠️ Ne déployez jamais avec `TERMINISH_SEED=demo` sur un site public : les comptes `admin1234`
+> et `demo1234` seraient accessibles à tous.
 
 Pour un réseau de plusieurs écoles, la console super-admin crée les établissements ; chaque école reste
 cloisonnée par `ecole_id`.

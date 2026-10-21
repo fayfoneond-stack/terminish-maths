@@ -1,0 +1,24 @@
+# Caddy : HTTPS automatique (Let's Encrypt) + proxy vers l'application
+{$DOMAIN} {
+	encode gzip zstd
+
+	# Journaux d'accès (rotation automatique)
+	log {
+		output stdout
+		format console
+	}
+
+	# Les reçus et bulletins peuvent être longs à générer
+	reverse_proxy app:3000 {
+		transport http {
+			read_timeout 60s
+		}
+	}
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options SAMEORIGIN
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}

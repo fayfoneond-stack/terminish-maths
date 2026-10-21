@@ -1,0 +1,50 @@
+# Terminish École — pile de production complète (VPS)
+#
+#   1. copier .env.example en .env et renseigner DOMAIN, ADMIN_EMAIL, ADMIN_PASSWORD
+#   2. docker compose up -d --build
+#
+# Caddy obtient et renouvelle automatiquement le certificat HTTPS du domaine.
+# Les données (base SQLite) vivent dans le volume `donnees`.
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      TERMINISH_DATA_DIR: /data
+      TERMINISH_SEED: ${TERMINISH_SEED:-prod}
+      COOKIE_SECURE: "1"
+    volumes:
+      - donnees:/data
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+      EMAIL: ${EMAIL_CONTACT:-}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-donnees:/data
+      - caddy-config:/config
+
+volumes:
+  donnees:
+  caddy-donnees:
+  caddy-config:

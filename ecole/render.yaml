@@ -1,0 +1,39 @@
+# Déploiement (Render) — modèle « Blueprint »
+#
+# Render lit ce fichier et crée le service web + le disque persistant.
+#   1. pousser ce dépôt sur GitHub
+#   2. Render → New → Blueprint → choisir le dépôt (dossier racine : ecole)
+#   3. renseigner les variables demandées (ADMIN_EMAIL, ADMIN_PASSWORD…)
+#
+# ⚠️ Le disque persistant est une option payante chez Render ; l'offre gratuite
+#    ne conserve pas la base SQLite entre deux redéploiements. Voir DEPLOIEMENT.md.
+
+services:
+  - type: web
+    name: terminish-ecole
+    runtime: docker
+    dockerfilePath: ./ecole/Dockerfile
+    dockerContext: ./ecole
+    plan: starter
+    region: frankfurt
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: TERMINISH_DATA_DIR
+        value: /data
+      - key: TERMINISH_SEED
+        value: prod
+      - key: COOKIE_SECURE
+        value: "1"
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+    disk:
+      name: terminish-donnees
+      mountPath: /data
+      sizeGB: 1

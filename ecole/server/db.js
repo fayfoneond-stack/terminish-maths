@@ -4,7 +4,8 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
+// Dossier des données (base SQLite) : surchargeable pour un volume Docker/hébergeur
+const DATA_DIR = process.env.TERMINISH_DATA_DIR || path.join(__dirname, '..', 'data');
 fs.mkdirSync(DATA_DIR, { recursive: true });
 const db = new DatabaseSync(path.join(DATA_DIR, 'terminish-ecole.db'));
 
@@ -334,6 +335,30 @@ const PRENOMS_M = ['Koffi', 'Komlan', 'Yaovi', 'Kossi', 'Dodji', 'Messan', 'Kodj
 const PRENOMS_F = ['Ama', 'Akossiwa', 'Yawa', 'Abra', 'Délali', 'Sitou', 'Afiavi', 'Eyram', 'Mawuéna', 'Kafui',
   'Adjovi', 'Gisèle', 'Christelle', 'Mariam', 'Fatou', 'Rolande', 'Sylvie', 'Akouvi', 'Eunice', 'Léa'];
 
+function seedAdmin() {
+  const deja = db.prepare("SELECT COUNT(*) AS n FROM utilisateurs WHERE role = 'super_admin'").get();
+  if (Number(deja.n) > 0) return;
+
+  const email = String(process.env.ADMIN_EMAIL || 'admin@terminish.tg').trim().toLowerCase();
+  const nom = String(process.env.ADMIN_NOM || 'Administrateur Terminish').trim();
+  const motDePasse = process.env.ADMIN_PASSWORD || crypto.randomBytes(9).toString('base64url');
+
+  createUser({ ecole_id: null, nom, email, password: motDePasse, role: 'super_admin' });
+
+  const ligne = '='.repeat(58);
+  console.log(ligne);
+  console.log('  Compte administrateur créé');
+  console.log(`  Identifiant : ${email}`);
+  if (process.env.ADMIN_PASSWORD) {
+    console.log('  Mot de passe : celui fourni dans ADMIN_PASSWORD');
+  } else {
+    console.log(`  Mot de passe : ${motDePasse}`);
+    console.log('  NOTE : ce mot de passe est généré une seule fois. Notez-le, puis');
+    console.log('  changez-le depuis le menu « Mon compte » de la console.');
+  }
+  console.log(ligne);
+}
+
 function seedDemo() {
   const existing = db.prepare('SELECT COUNT(*) AS n FROM etablissements').get();
   if (Number(existing.n) > 0) return;
@@ -540,6 +565,13 @@ function seedDemo() {
     VALUES (?,?,?,?,?,?,?, 'nouveau', ?)`).run(...l, now()));
 }
 
-seedDemo();
+// Mode `demo` (défaut) : jeu de données complet pour découvrir l'application.
+// Mode `prod` : aucun établissement de démonstration, seulement le compte administrateur.
+const SEED_MODE = String(process.env.TERMINISH_SEED || 'demo').toLowerCase();
+if (SEED_MODE === 'demo') {
+  seedDemo();
+} else {
+  seedAdmin();
+}
 
 module.exports = { db, hashPassword, verifyPassword, createEtablissement, createUser, seedPeriodes, now, today, addDays, ensureColumn };

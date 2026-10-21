@@ -1,0 +1,34 @@
+# Service systemd — installation sur un VPS sans Docker
+#   sudo cp deploy/terminish-ecole.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now terminish-ecole
+# Adapter User / WorkingDirectory / EnvironmentFile si besoin.
+
+[Unit]
+Description=Terminish Ecole - plateforme de gestion scolaire
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/terminish-ecole
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=TERMINISH_DATA_DIR=/var/lib/terminish-ecole
+Environment=TERMINISH_SEED=prod
+Environment=COOKIE_SECURE=1
+EnvironmentFile=-/etc/terminish-ecole.env
+ExecStart=/usr/bin/node server/index.js
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+# Durcissement
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/var/lib/terminish-ecole
+
+[Install]
+WantedBy=multi-user.target

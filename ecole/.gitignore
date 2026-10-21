@@ -2,3 +2,8 @@ node_modules/
 data/
 *.log
 .DS_Store
+
+# Secrets de déploiement
+.env
+.env.*
+!.env.example
