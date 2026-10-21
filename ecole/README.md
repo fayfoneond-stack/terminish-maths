@@ -274,7 +274,8 @@ Quelques valeurs sont des exemples, à remplacer par les vôtres :
 - **identité sur les reçus** (nom commercial, ville, téléphone, email, **WhatsApp**) : Console → Paiements →
   Identité sur les reçus. Ces valeurs alimentent les reçus PDF, le bouton « Une question ? WhatsApp » de la page
   Abonnement et le bloc Contact du site public (servi par `GET /api/public/contact`) ;
-- **numéro WhatsApp par défaut** `+228 90 00 00 00` (réglage `editeur_whatsapp`, valeur de repli dans
-  `ecole/server/db.js` et `ecole/public/index.html`) : à remplacer par le vôtre dans la console ;
+- **coordonnées de l'éditeur** déjà renseignées : Mixx by Yas `+228 93 15 01 78`, Moov Money
+  `+228 97 24 30 86`, WhatsApp/téléphone `+228 93 15 01 78` (réglages modifiables dans la console,
+  valeurs de repli dans `ecole/server/db.js` et `ecole/public/index.html`) ;
 - **tarifs** : Console → Paiements (ils alimentent la page Abonnement) et section Tarifs du site public ;
 - **mentions légales / nom commercial** de l'éditeur dans le pied de page du site.

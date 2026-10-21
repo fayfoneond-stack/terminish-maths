@@ -2827,7 +2827,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
             <form id="mm-form">
               <h4 style="margin:0 0 8px;font-size:13px">🔴 Mixx by Yas <span class="tag gris">ex T-Money · *145*5#</span></h4>
               <div class="grid2">
-                <div class="field"><label>Numéro marchand Mixx</label><input name="mixx_numero" value="${esc(reg.mixx_numero)}" placeholder="+228 90 00 00 00"></div>
+                <div class="field"><label>Numéro marchand Mixx</label><input name="mixx_numero" value="${esc(reg.mixx_numero)}" placeholder="+228 93 15 01 78"></div>
                 <div class="field"><label>Nom du bénéficiaire</label><input name="mixx_nom" value="${esc(reg.mixx_nom)}" placeholder="TERMINISH ECOLE"></div>
               </div>
               <label class="switch" style="margin-bottom:14px"><input type="checkbox" name="mixx_actif" ${reg.mixx_actif ? 'checked' : ''}> Accepter les paiements Mixx by Yas</label>

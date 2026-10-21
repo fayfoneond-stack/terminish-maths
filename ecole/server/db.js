@@ -220,11 +220,11 @@ db.prepare('CREATE INDEX IF NOT EXISTS idx_paiements_statut ON paiements(statut)
 
 /* Réglages de la plateforme (Mobile Money, tarifs, CinetPay) */
 const REGLAGES_DEFAUT = {
-  mixx_numero: '',
-  mixx_nom: '',
+  mixx_numero: '+228 93 15 01 78',
+  mixx_nom: 'TERMINISH ÉCOLE',
   mixx_actif: '1',
-  moov_numero: '',
-  moov_nom: '',
+  moov_numero: '+228 97 24 30 86',
+  moov_nom: 'TERMINISH ÉCOLE',
   moov_actif: '1',
   prix_essentiel: '15000',
   prix_standard: '25000',
@@ -235,9 +235,9 @@ const REGLAGES_DEFAUT = {
   editeur_nom: 'Terminish École',
   editeur_sous_titre: 'Plateforme de gestion scolaire · Bulletins, notes et statistiques',
   editeur_ville: 'Lomé, Togo',
-  editeur_telephone: '+228 90 00 00 00',
+  editeur_telephone: '+228 93 15 01 78',
   editeur_email: 'contact@terminish-ecole.com',
-  editeur_whatsapp: '22890000000'
+  editeur_whatsapp: '22893150178'
 };
 const insertReglage = db.prepare('INSERT OR IGNORE INTO reglages (cle, valeur) VALUES (?,?)');
 Object.entries(REGLAGES_DEFAUT).forEach(([k, v]) => insertReglage.run(k, v));
@@ -523,11 +523,11 @@ function seedDemo() {
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(ecoleId, 25000, 'FCFA', 'standard', 'PAY-DEMO-001', 'paye',
     today(), addDays(240).slice(0, 10), 'mixx', '+228 90 11 22 33', 'MP251021.1432.A12345', 'manuel', 1, now(), now());
 
-  // Numéros marchands de démonstration (remplaçables dans la console éditeur)
+  // Numéros marchands de l'éditeur (modifiables dans la console éditeur)
   const setReg = db.prepare('UPDATE reglages SET valeur = ? WHERE cle = ?');
-  setReg.run('+228 90 12 34 56', 'mixx_numero');
+  setReg.run('+228 93 15 01 78', 'mixx_numero');
   setReg.run('TERMINISH ÉCOLE', 'mixx_nom');
-  setReg.run('+228 91 45 67 89', 'moov_numero');
+  setReg.run('+228 97 24 30 86', 'moov_numero');
   setReg.run('TERMINISH ÉCOLE', 'moov_nom');
 
   // Demandes entrantes (leads)
