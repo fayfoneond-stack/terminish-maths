@@ -54,6 +54,27 @@ Les sections 2 et 3 détaillent chaque étape si le script rencontre un problèm
 
 ---
 
+### Cas particulier : Chromebook (ChromeOS)
+
+Le dossier **« Fichiers Linux »** du gestionnaire de fichiers correspond au dossier personnel du
+conteneur Linux (`~`). Un dossier visible comme `Mes fichiers > Fichiers Linux > TERMINISH ECOLE`
+se retrouve donc dans le Terminal sous `~/"TERMINISH ECOLE"` (guillemets obligatoires : le nom
+contient une espace).
+
+```bash
+cd ~/"TERMINISH ECOLE"
+ls                       # doit afficher : server  public  deploy  package.json  README.md
+bash deploy/gratuit/installer-linux.sh --demo
+```
+
+Si `ls` n'affiche pas ces dossiers, on est un niveau trop haut ou trop bas : utilisez `pwd` et `ls`
+pour vous repérer, ou `find ~ -name installer-linux.sh` pour localiser l'application.
+
+Rappel ChromeOS : le conteneur Linux s'arrête quand le Chromebook s'éteint ou se met en veille.
+Excellent pour démontrer, insuffisant pour un site permanent → voir la section 4 (VM Oracle gratuite).
+
+---
+
 ## 1. Ce qu'il vous faut (et ce que ça coûte)
 
 | Élément | Coût |
