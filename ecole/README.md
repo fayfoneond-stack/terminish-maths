@@ -265,6 +265,7 @@ npm run partage          # site + lien public https://xxx.trycloudflare.com
 npm run partage:demo     # idem avec l'école de démonstration (admin1234 / demo1234)
 npm run local            # serveur seul (localhost / réseau Wi-Fi)
 npm run motdepasse       # réinitialise le mot de passe du super administrateur
+npm run lien             # lien public actuel + état du site
 ```
 
 Guide complet pour un hébergement permanent : **[DEPLOIEMENT.md](DEPLOIEMENT.md)** (VPS + Docker + HTTPS

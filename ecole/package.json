@@ -12,7 +12,8 @@
     "partage:demo": "node deploy/gratuit/demarrer.js --demo",
     "local": "node deploy/gratuit/demarrer.js --sans-tunnel",
     "installer": "bash deploy/gratuit/installer-linux.sh",
-    "motdepasse": "node server/motdepasse.js"
+    "motdepasse": "node server/motdepasse.js",
+    "lien": "node server/lien.js"
   },
   "keywords": [],
   "author": "",

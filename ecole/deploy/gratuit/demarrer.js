@@ -61,6 +61,8 @@ if (!fs.existsSync(path.join(RACINE, 'node_modules', 'express'))) {
 /* ------------------------------------------------------------------ */
 fs.mkdirSync(DATA_DIR, { recursive: true });
 const FICHIER_COMPTE = path.join(DATA_DIR, 'compte-administrateur.txt');
+const FICHIER_LIEN = path.join(DATA_DIR, 'lien-public.txt');
+let lienPublic = null;
 
 const MOTS_A = ['palmier', 'baobab', 'colibri', 'calebasse', 'harmattan', 'savane',
   'lagune', 'mangrove', 'fromager', 'hibiscus', 'zebu', 'mil'];
@@ -199,10 +201,18 @@ serveur.on('exit', code => {
 /* 4. Tunnel HTTPS gratuit (Cloudflare, sans compte)                    */
 /* ------------------------------------------------------------------ */
 let tunnel = null;
+let arretDemande = false;
+let relances = 0;
 function arreter(code = 0) {
+  arretDemande = true;
   try { if (tunnel) tunnel.kill(); } catch (_) {}
   try { serveur.kill(); } catch (_) {}
-  console.log('\n👋 Arrêt. À bientôt !\n');
+  try {
+    if (fs.existsSync(FICHIER_LIEN)) fs.unlinkSync(FICHIER_LIEN);
+  } catch (_) { /* sans conséquence */ }
+  console.log('\n👋 Arrêt. À bientôt !');
+  if (lienPublic) console.log(`   Le lien ${lienPublic} ne fonctionne plus (l’adresse est libérée).`);
+  console.log('   Pour repartir : npm run partage\n');
   process.exit(code);
 }
 process.on('SIGINT', () => arreter(0));
@@ -239,34 +249,101 @@ function trouverCloudflared() {
   return null;
 }
 
+function afficherModeLocal(aCloudflared) {
+  cadre('TERMINISH ÉCOLE EST DÉMARRÉ');
+  console.log(`  Adresse sur cet ordinateur : ${local}`);
+  ips.forEach(ip => console.log(`  Adresse sur votre réseau   : http://${ip}:${PORT}`));
+  console.log('\n');
+  afficherComptes('  ');
+  if (!MODE_DEMO && compteAffiche && compteAffiche !== 'existant') {
+    const joli = FICHIER_COMPTE.startsWith(os.homedir())
+      ? FICHIER_COMPTE.replace(os.homedir(), '~') : FICHIER_COMPTE;
+    console.log(`  (également dans ${joli})`);
+  }
+  if (!SANS_TUNNEL && !aCloudflared) {
+    const localBin = path.join(os.homedir(), '.local', 'bin', 'cloudflared');
+    console.log('\n  ⓘ Cloudflare Tunnel introuvable : aucun lien public.');
+    if (fs.existsSync(localBin)) {
+      console.log(`    Il existe pourtant ici : ${localBin}`);
+      console.log('    Relancez avec :  CLOUDFLARED_BIN="$HOME/.local/bin/cloudflared" npm run partage');
+    } else {
+      console.log('    Installation :  bash deploy/gratuit/installer-linux.sh --verifier');
+      console.log('    ou :            sudo apt install cloudflared');
+      console.log('    (détails : DEPLOIEMENT-GRATUIT.md, section « Installer cloudflared »)');
+    }
+  }
+  console.log('\n  Laissez cette fenêtre ouverte. Ctrl+C pour arrêter.\n');
+}
+
+/** Lance un tunnel : chaque tentative produit un nouveau lien public. */
+function demarrerTunnel(cheminBinaire) {
+  let affiche = false;
+
+  tunnel = spawn(cheminBinaire, ['tunnel', '--url', `http://127.0.0.1:${PORT}`, '--no-autoupdate'],
+    { stdio: ['ignore', 'pipe', 'pipe'] });
+
+  const analyser = flux => {
+    let tampon = '';
+    flux.on('data', morceau => {
+      tampon += morceau.toString();
+      const m = /https:\/\/[a-z0-9-]+\.trycloudflare\.com/.exec(tampon);
+      if (m && !affiche) {
+        affiche = true;
+        lienPublic = m[0];
+        try {
+          fs.writeFileSync(FICHIER_LIEN, [
+            lienPublic, '',
+            `ouvert le ${new Date().toLocaleString('fr-FR')}`,
+            `serveur local : ${local}`, '',
+            'Tant que la commande « npm run partage » tourne, ce lien fonctionne.',
+            'Après un arrêt ou une mise en veille, un NOUVEAU lien est créé.',
+            'Pour le retrouver : npm run lien', ''
+          ].join('\n'));
+        } catch (_) { /* disque en lecture seule : sans conséquence */ }
+
+        cadre('VOTRE SITE EST EN LIGNE');
+        console.log(`  🌍 Lien public  : ${lienPublic}`);
+        console.log(`  💻 Sur place    : ${local}`);
+        console.log('');
+        afficherComptes('  ');
+        console.log('\n  ⚠️  Ce lien change à chaque redémarrage : envoyez-le juste');
+        console.log('      avant une démonstration. Il reste valable tant que cette');
+        console.log('      fenêtre est ouverte.');
+        console.log(`\n  Le lien est aussi noté dans ${FICHIER_LIEN.replace(os.homedir(), '~')}`);
+        console.log('  (à retrouver plus tard : npm run lien)');
+        console.log('\n  Ctrl+C pour arrêter.\n');
+      }
+      if (tampon.length > 8000) tampon = tampon.slice(-4000);
+    });
+  };
+  analyser(tunnel.stdout);
+  analyser(tunnel.stderr);
+
+  tunnel.on('exit', code => {
+    if (arretDemande) return;
+    if (!affiche) {
+      console.log('⚠️  Le lien public n’a pas pu être ouvert (réseau bloqué ?).');
+      console.log(`   Le site reste accessible sur ${local}.`);
+      return;
+    }
+    if (relances < 5) {
+      relances += 1;
+      console.log(`\n⚠️  Le tunnel public s’est arrêté (code ${code}). Nouvelle tentative ${relances}/5…`);
+      console.log('   Un NOUVEAU lien va être créé.');
+      setTimeout(() => demarrerTunnel(cheminBinaire), 3000);
+    } else {
+      console.log('\n❌ Le tunnel public n’a pas pu être rétabli.');
+      console.log(`   Le site reste accessible sur ${local}. Relancez npm run partage.`);
+    }
+  });
+}
+
 setTimeout(() => {
   const cloudflare = SANS_TUNNEL ? null : trouverCloudflared();
   const aCloudflared = Boolean(cloudflare);
 
   if (SANS_TUNNEL || !aCloudflared) {
-    cadre('TERMINISH ÉCOLE EST DÉMARRÉ');
-    console.log(`  Adresse sur cet ordinateur : ${local}`);
-    ips.forEach(ip => console.log(`  Adresse sur votre réseau   : http://${ip}:${PORT}`));
-    console.log('\n');
-    afficherComptes('  ');
-    if (!MODE_DEMO && compteAffiche && compteAffiche !== 'existant') {
-      const joli = FICHIER_COMPTE.startsWith(os.homedir())
-        ? FICHIER_COMPTE.replace(os.homedir(), '~') : FICHIER_COMPTE;
-      console.log(`  (également dans ${joli})`);
-    }
-    if (!SANS_TUNNEL && !aCloudflared) {
-      const localBin = path.join(os.homedir(), '.local', 'bin', 'cloudflared');
-      console.log('\n  ⓘ Cloudflare Tunnel introuvable : aucun lien public.');
-      if (fs.existsSync(localBin)) {
-        console.log(`    Il existe pourtant ici : ${localBin}`);
-        console.log('    Relancez avec :  CLOUDFLARED_BIN="$HOME/.local/bin/cloudflared" npm run partage');
-      } else {
-        console.log('    Installation :  bash deploy/gratuit/installer-linux.sh --verifier');
-        console.log('    ou :            sudo apt install cloudflared');
-        console.log('    (détails : DEPLOIEMENT-GRATUIT.md, section « Installer cloudflared »)');
-      }
-    }
-    console.log('\n  Laissez cette fenêtre ouverte. Ctrl+C pour arrêter.\n');
+    afficherModeLocal(aCloudflared);
     return;
   }
 
@@ -278,38 +355,5 @@ setTimeout(() => {
       console.log(`     echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc`);
     }
   }
-  tunnel = spawn(cloudflare.chemin, ['tunnel', '--url', `http://127.0.0.1:${PORT}`, '--no-autoupdate'],
-    { stdio: ['ignore', 'pipe', 'pipe'] });
-
-  let affiche = false;
-  const analyser = flux => {
-    let tampon = '';
-    flux.on('data', morceau => {
-      tampon += morceau.toString();
-      const m = /https:\/\/[a-z0-9-]+\.trycloudflare\.com/.exec(tampon);
-      if (m && !affiche) {
-        affiche = true;
-        cadre('VOTRE SITE EST EN LIGNE');
-        console.log(`  🌍 Lien public  : ${m[0]}`);
-        console.log(`  💻 Sur place    : ${local}`);
-        console.log('');
-        afficherComptes('  ');
-        console.log(`\n  ⚠️  Ce lien change à chaque redémarrage : envoyez-le juste`);
-        console.log('      avant une démonstration. Il reste valable tant que cette');
-        console.log('      fenêtre est ouverte.');
-        console.log('\n  Ctrl+C pour arrêter.\n');
-      }
-      if (tampon.length > 8000) tampon = tampon.slice(-4000);
-    });
-  };
-  analyser(tunnel.stdout);
-  analyser(tunnel.stderr);
-
-  tunnel.on('exit', code => {
-    if (!affiche) {
-      console.log('⚠️  Le lien public n’a pas pu être ouvert (réseau bloqué ?).');
-      console.log(`   Le site reste accessible sur ${local}.`);
-    }
-    if (code && code !== 0 && !affiche) console.log(`   cloudflared a quitté (code ${code}).`);
-  });
+  demarrerTunnel(cloudflare.chemin);
 }, 2200);

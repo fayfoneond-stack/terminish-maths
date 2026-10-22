@@ -183,6 +183,35 @@ La console administrateur est sur `/app` avec l'identifiant et le mot de passe a
 
 ---
 
+## 2 bis. « Ce site est inaccessible » / ERR_NAME_NOT_RESOLVED
+
+C'est le comportement normal d'un **tunnel rapide** Cloudflare : l'adresse `xxxx.trycloudflare.com`
+n'existe que **tant que la commande tourne**. Dès que vous faites `Ctrl+C`, que le Chromebook se met en
+veille ou que le conteneur Linux s'arrête, Cloudflare **supprime l'adresse du DNS** ; le lien devient
+donc introuvable (`ERR_NAME_NOT_RESOLVED`) et ne reviendra jamais.
+
+Trois réflexes :
+
+```bash
+npm run lien        # le site est-il en ligne ? quel est le lien actuel ?
+npm run partage     # repartir (un NOUVEAU lien est créé)
+```
+
+| Situation | Que faire |
+|---|---|
+| Vous avez utilisé un lien d'hier | ouvrir le lien affiché par le terminal en cours |
+| Le terminal est fermé | `npm run partage` → nouveau lien |
+| Le lien s'arrête tout seul | le lanceur **relance automatiquement** le tunnel (5 tentatives) et affiche le nouveau lien |
+| Vous voulez une adresse qui ne change jamais | VM Oracle gratuite + `sslip.io` (section 4) |
+
+Le lien en cours est aussi écrit dans `data/lien-public.txt` et effacé à l'arrêt : il n'y a donc jamais
+d'ambiguïté entre un lien mort et un lien vivant.
+
+Pour éviter les coupures pendant une démonstration : Paramètres ChromeOS → Appareil → Économiseur
+d'énergie → **Jamais** de mise en veille, Chromebook sur secteur.
+
+---
+
 ## 3. Comment faire une démonstration convaincante
 
 1. `npm run partage:demo` → vous obtenez un lien et l'école fictive « Complexe Scolaire Les Palmiers ».
@@ -365,6 +394,7 @@ les sauvegardes : aucun frais caché, aucune limite d'écoles, aucun quota.
 | `Le port 3000 est déjà utilisé` | une autre instance tourne déjà | `--port 3001`, ou `pkill -f deploy/gratuit/demarrer.js` |
 | `Permission denied` au lancement du script | bit exécutable absent | `bash deploy/gratuit/installer-linux.sh` (sans `./`) |
 | Le lien `trycloudflare` ne s'ouvre pas | tunnel pas encore prêt / réseau | attendez 10 s, rechargez ; vérifiez que la fenêtre affiche bien l'URL |
+| `ERR_NAME_NOT_RESOLVED` | lien d'un tunnel arrêté (adresse supprimée) | `npm run lien`, puis `npm run partage` |
 | « Aucun lien public » dans la console | `cloudflared` non installé ou bloqué | `cloudflared --version` ; antivirus → autoriser |
 | Le lien change tout le temps | comportement normal du tunnel rapide | voir voie 2 (Oracle Cloud) pour une adresse fixe |
 | « Cloudflare Tunnel introuvable » alors qu'il est installé | `~/.local/bin` absent du PATH du terminal | relancer avec `bash deploy/gratuit/installer-linux.sh`, ou `export PATH="$HOME/.local/bin:$PATH"`, ou `CLOUDFLARED_BIN="$HOME/.local/bin/cloudflared" npm run partage` |
@@ -386,6 +416,7 @@ bash deploy/gratuit/installer-linux.sh --demo
 # à chaque démonstration
 npm run partage:demo      # site de démo + lien HTTPS
 npm run partage           # site propre
+npm run lien              # retrouver le lien actuel et l'état du site
 ```
 
 Vous avez un site HTTPS, un lien à envoyer, une console d'administration, et zéro facture.
