@@ -267,6 +267,10 @@ en ligne **en permanence**, même quand votre ordinateur est éteint.
 > Le jour où vous achèterez un domaine (`ecole.votre-ecole.tg`), il suffira de changer la ligne `DOMAIN=`
 > et de relancer : le certificat se renouvelle tout seul.
 
+**Automatisé** : `sudo bash deploy/vm/installer-vm.sh` fait tout cela depuis la VM (Docker, HTTPS,
+adresse `ecole.<ip>.sslip.io`, mot de passe admin, pare-feu, démarrage automatique).
+Détails et prérequis Oracle : **[LIEN-ETERNEL.md](LIEN-ETERNEL.md)**.
+
 ### Autres options gratuites (si Oracle est refusé)
 
 | Service | Durée | Limite | Adapté ? |

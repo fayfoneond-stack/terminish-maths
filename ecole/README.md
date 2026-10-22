@@ -201,9 +201,10 @@ ecole/
 │   ├── css/styles.css
 │   └── js/util.js, js/app.js  SPA (vanilla JS, routage par hash)
 ├── data/            base SQLite (ignorée par Git)
-├── deploy/          Caddyfile, nginx.conf, service systemd, gratuit/ (lanceur + installateur Linux)
+├── deploy/          Caddyfile, nginx.conf, systemd, gratuit/ (PC), vm/ (serveur 24 h/24)
 ├── Dockerfile, docker-compose.yml, render.yaml
 ├── DEPLOIEMENT.md   guide de mise en ligne pas à pas
+├── LIEN-ETERNEL.md  adresse fixe gratuite (VPS Oracle Always Free)
 └── DEPLOIEMENT-GRATUIT.md  mise en ligne à 0 F (ordinateur + Cloudflare Tunnel)
 ```
 
@@ -258,6 +259,10 @@ ecole/
 
 **Budget zéro ?** Suivez **[DEPLOIEMENT-GRATUIT.md](DEPLOIEMENT-GRATUIT.md)** : le site tourne sur votre
 ordinateur et devient accessible en HTTPS via Cloudflare Tunnel (gratuit, sans compte).
+
+**Besoin d'un lien qui ne change jamais ?** **[LIEN-ETERNEL.md](LIEN-ETERNEL.md)** : VM Oracle Cloud
+« Always Free » (0 F, 24 h/24) + `deploy/vm/installer-vm.sh`, qui installe Docker, HTTPS et l'adresse
+`https://ecole.<ip>.sslip.io` en une commande.
 
 ```bash
 bash deploy/gratuit/installer-linux.sh --demo   # Linux : tout installer (sans sudo) et démarrer
