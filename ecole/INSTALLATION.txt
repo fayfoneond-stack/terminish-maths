@@ -141,6 +141,10 @@ PRÉREQUIS : Node.js 22 ou plus. Rien d'autre. (Docker seulement pour l'option D
   Le script met à jour la base, ferme les sessions ouvertes et réécrit
   data/compte-administrateur.txt. La base n'est pas modifiée autrement.
 
+  Au démarrage, le lanceur VÉRIFIE réellement le mot de passe annoncé :
+      « ✔ vérifié à l'instant »      → il fonctionne
+      « ✘ non reconnu »              → un compte existe déjà : npm run motdepasse
+
 ===============================================================================
  À NE PAS OUBLIER APRÈS LA MISE EN LIGNE
 ===============================================================================

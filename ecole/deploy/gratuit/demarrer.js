@@ -143,6 +143,34 @@ if (MODE_DEMO) {
   compteAffiche = compte.password || null;
 }
 
+/* ------------------------------------------------------------------ */
+/* 2 bis. Le mot de passe affiché est-il VRAIMENT valide ?             */
+/* ------------------------------------------------------------------ */
+// Le serveur ne crée le compte administrateur que s'il n'en existe aucun :
+// quand une base existe déjà (école déjà configurée, base verrouillée…), un
+// mot de passe fraîchement généré ne serait jamais appliqué. On ne devine
+// donc pas : on essaie réellement de se connecter, puis on corrige l'affichage.
+const verif = { etat: 'attente', detail: '' };   // attente | ok | ko | ignore
+const attentes = [];
+
+function surVerif(fn) {
+  if (verif.etat === 'attente') attentes.push(fn);
+  else fn(verif);
+}
+
+function resoudreVerif(etat, detail = '') {
+  if (verif.etat !== 'attente') return;
+  verif.etat = etat;
+  verif.detail = detail;
+  attentes.splice(0).forEach(fn => fn(verif));
+}
+
+/** Message affiché à la place d'un mot de passe qui ne fonctionne pas. */
+function motDePasseNonReconnu(indent = '  ') {
+  console.log(`${indent}Mot de passe           : ✘ non reconnu par cette installation`);
+  console.log(`${indent}                         (un compte existe déjà : npm run motdepasse)`);
+}
+
 /** Affiche les identifiants réellement valides. */
 function afficherComptes(indent = '  ') {
   if (MODE_DEMO) {
@@ -157,9 +185,62 @@ function afficherComptes(indent = '  ') {
     console.log(`${indent}Mot de passe           : inchangé depuis la première installation`);
     console.log(`${indent}                         (si oublié : npm run motdepasse)`);
   } else if (compteAffiche) {
-    console.log(`${indent}Mot de passe           : ${compteAffiche}`);
+    if (verif.etat === 'ko') {
+      motDePasseNonReconnu(indent);
+    } else {
+      console.log(`${indent}Mot de passe           : ${compteAffiche}${
+        verif.etat === 'ok' ? '   ✔ vérifié à l’instant' : ''}`);
+      if (verif.etat === 'attente') console.log(`${indent}                         (vérification en cours…)`);
+    }
   } else {
     console.log(`${indent}Mot de passe           : celui fourni dans ADMIN_PASSWORD`);
+  }
+}
+
+/** Avertissement bien visible si le mot de passe annoncé ne marche pas. */
+function prevenirSiInvalide() {
+  surVerif(v => {
+    if (v.etat !== 'ko') return;
+    console.log('');
+    console.log('  ⚠️  Le mot de passe annoncé ci-dessus n’est PAS reconnu :');
+    console.log('      un compte administrateur existe déjà dans cette installation,');
+    console.log('      avec un autre mot de passe.');
+    console.log('      Corrigez en 10 secondes (dans un autre terminal) :');
+    console.log('          npm run motdepasse');
+    console.log('');
+  });
+}
+
+const attendre = ms => new Promise(r => setTimeout(r, ms));
+
+/** Attend que le serveur réponde, puis teste réellement la connexion. */
+async function verifierIdentifiants() {
+  if (MODE_DEMO) return resoudreVerif('ignore');
+  if (!compte.password) return resoudreVerif('ignore');   // ADMIN_PASSWORD : rien à vérifier
+
+  const fin = Date.now() + 25000;
+  let enLigne = false;
+  while (Date.now() < fin) {
+    try {
+      const r = await fetch(`http://127.0.0.1:${PORT}/api/health`, { signal: AbortSignal.timeout(1500) });
+      if (r.ok) { enLigne = true; break; }
+    } catch (_) { /* pas encore prêt */ }
+    await attendre(400);
+  }
+  if (!enLigne) return resoudreVerif('ignore');
+
+  try {
+    const r = await fetch(`http://127.0.0.1:${PORT}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: compte.email, password: compte.password }),
+      signal: AbortSignal.timeout(4000)
+    });
+    if (r.ok) return resoudreVerif('ok');
+    if (r.status === 401) return resoudreVerif('ko');
+    return resoudreVerif('ignore');
+  } catch (_) {
+    return resoudreVerif('ignore');
   }
 }
 
@@ -196,6 +277,9 @@ serveur.on('exit', code => {
   if (code && code !== 0) console.error(`\n❌ Le serveur s’est arrêté (code ${code}).`);
   process.exit(code || 0);
 });
+
+// Vérifie le mot de passe annoncé, sans bloquer le démarrage.
+verifierIdentifiants();
 
 /* ------------------------------------------------------------------ */
 /* 4. Tunnel HTTPS gratuit (Cloudflare, sans compte)                    */
@@ -255,7 +339,8 @@ function afficherModeLocal(aCloudflared) {
   ips.forEach(ip => console.log(`  Adresse sur votre réseau   : http://${ip}:${PORT}`));
   console.log('\n');
   afficherComptes('  ');
-  if (!MODE_DEMO && compteAffiche && compteAffiche !== 'existant') {
+  prevenirSiInvalide();
+  if (!MODE_DEMO && compteAffiche && compteAffiche !== 'existant' && verif.etat !== 'ko') {
     const joli = FICHIER_COMPTE.startsWith(os.homedir())
       ? FICHIER_COMPTE.replace(os.homedir(), '~') : FICHIER_COMPTE;
     console.log(`  (également dans ${joli})`);
@@ -306,6 +391,7 @@ function demarrerTunnel(cheminBinaire) {
         console.log(`  💻 Sur place    : ${local}`);
         console.log('');
         afficherComptes('  ');
+        prevenirSiInvalide();
         console.log('\n  ⚠️  Ce lien change à chaque redémarrage : envoyez-le juste');
         console.log('      avant une démonstration. Il reste valable tant que cette');
         console.log('      fenêtre est ouverte.');
