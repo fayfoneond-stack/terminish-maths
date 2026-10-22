@@ -46,9 +46,17 @@ Sortie attendue :
 │ VOTRE SITE EST EN LIGNE                                        │
 └────────────────────────────────────────────────────────────────┘
   🌍 Lien public  : https://joli-nuage-rapide-42.trycloudflare.com
-  Console admin   : admin@terminish.tg
-  Mot de passe    : palmier-clair-4821
+
+  Comptes de démonstration :
+    admin@terminish.tg       admin1234    console éditeur
+    directeur@demo.tg        demo1234     chef d'établissement
+    prof.maths@demo.tg       prof1234     enseignant
+    eleve@demo.tg            eleve1234    élève / parent
 ```
+
+**Important** : en mode `--demo`, les identifiants sont ceux du jeu de démonstration
+(`admin1234`, `demo1234`…). Le mot de passe généré ne sert qu'au mode normal (`npm run partage`),
+sur une base neuve.
 
 Les sections 2 et 3 détaillent chaque étape si le script rencontre un problème.
 
@@ -361,7 +369,8 @@ les sauvegardes : aucun frais caché, aucune limite d'écoles, aucun quota.
 | Le lien change tout le temps | comportement normal du tunnel rapide | voir voie 2 (Oracle Cloud) pour une adresse fixe |
 | « Cloudflare Tunnel introuvable » alors qu'il est installé | `~/.local/bin` absent du PATH du terminal | relancer avec `bash deploy/gratuit/installer-linux.sh`, ou `export PATH="$HOME/.local/bin:$PATH"`, ou `CLOUDFLARED_BIN="$HOME/.local/bin/cloudflared" npm run partage` |
 | Site inaccessible depuis le téléphone | PC en veille / Internet coupé | réveillez le PC, relancez `npm run partage` |
-| Mot de passe administrateur oublié | — | il est dans `data/compte-administrateur.txt` |
+| Mot de passe administrateur oublié | — | il est dans `data/compte-administrateur.txt`, sinon `npm run motdepasse` (nouveau mot de passe, sessions fermées) |
+| « Identifiants incorrects » avec le mot de passe affiché | en mode `--demo`, le compte est `admin@terminish.tg` / **`admin1234`** (le mot de passe généré ne s'applique pas) | utilisez `admin1234`, ou `npm run motdepasse` pour imposer votre propre mot de passe |
 | Données perdues | mauvais dossier de données | vérifiez `TERMINISH_DATA_DIR` : toujours le même |
 
 ---

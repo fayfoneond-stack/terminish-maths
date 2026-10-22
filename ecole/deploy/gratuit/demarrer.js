@@ -15,6 +15,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const crypto = require('node:crypto');
+let DatabaseSync = null;
+try { ({ DatabaseSync } = require('node:sqlite')); } catch (_) { /* Node < 22.5 */ }
 
 const RACINE = path.join(__dirname, '..', '..');
 const argv = process.argv.slice(2);
@@ -72,27 +74,90 @@ function nouveauMotDePasse() {
   return `${a}-${b}-${crypto.randomInt(1000, 9999)}`;
 }
 
-let compte = { email: process.env.ADMIN_EMAIL || 'admin@terminish.tg', password: process.env.ADMIN_PASSWORD || '' };
-if (!compte.password) {
-  if (fs.existsSync(FICHIER_COMPTE)) {
-    const t = fs.readFileSync(FICHIER_COMPTE, 'utf8');
-    const e = /Identifiant\s*:\s*(\S+)/.exec(t);
-    const p = /Mot de passe\s*:\s*(\S+)/.exec(t);
-    if (e && p) compte = { email: e[1], password: p[1] };
+const CHEMIN_DB = path.join(DATA_DIR, 'terminish-ecole.db');
+
+/** État de la base avant démarrage : base neuve ? compte admin déjà créé ? */
+function etatBase() {
+  if (!fs.existsSync(CHEMIN_DB) || !DatabaseSync) return { existe: false, ecoles: 0, admin: null };
+  let base = null;
+  try {
+    base = new DatabaseSync(CHEMIN_DB);
+    base.exec('PRAGMA busy_timeout = 3000');
+    const ecoles = Number(base.prepare('SELECT COUNT(*) AS n FROM etablissements').get().n);
+    const row = base.prepare("SELECT email FROM utilisateurs WHERE role = 'super_admin' ORDER BY id LIMIT 1").get();
+    return { existe: true, ecoles, admin: row ? row.email : null };
+  } catch (err) {
+    return { existe: true, ecoles: 0, admin: null, erreur: err.message };
+  } finally {
+    try { if (base) base.close(); } catch (_) {}
   }
+}
+
+const base = etatBase();
+
+// En mode démonstration, la base installe ses propres comptes : le mot de passe
+// affiché doit être celui-là, pas un mot de passe généré qui ne serait jamais appliqué.
+const MODE_DEMO = DEMO || (base.existe && base.ecoles > 0 && !base.admin);
+
+const COMPTES_DEMO = [
+  ['admin@terminish.tg', 'admin1234', 'console éditeur (écoles, paiements, réglages)'],
+  ['directeur@demo.tg', 'demo1234', 'chef d’établissement'],
+  ['prof.maths@demo.tg', 'prof1234', 'enseignant'],
+  ['eleve@demo.tg', 'eleve1234', 'élève / parent']
+];
+
+let compte = { email: process.env.ADMIN_EMAIL || 'admin@terminish.tg', password: process.env.ADMIN_PASSWORD || '' };
+let compteAffiche = null;   // null = pas de mot de passe à afficher (déjà existant)
+
+if (MODE_DEMO) {
+  compte = { email: 'admin@terminish.tg', password: 'admin1234' };
+} else if (base.admin) {
+  // Compte déjà en place : son mot de passe n'a pas changé, on ne peut pas le deviner.
+  compte = { email: base.admin, password: process.env.ADMIN_PASSWORD || '' };
+  compteAffiche = 'existant';
+} else {
   if (!compte.password) {
-    compte.password = nouveauMotDePasse();
-    fs.writeFileSync(FICHIER_COMPTE, [
-      'Terminish École — compte administrateur de cette installation',
-      '',
-      `Identifiant  : ${compte.email}`,
-      `Mot de passe : ${compte.password}`,
-      '',
-      'Conservez ce fichier. Il permet de vous connecter sur /app avec le rôle',
-      '« super administrateur » (console des écoles, paiements, réglages).',
-      'Vous pouvez changer ce mot de passe dans le menu « Mon compte ».',
-      ''
-    ].join('\n'), { mode: 0o600 });
+    if (fs.existsSync(FICHIER_COMPTE)) {
+      const t = fs.readFileSync(FICHIER_COMPTE, 'utf8');
+      const e = /Identifiant\s*:\s*(\S+)/.exec(t);
+      const p = /Mot de passe\s*:\s*(\S+)/.exec(t);
+      if (e && p) compte = { email: e[1], password: p[1] };
+    }
+    if (!compte.password) {
+      compte.password = nouveauMotDePasse();
+      fs.writeFileSync(FICHIER_COMPTE, [
+        'Terminish École — compte administrateur de cette installation',
+        '',
+        `Identifiant  : ${compte.email}`,
+        `Mot de passe : ${compte.password}`,
+        '',
+        'Conservez ce fichier. Il permet de vous connecter sur /app avec le rôle',
+        '« super administrateur » (console des écoles, paiements, réglages).',
+        'Vous pouvez changer ce mot de passe dans le menu « Mon compte ».',
+        ''
+      ].join('\n'), { mode: 0o600 });
+    }
+  }
+  compteAffiche = compte.password || null;
+}
+
+/** Affiche les identifiants réellement valides. */
+function afficherComptes(indent = '  ') {
+  if (MODE_DEMO) {
+    console.log(`${indent}Comptes de démonstration :`);
+    COMPTES_DEMO.forEach(([email, mdp, role]) => {
+      console.log(`${indent}  ${email.padEnd(24)} ${mdp.padEnd(12)} ${role}`);
+    });
+    return;
+  }
+  console.log(`${indent}Console administrateur : ${compte.email}`);
+  if (compteAffiche === 'existant') {
+    console.log(`${indent}Mot de passe           : inchangé depuis la première installation`);
+    console.log(`${indent}                         (si oublié : npm run motdepasse)`);
+  } else if (compteAffiche) {
+    console.log(`${indent}Mot de passe           : ${compteAffiche}`);
+  } else {
+    console.log(`${indent}Mot de passe           : celui fourni dans ADMIN_PASSWORD`);
   }
 }
 
@@ -182,11 +247,13 @@ setTimeout(() => {
     cadre('TERMINISH ÉCOLE EST DÉMARRÉ');
     console.log(`  Adresse sur cet ordinateur : ${local}`);
     ips.forEach(ip => console.log(`  Adresse sur votre réseau   : http://${ip}:${PORT}`));
-    console.log(`\n  Console administrateur : ${compte.email}`);
-    console.log(`  Mot de passe           : ${compte.password}`);
-    const joli = FICHIER_COMPTE.startsWith(os.homedir())
-      ? FICHIER_COMPTE.replace(os.homedir(), '~') : FICHIER_COMPTE;
-    console.log(`  (également dans ${joli})`);
+    console.log('\n');
+    afficherComptes('  ');
+    if (!MODE_DEMO && compteAffiche && compteAffiche !== 'existant') {
+      const joli = FICHIER_COMPTE.startsWith(os.homedir())
+        ? FICHIER_COMPTE.replace(os.homedir(), '~') : FICHIER_COMPTE;
+      console.log(`  (également dans ${joli})`);
+    }
     if (!SANS_TUNNEL && !aCloudflared) {
       const localBin = path.join(os.homedir(), '.local', 'bin', 'cloudflared');
       console.log('\n  ⓘ Cloudflare Tunnel introuvable : aucun lien public.');
@@ -225,8 +292,8 @@ setTimeout(() => {
         cadre('VOTRE SITE EST EN LIGNE');
         console.log(`  🌍 Lien public  : ${m[0]}`);
         console.log(`  💻 Sur place    : ${local}`);
-        console.log(`\n  Console admin   : ${compte.email}`);
-        console.log(`  Mot de passe    : ${compte.password}`);
+        console.log('');
+        afficherComptes('  ');
         console.log(`\n  ⚠️  Ce lien change à chaque redémarrage : envoyez-le juste`);
         console.log('      avant une démonstration. Il reste valable tant que cette');
         console.log('      fenêtre est ouverte.');

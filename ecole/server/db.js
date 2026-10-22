@@ -12,6 +12,7 @@ const db = new DatabaseSync(path.join(DATA_DIR, 'terminish-ecole.db'));
 db.exec(`
 PRAGMA journal_mode = WAL;
 PRAGMA foreign_keys = ON;
+PRAGMA busy_timeout = 5000;
 
 CREATE TABLE IF NOT EXISTS etablissements (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

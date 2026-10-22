@@ -262,8 +262,9 @@ ordinateur et devient accessible en HTTPS via Cloudflare Tunnel (gratuit, sans c
 ```bash
 bash deploy/gratuit/installer-linux.sh --demo   # Linux : tout installer (sans sudo) et démarrer
 npm run partage          # site + lien public https://xxx.trycloudflare.com
-npm run partage:demo     # idem avec l'école de démonstration
+npm run partage:demo     # idem avec l'école de démonstration (admin1234 / demo1234)
 npm run local            # serveur seul (localhost / réseau Wi-Fi)
+npm run motdepasse       # réinitialise le mot de passe du super administrateur
 ```
 
 Guide complet pour un hébergement permanent : **[DEPLOIEMENT.md](DEPLOIEMENT.md)** (VPS + Docker + HTTPS
@@ -289,7 +290,7 @@ derrière Nginx (`deploy/nginx.conf`) ou Caddy.
 | `PORT` | port d'écoute (3000 par défaut) |
 | `TERMINISH_DATA_DIR` | dossier de la base SQLite (ex. `/data` sur un volume) |
 | `TERMINISH_SEED` | `demo` (défaut) = école + comptes de démonstration ; `prod` = uniquement le compte admin |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NOM` | compte super-admin créé au premier démarrage (mot de passe aléatoire affiché si absent) |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NOM` | compte super-admin créé au premier démarrage (mot de passe aléatoire affiché si absent). En mode `TERMINISH_SEED=demo`, le compte est `admin@terminish.tg` / `admin1234` — pour imposer un autre mot de passe : `npm run motdepasse` |
 | `COOKIE_SECURE` | `1` pour marquer le cookie de session `Secure` (obligatoire derrière HTTPS) |
 | `CINETPAY_APIKEY`, `CINETPAY_SITE_ID`, `CINETPAY_MODE` | paiement automatique CinetPay |
 | `PAYDUNYA_MASTER_KEY`, `PAYDUNYA_PRIVATE_KEY`, `PAYDUNYA_TOKEN`, `PAYDUNYA_MODE` | paiement automatique PayDunya |
