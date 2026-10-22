@@ -176,6 +176,11 @@ EOF
   L'adresse stable sera :  https://${NOM}
   (elle ne changera plus, même après redémarrage du Chromebook)
 
+  ℹ Le nom de la machine fait partie de l'adresse. Pour un nom plus parlant
+    (terminish-ecole au lieu de penguin), renommez-la MAINTENANT :
+    https://login.tailscale.com/admin/machines → ⋯ → Edit machine name
+    Une fois le lien distribué aux écoles, ne le renommez plus.
+
   Vérifier plus tard :
       sudo tailscale funnel status
       sudo tailscale funnel --bg off     # fermer l'accès public
@@ -194,6 +199,25 @@ EOF
       printf '%s\n' "$URL" > "$DATA_DIR/lien-stable.txt" 2>/dev/null || true
     else
       cat /tmp/ts-funnel.log 2>/dev/null
+      local lienf
+      lienf="$(grep -oE 'https://login\.tailscale\.com/f/funnel[^ ]*' /tmp/ts-funnel.log 2>/dev/null | head -n1)"
+      if [ -n "$lienf" ]; then
+        echo
+        alerte "Funnel n'est pas encore autorisé sur votre réseau (une seule fois) :"
+        echo "   1. ouvrez ce lien dans Chrome :"
+        echo "        ${lienf}"
+        echo "   2. cliquez « Enable Funnel » (ou « Activer »)"
+        echo "   3. attendez 10 secondes, puis relancez cette commande"
+        return 0
+      fi
+      if grep -qi 'https.*not enabled\|HTTPS is not enabled' /tmp/ts-funnel.log 2>/dev/null; then
+        echo
+        alerte "Le HTTPS n'est pas encore actif pour votre réseau :"
+        echo "   1. https://login.tailscale.com/admin/dns → « Enable HTTPS »"
+        echo "   2. attendez 1 minute (émission du certificat)"
+        echo "   3. relancez cette commande"
+        return 0
+      fi
       erreur "Le tunnel n'a pas pu s'ouvrir."
       echo "   Causes fréquentes : HTTPS pas encore activé (console Tailscale),"
       echo "   ou MagicDNS désactivé. Voir les messages ci-dessus."

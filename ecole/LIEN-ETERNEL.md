@@ -89,12 +89,31 @@ ouvrez-la dans Chrome, connectez-vous avec **Google ou GitHub**. Aucune carte n'
 sudo tailscale funnel --bg 3000
 ```
 
-Le terminal affiche :
+**Première fois seulement** : Tailscale peut répondre
+
+```
+Funnel is not enabled on your tailnet.
+To enable, visit:
+
+    https://login.tailscale.com/f/funnel?node=xxxxxxxxxxxx
+```
+
+C'est une autorisation à donner une seule fois. Ouvrez **ce lien précis** dans Chrome,
+cliquez **« Enable Funnel »**, attendez 10 secondes, puis relancez la même commande
+(`sudo tailscale funnel --bg 3000`).
+
+Le terminal affiche alors :
 
 ```
 Available on the internet:
 https://mon-pc.requin-bleu.ts.net
 ```
+
+> **Le nom de la machine fait partie de l'adresse.** `penguin` (nom par défaut du
+> conteneur Linux) donne `https://penguin.<réseau>.ts.net`. Pour un nom plus parlant,
+> renommez la machine **avant** de distribuer le lien :
+> <https://login.tailscale.com/admin/machines> → `⋯` → *Edit machine name*
+> (`terminish-ecole` par exemple). Après, ne le renommez plus : le lien changerait.
 
 **C'est fini. Cette adresse est la vôtre, définitivement.**
 

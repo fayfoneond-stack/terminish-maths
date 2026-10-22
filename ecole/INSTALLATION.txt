@@ -179,6 +179,10 @@ PRÉREQUIS : Node.js 22 ou plus. Rien d'autre. (Docker seulement pour l'option D
   Cloudflare Tunnel introuvable     → export PATH="$HOME/.local/bin:$PATH"
   Tailscale : command not found     → fermer/rouvrir le terminal, puis relancer
   « HTTPS is not enabled » (Funnel) → activer Enable HTTPS dans la console Tailscale
+  « Funnel is not enabled »         → ouvrir le lien login.tailscale.com/f/funnel?node=…
+                                      affiché, cliquer « Enable Funnel », relancer
+  adresse en .ts.net peu parlante    → renommer la machine AVANT de distribuer le lien
+                                      (admin/machines → Edit machine name)
   Le lien ts.net ne répond pas      → le site doit tourner : npm run partage
 
 ===============================================================================
