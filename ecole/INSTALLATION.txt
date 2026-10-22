@@ -1,0 +1,180 @@
+===============================================================================
+ TERMINISH ÉCOLE — PAQUET DE DÉPLOIEMENT
+ Tout ce qui est nécessaire pour installer et mettre le site en ligne.
+===============================================================================
+
+CONTENU
+-------
+  server/            code du serveur (Node.js) : base, API, bulletins, paiements
+  public/            interface web (site vitrine + application)
+  deploy/            configurations : Caddy, Nginx, systemd, lanceur gratuit
+  package.json       dépendances (express, pdfkit) + commandes
+  package-lock.json  versions figées (installation reproductible)
+  Dockerfile         image de production (Node 22, non-root)
+  docker-compose.yml pile complète : application + HTTPS automatique
+  render.yaml        déploiement Render avec disque persistant
+  .env.example       modèle de configuration (à copier en .env)
+  .nvmrc             version de Node attendue (22)
+  README.md          présentation, fonctionnalités, API
+  DEPLOIEMENT.md     guide complet (VPS, Render, Nginx, sauvegardes)
+  DEPLOIEMENT-GRATUIT.md  mise en ligne à 0 F (ordinateur + lien HTTPS)
+  LIEN-ETERNEL.md    adresse fixe gratuite SANS CARTE (Tailscale) ; Oracle en annexe
+  INSTALLATION.txt   ce fichier
+  FIREBASE.md        faut-il migrer vers Firebase ? (chiffrage)
+
+PRÉREQUIS : Node.js 22 ou plus. Rien d'autre. (Docker seulement pour l'option Docker.)
+
+===============================================================================
+ A. ESSAI EN 2 MINUTES, SUR VOTRE ORDINATEUR (gratuit)
+===============================================================================
+
+    unzip terminish-ecole-deploiement.zip
+    cd terminish-ecole
+    bash deploy/gratuit/installer-linux.sh --demo
+
+  → installe les dépendances, cloudflared (sans sudo), affiche un lien HTTPS public.
+
+  COMPTES DE DÉMONSTRATION (mode --demo) :
+      admin@terminish.tg    admin1234    console éditeur (écoles, paiements)
+      directeur@demo.tg     demo1234     chef d'établissement
+      prof.maths@demo.tg    prof1234     enseignant
+      eleve@demo.tg         eleve1234    élève / parent
+
+  ⚠ Le mot de passe généré affiché par le lanceur ne concerne QUE le mode normal
+    (npm run partage) sur une base neuve. En mode --demo, c'est admin1234.
+
+===============================================================================
+ B. MISE EN LIGNE PERMANENTE AVEC DOCKER (VPS)
+===============================================================================
+
+    cp .env.example .env
+    nano .env       # DOMAIN=ecole.votre-domaine.tg, ADMIN_EMAIL, ADMIN_PASSWORD,
+                    # TERMINISH_SEED=prod
+    docker compose up -d --build
+    docker compose logs -f app
+
+  Caddy obtient le certificat HTTPS automatiquement.
+  Vérification : https://votre-domaine/api/health → {"ok":true,...}
+
+===============================================================================
+ C. MISE EN LIGNE SANS DOCKER (VPS + systemd + Nginx)
+===============================================================================
+
+    npm ci --omit=dev
+    cp .env.example .env && nano .env
+    cp deploy/terminish-ecole.service /etc/systemd/system/
+    systemctl daemon-reload && systemctl enable --now terminish-ecole
+    cp deploy/nginx.conf /etc/nginx/sites-available/terminish
+    certbot --nginx -d ecole.votre-domaine.tg
+
+===============================================================================
+ D. RENDER (aucun serveur à gérer)
+===============================================================================
+
+  Pousser le dépôt sur GitHub, puis Render → New → Blueprint (lit render.yaml).
+  Prévoir un disque persistant : la base SQLite ne survit pas sinon.
+
+===============================================================================
+ « CE SITE EST INACCESSIBLE » / ERR_NAME_NOT_RESOLVED
+===============================================================================
+
+  Un tunnel rapide Cloudflare (lien xxxx.trycloudflare.com) n'existe que tant
+  que la commande tourne. À l'arrêt (Ctrl+C, veille, fermeture du terminal),
+  l'adresse est supprimée définitivement : elle ne reviendra pas.
+
+      npm run lien       → le site est-il en ligne ? quel est le lien actuel ?
+      npm run partage    → repartir (un NOUVEAU lien est créé)
+
+  Le lanceur relance automatiquement le tunnel s'il tombe (5 tentatives).
+  Pour une adresse qui ne change jamais : Tailscale (section suivante).
+
+===============================================================================
+ UN LIEN QUI NE CHANGE JAMAIS — GRATUIT, SANS CARTE BANCAIRE (Tailscale)
+===============================================================================
+
+  Un lien xxxx.trycloudflare.com est éphémère : il meurt avec la commande.
+  Pour une adresse stable SANS carte bancaire, utilisez Tailscale Funnel :
+  vous obtenez https://<machine>.<reseau>.ts.net, gratuit à vie, HTTPS inclus,
+  sans ouvrir aucun port dans la box (fonctionne en CGNAT et sur Chromebook).
+
+      # terminal 1
+      npm run partage
+
+      # terminal 2  (Ctrl+Shift+T)
+      bash deploy/gratuit/lien-stable.sh --tailscale
+
+  Le script installe Tailscale, vous fait vous connecter (Google ou GitHub,
+  aucune carte), puis affiche les 2 options à activer dans la console :
+      https://login.tailscale.com/admin/dns  → MagicDNS + Enable HTTPS
+  et la commande finale :
+
+      sudo tailscale funnel --bg 3000
+      # → Available on the internet: https://mon-pc.requin-bleu.ts.net
+
+  Autres commandes du script :
+      bash deploy/gratuit/lien-stable.sh --etat      # où en est-on ?
+      bash deploy/gratuit/lien-stable.sh --ip        # diagnostic IP/CGNAT
+      bash deploy/gratuit/lien-stable.sh --duckdns NOM TOKEN   # nom DuckDNS
+
+  ⚠ Une fois le tunnel ouvert, le site est public : changez le mot de passe
+    administrateur (npm run motdepasse) et n'utilisez pas partage:demo.
+
+  ── Si un jour vous avez une carte bancaire (annexe) ──────────────────────
+  Une VM Oracle Cloud « Always Free » fait tourner le site 24 h/24, même
+  Chromebook éteint. Carte demandée pour vérification d'identité, sans débit.
+
+      sudo bash deploy/vm/installer-vm.sh
+      # → https://ecole.<ip-publique>.sslip.io  (HTTPS automatique)
+
+  Options : --domaine ecole.mon-ecole.tg · --admin moi@exemple.tg
+            --mot-de-passe '...' · --ip 1.2.3.4 · --verifier · --simulation
+
+  Guide complet : LIEN-ETERNEL.md
+
+===============================================================================
+ MOT DE PASSE OUBLIÉ / REFUSÉ
+===============================================================================
+
+    npm run motdepasse                                   # nouveau mot de passe
+    ADMIN_PASSWORD='MonSecret!2026' npm run motdepasse   # mot de passe imposé
+
+  Le script met à jour la base, ferme les sessions ouvertes et réécrit
+  data/compte-administrateur.txt. La base n'est pas modifiée autrement.
+
+===============================================================================
+ À NE PAS OUBLIER APRÈS LA MISE EN LIGNE
+===============================================================================
+  [ ] TERMINISH_SEED=prod          (sinon les comptes de démo sont publics)
+  [ ] si Tailscale Funnel est ouvert : site visible sur Internet, mots de passe solides
+  [ ] mot de passe administrateur long, changé après la 1re connexion
+  [ ] HTTPS actif, COOKIE_SECURE=1
+  [ ] numéros marchands Mixx / Moov et tarifs vérifiés dans la console
+  [ ] sauvegarde quotidienne : npm run backup (puis copie hors du serveur)
+  [ ] /api/health surveillé (UptimeRobot, gratuit)
+
+===============================================================================
+ VARIABLES D'ENVIRONNEMENT (voir .env.example)
+===============================================================================
+  PORT                      port d'écoute (3000)
+  TERMINISH_DATA_DIR        dossier de la base (ex. /data dans Docker)
+  TERMINISH_SEED            demo | prod
+  ADMIN_EMAIL / ADMIN_PASSWORD   compte super-admin créé au 1er démarrage
+  COOKIE_SECURE             1 derrière HTTPS (obligatoire en production)
+  PAYDUNYA_* / CINETPAY_*   paiement automatique (facultatif)
+  CLOUDINARY_*              copie des logos sur le CDN (facultatif)
+
+===============================================================================
+ DÉPANNAGE EXPRESS
+===============================================================================
+  « Identifiants incorrects »   → en démo : admin1234 ; sinon npm run motdepasse
+  Cannot find module 'node:sqlite'  → Node trop ancien (il faut 22+)
+  502 Bad Gateway                   → docker compose logs app
+  Session perdue en boucle          → cookie Secure sans HTTPS
+  Données perdues au redéploiement  → aucun disque persistant monté sur /data
+  Port 3000 déjà pris               → --port 3001
+  Cloudflare Tunnel introuvable     → export PATH="$HOME/.local/bin:$PATH"
+  Tailscale : command not found     → fermer/rouvrir le terminal, puis relancer
+  « HTTPS is not enabled » (Funnel) → activer Enable HTTPS dans la console Tailscale
+  Le lien ts.net ne répond pas      → le site doit tourner : npm run partage
+
+===============================================================================

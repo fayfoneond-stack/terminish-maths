@@ -2,7 +2,9 @@
 
 ## ⬇️ Le fichier à prendre pour déployer
 
-### `terminish-ecole-deploiement.zip` — 158 Ko (version corrigée)
+### `terminish-ecole-deploiement.zip` — 176 Ko (22/10/2026)
+
+sha256 : `c2fd37792493c0ebc1081cc66625c3abb5acc45d37bc5af9098dc48b87d11082`
 
 Tout ce qu'il faut pour installer et mettre le site en ligne, et **rien de plus** :
 
@@ -11,15 +13,16 @@ terminish-ecole/
 ├── INSTALLATION.txt      ← à lire en premier (démarrage, Docker, Render, variables)
 ├── server/               8 fichiers .js : base, API, bulletins, paiements, reçus, stats
 ├── public/               site vitrine + application (HTML, CSS, JS)
-├── deploy/               Caddy, Nginx, systemd, lanceur + installateur Linux
+├── deploy/               Caddy, Nginx, systemd, lanceur, installateur Linux,
+│                         lien-stable.sh (adresse fixe Tailscale) + paquet.sh
 ├── package.json / package-lock.json    dépendances (versions figées)
 ├── Dockerfile / docker-compose.yml     mise en ligne Docker + HTTPS automatique
 ├── render.yaml                         déploiement Render (disque persistant)
 ├── .env.example / .nvmrc               configuration
-└── README.md, DEPLOIEMENT.md, DEPLOIEMENT-GRATUIT.md, FIREBASE.md
+└── README.md, LIEN-ETERNEL.md, DEPLOIEMENT.md, DEPLOIEMENT-GRATUIT.md, FIREBASE.md
 ```
 
-32 fichiers · aucun `node_modules` · aucune donnée · testé (extraction vierge,
+39 fichiers · aucun `node_modules` · aucune donnée · testé (extraction vierge,
 `npm ci`, démarrage, `/api/health` OK).
 
 ## Les autres archives (facultatives)
@@ -41,7 +44,11 @@ cd terminish-ecole
 # 1) essai immédiat, gratuit, avec lien HTTPS public
 bash deploy/gratuit/installer-linux.sh --demo
 
-# 2) mise en ligne permanente (VPS avec Docker)
+# 2) adresse fixe gratuite, sans carte bancaire (Tailscale)
+npm run partage                                     # terminal 1
+bash deploy/gratuit/lien-stable.sh --tailscale       # terminal 2
+
+# 3) mise en ligne permanente (VPS avec Docker)
 cp .env.example .env && nano .env      # DOMAIN, ADMIN_EMAIL, ADMIN_PASSWORD, TERMINISH_SEED=prod
 docker compose up -d --build
 ```
@@ -51,10 +58,13 @@ docker compose up -d --build
 
 ## À savoir
 
+- **Lien fixe sans carte bancaire** : `deploy/gratuit/lien-stable.sh --tailscale` →
+  `https://<machine>.<reseau>.ts.net`, HTTPS inclus. Voir `LIEN-ETERNEL.md`.
 - **Aucun `node_modules`** dans les zips : `npm ci --omit=dev` le reconstruit en ~1 seconde.
 - **`TERMINISH_SEED=prod`** est indispensable en production ; sinon les comptes de démo
   (`admin1234`, `demo1234`) restent accessibles publiquement.
 - **Sauvegarde** : `npm run backup` → fichier daté dans `data/sauvegardes/` (à copier hors du serveur).
+- Le paquet se refabrique à l'identique avec `bash deploy/paquet.sh` (taille + sha256 + contrôles).
 - Le dépôt Git reste la référence pour les mises à jour :
   `git clone https://github.com/fayfoneond-stack/terminish-maths.git`
 

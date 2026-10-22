@@ -79,7 +79,7 @@ Si `ls` n'affiche pas ces dossiers, on est un niveau trop haut ou trop bas : uti
 pour vous repérer, ou `find ~ -name installer-linux.sh` pour localiser l'application.
 
 Rappel ChromeOS : le conteneur Linux s'arrête quand le Chromebook s'éteint ou se met en veille.
-Excellent pour démontrer, insuffisant pour un site permanent → voir la section 4 (VM Oracle gratuite).
+Excellent pour démontrer, insuffisant pour un site permanent → voir la section 4 (Tailscale Funnel).
 
 ---
 
@@ -202,7 +202,7 @@ npm run partage     # repartir (un NOUVEAU lien est créé)
 | Vous avez utilisé un lien d'hier | ouvrir le lien affiché par le terminal en cours |
 | Le terminal est fermé | `npm run partage` → nouveau lien |
 | Le lien s'arrête tout seul | le lanceur **relance automatiquement** le tunnel (5 tentatives) et affiche le nouveau lien |
-| Vous voulez une adresse qui ne change jamais | VM Oracle gratuite + `sslip.io` (section 4) |
+| Vous voulez une adresse qui ne change jamais | **Tailscale Funnel** (section 4) : gratuit, sans carte, HTTPS |
 
 Le lien en cours est aussi écrit dans `data/lien-public.txt` et effacé à l'arrêt : il n'y a donc jamais
 d'ambiguïté entre un lien mort et un lien vivant.
@@ -230,16 +230,93 @@ au même Wi-Fi que votre ordinateur (`http://VOTRE-IP:3000`).
 
 ---
 
-## 4. Voie 2 — Une adresse stable, gratuitement (quand vous voulez faire sérieux)
+## 4. Voie 2 — Une adresse stable, gratuitement et **sans carte bancaire** (Tailscale)
 
-Le lien `trycloudflare.com` change à chaque redémarrage. Pour une adresse fixe sans payer de domaine,
-utilisez la **machine virtuelle gratuite à vie d'Oracle Cloud** (offre « Always Free »).
+Le lien `trycloudflare.com` change à chaque redémarrage. Pour une adresse fixe, gratuite et sans
+carte bancaire, la solution est **Tailscale Funnel** : votre Chromebook obtient une adresse HTTPS
+qui ne change jamais.
+
+| Point | Détail |
+|---|---|
+| Ce que vous obtenez | `https://<votre-machine>.<votre-reseau>.ts.net` — HTTPS valide |
+| Coût | **0 F à vie** (offre *Personal*), **jamais de carte** |
+| Inscription | compte Google ou GitHub, 2 clics |
+| Ports à ouvrir dans la box | **aucun** (fonctionne même en CGNAT / 4G) |
+| Condition | le site doit tourner : le Chromebook reste allumé pendant l'utilisation |
+
+```bash
+# terminal 1
+npm run partage
+
+# terminal 2 (Ctrl+Shift+T)
+bash deploy/gratuit/lien-stable.sh --tailscale
+```
+
+Le script installe Tailscale, vous fait vous connecter, puis affiche les deux options à activer
+(<https://login.tailscale.com/admin/dns> : *MagicDNS* + *Enable HTTPS*) et la commande à lancer :
+
+```bash
+sudo tailscale funnel --bg 3000
+# → Available on the internet: https://mon-pc.requin-bleu.ts.net
+```
+
+Vérifier plus tard : `bash deploy/gratuit/lien-stable.sh --etat`.
+Fermer l'accès public : `sudo tailscale funnel --bg off`.
+
+> ⚠️ Une fois le tunnel ouvert, **le site est public** : changez le mot de passe administrateur
+> (`npm run motdepasse`) et ne laissez pas tourner `partage:demo`.
+
+Deux variantes, si vous préférez ne pas utiliser Tailscale :
+
+```bash
+bash deploy/gratuit/lien-stable.sh --ip                     # diagnostic IP publique / CGNAT / redirection
+bash deploy/gratuit/lien-stable.sh --duckdns terminish TOKEN # nom fixe gratuit (DuckDNS)
+```
+
+Elles exigent une **IP publique et une redirection de port** dans la box, et n'apportent pas le
+HTTPS : à réserver à un PC classique, pas au conteneur Linux du Chromebook.
+
+Guide complet : **[LIEN-ETERNEL.md](LIEN-ETERNEL.md)**.
+
+---
+
+## 4 bis. Linux : redémarrer le site tout seul après une coupure
+
+Sans droits administrateur, avec un service utilisateur systemd :
+
+```bash
+mkdir -p ~/.config/systemd/user
+cp deploy/gratuit/terminish-partage.service ~/.config/systemd/user/
+nano ~/.config/systemd/user/terminish-partage.service   # ajuster WorkingDirectory
+systemctl --user daemon-reload
+systemctl --user enable --now terminish-partage
+loginctl enable-linger "$USER"        # démarre même sans session ouverte
+```
+
+Voir le lien public à tout moment :
+
+```bash
+journalctl --user -u terminish-partage -f | grep -o 'https://[a-z0-9-]*\.trycloudflare\.com'
+```
+
+Arrêt : `systemctl --user stop terminish-partage`.
+
+> Le lien change à chaque redémarrage. Pour une adresse fixe, passez à la section 4
+> (Tailscale Funnel : gratuit, sans carte, HTTPS).
+
+---
+
+## 4 ter. Voie 3 — Une VM gratuite 24 h/24 (Oracle Cloud, carte demandée)
+
+Si un jour vous disposez d'une carte bancaire (simple vérification d'identité, aucun débit), une
+machine virtuelle gratuite à vie fait tourner le site **sans votre ordinateur**.
+
 
 | Point | Détail |
 |---|---|
 | Ce que vous obtenez | une VM Linux 24 h/24, IP publique fixe, disque persistant |
 | Coût | **0 F**, sans limite de durée |
-| Ce qu'il faut | un compte Oracle Cloud (une carte est demandée **pour vérifier votre identité**, sans débit) |
+| Ce qu'il faut | un compte Oracle Cloud — **carte bancaire exigée** pour vérifier l'identité (sans débit) |
 | Adresse | `https://ecole.<votre-ip>.sslip.io` — gratuit, HTTPS automatique, ne dépend d'aucun achat de domaine |
 
 Marche à suivre (20 minutes) :
@@ -269,9 +346,9 @@ en ligne **en permanence**, même quand votre ordinateur est éteint.
 
 **Automatisé** : `sudo bash deploy/vm/installer-vm.sh` fait tout cela depuis la VM (Docker, HTTPS,
 adresse `ecole.<ip>.sslip.io`, mot de passe admin, pare-feu, démarrage automatique).
-Détails et prérequis Oracle : **[LIEN-ETERNEL.md](LIEN-ETERNEL.md)**.
+Détails et prérequis Oracle : **[LIEN-ETERNEL.md](LIEN-ETERNEL.md)** (§5).
 
-### Autres options gratuites (si Oracle est refusé)
+### Autres options gratuites (toutes avec carte, donc écartées pour l'instant)
 
 | Service | Durée | Limite | Adapté ? |
 |---|---|---|---|
@@ -279,32 +356,6 @@ Détails et prérequis Oracle : **[LIEN-ETERNEL.md](LIEN-ETERNEL.md)**.
 | **GitHub Codespaces** (60 h/mois) | illimité | machine éteinte quand vous fermez l'onglet | démonstrations seulement |
 | **Ordinateur d'une école partenaire** | illimitée | dépend de leur électricité/Internet | bon plan si une école pilote vous fait confiance |
 | Ancien smartphone Android (Termux) | illimitée | fragile | à éviter |
-
----
-
-## 4 bis. Linux : redémarrer le site tout seul après une coupure
-
-Sans droits administrateur, avec un service utilisateur systemd :
-
-```bash
-mkdir -p ~/.config/systemd/user
-cp deploy/gratuit/terminish-partage.service ~/.config/systemd/user/
-nano ~/.config/systemd/user/terminish-partage.service   # ajuster WorkingDirectory
-systemctl --user daemon-reload
-systemctl --user enable --now terminish-partage
-loginctl enable-linger "$USER"        # démarre même sans session ouverte
-```
-
-Voir le lien public à tout moment :
-
-```bash
-journalctl --user -u terminish-partage -f | grep -o 'https://[a-z0-9-]*\.trycloudflare\.com'
-```
-
-Arrêt : `systemctl --user stop terminish-partage`.
-
-> Le lien change à chaque redémarrage. Pour une adresse fixe, passez à la section 4
-> (VM Oracle Cloud gratuite + `sslip.io`).
 
 ---
 
@@ -400,7 +451,7 @@ les sauvegardes : aucun frais caché, aucune limite d'écoles, aucun quota.
 | Le lien `trycloudflare` ne s'ouvre pas | tunnel pas encore prêt / réseau | attendez 10 s, rechargez ; vérifiez que la fenêtre affiche bien l'URL |
 | `ERR_NAME_NOT_RESOLVED` | lien d'un tunnel arrêté (adresse supprimée) | `npm run lien`, puis `npm run partage` |
 | « Aucun lien public » dans la console | `cloudflared` non installé ou bloqué | `cloudflared --version` ; antivirus → autoriser |
-| Le lien change tout le temps | comportement normal du tunnel rapide | voir voie 2 (Oracle Cloud) pour une adresse fixe |
+| Le lien change tout le temps | comportement normal du tunnel rapide | voir section 4 (Tailscale Funnel) pour une adresse fixe |
 | « Cloudflare Tunnel introuvable » alors qu'il est installé | `~/.local/bin` absent du PATH du terminal | relancer avec `bash deploy/gratuit/installer-linux.sh`, ou `export PATH="$HOME/.local/bin:$PATH"`, ou `CLOUDFLARED_BIN="$HOME/.local/bin/cloudflared" npm run partage` |
 | Site inaccessible depuis le téléphone | PC en veille / Internet coupé | réveillez le PC, relancez `npm run partage` |
 | Mot de passe administrateur oublié | — | il est dans `data/compte-administrateur.txt`, sinon `npm run motdepasse` (nouveau mot de passe, sessions fermées) |
