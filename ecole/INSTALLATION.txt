@@ -168,6 +168,21 @@ PRÉREQUIS : Node.js 22 ou plus. Rien d'autre. (Docker seulement pour l'option D
       « ✘ non reconnu »              → un compte existe déjà : npm run motdepasse
 
 ===============================================================================
+ « CETTE PAGE NE FONCTIONNE PAS » / HTTP ERROR 502 (lien .ts.net)
+===============================================================================
+
+  Le 502 ne vient pas de Tailscale : le nom et le certificat fonctionnent,
+  mais le SITE n'est pas démarré sur le port 3000 (fenêtre fermée, veille,
+  redémarrage du conteneur Linux).
+
+      bash deploy/gratuit/service-auto.sh --etat     # diagnostic
+      bash deploy/gratuit/service-auto.sh --installer # il démarre tout seul
+
+  --installer met le site en service avec relance automatique : plus besoin
+  de garder « npm run partage » ouvert. Le lien .ts.net ne change pas.
+  Autres commandes : --redemarrer · --arreter · --journaux · --simulation
+
+===============================================================================
  À NE PAS OUBLIER APRÈS LA MISE EN LIGNE
 ===============================================================================
   [ ] TERMINISH_SEED=prod          (sinon les comptes de démo sont publics)

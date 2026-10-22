@@ -299,6 +299,13 @@ mode_etat() {
     if sudo "$ts" funnel status 2>/dev/null | grep -q "https://"; then
       local url; url="$(sudo "$ts" funnel status 2>/dev/null | grep -oE 'https://[a-z0-9.-]+\.ts\.net' | head -n1)"
       ok "Adresse stable : ${url}"
+      if ! site_repond; then
+        echo
+        alerte "C'est la cause du « HTTP ERROR 502 » : le tunnel est ouvert mais"
+        echo "   le site n'est PAS démarré sur le port ${PORT}."
+        echo "   → npm run partage          (ou, pour ne plus y penser :"
+        echo "      bash deploy/gratuit/service-auto.sh --installer )"
+      fi
     else
       info "  aucun tunnel public ouvert (sudo tailscale funnel --bg ${PORT})"
     fi

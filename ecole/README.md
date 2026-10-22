@@ -201,7 +201,7 @@ ecole/
 │   ├── css/styles.css
 │   └── js/util.js, js/app.js  SPA (vanilla JS, routage par hash)
 ├── data/            base SQLite (ignorée par Git)
-├── deploy/          Caddyfile, nginx.conf, systemd, gratuit/ (PC), vm/ (serveur 24 h/24)
+├── deploy/          Caddyfile, nginx.conf, systemd, gratuit/ (PC : lanceur, lien stable, service), vm/ (serveur 24 h/24)
 ├── Dockerfile, docker-compose.yml, render.yaml
 ├── DEPLOIEMENT.md   guide de mise en ligne pas à pas
 ├── LIEN-ETERNEL.md  adresse fixe gratuite sans carte (Tailscale Funnel ; Oracle en annexe)
@@ -290,6 +290,7 @@ ordinateur et devient accessible en HTTPS via Cloudflare Tunnel (gratuit, sans c
 vie, sans ouvrir de port (fonctionne même derrière le NAT du Chromebook). Une seule commande :
 
 ```bash
+bash deploy/gratuit/service-auto.sh --installer  # le site démarre tout seul (fini le 502)
 bash deploy/gratuit/lien-stable.sh --tailscale   # installe, connecte, ouvre le tunnel
 bash deploy/gratuit/lien-stable.sh --etat        # où en est-on ?
 bash deploy/gratuit/lien-stable.sh --ip          # variante : diagnostic IP publique / CGNAT

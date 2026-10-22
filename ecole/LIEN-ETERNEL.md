@@ -123,9 +123,44 @@ https://mon-pc.requin-bleu.ts.net
 > Le nom exact dépend de votre machine et de votre réseau. Le script l'écrit aussi dans
 > `data/lien-stable.txt` : `cat data/lien-stable.txt` à tout moment.
 
+### 2.2 bis — « HTTP ERROR 502 » : le site n'est pas démarré
+
+C'est **la panne la plus fréquente**, et elle n'a rien à voir avec Tailscale. Le nom
+`penguin.xxx.ts.net` et le certificat fonctionnent (la page arrive bien), mais Tailscale ne trouve
+rien à l'autre bout : la fenêtre `npm run partage` a été fermée, le Chromebook s'est mis en veille,
+ou le conteneur Linux a redémarré.
+
+- **502** = tunnel ouvert, **site arrêté**
+- **Le lien `.ts.net` ne change pas** : il n'y a rien à redistribuer, juste à rallumer le site.
+
+Pour ne plus y penser, installez le site comme service (une seule fois) :
+
+```bash
+cd ~/"TERMINISH ECOLE"
+bash deploy/gratuit/service-auto.sh --installer
+```
+
+Le site démarre alors **tout seul**, en arrière-plan, et **redémarre automatiquement** s'il tombe
+(sur un Chromebook, `loginctl enable-linger` le maintient actif même sans terminal ouvert). Plus
+besoin de garder une fenêtre `npm run partage` : le tunnel Tailscale remplace Cloudflare.
+
+```bash
+bash deploy/gratuit/service-auto.sh --etat        # ça tourne ? lequel ?
+bash deploy/gratuit/service-auto.sh --redemarrer
+bash deploy/gratuit/service-auto.sh --arreter
+bash deploy/gratuit/service-auto.sh --journaux    # les 60 dernières lignes
+```
+
+> Si le conteneur Linux n'a pas systemd, le script le dit et bascule sur un lancement détaché
+> (`setsid`), avec les journaux dans `data/journal-site.log`.
+
 ### 2.3 Au quotidien
 
 ```bash
+bash deploy/gratuit/service-auto.sh --etat       # tout est-il en place ?
+bash deploy/gratuit/lien-stable.sh --etat        # tunnel + site, d'un coup d'œil
+
+# méthode « fenêtre ouverte » (dépannage)
 npm run partage                          # démarrer le site (1er terminal)
 bash deploy/gratuit/lien-stable.sh --tailscale   # rouvrir le tunnel (2e terminal)
 bash deploy/gratuit/lien-stable.sh --etat        # où en est-on ?
