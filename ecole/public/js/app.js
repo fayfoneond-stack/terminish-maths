@@ -250,6 +250,7 @@
   async function boot() {
     const me = await api('/api/me');
     S.me = me.user;
+    S.affectations = me.affectations || [];
     S.etab = me.etablissement;
     S.eleve = me.eleve;
     document.title = S.etab ? `${S.etab.nom} — Terminish École` : 'Terminish École';
@@ -1210,6 +1211,36 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
   });
 
   /* ---------------------------- SAISIE ----------------------------- */
+  /* Journal de saisie : qui a touché quelle note (visible par la direction) */
+  async function journalSaisieHtml(classeId, periodeId) {
+    let rows = [];
+    try {
+      rows = await api(`/api/journal-notes?classe_id=${classeId}&periode_id=${periodeId}&limite=25`);
+    } catch (_) { return ''; }
+    if (!Array.isArray(rows) || !rows.length) return '';
+    const typeFr = t => t === 'composition' ? 'Composition' : (t === 'devoir1' ? 'Devoir 1' : (t === 'devoir2' ? 'Devoir 2' : 'Évaluation'));
+    return `
+      <div class="panel" style="margin-top:18px">
+        <div class="panel-head">
+          <div><h2>Journal de saisie</h2>
+            <div class="sub">Qui a enregistré ou modifié chaque note, et quand. Réservé à la direction.</div></div>
+        </div>
+        <div class="table-wrap"><table class="data">
+          <thead><tr><th>Quand</th><th>Enseignant</th><th>Élève</th><th>Matière</th><th>Évaluation</th><th class="right">Note</th></tr></thead>
+          <tbody>${rows.map(r => `
+            <tr>
+              <td class="muted small">${esc(dateFr(r.modifie_le))} ${esc(heureFr(r.modifie_le))}</td>
+              <td>${esc(r.enseignant || '—')}</td>
+              <td>${esc(r.nom)} ${esc(r.prenom)}<div class="muted small">${esc(r.matricule || '')}</div></td>
+              <td>${esc(r.matiere)}</td>
+              <td>${esc(typeFr(r.type))}</td>
+              <td class="right">${r.absent ? '<span class="tag">Absent</span>' : (r.valeur == null ? '—' : fmt(r.valeur))}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table></div>
+      </div>`;
+  }
+
   V.saisie = {
     async render() {
       await loadRefs();
@@ -1224,6 +1255,16 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       let matiereId = Number(q.matiere_id);
       let periodeId = Number(q.periode_id);
 
+      // Un professeur ne choisit que dans SES matières (affectations décidées
+      // par la direction). Le serveur refuse de toute façon tout le reste.
+      const mesAff = Array.isArray(S.affectations) ? S.affectations : [];
+      const matieresDe = (classe) => {
+        const liste = classe ? (classe.matieres || []) : [];
+        if (S.me.role !== 'enseignant') return liste;
+        return liste.filter(m => mesAff.some(a =>
+          Number(a.classe_id) === Number(classe.id) && Number(a.matiere_id) === Number(m.id)));
+      };
+
       if (mode === 'epreuve') {
         const epId = Number(q.epreuve_id);
         epreuve = epreuves.find(e => e.id === epId) || null;
@@ -1234,7 +1275,8 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       } else {
         const classe = S.classes.find(c => c.id === classeId);
         if (classe) {
-          if (!matiereId || !classe.matieres.some(m => m.id === matiereId)) matiereId = classe.matieres[0] ? classe.matieres[0].id : null;
+          const dispo = matieresDe(classe);
+          if (!matiereId || !dispo.some(m => m.id === matiereId)) matiereId = dispo[0] ? dispo[0].id : null;
           const periods = S.periodes.filter(p => p.cycle === classe.cycle);
           if (!periodeId || !periods.some(p => p.id === periodeId)) periodeId = (periods.find(p => p.statut === 'ouverte') || periods[0] || {}).id;
         }
@@ -1245,7 +1287,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
 
       const classesDispo = S.classes;
       const classe = classesDispo.find(c => c.id === classeId);
-      const matieresClasse = classe ? classe.matieres : [];
+      const matieresClasse = matieresDe(classe);
       const periodesDispo = classe ? S.periodes.filter(p => p.cycle === classe.cycle) : S.periodes;
       const periode = S.periodes.find(p => p.id === Number(periodeId));
       const verrou = periode && periode.statut === 'fermee' && S.me.role !== 'directeur' && S.me.role !== 'super_admin';
@@ -1295,6 +1337,9 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         corps = grilleHtml(data, mode, verrou);
       }
 
+      const journal = (S.me.role === 'directeur' && mode === 'periode' && classeId && periodeId)
+        ? await journalSaisieHtml(classeId, periodeId) : '';
+
       return `
         <div class="panel">
           <div class="panel-head">
@@ -1307,7 +1352,8 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
           ${barre}
           ${verrou ? '<div class="notice warn">Cette période est <b>clôturée</b> : la saisie est verrouillée. Contactez la direction pour la réouvrir.</div>' : ''}
           ${corps}
-        </div>`;
+        </div>
+        ${journal}`;
     },
 
     async mount() {

@@ -132,6 +132,28 @@ PRÉREQUIS : Node.js 22 ou plus. Rien d'autre. (Docker seulement pour l'option D
   Guide complet : LIEN-ETERNEL.md
 
 ===============================================================================
+ QUI PEUT VOIR / MODIFIER QUOI (cloisonnement des professeurs)
+===============================================================================
+
+  Chaque professeur ne voit que les classes ET les matières que la direction
+  lui a affectées (menu Enseignants → affectations). Côté serveur, la grille
+  d'une autre matière répond 403, et l'écriture est refusée de la même façon.
+
+    • un prof de Physique-Chimie n'ouvre PAS la grille de Mathématiques
+      de la même classe, même en modifiant l'adresse ;
+    • il ne voit pas les notes de son collègue (ni ne peut les modifier) ;
+    • les bulletins d'une classe restent visibles aux profs de cette classe
+      (un bulletin contient toutes les matières : c'est normal) ;
+    • deux profs sur la MÊME matière peuvent co-saisir (remplacement) : la
+      direction voit qui a modifié quoi dans le « Journal de saisie » de la
+      page Saisie des notes ;
+    • une période clôturée bloque toute saisie des professeurs ;
+    • une note ne peut concerner qu'un élève de la classe de l'évaluation.
+
+  Pour retirer un accès : Enseignants → modifier → décocher la classe/matière
+  (ou désactiver le compte). L'effet est immédiat.
+
+===============================================================================
  MOT DE PASSE OUBLIÉ / REFUSÉ
 ===============================================================================
 

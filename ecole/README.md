@@ -212,6 +212,30 @@ ecole/
 - Mots de passe : `scrypt` avec sel aléatoire, comparaison à temps constant.
 - Isolation multi-tenant : chaque requête est filtrée par `ecole_id` issu de l'utilisateur connecté ; les
   enseignants sont en plus restreints à leurs affectations (classes **et** matières).
+
+### Qui peut voir quoi, qui peut modifier quoi
+
+| | Chef d'établissement | Enseignant | Élève / parent |
+|---|---|---|---|
+| Classes visibles | toutes | seulement celles où il est affecté | la sienne |
+| Matières où il saisit | toutes | **seulement les siennes** (classe + matière) | — |
+| Notes d'un collègue (autre matière) | voit (bulletins) | **ne voit pas la grille, ne peut pas écrire** | — |
+| Bulletins d'une classe | toutes ses classes | ses classes seulement | le sien, si publié |
+| Journal de saisie (qui a modifié quoi) | **oui** | non | non |
+| Liste des enseignants | oui | non | non |
+| Création d'élèves, classes, matières, périodes | oui | non | non |
+
+Concrètement : un professeur de Physique-Chimie qui ouvre la grille de Mathématiques de la même
+classe reçoit un **403** ; son menu ne propose d'ailleurs que ses propres matières. Le cloisonnement
+est fait **côté serveur** (`canAccessClasse` + `canSaisir`), pas seulement dans l'interface.
+La direction contrôle tout cela depuis `Enseignants → affectations` (une ligne = une matière dans
+une classe). Deux professeurs affectés à la **même** matière peuvent co-saisir : c'est voulu
+(remplacement, co-enseignement), et chaque note garde la trace de qui l'a modifiée en dernier
+(`notes.saisi_par` + `notes.modifie_le`), visible dans le **journal de saisie** de la page
+« Saisie des notes ».
+
+Autres verrous : une période **clôturée** (`parametres → Périodes`) refuse toute nouvelle saisie aux
+enseignants ; une note ne peut viser qu'un élève de la classe de l'évaluation.
 - Bulletins imprimables : page HTML A4 autonome (`/print/bulletin/:id`, `/print/classe/:id`), impression
   navigateur ou « Enregistrer au format PDF ». La direction, l'enseignant affecté ou l'élève concerné
   (si publié) peuvent y accéder.
@@ -235,6 +259,7 @@ ecole/
 | CRUD | `/api/eleves`, `/api/classes`, `/api/matieres`, `/api/enseignants` | direction (lecture élargie) |
 | POST | `/api/eleves/import` | direction |
 | GET | `/api/notes/grille` | personnel (affectations) |
+| GET | `/api/journal-notes` | direction (traçabilité des saisies) |
 | POST | `/api/notes/saisie` | personnel (affectations) |
 | GET | `/api/bulletins/classe` | personnel |
 | PUT/POST | `/api/bulletins/...` | direction |

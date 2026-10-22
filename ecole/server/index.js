@@ -124,10 +124,16 @@ app.get('/api/me', auth, (req, res) => {
   if (req.user.role === 'eleve') {
     eleve = db.prepare('SELECT * FROM eleves WHERE user_id = ?').get(req.user.id) || null;
   }
+  // Un enseignant ne doit voir que les matières qui lui sont affectées :
+  // on les transmet au client pour que les menus ne proposent rien d'autre.
+  const affectations = req.user.role === 'enseignant'
+    ? db.prepare('SELECT classe_id, matiere_id FROM affectations WHERE enseignant_id = ?').all(req.user.id)
+    : [];
   res.json({
     user: { id: req.user.id, nom: req.user.nom, email: req.user.email, role: req.user.role, ecole_id: req.user.ecole_id },
     etablissement: etab || null,
-    eleve
+    eleve,
+    affectations
   });
 });
 
@@ -459,7 +465,8 @@ app.get('/api/eleves/:id', auth, staffOnly, (req, res) => {
 /* ------------------------------------------------------------------ */
 /* Enseignants                                                         */
 /* ------------------------------------------------------------------ */
-app.get('/api/enseignants', auth, staffOnly, (req, res) => {
+// La liste des collègues (e-mails compris) ne regarde que la direction.
+app.get('/api/enseignants', auth, directionOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
   const users = db.prepare("SELECT id, nom, email, telephone, actif, derniere_connexion FROM utilisateurs WHERE ecole_id = ? AND role = 'enseignant' ORDER BY nom").all(id);
   const out = users.map(u => {
@@ -584,10 +591,16 @@ app.post('/api/notes/saisie', auth, staffOnly, (req, res) => {
   const upsert = db.prepare(`INSERT INTO notes (evaluation_id, eleve_id, valeur, absent, saisi_par, modifie_le)
     VALUES (?,?,?,?,?,?) ON CONFLICT(evaluation_id, eleve_id) DO UPDATE SET
     valeur = excluded.valeur, absent = excluded.absent, saisi_par = excluded.saisi_par, modifie_le = excluded.modifie_le`);
+  // La classe concernée par l'évaluation : elle sert à refuser toute note
+  // visant un élève d'une autre classe (erreur de saisie ou tentative de bricolage).
+  const evalRow = db.prepare('SELECT classe_id FROM evaluations WHERE id = ?').get(evaluation.id);
+  const classeCible = evalRow ? Number(evalRow.classe_id) : null;
+
   let saved = 0;
   notes.forEach(n => {
-    const eleve = db.prepare('SELECT id FROM eleves WHERE id = ? AND ecole_id = ?').get(n.eleve_id, ecoleId);
+    const eleve = db.prepare('SELECT id, classe_id FROM eleves WHERE id = ? AND ecole_id = ?').get(n.eleve_id, ecoleId);
     if (!eleve) return;
+    if (classeCible && Number(eleve.classe_id) !== classeCible) return;
     const absent = n.absent ? 1 : 0;
     let valeur = n.valeur;
     if (valeur === '' || valeur === null || valeur === undefined) valeur = null;
@@ -730,10 +743,15 @@ app.get('/api/stats/etablissement', auth, staffOnly, (req, res) => {
 app.get('/api/examens', auth, staffOnly, (req, res) => {
   const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
   const rows = db.prepare('SELECT * FROM examens WHERE ecole_id = ? ORDER BY cree_le DESC').all(ecoleId);
+  const isProf = req.user.role === 'enseignant';
+  const mesAff = isProf
+    ? db.prepare('SELECT classe_id, matiere_id FROM affectations WHERE enseignant_id = ?').all(req.user.id)
+    : [];
   res.json(rows.map(e => {
     const epreuves = db.prepare(`SELECT ep.*, c.nom AS classe_nom, m.nom AS matiere_nom FROM epreuves ep
       JOIN classes c ON c.id = ep.classe_id JOIN matieres m ON m.id = ep.matiere_id
-      WHERE ep.examen_id = ? ORDER BY ep.date_epreuve, ep.heure`).all(e.id);
+      WHERE ep.examen_id = ? ORDER BY ep.date_epreuve, ep.heure`).all(e.id)
+      .filter(ep => !isProf || mesAff.some(a => a.classe_id === ep.classe_id && a.matiere_id === ep.matiere_id));
     const periode = e.periode_id ? db.prepare('SELECT * FROM periodes WHERE id = ?').get(e.periode_id) : null;
     return { ...e, periode, epreuves };
   }));
@@ -779,6 +797,41 @@ app.delete('/api/examens/:id/epreuves/:epreuveId', auth, directionOnly, (req, re
   const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
   db.prepare('DELETE FROM epreuves WHERE id = ? AND examen_id = ? AND ecole_id = ?').run(req.params.epreuveId, req.params.id, ecoleId);
   res.json({ ok: true });
+});
+
+/* ------------------------------------------------------------------ */
+/* Journal de saisie (direction)                                       */
+/* ------------------------------------------------------------------ */
+// Trace de qui a enregistré ou modifié chaque note : la direction peut
+// vérifier en un coup d'œil qu'un collègue n'a pas touché une matière qui
+// ne lui est pas affectée (et revenir sur une note litigieuse).
+app.get('/api/journal-notes', auth, directionOnly, (req, res) => {
+  const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
+  const limite = Math.min(Number(req.query.limite) || 40, 200);
+  const filtres = [];
+  const params = [ecoleId];
+  if (req.query.classe_id) { filtres.push('ev.classe_id = ?'); params.push(Number(req.query.classe_id)); }
+  if (req.query.periode_id) { filtres.push('ev.periode_id = ?'); params.push(Number(req.query.periode_id)); }
+  if (req.query.enseignant_id) {
+    filtres.push("n.saisi_par IN (SELECT id FROM utilisateurs WHERE id = ? AND ecole_id = ?)");
+    params.push(Number(req.query.enseignant_id), ecoleId);
+  }
+  const rows = db.prepare(`
+    SELECT n.modifie_le, n.valeur, n.absent, n.saisi_par,
+           el.nom, el.prenom, el.matricule,
+           m.nom AS matiere, c.nom AS classe,
+           ev.type, ev.libelle,
+           u.nom AS enseignant
+    FROM notes n
+    JOIN eleves el ON el.id = n.eleve_id
+    JOIN evaluations ev ON ev.id = n.evaluation_id
+    JOIN matieres m ON m.id = ev.matiere_id
+    JOIN classes c ON c.id = ev.classe_id
+    LEFT JOIN utilisateurs u ON u.id = n.saisi_par
+    WHERE ev.ecole_id = ? ${filtres.length ? 'AND ' + filtres.join(' AND ') : ''}
+    ORDER BY n.modifie_le DESC
+    LIMIT ${limite}`).all(...params);
+  res.json(rows);
 });
 
 /* ------------------------------------------------------------------ */
