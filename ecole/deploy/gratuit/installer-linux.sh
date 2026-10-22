@@ -127,6 +127,15 @@ if [ -z "$CLOUDFLARED" ] && [ "$MODE_LOCAL" -eq 0 ] && [ "$VERIFIER" -eq 0 ]; th
       mv "$HOME/.local/bin/cloudflared.tmp" "$HOME/.local/bin/cloudflared"
       CLOUDFLARED="$HOME/.local/bin/cloudflared"
       export PATH="$HOME/.local/bin:$PATH"
+      # PATH persistant pour les prochains terminaux (idempotent)
+      if [ -f "$HOME/.bashrc" ] && ! grep -q 'terminish-cloudflared' "$HOME/.bashrc" 2>/dev/null; then
+        {
+          echo ''
+          echo '# terminish-cloudflared — accès à cloudflared installé sans sudo'
+          echo 'export PATH="$HOME/.local/bin:$PATH"'
+        } >> "$HOME/.bashrc"
+        info "PATH mis à jour dans ~/.bashrc (utile aux prochains terminaux)"
+      fi
       ok "cloudflared installé (sans sudo)"
     else
       rm -f "$HOME/.local/bin/cloudflared.tmp" 2>/dev/null || true

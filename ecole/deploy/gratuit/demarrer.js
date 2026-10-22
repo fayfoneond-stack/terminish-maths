@@ -147,9 +147,36 @@ const local = `http://localhost:${PORT}`;
 const ips = Object.values(os.networkInterfaces()).flat()
   .filter(i => i && i.family === 'IPv4' && !i.internal).map(i => i.address);
 
+/**
+ * Localise cloudflared même s'il n'est pas dans le PATH du terminal courant.
+ * L'installateur Linux le pose dans ~/.local/bin, qui n'est pas toujours
+ * exporté dans les nouveaux shells : on teste donc les emplacements connus.
+ */
+function trouverCloudflared() {
+  const candidats = [
+    process.env.CLOUDFLARED_BIN,
+    'cloudflared',
+    path.join(os.homedir(), '.local', 'bin', 'cloudflared'),
+    '/usr/local/bin/cloudflared',
+    '/usr/bin/cloudflared',
+    '/snap/bin/cloudflared',
+    '/opt/homebrew/bin/cloudflared',
+    path.join(process.cwd(), 'cloudflared.exe')
+  ].filter(Boolean);
+
+  for (const candidat of candidats) {
+    if (candidat !== 'cloudflared' && !fs.existsSync(candidat)) continue;
+    const essai = spawnSync(candidat, ['--version'], { encoding: 'utf8' });
+    if (essai.status === 0) {
+      return { chemin: candidat, version: String(essai.stdout || '').split('\n')[0].trim() };
+    }
+  }
+  return null;
+}
+
 setTimeout(() => {
-  const present = spawnSync('cloudflared', ['--version'], { encoding: 'utf8' });
-  const aCloudflared = present.status === 0;
+  const cloudflare = SANS_TUNNEL ? null : trouverCloudflared();
+  const aCloudflared = Boolean(cloudflare);
 
   if (SANS_TUNNEL || !aCloudflared) {
     cadre('TERMINISH ÉCOLE EST DÉMARRÉ');
@@ -161,16 +188,30 @@ setTimeout(() => {
       ? FICHIER_COMPTE.replace(os.homedir(), '~') : FICHIER_COMPTE;
     console.log(`  (également dans ${joli})`);
     if (!SANS_TUNNEL && !aCloudflared) {
-      console.log('\n  ⓘ Cloudflare Tunnel n’est pas installé : aucun lien public.');
-      console.log('    Pour partager le site par Internet, voir DEPLOIEMENT-GRATUIT.md,');
-      console.log('    section « Installer cloudflared ».');
+      const localBin = path.join(os.homedir(), '.local', 'bin', 'cloudflared');
+      console.log('\n  ⓘ Cloudflare Tunnel introuvable : aucun lien public.');
+      if (fs.existsSync(localBin)) {
+        console.log(`    Il existe pourtant ici : ${localBin}`);
+        console.log('    Relancez avec :  CLOUDFLARED_BIN="$HOME/.local/bin/cloudflared" npm run partage');
+      } else {
+        console.log('    Installation :  bash deploy/gratuit/installer-linux.sh --verifier');
+        console.log('    ou :            sudo apt install cloudflared');
+        console.log('    (détails : DEPLOIEMENT-GRATUIT.md, section « Installer cloudflared »)');
+      }
     }
     console.log('\n  Laissez cette fenêtre ouverte. Ctrl+C pour arrêter.\n');
     return;
   }
 
   console.log('🌍 Ouverture d’un lien public (gratuit)…');
-  tunnel = spawn('cloudflared', ['tunnel', '--url', `http://127.0.0.1:${PORT}`, '--no-autoupdate'],
+  if (cloudflare.chemin !== 'cloudflared') {
+    console.log(`   (utilise ${cloudflare.chemin})`);
+    if (!String(process.env.PATH || '').split(path.delimiter).includes(path.dirname(cloudflare.chemin))) {
+      console.log('   Astuce : ajoutez ce dossier au PATH pour taper « cloudflared » directement :');
+      console.log(`     echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc`);
+    }
+  }
+  tunnel = spawn(cloudflare.chemin, ['tunnel', '--url', `http://127.0.0.1:${PORT}`, '--no-autoupdate'],
     { stdio: ['ignore', 'pipe', 'pipe'] });
 
   let affiche = false;

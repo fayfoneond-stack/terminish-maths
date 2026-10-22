@@ -2,7 +2,7 @@
 
 ## ⬇️ Le fichier à prendre pour déployer
 
-### `terminish-ecole-deploiement-2026-10-21.zip` — 153 Ko
+### `terminish-ecole-deploiement.zip` — 158 Ko (version corrigée)
 
 Tout ce qu'il faut pour installer et mettre le site en ligne, et **rien de plus** :
 
@@ -35,7 +35,7 @@ terminish-ecole/
 ## Déployer (Linux)
 
 ```bash
-unzip terminish-ecole-deploiement-2026-10-21.zip
+unzip terminish-ecole-deploiement.zip
 cd terminish-ecole
 
 # 1) essai immédiat, gratuit, avec lien HTTPS public
@@ -57,3 +57,11 @@ docker compose up -d --build
 - **Sauvegarde** : `npm run backup` → fichier daté dans `data/sauvegardes/` (à copier hors du serveur).
 - Le dépôt Git reste la référence pour les mises à jour :
   `git clone https://github.com/fayfoneond-stack/terminish-maths.git`
+
+---
+
+## Mise à jour du 22/10
+
+Le lanceur retrouve désormais `cloudflared` même installé dans `~/.local/bin` (hors `PATH`).
+Si vous utilisez une copie extraite avant cette date : `Ctrl+C`, puis
+`export PATH="$HOME/.local/bin:$PATH"` et relancez `npm run partage`.

@@ -359,6 +359,7 @@ les sauvegardes : aucun frais caché, aucune limite d'écoles, aucun quota.
 | Le lien `trycloudflare` ne s'ouvre pas | tunnel pas encore prêt / réseau | attendez 10 s, rechargez ; vérifiez que la fenêtre affiche bien l'URL |
 | « Aucun lien public » dans la console | `cloudflared` non installé ou bloqué | `cloudflared --version` ; antivirus → autoriser |
 | Le lien change tout le temps | comportement normal du tunnel rapide | voir voie 2 (Oracle Cloud) pour une adresse fixe |
+| « Cloudflare Tunnel introuvable » alors qu'il est installé | `~/.local/bin` absent du PATH du terminal | relancer avec `bash deploy/gratuit/installer-linux.sh`, ou `export PATH="$HOME/.local/bin:$PATH"`, ou `CLOUDFLARED_BIN="$HOME/.local/bin/cloudflared" npm run partage` |
 | Site inaccessible depuis le téléphone | PC en veille / Internet coupé | réveillez le PC, relancez `npm run partage` |
 | Mot de passe administrateur oublié | — | il est dans `data/compte-administrateur.txt` |
 | Données perdues | mauvais dossier de données | vérifiez `TERMINISH_DATA_DIR` : toujours le même |
