@@ -65,6 +65,25 @@ nom_tailscale() {
   local b; b="$(ts)"; [ -z "$b" ] && return
   "$b" status --json 2>/dev/null | grep -o '"DNSName":"[^"]*"' | head -n1 | cut -d'"' -f4 | sed 's/\.$//'
 }
+# Sur un Chromebook (conteneur « penguin »), systemd n'est pas toujours
+# disponible : le démon Tailscale ne redémarre donc pas tout seul. On le
+# relance ici, en mode « userspace-networking » (aucun droit réseau spécial).
+demarrer_tailscaled() {
+  local b; b="$(ts)"
+  sudo systemctl start tailscaled >/dev/null 2>&1 && {
+    for i in 1 2 3 4 5; do sleep 1; sudo "$b" status >/dev/null 2>&1 && return 0; done
+  }
+  info "Démon Tailscale lancé à la main (sans systemd)…"
+  sudo mkdir -p /var/lib/tailscale /var/log
+  sudo nohup "$(command -v tailscaled)" --state=/var/lib/tailscale/tailscaled.state \
+    --tun=userspace-networking >> /var/log/tailscaled.log 2>&1 &
+  for i in $(seq 1 12); do
+    sleep 1
+    sudo "$b" status >/dev/null 2>&1 && return 0
+  done
+  return 1
+}
+
 url_funnel() {
   local b; b="$(ts)"; [ -z "$b" ] && return
   sudo "$b" funnel status 2>/dev/null | grep -oE 'https://[a-z0-9.-]+\.ts\.net' | head -n1
@@ -136,6 +155,7 @@ fi
 # ------------------------------------------------------------ 3. Tailscale
 etape "3/5 · Tailscale (le réseau privé qui porte le lien public)"
 ETAT_TS="$(ts_etat)"
+if [ -n "$(ts)" ]; then sudo -v 2>/dev/null || true; fi   # un seul mot de passe pour la suite
 case "$ETAT_TS" in
   Absent)
     rouge "Tailscale n'est pas installé."
@@ -143,6 +163,7 @@ case "$ETAT_TS" in
       info "Installation : curl -fsSL https://tailscale.com/install.sh | sh"
       curl -fsSL https://tailscale.com/install.sh | sh >/dev/null 2>&1 \
         && vert "Tailscale installé" || { rouge "Installation impossible"; exit 1; }
+      demarrer_tailscaled || true
       echo "    → puis : sudo tailscale up   (connexion Google/GitHub, sans carte)"
       exit 1
     fi ;;
@@ -153,6 +174,7 @@ case "$ETAT_TS" in
   Stopped)
     rouge "Tailscale est arrêté."
     if [ "$VERIFIER_SEULEMENT" != "--verifier" ]; then
+      demarrer_tailscaled || jaune "Le démon n'a pas démarré (voir /var/log/tailscaled.log)"
       sudo "$(ts)" up || { rouge "Connexion Tailscale impossible"; exit 1; }
       sleep 2
     fi ;;

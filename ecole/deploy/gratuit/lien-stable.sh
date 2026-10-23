@@ -157,6 +157,18 @@ mode_tailscale() {
   [ -z "$TS" ] && { erreur "Tailscale installé mais introuvable. Fermez et rouvrez le terminal."; return 1; }
   ok "Tailscale : $("$TS" version 2>/dev/null | head -n1 || echo 'installé')"
 
+  # Chromebook : systemd absent → le démon ne redémarre pas tout seul.
+  if ! tailscale status >/dev/null 2>&1; then
+    if systemctl is-active --quiet tailscaled 2>/dev/null; then
+      :
+    else
+      info "Démarrage du démon Tailscale (mode sans systemd)…"
+      sudo mkdir -p /var/lib/tailscale
+      sudo nohup tailscaled --state=/var/lib/tailscale/tailscaled.state \
+        --tun=userspace-networking >> /var/log/tailscaled.log 2>&1 &
+      for i in $(seq 1 10); do sleep 1; tailscale status >/dev/null 2>&1 && break; done
+    fi
+  fi
   if ! tailscale status >/dev/null 2>&1; then
     alerte "Connexion au réseau Tailscale nécessaire (une seule fois)."
     cat <<'EOF'
