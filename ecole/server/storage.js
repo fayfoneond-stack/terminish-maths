@@ -208,11 +208,42 @@ async function enregistrerDrive(fichier) {
 }
 
 /* ------------------------------------------------------------------ mega ---- */
+/**
+ * Où est rclone ? Sur un hébergement mutualisé (alwaysdata), le binaire est
+ * souvent installé dans ~/bin sans être dans le PATH du service : on essaie
+ * donc RCLONE_BIN (avec ~ développé), puis les emplacements usuels.
+ */
+let rcloneMemorise = null;
+function trouverRclone() {
+  if (rcloneMemorise) return rcloneMemorise;
+  const maison = process.env.HOME || os.homedir();
+  const dev = (p) => (p && p.startsWith('~/') ? path.join(maison, p.slice(2)) : p);
+  const candidats = [
+    dev(process.env.RCLONE_BIN || ''),
+    path.join(maison, 'bin', 'rclone'),
+    path.join(maison, '.local', 'bin', 'rclone'),
+    '/usr/local/bin/rclone',
+    '/usr/bin/rclone',
+    'rclone'
+  ].filter(Boolean);
+  for (const c of candidats) {
+    const r = spawnSync(c, ['version'], { encoding: 'utf8', timeout: 8000 });
+    if (r.status === 0) {
+      const lignes = String(r.stdout || '').split('\n');
+      rcloneMemorise = { chemin: c, version: (lignes[0] || '').replace('rclone ', '') };
+      return rcloneMemorise;
+    }
+  }
+  return null;
+}
+
 /** MEGA passe par rclone (aucune bibliothèque Node fiable côté serveur). */
 async function enregistrerMega(fichier) {
   const remote = process.env.MEGA_RCLONE_REMOTE || '';
   if (!remote) throw new Error('MEGA_RCLONE_REMOTE absent');
-  const binaire = process.env.RCLONE_BIN || 'rclone';
+  const trouve = trouverRclone();
+  if (!trouve) throw new Error('rclone introuvable (RCLONE_BIN=~/bin/rclone)');
+  const binaire = trouve.chemin;
   const dossier = path.join(os.tmpdir(), `terminish-mega-${crypto.randomUUID()}`);
   fs.mkdirSync(dossier, { recursive: true });
   const local = path.join(dossier, fichier.nom);
@@ -238,7 +269,14 @@ const FOURNISSEURS = {
   mega: enregistrerMega
 };
 
-function ordre() {
+/**
+ * Ordre d'essai des fournisseurs.
+ * @param {string[]|null} seulement  liste imposée (test isolé) : pas de repli local
+ */
+function ordre(seulement) {
+  if (Array.isArray(seulement) && seulement.length) {
+    return seulement.map(x => String(x).toLowerCase().trim()).filter(x => FOURNISSEURS[x]);
+  }
   const brut = String(process.env.STORAGE_PROVIDERS || 'cloudinary,local').toLowerCase();
   const liste = brut.split(',').map(x => x.trim()).filter(x => FOURNISSEURS[x]);
   if (!liste.includes('local')) liste.push('local');   // filet de sécurité
@@ -249,7 +287,7 @@ function ordre() {
  * Enregistre un fichier (data URL) et renvoie { url, provider, publicId }.
  * N'échoue jamais : en dernier recours, le disque local prend le relais.
  */
-async function enregistrer(dataUrl, { categorie = 'divers', ecoleId = 'global' } = {}) {
+async function enregistrer(dataUrl, { categorie = 'divers', ecoleId = 'global', seulement = null } = {}) {
   const lu = lireDataUrl(dataUrl);
   if (!lu) throw new Error('Image illisible (formats acceptés : PNG, JPEG, WebP)');
   const fichier = {
@@ -261,7 +299,7 @@ async function enregistrer(dataUrl, { categorie = 'divers', ecoleId = 'global' }
   };
 
   const erreurs = [];
-  for (const nom of ordre()) {
+  for (const nom of ordre(seulement)) {
     try {
       const resultat = await FOURNISSEURS[nom](fichier);
       if (resultat && resultat.url) return { ...resultat, essais: erreurs };
@@ -270,7 +308,7 @@ async function enregistrer(dataUrl, { categorie = 'divers', ecoleId = 'global' }
     }
   }
   // enregistrerLocal ne lève pas ; si on arrive ici, c'est une panne disque
-  throw new Error(`Aucun stockage disponible (${erreurs.join(' ; ') || 'disque inaccessible'})`);
+  throw new Error(erreurs.length ? erreurs.join(' ; ') : 'disque inaccessible');
 }
 
 /** Pour le diagnostic : quels fournisseurs sont utilisables ? */
@@ -281,8 +319,19 @@ function etat() {
     local: { dossier: MEDIA_DIR, url: PUBLIC_PREFIX },
     cloudinary: { configure: comptes.length > 0, comptes: comptes.map(c => c.cloud) },
     drive: { configure: Boolean(process.env.GOOGLE_DRIVE_SA_JSON && process.env.GOOGLE_DRIVE_FOLDER_ID) },
-    mega: { configure: Boolean(process.env.MEGA_RCLONE_REMOTE), via: 'rclone' }
+    mega: {
+      configure: Boolean(process.env.MEGA_RCLONE_REMOTE),
+      via: 'rclone',
+      dossier: process.env.MEGA_RCLONE_REMOTE || null,
+      rclone: (() => {
+        const t = trouverRclone();
+        return t ? { present: true, chemin: t.chemin, version: t.version } : { present: false, chemin: null };
+      })()
+    }
   };
 }
 
-module.exports = { enregistrer, etat, lireDataUrl, comptesCloudinary, indexCompte, MEDIA_DIR, PUBLIC_PREFIX, TAILLE_MAX };
+module.exports = {
+  enregistrer, etat, lireDataUrl, comptesCloudinary, indexCompte,
+  trouverRclone, MEDIA_DIR, PUBLIC_PREFIX, TAILLE_MAX
+};

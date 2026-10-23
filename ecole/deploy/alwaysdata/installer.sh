@@ -129,6 +129,15 @@ if [ -z "$MDP" ]; then
   ")"
 fi
 
+# Les réglages ajoutés à la main (MEGA, Cloudinary, Drive…) sont CONSERVÉS :
+# seul le bloc géré ci-dessous est réécrit. Sans cela, relancer l'installateur
+# effacerait la configuration du stockage externe.
+CONSERVER="$(mktemp)"
+if [ -f "$APP/.env" ]; then
+  grep -Ev '^(TERMINISH_SEED|TERMINISH_DATA_DIR|ADMIN_EMAIL|ADMIN_PASSWORD|COOKIE_SECURE)=' "$APP/.env" \
+    | grep -Ev '^# Terminish École — réglages du serveur' > "$CONSERVER" 2>/dev/null || true
+fi
+
 cat > "$APP/.env" <<EOF
 # Terminish École — réglages du serveur (généré par deploy/alwaysdata/installer.sh)
 # Ce fichier est lu au démarrage ; il n'est jamais publié sur le web.
@@ -137,7 +146,22 @@ TERMINISH_DATA_DIR=$APP/data
 ADMIN_EMAIL=$EMAIL
 ADMIN_PASSWORD=$MDP
 COOKIE_SECURE=1
+#
+# --- Stockage externe (facultatif) -------------------------------------------
+# Par défaut : tout reste sur le disque, dans data/media (1 Go sur alwaysdata).
+# MEGA (25 Go gratuits) : bash deploy/alwaysdata/rclone.sh --installer --configurer
+#   écrit automatiquement RCLONE_BIN, MEGA_RCLONE_REMOTE et STORAGE_PROVIDERS.
+# Cloudinary : CLOUDINARY_CLOUD_NAME=... / CLOUDINARY_API_KEY=... / CLOUDINARY_API_SECRET=...
+# Google Drive : GOOGLE_DRIVE_SA_JSON=/chemin/compte-de-service.json
+#                GOOGLE_DRIVE_FOLDER_ID=identifiant_du_dossier
+# Ordre d'essai : STORAGE_PROVIDERS=mega,cloudinary,local
+# Voir STOCKAGE-EXTERNE.md pour le détail.
 EOF
+if [ -s "$CONSERVER" ]; then
+  printf '\n# --- réglages conservés (stockage, options) ---\n' >> "$APP/.env"
+  cat "$CONSERVER" >> "$APP/.env"
+fi
+rm -f "$CONSERVER"
 chmod 600 "$APP/.env"
 ok ".env écrit (mode $([ "$DEMO" = "1" ] && echo 'démonstration' || echo 'production'))"
 info "Données : $APP/data/terminish-ecole.db"

@@ -3208,6 +3208,9 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         api('/api/admin/reglages')
       ]);
       S.adminReglages = reg;
+      // L'état du stockage externe est facultatif : s'il n'est pas disponible
+      // (version antérieure du serveur), la page continue de s'afficher.
+      const stock = await api('/api/stockage/etat').catch(() => null);
       const rows = d.paiements;
       const attente = rows.filter(p => p.statut === 'en_attente');
       const parOperateur = rows.filter(p => p.statut === 'paye').reduce((a, p) => {
@@ -3308,11 +3311,12 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                 </select></div>
               </div>
 
-              <h4 style="margin:14px 0 8px;font-size:13px">🖼️ Cloudinary <span class="tag gris">logos des écoles</span></h4>
-              <div class="notice ${reg.cloudinary && reg.cloudinary.actif ? 'ok' : 'info'}" style="margin-bottom:10px">
-                ${reg.cloudinary && reg.cloudinary.actif
-                  ? `Copie des logos active sur le compte <b>${esc(reg.cloudinary.cloud)}</b>. Le logo reste enregistré en base : il s’imprime même si le CDN est injoignable.`
-                  : 'Non configuré : les logos restent dans la base (aucun envoi externe). Renseignez <code>CLOUDINARY_CLOUD_NAME</code>, <code>CLOUDINARY_API_KEY</code> et <code>CLOUDINARY_API_SECRET</code> pour activer la copie CDN.'}
+              <h4 style="margin:14px 0 8px;font-size:13px">🗄️ Stockage externe <span class="tag gris">MEGA · Cloudinary · Google Drive</span></h4>
+              ${vueStockage(stock)}
+              <div class="notice info" style="margin:10px 0 0">
+                <b>Ce qui part à l’extérieur :</b> signatures, logos et pièces jointes.<br>
+                <b>Ce qui ne sort jamais :</b> notes, élèves, bulletins — ils restent dans la base SQLite de l’établissement.<br>
+                Le disque du serveur garde toujours une copie de secours : si MEGA tombe, le site continue de fonctionner.
               </div>
 
               <h4 style="margin:14px 0 8px;font-size:13px">🧾 Identité sur les reçus</h4>
@@ -3387,7 +3391,59 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     }
   };
 
+  /** Ligne d'état d'un fournisseur de stockage. */
+  function vueStockage(st) {
+    if (!st) return '<div class="notice warn">État du stockage indisponible : redémarrez le serveur après la mise à jour.</div>';
+    const etat = (actif, texte) => actif
+      ? `<span class="tag vert">Actif</span> <span class="small muted">${texte}</span>`
+      : `<span class="tag gris">Non configuré</span>`;
+    const ordre = (st.ordre || []).join(' → ');
+    const ligne = (cle, nom, icone, actif, texte, config) => `
+      <div class="stat-line" style="align-items:flex-start;gap:10px">
+        <span style="min-width:150px"><b>${icone} ${nom}</b><div class="muted" style="font-size:11px">${config}</div></span>
+        <span style="flex:1;text-align:right">
+          ${etat(actif, texte)}
+          ${actif ? `<button class="btn btn-ghost btn-sm" style="margin-left:8px" onclick="App.testerStockage('${cle}')">Tester</button>` : ''}
+        </span>
+      </div>`;
+    const mega = st.mega || {};
+    const megaPret = Boolean(mega.configure && mega.rclone && mega.rclone.present);
+    return `
+      <div class="grid" style="gap:6px">
+        ${ligne('mega', 'MEGA', '🟥', megaPret,
+          megaPret ? `dossier <code>${esc(mega.dossier || '')}</code> · rclone ${esc((mega.rclone && mega.rclone.version) || '')}` : '',
+          mega.configure
+            ? (mega.rclone && mega.rclone.present ? '25 Go gratuits · rclone détecté' : 'rclone introuvable — lancez deploy/alwaysdata/rclone.sh --installer')
+            : '25 Go gratuits · email + mot de passe MEGA, via rclone')}
+        ${ligne('cloudinary', 'Cloudinary', '🟦', Boolean(st.cloudinary && st.cloudinary.configure),
+          st.cloudinary && st.cloudinary.configure ? `compte ${esc((st.cloudinary.comptes || []).join(', '))}` : '',
+          'images · cloud name, API key, secret')}
+        ${ligne('drive', 'Google Drive', '🟨', Boolean(st.drive && st.drive.configure), '',
+          'compte de service Google + identifiant de dossier')}
+        ${ligne('local', 'Stockage local', '💾', true, 'toujours disponible (secours)', esc((st.local && st.local.dossier) || ''))}
+      </div>
+      <div class="small muted" style="margin-top:8px">Ordre d’essai actuel : <b>${esc(ordre || '—')}</b>
+        — réglable par la variable <code>STORAGE_PROVIDERS</code> (ex. <code>mega,local</code>).</div>
+      <div id="stockage-resultat" class="small" style="margin-top:8px"></div>`;
+  }
+
   Object.assign(window.App, {
+    async testerStockage(fournisseur) {
+      const zone = document.getElementById('stockage-resultat');
+      if (zone) zone.innerHTML = '<span class="muted">Envoi d’un fichier de test…</span>';
+      try {
+        const r = await api('/api/stockage/tester', { method: 'POST', body: { fournisseur } });
+        const res = (r.resultats || [])[0] || {};
+        if (zone) {
+          zone.innerHTML = res.ok
+            ? `<span class="tag vert">Réussi</span> ${esc(fournisseur)} : fichier envoyé (${esc(res.url || '')})`
+            : `<span class="tag or">Échec</span> ${esc(fournisseur)} : ${esc(res.detail || 'raison inconnue')}`;
+        }
+      } catch (e) {
+        if (zone) zone.innerHTML = `<span class="tag or">Échec</span> ${esc(e.message)}`;
+      }
+    },
+
     async validerPaiement(id) {
       const ok = await confirmer('Confirmer que le paiement a bien été reçu ?<br><span class="small">L’abonnement de l’établissement sera prolongé automatiquement.</span>', {
         titre: 'Valider le paiement', danger: false, ok: 'Valider et activer'

@@ -14,7 +14,8 @@
     "installer": "bash deploy/gratuit/installer-linux.sh",
     "motdepasse": "node server/motdepasse.js",
     "lien": "node server/lien.js",
-    "base": "node server/base.js"
+    "base": "node server/base.js",
+    "stockage": "node server/stockage.js"
   },
   "keywords": [],
   "author": "",

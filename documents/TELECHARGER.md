@@ -2,20 +2,23 @@
 
 ## ⬇️ Le fichier à prendre pour déployer
 
-### `terminish-ecole-deploiement.zip` — 237 Ko (23/10/2026)
+### `terminish-ecole-deploiement.zip` — 250 Ko (23/10/2026)
 
-sha256 : `0e5c961606451cf0c8a7dad78e33175bd3662f9c995d4cd016394d0112b507a3`
+sha256 : `39847cb2f03dcd85f2d423cc37d112260e430bef44f4857bf749f11f1b2e731b`
 
 Tout ce qu'il faut pour installer et mettre le site en ligne, et **rien de plus** :
 
 ```
 terminish-ecole/
 ├── INSTALLATION.txt      ← à lire en premier (démarrage, Docker, Render, variables)
-├── FIREBASE.md / STOCKAGE-EXTERNE.md   publication et fichiers (signatures)
-├── server/               8 fichiers .js : base, API, bulletins, paiements, reçus, stats
+├── FIREBASE.md / STOCKAGE-EXTERNE.md   publication et stockage (MEGA, Cloudinary, Drive)
+├── HEBERGEMENT.md        héberger gratuitement sur alwaysdata (sans carte bancaire)
+├── server/               14 fichiers .js : base, API, bulletins, paiements, reçus, stats,
+│                         stockage (storage.js, stockage.js), sauvegardes
 ├── public/               site vitrine + application (HTML, CSS, JS)
 ├── deploy/               Caddy, Nginx, systemd, lanceur, installateur Linux,
 │                         lien-stable.sh (adresse fixe Tailscale) + paquet.sh
+│                         alwaysdata/installer.sh et alwaysdata/rclone.sh
 ├── package.json / package-lock.json    dépendances (versions figées)
 ├── Dockerfile / docker-compose.yml     mise en ligne Docker + HTTPS automatique
 ├── render.yaml                         déploiement Render (disque persistant)
@@ -23,8 +26,8 @@ terminish-ecole/
 └── README.md, LIEN-ETERNEL.md, DEPLOIEMENT.md, DEPLOIEMENT-GRATUIT.md, FIREBASE.md
 ```
 
-51 fichiers · aucun `node_modules` · aucune donnée · testé (extraction vierge,
-`npm ci`, démarrage, `/api/health` OK).
+53 fichiers · aucun `node_modules` · aucune donnée · testé (extraction vierge,
+`npm ci`, démarrage, `/api/health` OK, `npm run stockage` OK).
 
 ## Les autres archives (facultatives)
 

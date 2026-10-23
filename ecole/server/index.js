@@ -211,6 +211,43 @@ app.get('/api/stockage/etat', auth, directionOnly, (req, res) => {
   res.json(stockage.etat());
 });
 
+/**
+ * Test réel du stockage : envoie une image minuscule et indique, fournisseur
+ * par fournisseur, ce qui fonctionne. Sert à vérifier MEGA / Cloudinary / Drive
+ * sans passer par le terminal.
+ *   POST /api/stockage/tester            → teste les fournisseurs configurés
+ *   POST /api/stockage/tester {fournisseur:'mega'} → un seul
+ */
+app.post('/api/stockage/tester', auth, directionOnly, async (req, res) => {
+  const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+  const etat = stockage.etat();
+  const demandes = {
+    local: true,
+    cloudinary: etat.cloudinary.configure,
+    drive: etat.drive.configure,
+    mega: etat.mega.configure && etat.mega.rclone && etat.mega.rclone.present
+  };
+  const cible = String((req.body && req.body.fournisseur) || '').toLowerCase();
+  const aTester = cible ? [cible] : Object.keys(demandes).filter(n => demandes[n]);
+  const resultats = [];
+  for (const nom of aTester) {
+    if (!(nom in demandes)) { resultats.push({ fournisseur: nom, ok: false, detail: 'inconnu' }); continue; }
+    if (!demandes[nom]) {
+      resultats.push({ fournisseur: nom, ok: false, detail: 'non configuré' });
+      continue;
+    }
+    try {
+      // « seulement » évite tout repli silencieux : on veut savoir si CE
+      // fournisseur marche vraiment, pas si le disque local a pris le relais.
+      const r = await stockage.enregistrer(PNG, { categorie: 'test', ecoleId: 'diagnostic', seulement: [nom] });
+      resultats.push({ fournisseur: nom, ok: true, provider: r.provider, url: r.url });
+    } catch (err) {
+      resultats.push({ fournisseur: nom, ok: false, detail: err.message });
+    }
+  }
+  res.json({ ordre: etat.ordre, resultats });
+});
+
 /* Inscription self-service d'un établissement (essai gratuit 30 jours) */
 app.post('/api/inscription', (req, res) => {
   const { etablissement, nom, email, password, telephone, ville, type } = req.body || {};

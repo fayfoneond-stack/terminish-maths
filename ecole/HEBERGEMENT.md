@@ -63,6 +63,16 @@ sessions, des PDF. Il lui faut un **disque**, pas seulement de la mémoire.
 - 256 Mo de RAM : aucun souci pour 1 000 élèves, mais évitez de lancer plusieurs instances.
 - 1 Go de disque : la base d'une école fait quelques mégaoctets ; vous avez des années devant vous.
   Surveillez avec `npm run base` (taille du fichier).
+  **Ce 1 Go n'est pas une limite pour les images** : branchez votre compte MEGA (25 Go gratuits) et
+  les signatures, logos et pièces jointes partent chez MEGA, le disque ne gardant qu'une copie de
+  secours. Deux commandes, sans droits administrateur :
+
+  ```bash
+  bash deploy/alwaysdata/rclone.sh --installer
+  bash deploy/alwaysdata/rclone.sh --configurer
+  ```
+
+  Détail complet : **[STOCKAGE-EXTERNE.md](STOCKAGE-EXTERNE.md)**.
 
 ---
 
@@ -189,6 +199,16 @@ scp COMPTE@ssh-COMPTE.alwaysdata.net:'~/app/data/sauvegardes/*.db' ~/sauvegardes
 ```
 
 Une fois par mois suffit pour une petite école ; une fois par semaine si les notes bougent beaucoup.
+
+**Copie hors site sur MEGA** (en plus de la sauvegarde locale) :
+
+```bash
+npm run backup
+rclone copy data/sauvegardes mega:Terminish/sauvegardes
+```
+
+À programmer dans alwaysdata → **Tâches planifiées** (une fois par semaine). Voir
+**[STOCKAGE-EXTERNE.md](STOCKAGE-EXTERNE.md)** §3.4.
 
 ---
 

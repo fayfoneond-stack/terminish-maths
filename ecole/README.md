@@ -299,9 +299,19 @@ que l'adresse existe ou non (pas de fuite d'information).
 ### Stockage externe
 
 `server/storage.js` centralise l'envoi des fichiers : Cloudinary (jusqu'à plusieurs comptes en
-rotation), Google Drive, MEGA via rclone, et **repli local** systématique (`data/media`, servi sous
-`/media/...`). Diagnostic : `GET /api/stockage/etat`. Tout est expliqué dans
-**[STOCKAGE-EXTERNE.md](STOCKAGE-EXTERNE.md)**.
+rotation), Google Drive, **MEGA via rclone** (25 Go gratuits), et **repli local** systématique
+(`data/media`, servi sous `/media/...`). Seules les images (logos, signatures, pièces jointes)
+sortent : les notes et les bulletins restent dans SQLite.
+
+```bash
+npm run stockage                    # état des fournisseurs
+npm run stockage -- --test mega     # envoi réel d'un fichier de test
+bash deploy/alwaysdata/rclone.sh --installer --configurer   # MEGA en 2 étapes
+```
+
+Depuis l'application : **Réglages → Stockage externe** affiche l'état de chaque fournisseur et
+permet de le tester en un clic. Diagnostic HTTP : `GET /api/stockage/etat`,
+`POST /api/stockage/tester`. Tout est expliqué dans **[STOCKAGE-EXTERNE.md](STOCKAGE-EXTERNE.md)**.
 
 ### Sur quelle base tourne le site ? (`npm run base`)
 
@@ -346,6 +356,7 @@ et le contrôle du tunnel (`502` si le tunnel ne pointe pas sur le même port).
 | GET | `/api/journal-notes` | direction (traçabilité des saisies) |
 | PUT | `/api/moi/signature` | personnel (sa propre signature manuscrite) |
 | GET | `/api/stockage/etat` | direction (fournisseurs de stockage actifs) |
+| POST | `/api/stockage/tester` | direction (envoie un fichier de test, `{fournisseur}` facultatif) |
 | POST | `/api/notes/saisie` | personnel (affectations) |
 | GET | `/api/bulletins/classe` | personnel |
 | PUT/POST | `/api/bulletins/...` | direction |

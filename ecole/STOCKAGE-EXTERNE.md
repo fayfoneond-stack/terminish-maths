@@ -1,7 +1,7 @@
-# Stockage externe : Cloudinary, Google Drive, MEGA (et plusieurs comptes)
+# Stockage externe : MEGA, Cloudinary, Google Drive (et plusieurs comptes)
 
 > Ce que ça couvre : **signatures des professeurs**, **logos d'établissement**, pièces jointes.
-> Les notes et les bulletins vivent dans la base — pas dans le stockage externe.
+> Les notes et les bulletins vivent dans la base SQLite — **jamais** dans le stockage externe.
 
 ---
 
@@ -11,10 +11,14 @@
 |---|---|---|---|
 | Signature d'un professeur | 10–40 Ko (réduite à 600 px) | stockage externe | apparaît sur chaque bulletin |
 | Logo d'un établissement | 10–80 Ko | stockage externe | en-tête des bulletins |
+| Pièces jointes | ≤ 4 Mo | stockage externe | documents |
 | Base SQLite (élèves, notes, bulletins) | ~5–20 Mo pour 1 000 élèves | sur le serveur, **jamais** sur un Drive | transactions, vitesse |
 
 Une signature est réduite automatiquement dans le navigateur avant envoi (600 px, PNG/JPEG).
-Ordre de grandeur : **10 000 professeurs ≈ 300 Mo** — quelques pour cent du gratuit Cloudinary.
+Ordre de grandeur : **10 000 signatures ≈ 300 Mo** — quelques pour cent d'un espace gratuit.
+
+Autrement dit : même si MEGA, Cloudinary ou Drive tombe, **le site continue de fonctionner** et les
+bulletins restent imprimables (le logo et la signature restent en base).
 
 ---
 
@@ -23,42 +27,152 @@ Ordre de grandeur : **10 000 professeurs ≈ 300 Mo** — quelques pour cent du 
 L'application n'appelle jamais un fournisseur directement. Elle appelle `enregistrer()` :
 
 ```
-1. Cloudinary (si configuré)   → renvoie une URL https://res.cloudinary.com/...
-2. Google Drive (si configuré) → renvoie une URL drive.google.com/thumbnail...
-3. MEGA via rclone (si configuré)
-4. Disque local (toujours)     → /media/signatures/<uuid>.png
+1. Premier fournisseur de STORAGE_PROVIDERS (mega, cloudinary, drive…)
+2. Le suivant…
+3. Disque local (TOUJOURS en dernier) → /media/signatures/<uuid>.png
 ```
 
-Si tous échouent, le fichier reste **sur le disque** : l'application ne s'arrête jamais à cause
-d'un stockage externe. Le fournisseur retenu est mémorisé dans `utilisateurs.signature_provider`.
+- `enregistrer()` **ne lève jamais d'erreur** : en cas de panne externe, le fichier est écrit sur le
+  disque et le site continue.
+- Le fournisseur retenu est mémorisé dans `utilisateurs.signature_provider`.
+- `local` est ajouté automatiquement en fin de liste, même si on l'oublie.
 
-Contrôler ce qui est actif, depuis la console (compte direction) :
+Vérifier ce qui est actif :
 
-```
-GET /api/stockage/etat
+```bash
+npm run stockage        # ou : GET /api/stockage/etat
 ```
 
 ```json
-{ "ordre": ["cloudinary","local"],
-  "cloudinary": { "configure": true, "comptes": ["mon-ecole-1","mon-ecole-2"] },
+{ "ordre": ["mega","local"],
+  "local": { "dossier": "/home/compte/app/data/media", "url": "/media" },
+  "cloudinary": { "configure": false, "comptes": [] },
   "drive": { "configure": false },
-  "mega": { "configure": false } }
+  "mega": { "configure": true, "dossier": "mega:Terminish",
+            "rclone": { "present": true, "chemin": "/home/compte/bin/rclone", "version": "v1.68.1" } } }
 ```
+
+Depuis l'application : **Réglages → Stockage externe** affiche chaque fournisseur (Actif / Non
+configuré) et un bouton **Tester** qui envoie réellement un fichier (`POST /api/stockage/tester`).
 
 ---
 
-## 3. Cloudinary — recommandé pour les images
+## 3. MEGA — le stockage principal (compte existant)
+
+### 3.1 Pourquoi rclone, et pas une « API MEGA pour Node »
+
+MEGA ne publie pas de bibliothèque Node.js maintenue : les paquets existants cassent à chaque
+changement de protocole et exigent souvent Node 20+. **rclone** est un binaire unique (~20 Mo),
+sans droits administrateur, qui gère le chiffrement et les sessions, et parle aussi à Google Drive,
+Dropbox, S3… C'est la méthode fiable — celle des serveurs en production.
+
+Chaque envoi fait `rclone copy` puis `rclone link` (lien public). C'est plus lent qu'un CDN
+(1–3 s) : parfait pour les signatures et les logos, pas pour servir un site entier.
+
+> **Espace** : l'offre gratuite MEGA donne 20 Go (jusqu'à 25 Go sur certains comptes ou avec les
+> bonus d'inscription). Vérifiez le vôtre avec `--verifier` : le script affiche l'espace réel.
+
+### 3.2 Les commandes, une par une
+
+Depuis le dossier de l'application, sur le serveur :
+
+**1.** Installer rclone dans `~/bin` (aucun droit administrateur) :
+
+```bash
+bash deploy/alwaysdata/rclone.sh --installer
+```
+
+Résultat attendu : `✔ rclone installé : /home/COMPTE/bin/rclone (rclone v1.xx.x)`
+et la ligne `RCLONE_BIN=/home/COMPTE/bin/rclone`.
+
+**2.** Enregistrer le compte MEGA (email + mot de passe du compte existant) :
+
+```bash
+bash deploy/alwaysdata/rclone.sh --configurer
+```
+
+Le script demande l'email puis le mot de passe (saisie invisible), crée le compte distant `mega`,
+le dossier `Terminish`, et écrit dans `.env` :
+
+```ini
+RCLONE_BIN=/home/COMPTE/bin/rclone
+MEGA_RCLONE_REMOTE=mega:Terminish
+STORAGE_PROVIDERS=mega,local
+```
+
+En une seule ligne, sans question :
+
+```bash
+bash deploy/alwaysdata/rclone.sh --configurer --email vous@exemple.tg --motdepasse '…'
+```
+
+> ⚠ **Double authentification MEGA activée ?** Le code se saisit dans l'assistant interactif :
+> ```bash
+> ~/bin/rclone config
+> ```
+> → `n` (nouveau compte) → nom `mega` → type `mega` → email → mot de passe → coller le code.
+> Puis relancer `--configurer` (le compte existe déjà, il ne touche plus au mot de passe).
+
+**3.** Vérifier :
+
+```bash
+bash deploy/alwaysdata/rclone.sh --verifier
+```
+
+```
+✔ rclone : /home/COMPTE/bin/rclone (rclone v1.xx.x)
+✔ compte distant mega : présent
+✔ espace MEGA : 0.02 Go utilisés / 25.00 Go (libre 24.98 Go)
+✔ dossier mega:Terminish accessible
+```
+
+**4.** Redémarrer le site : interface alwaysdata → **Sites** → *Redémarrer*
+(ou `systemctl restart terminish-ecole` sur un VPS).
+
+**5.** **Réglages → Stockage externe → MEGA → Tester** : un carré d'un pixel est réellement envoyé,
+l'URL s'affiche, un fichier de test apparaît dans `Terminish/test/`.
+
+### 3.3 En ligne de commande
+
+```bash
+npm run stockage                    # état des 4 fournisseurs
+npm run stockage -- --test mega     # envoi réel sur MEGA
+npm run stockage -- --rclone        # diagnostic rclone (chemin, version, remotes)
+```
+
+### 3.4 MEGA comme copie des sauvegardes (recommandé)
+
+```bash
+npm run backup
+rclone copy data/sauvegardes mega:Terminish/sauvegardes
+```
+
+À mettre dans une tâche planifiée alwaysdata (*Tâches planifiées*) une fois par semaine.
+**Une sauvegarde sur MEGA ne remplace pas la sauvegarde de la base** : c'est une copie hors site.
+
+---
+
+## 4. Cloudinary — recommandé pour les images
 
 **Gratuit sans carte** : 25 crédits/mois (≈ 25 Go de trafic, transformations illimitées pour cette
 application). Inscription : <https://cloudinary.com/users/register/free> (Google suffit).
 
-### 3.1 Un seul compte
+### 4.1 Un seul compte
 
 ```bash
 CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
 ```
 
-### 3.2 Plusieurs comptes (rotation automatique)
+ou, séparément :
+
+```ini
+CLOUDINARY_CLOUD_NAME=mon-ecole
+CLOUDINARY_API_KEY=123456789012345
+CLOUDINARY_API_SECRET=abcdefghijklmnop
+STORAGE_PROVIDERS=cloudinary,local
+```
+
+### 4.2 Plusieurs comptes (rotation automatique)
 
 Quand le premier compte approche de son quota, ajoutez-en un autre — **sans rien changer dans
 l'application** :
@@ -77,56 +191,70 @@ comptes. Avec 4 comptes gratuits, vous couvrez confortablement des milliers d'é
 
 ---
 
-## 4. Google Drive — pour les archives et les pièces jointes
+## 5. Google Drive — archives et pièces jointes
 
-Drive n'est pas un CDN : chaque image affichée passe par une redirection Google. C'est parfait pour
-des archives, acceptable pour des signatures (petit volume).
+Drive n'est pas un CDN : chaque image affichée passe par une redirection Google. Parfait pour des
+archives, acceptable pour des signatures (petit volume).
 
 1. Console Google Cloud → **API Drive activée**.
-2. **Compte de service** → clé JSON → téléchargez-la sur le serveur.
-3. Dans Drive, partagez le dossier cible avec l'e-mail du compte de service (rôle *Éditeur*).
-   Récupérez l'identifiant du dossier dans l'URL : `https://drive.google.com/drive/folders/`**`1AbC...`**
+2. **Compte de service** → clé JSON → déposer le fichier sur le serveur (mode 600).
+3. Dans Drive, partager le dossier cible avec l'email du compte de service (rôle *Éditeur*).
+   Identifiant du dossier dans l'URL : `https://drive.google.com/drive/folders/`**`1AbC...`**
 
-```bash
-GOOGLE_DRIVE_SA_JSON=/home/vous/cle-service.json
+```ini
+GOOGLE_DRIVE_SA_JSON=/home/COMPTE/app/compte-de-service.json
 GOOGLE_DRIVE_FOLDER_ID=1AbC...
 STORAGE_PROVIDERS=cloudinary,drive,local
 ```
 
 Les fichiers sont créés en lecture publique (sinon les bulletins afficheraient une image cassée).
-**Un compte Google gratuit = 15 Go** ; plusieurs comptes = plusieurs dossiers, mais la rotation
-multi-comptes n'est implémentée que pour Cloudinary (Drive accepte un compte de service à la fois).
+**Un compte Google gratuit = 15 Go** ; la rotation multi-comptes n'existe que pour Cloudinary
+(Drive accepte un compte de service à la fois).
 
 ---
 
-## 5. MEGA — par rclone
+## 6. L'ordre d'essai (`STORAGE_PROVIDERS`)
 
-MEGA n'a pas d'API HTTP simple utilisable depuis Node. On passe par **rclone**, qui gère le
-chiffrement et les sessions.
-
-```bash
-curl https://rclone.org/install.sh | sudo bash
-rclone config          # n) nouveau remote → nom : mega → type : mega → e-mail + mot de passe
-rclone lsd mega:Terminish          # vérifier l'accès
+```ini
+STORAGE_PROVIDERS=mega,local               # MEGA puis disque
+STORAGE_PROVIDERS=mega,cloudinary,local    # MEGA, sinon Cloudinary, sinon disque
+STORAGE_PROVIDERS=cloudinary,local         # défaut si la variable est absente
 ```
 
-```bash
-MEGA_RCLONE_REMOTE=mega:Terminish
-RCLONE_BIN=rclone
-STORAGE_PROVIDERS=cloudinary,mega,local
-```
-
-Chaque envoi fait `rclone copy` puis `rclone link` (lien public). C'est plus lent (1–3 s) : à
-réserver aux archives, pas à l'affichage d'un bulletin.
-
-> **MEGA gratuit = 20 Go**, sans carte. Utile comme **seconde copie** des sauvegardes :
-> `npm run backup` puis `rclone copy data/sauvegardes mega:Terminish/sauvegardes`.
+- Le premier fournisseur qui répond gagne.
+- **`local` est toujours ajouté en dernier**, même si on l'oublie.
+- Toute modification impose un **redémarrage** du site.
+- Relancer `deploy/alwaysdata/installer.sh` **ne perd plus** ces réglages : seul son propre bloc
+  est réécrit, le reste de `.env` est conservé.
 
 ---
 
-## 6. Ce que ça change pour « 1 000 établissements × 1 000 élèves »
+## 7. Si un service externe tombe
 
-Il faut séparer deux choses :
+Rien à faire : `enregistrer()` ne lève jamais d'erreur.
+
+1. MEGA ne répond pas → essai suivant (Cloudinary/Drive) → puis disque local.
+2. Le fichier est **toujours** écrit sur le disque local ; la copie externe est un supplément.
+3. Les notes et les bulletins ne dépendent d'aucun service externe.
+4. L'échec est visible : **Réglages → Stockage externe**, ou `npm run stockage`.
+
+Seul désagrément : une image enregistrée pendant une panne reste servie depuis `data/media` au lieu
+de MEGA. Aucune perte.
+
+---
+
+## 8. Sécurité et sauvegardes
+
+- `.env` est créé en mode **600** et n'est jamais publié sur le web.
+- Le mot de passe MEGA est **chiffré par rclone** dans `~/.config/rclone/rclone.conf` (mode 600).
+- Ne mettez **jamais** `.env` ni `rclone.conf` dans une sauvegarde publique ou un dépôt Git.
+- Une clé de compte de service Google donne accès au Drive : traitez-la comme un mot de passe.
+- Sur alwaysdata, les sauvegardes de l'hébergeur couvrent 3 jours ; faites en plus une copie
+  mensuelle chez vous (`npm run backup` puis téléchargement).
+
+---
+
+## 9. Ce que ça change pour « 1 000 établissements × 1 000 élèves »
 
 | Ce qui grossit | Où | Volume pour 1 000 écoles × 1 000 élèves |
 |---|---|---|
@@ -135,28 +263,53 @@ Il faut séparer deux choses :
 | Logos | stockage externe | 1 000 logos ≈ **50 Mo** |
 
 - **Les images ne sont pas le problème** : quelques centaines de Mo, couverts par le gratuit.
-- **La base non plus, en taille** — mais elle doit rester sur **un seul serveur**, avec
-  `npm run backup` quotidien et une copie hors du serveur (Drive ou MEGA).
+- La base non plus, en taille — mais elle doit rester sur **un seul serveur**, avec un
+  `npm run backup` quotidien et une copie hors du serveur (MEGA).
 - Ce qui limite vraiment à cette échelle, c'est le **nombre d'écritures simultanées** et la
   **sauvegarde** : à partir de quelques centaines d'écoles actives en même temps, il faut passer à
-  PostgreSQL (voir `FIREBASE.md` §3) et à un serveur dédié — pas à cause du stockage de fichiers.
+  PostgreSQL (voir `FIREBASE.md` §3) et à un serveur dédié — pas à cause des fichiers.
 
-**Conseil pratique** : restez sur `local` + Cloudinary pour démarrer. Ajoutez Drive/MEGA pour les
-**sauvegardes**, pas pour les signatures. On branche un second compte Cloudinary quand le premier
-dépasse 70 % de son quota.
+**Conseil pratique** : `mega,local` ou `cloudinary,local` pour démarrer. Ajoutez un second compte
+Cloudinary quand le premier dépasse 70 % de son quota. MEGA sert aussi de copie de sauvegarde hors
+site.
 
 ---
 
-## 7. Vérifier en 3 commandes
+## 10. Vérifier en 3 commandes
 
 ```bash
 # 1. quels fournisseurs sont prêts ?
-curl -s https://VOTRE-ADRESSE/api/stockage/etat -H "Cookie: …"
+npm run stockage
 
-# 2. importer une signature (console → Enseignants → ✏️ → glisser une photo)
-#    puis vérifier dans la base :
+# 2. envoi réel d'un fichier de test
+npm run stockage -- --test mega
+
+# 3. côté base : signatures et fournisseur retenu
 sqlite3 data/terminish-ecole.db \
-  "SELECT nom, signature, signature_provider FROM utilisateurs WHERE signature IS NOT NULL;"
-
-# 3. ouvrir un bulletin : la signature doit s'afficher au-dessus du nom
+  "SELECT nom, signature_provider FROM utilisateurs WHERE signature IS NOT NULL;"
 ```
+
+Puis ouvrir un bulletin : la signature doit s'afficher au-dessus du nom du professeur.
+
+---
+
+## 11. Questions fréquentes
+
+**Le disque de 1 Go d'alwaysdata suffit-il ?**
+Oui pour une école entière (la base pèse moins de 1 Mo par an). Ce sont les images qui grossissent :
+MEGA prend le relais dès qu'il est configuré, le disque ne garde qu'une copie de secours.
+
+**Puis-je changer de fournisseur plus tard ?**
+Oui : modifiez `STORAGE_PROVIDERS`, redémarrez. Les fichiers déjà écrits restent accessibles (l'URL
+est enregistrée avec chaque image).
+
+**Pourquoi pas Dropbox / OneDrive ?**
+rclone les gère aussi ; ajoutez le compte distant (`rclone config`) et demandez-nous l'ajout du
+fournisseur correspondant.
+
+**Est-ce que cela ralentit la saisie des notes ?**
+Non : les notes ne passent jamais par le stockage externe.
+
+**Multi-établissements ?**
+Chaque école a son sous-dossier (`mega:Terminish/ecole-<id>/…`), et Cloudinary peut répartir sur
+plusieurs comptes. Une seule installation sert plusieurs écoles sans mélange des fichiers.
