@@ -545,3 +545,18 @@ table.data .strong { font-weight: 700; }
 .pay-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 18px; }
 .pay-steps div { background: #f4f9f6; border-radius: 10px; padding: 11px 13px; font-size: 12.8px; color: #334b41; line-height: 1.5; }
 .pay-steps b { color: var(--vert); }
+
+/* ---------- Signature manuscrite (import d'une photo) ---------- */
+.sig-zone {
+  border: 2px dashed #b9c9c2; border-radius: 10px; padding: 10px;
+  background: #fbfdfc; transition: border-color .15s, background .15s; cursor: pointer;
+}
+.sig-zone.survol, .sig-zone:focus { border-color: var(--vert); background: #f2faf6; outline: none; }
+.sig-apercu {
+  min-height: 84px; display: flex; align-items: center; justify-content: center;
+  background: #fff; border: 1px solid #e3ece8; border-radius: 8px;
+}
+.sig-apercu img { max-height: 78px; max-width: 100%; object-fit: contain; }
+.sig-vide-txt { text-align: center; color: #7d8f87; font-size: 12.5px; line-height: 1.5; }
+.sig-vide-txt span { font-size: 11px; color: #9aaba3; }
+.sig-actions { display: flex; gap: 8px; margin-top: 8px; }

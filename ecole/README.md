@@ -205,6 +205,8 @@ ecole/
 ├── Dockerfile, docker-compose.yml, render.yaml
 ├── DEPLOIEMENT.md   guide de mise en ligne pas à pas
 ├── LIEN-ETERNEL.md  adresse fixe gratuite sans carte (Tailscale Funnel ; Oracle en annexe)
+├── FIREBASE.md      publier sur Firebase : ce qui marche sans carte
+├── STOCKAGE-EXTERNE.md  Cloudinary, Drive, MEGA, multi-comptes
 └── DEPLOIEMENT-GRATUIT.md  mise en ligne à 0 F (ordinateur + Cloudflare Tunnel)
 ```
 
@@ -240,6 +242,28 @@ enseignants ; une note ne peut viser qu'un élève de la classe de l'évaluation
   navigateur ou « Enregistrer au format PDF ». La direction, l'enseignant affecté ou l'élève concerné
   (si publié) peuvent y accéder.
 
+### Bulletin : professeurs et signatures
+
+| Élément du bulletin | D'où il vient |
+|---|---|
+| Nom du professeur, sous chaque matière | affectations (classe + matière) |
+| Bloc « Le Professeur principal » | `classes.titulaire_id` → nom **et signature** de l'enseignant |
+| Bloc « Le Chef d'Établissement » | `etablissements.chef_nom` / `chef_titre` + signature du compte direction |
+| Le tuteur | **supprimé du bulletin** (les coordonnées du tuteur restent dans la fiche élève) |
+
+La signature s'importe **une seule fois** : console → *Enseignants* → ✏️ → zone de dépôt
+(glisser une photo, coller avec `Ctrl+V`, ou choisir un fichier). Elle est réduite à 600 px dans le
+navigateur, puis enregistrée sur le stockage configuré (`STORAGE_PROVIDERS`). Elle apparaît ensuite
+automatiquement sur tous les bulletins de l'enseignant, au-dessus de son nom.
+Le chef d'établissement importe la sienne depuis *Paramètres → Logo & signature*.
+
+### Stockage externe
+
+`server/storage.js` centralise l'envoi des fichiers : Cloudinary (jusqu'à plusieurs comptes en
+rotation), Google Drive, MEGA via rclone, et **repli local** systématique (`data/media`, servi sous
+`/media/...`). Diagnostic : `GET /api/stockage/etat`. Tout est expliqué dans
+**[STOCKAGE-EXTERNE.md](STOCKAGE-EXTERNE.md)**.
+
 ### Principales tables
 
 `etablissements`, `utilisateurs`, `sessions`, `classes`, `matieres`, `classe_matieres`, `eleves`,
@@ -260,6 +284,8 @@ enseignants ; une note ne peut viser qu'un élève de la classe de l'évaluation
 | POST | `/api/eleves/import` | direction |
 | GET | `/api/notes/grille` | personnel (affectations) |
 | GET | `/api/journal-notes` | direction (traçabilité des saisies) |
+| PUT | `/api/moi/signature` | personnel (sa propre signature manuscrite) |
+| GET | `/api/stockage/etat` | direction (fournisseurs de stockage actifs) |
 | POST | `/api/notes/saisie` | personnel (affectations) |
 | GET | `/api/bulletins/classe` | personnel |
 | PUT/POST | `/api/bulletins/...` | direction |

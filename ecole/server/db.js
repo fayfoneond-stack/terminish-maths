@@ -222,6 +222,12 @@ ensureColumn('paiements', 'canal', "TEXT DEFAULT 'manuel'");
 ensureColumn('etablissements', 'logo_url', 'TEXT');
 ensureColumn('etablissements', 'logo_public_id', 'TEXT');
 
+// Bulletin : signature manuscrite scannée de l'enseignant (importée une fois),
+// professeur principal de la classe, et signature du chef d'établissement.
+ensureColumn('utilisateurs', 'signature', 'TEXT');
+ensureColumn('utilisateurs', 'signature_provider', 'TEXT');
+ensureColumn('classes', 'titulaire_id', 'INTEGER');
+
 db.prepare('CREATE INDEX IF NOT EXISTS idx_paiements_statut ON paiements(statut)').run();
 
 /* Réglages de la plateforme (Mobile Money, tarifs, CinetPay) */

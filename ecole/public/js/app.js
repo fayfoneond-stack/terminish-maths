@@ -251,6 +251,7 @@
     const me = await api('/api/me');
     S.me = me.user;
     S.affectations = me.affectations || [];
+    S.signature = me.signature || null;
     S.etab = me.etablissement;
     S.eleve = me.eleve;
     document.title = S.etab ? `${S.etab.nom} — Terminish École` : 'Terminish École';
@@ -844,7 +845,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     },
 
     imprimerBulletin(eleveId, periodeId) {
-      window.open(`/print/bulletin/${eleveId}?periode_id=${periodeId}`, '_blank');
+      window.open(lienServeur(`/print/bulletin/${eleveId}?periode_id=${periodeId}`), '_blank');
     }
   });
 
@@ -893,6 +894,13 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     }
   };
 
+  /** Liste des enseignants (pour désigner le professeur principal). */
+  async function chargerEnseignants() {
+    if (S.enseignants && S.enseignants.length) return S.enseignants;
+    try { S.enseignants = await api('/api/enseignants'); } catch (_) { S.enseignants = []; }
+    return S.enseignants;
+  }
+
   function classeFormHtml(c = {}, cycleDefaut = 'college') {
     const cycle = c.cycle || cycleDefaut;
     const choisis = new Map((c.matieres || []).map(m => [m.id, m.coefficient]));
@@ -908,7 +916,16 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         </select></div>
         <div class="field"><label>Série (lycée)</label><input name="serie" value="${esc(c.serie || '')}" placeholder="A, C, D..."></div>
       </div>
-      <div class="field"><label>Professeur titulaire</label><input name="titulaire" value="${esc(c.titulaire || '')}" placeholder="M. ..."></div>
+      <div class="grid2">
+        <div class="field"><label>Professeur principal (signe le bulletin)</label>
+          <select name="titulaire_id" id="cl-titulaire">
+            <option value="">— Aucun —</option>
+            ${(S.enseignants || []).map(e => `<option value="${e.id}" ${Number(c.titulaire_id) === e.id ? 'selected' : ''}>${esc(e.nom)}</option>`).join('')}
+          </select>
+          <div class="hint">Sa signature apparaîtra sur les bulletins de cette classe.</div>
+        </div>
+        <div class="field"><label>Nom affiché (si aucun compte)</label><input name="titulaire" value="${esc(c.titulaire || '')}" placeholder="M. ..."></div>
+      </div>
       <div class="field"><label>Matières &amp; coefficients</label>
         <div class="affect-grid"><table>
           <thead><tr><th>Matière</th><th>Enseignée</th><th style="width:110px">Coefficient</th></tr></thead>
@@ -933,8 +950,9 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
   }
 
   Object.assign(window.App, {
-    nouvelleClasse(cycle = 'college') {
+    async nouvelleClasse(cycle = 'college') {
       if (!S.matieres.length) return toast('Créez d’abord au moins une matière.', 'err');
+      await chargerEnseignants();
       const m = modal({
         title: 'Nouvelle classe', size: 'large',
         body: `<form id="classe-form">${classeFormHtml({}, cycle)}</form>`,
@@ -945,6 +963,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         if (!form.reportValidity()) return;
         const data = Object.fromEntries(new FormData(form).entries());
         data.matieres = collecterMatieres(m.root);
+        data.titulaire_id = data.titulaire_id ? Number(data.titulaire_id) : null;
         try {
           await api('/api/classes', { method: 'POST', body: data });
           toast('Classe créée');
@@ -958,6 +977,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     async editerClasse(id) {
       const c = S.classes.find(x => x.id === id);
       if (!c) return;
+      await chargerEnseignants();
       const m = modal({
         title: `Modifier ${c.nom}`, size: 'large',
         body: `<form id="classe-form">${classeFormHtml(c)}</form>`,
@@ -968,6 +988,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         if (!form.reportValidity()) return;
         const data = Object.fromEntries(new FormData(form).entries());
         data.matieres = collecterMatieres(m.root);
+        data.titulaire_id = data.titulaire_id ? Number(data.titulaire_id) : null;
         try {
           await api('/api/classes/' + id, { method: 'PUT', body: data });
           toast('Classe mise à jour');
@@ -1113,7 +1134,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
             <thead><tr><th>Enseignant</th><th>Contact</th><th>Affectations</th><th class="center">État</th><th></th></tr></thead>
             <tbody>${list.map(e => `
               <tr>
-                <td><div class="strong">${esc(e.nom)}</div><div class="muted small">Dernière connexion : ${e.derniere_connexion ? dateFr(e.derniere_connexion) : 'jamais'}</div></td>
+                <td><div class="strong">${esc(e.nom)} ${e.signature ? '<span class="tag vert" title="Signature enregistrée">✍️ signé</span>' : '<span class="tag gris" title="Aucune signature">sans signature</span>'}</div><div class="muted small">Dernière connexion : ${e.derniere_connexion ? dateFr(e.derniere_connexion) : 'jamais'}</div></td>
                 <td class="small">${esc(e.email)}${e.telephone ? `<div class="muted">${esc(e.telephone)}</div>` : ''}</td>
                 <td><div class="chips" style="max-width:340px">${e.affectations.length ? e.affectations.slice(0, 4).map(a => `<span class="chip">${esc(a.classe_nom)} · ${esc(a.matiere_nom)}</span>`).join('') : '<span class="muted small">Aucune affectation</span>'}${e.affectations.length > 4 ? `<span class="chip">+${e.affectations.length - 4}</span>` : ''}</div></td>
                 <td class="center">${badgeStatut(e.actif ? 'actif' : 'inactif')}</td>
@@ -1127,6 +1148,95 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         </div>`;
     }
   };
+
+  /* ---------------- Signature manuscrite (import d'une photo) ----------------
+     Une seule fois : on glisse une photo de la signature, elle est réduite
+     puis enregistrée. Elle sera ensuite apposée sur chaque bulletin.
+     Accepte : glisser-déposer, coller (Ctrl+V) et sélection de fichier. */
+  function signatureHtml(url, { label = 'Signature manuscrite', id = 'sig' } = {}) {
+    return `
+      <div class="field">
+        <label>${esc(label)}</label>
+        <div class="sig-zone" id="${id}-zone" tabindex="0">
+          <input type="file" accept="image/png,image/jpeg,image/webp" id="${id}-file" hidden>
+          <div class="sig-apercu" id="${id}-apercu">
+            ${url ? `<img src="${esc(url)}" alt="signature">` : '<div class="sig-vide-txt">Glissez ici une photo de la signature<br><span>ou cliquez pour choisir un fichier</span></div>'}
+          </div>
+          <div class="sig-actions">
+            <button type="button" class="btn btn-ghost btn-sm" id="${id}-choisir">📷 Importer une photo</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="${id}-effacer" ${url ? '' : 'style="display:none"'}>🗑️ Retirer</button>
+          </div>
+        </div>
+        <input type="hidden" name="${id}" id="${id}-valeur" value="">
+        <div class="hint">Fond blanc de préférence, cadrée serrée. La photo est réduite automatiquement ; elle apparaîtra sur les bulletins avec votre nom.</div>
+      </div>`;
+  }
+
+  /** Branche la zone de signature ; renvoie une fonction qui donne la valeur actuelle. */
+  function monterSignature(root, id = 'sig', initiale = null) {
+    const zone = root.querySelector('#' + id + '-zone');
+    if (!zone) return () => null;
+    const fichier = root.querySelector('#' + id + '-file');
+    const apercu = root.querySelector('#' + id + '-apercu');
+    const valeur = root.querySelector('#' + id + '-valeur');
+    const boutonEffacer = root.querySelector('#' + id + '-effacer');
+    let courante = initiale || null;      // URL d'origine (déjà enregistrée)
+    let nouvelle = null;                  // data URL à envoyer
+
+    const rendre = (src) => {
+      apercu.innerHTML = src
+        ? `<img src="${esc(src)}" alt="signature">`
+        : '<div class="sig-vide-txt">Glissez ici une photo de la signature<br><span>ou cliquez pour choisir un fichier</span></div>';
+      if (boutonEffacer) boutonEffacer.style.display = src ? '' : 'none';
+    };
+
+    const prendre = async (f) => {
+      if (!f) return;
+      if (!/^image\//.test(f.type)) return toast('Choisissez une image (PNG, JPEG ou WebP).', 'err');
+      if (f.size > 8 * 1024 * 1024) return toast('Image trop lourde (8 Mo maximum).', 'err');
+      try {
+        const dataUrl = await readImage(f, 600);   // réduite à 600 px de côté
+        nouvelle = dataUrl;
+        valeur.value = dataUrl;
+        rendre(dataUrl);
+        toast('Signature prête — enregistrez pour la conserver');
+      } catch (_) { toast('Image illisible.', 'err'); }
+    };
+
+    zone.addEventListener('click', (e) => { if (!e.target.closest('button')) fichier.click(); });
+    zone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fichier.click(); } });
+    root.querySelector('#' + id + '-choisir').addEventListener('click', (e) => { e.preventDefault(); fichier.click(); });
+    fichier.addEventListener('change', (e) => prendre(e.target.files[0]));
+
+    ['dragenter', 'dragover'].forEach(ev => zone.addEventListener(ev, (e) => {
+      e.preventDefault(); zone.classList.add('survol');
+    }));
+    ['dragleave', 'drop'].forEach(ev => zone.addEventListener(ev, (e) => {
+      e.preventDefault(); zone.classList.remove('survol');
+    }));
+    zone.addEventListener('drop', (e) => {
+      const f = e.dataTransfer.files && e.dataTransfer.files[0];
+      prendre(f);
+    });
+    zone.addEventListener('paste', (e) => {
+      const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
+      if (item) { e.preventDefault(); prendre(item.getAsFile()); }
+    });
+
+    if (boutonEffacer) boutonEffacer.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const ok = await confirmer('Retirer la signature ? Elle disparaîtra des bulletins.', { titre: 'Retirer la signature', ok: 'Retirer' });
+      if (!ok) return;
+      nouvelle = ''; valeur.value = '__supprimer__'; courante = null; rendre(null);
+    });
+
+    /** Valeur à envoyer à l'API : undefined = ne pas toucher. */
+    return () => {
+      if (valeur.value === '__supprimer__') return '';
+      if (nouvelle) return nouvelle;
+      return undefined;
+    };
+  }
 
   function affectationGridHtml(affectations = []) {
     const set = new Set(affectations.map(a => `${a.classe_id}-${a.matiere_id}`));
@@ -1154,6 +1264,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         <div class="field"><label>Email de connexion *</label><input type="email" name="email" required value="${esc(e.email || '')}" ${e.id ? 'readonly style="background:#f6f8f7"' : ''} placeholder="prof@ecole.tg"></div>
         <div class="field"><label>${e.id ? 'Nouveau mot de passe' : 'Mot de passe *'}</label><input type="text" name="password" ${e.id ? '' : 'required minlength="6"'} placeholder="${e.id ? 'Laisser vide pour conserver' : '6 caractères minimum'}"></div>
       </div>
+      ${signatureHtml(e.signature || null, { id: 'sig-ens', label: 'Signature de l’enseignant (apparaîtra sur les bulletins)' })}
       <div class="field"><label>Classes et matières affectées</label>${affectationGridHtml(e.affectations || [])}</div>`;
   }
 
@@ -1165,11 +1276,15 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         body: `<form id="ens-form">${enseignantFormHtml()}</form>`,
         footer: `<button class="btn btn-ghost btn-sm" data-close>Annuler</button><button class="btn btn-primary btn-sm" id="save-ens">Créer le compte</button>`
       });
+      const lireSignature = monterSignature(m.root, 'sig-ens');
       m.root.querySelector('#save-ens').onclick = async () => {
         const form = m.root.querySelector('#ens-form');
         if (!form.reportValidity()) return;
         const data = Object.fromEntries(new FormData(form).entries());
+        delete data['sig-ens'];
         data.affectations = collecterAffectations(m.root);
+        const sig = lireSignature();
+        if (sig !== undefined) data.signature = sig;
         try {
           await api('/api/enseignants', { method: 'POST', body: data });
           toast('Enseignant ajouté — communiquez-lui ses identifiants');
@@ -1185,11 +1300,15 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         body: `<form id="ens-form">${enseignantFormHtml(e)}</form>`,
         footer: `<button class="btn btn-ghost btn-sm" data-close>Annuler</button><button class="btn btn-primary btn-sm" id="save-ens">Enregistrer</button>`
       });
+      const lireSignature = monterSignature(m.root, 'sig-ens', e.signature || null);
       m.root.querySelector('#save-ens').onclick = async () => {
         const form = m.root.querySelector('#ens-form');
         if (!form.reportValidity()) return;
         const data = Object.fromEntries(new FormData(form).entries());
+        delete data['sig-ens'];
         data.affectations = collecterAffectations(m.root);
+        const sig = lireSignature();
+        if (sig !== undefined) data.signature = sig;
         try {
           await api('/api/enseignants/' + id, { method: 'PUT', body: data });
           toast('Enseignant mis à jour');
@@ -1701,15 +1820,15 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
 
   Object.assign(window.App, {
     imprimerClasse(classeId, periodeId) {
-      window.open(`/print/classe/${classeId}?periode_id=${periodeId}`, '_blank');
+      window.open(lienServeur(`/print/classe/${classeId}?periode_id=${periodeId}`), '_blank');
     },
 
     telechargerRecu(paiementId) {
-      window.open(`/api/paiements/${paiementId}/recu.pdf`, '_blank');
+      window.open(lienServeur(`/api/paiements/${paiementId}/recu.pdf`), '_blank');
     },
 
     imprimerExamen(examenId, classeId) {
-      window.open(`/print/examen/${examenId}?classe_id=${classeId}`, '_blank');
+      window.open(lienServeur(`/print/examen/${examenId}?classe_id=${classeId}`), '_blank');
     },
 
     async appreciation(eleveId, periodeId) {
@@ -2189,6 +2308,11 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                 </div>
               </div>
               <div class="notice info" style="margin:12px 0 0">Le logo et les informations de l'établissement sont imprimés sur chaque bulletin, y compris lors de l'impression en lot.</div>
+
+              <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--bord)">
+                ${signatureHtml(S.signature || null, { id: 'sig-chef', label: "Signature du chef d'établissement (imprimée sur les bulletins)" })}
+                <button type="button" class="btn btn-ghost btn-sm" id="btn-sig-chef">✍️ Enregistrer ma signature</button>
+              </div>
             </div>
 
             <div class="panel">
@@ -2266,10 +2390,25 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         rm.remove();
       };
 
+      // Signature du chef d'établissement : importée une fois, apposée ensuite
+      // automatiquement sur chaque bulletin.
+      const lireSigChef = monterSignature(document, 'sig-chef', S.signature || null);
+      const btnSig = $('#btn-sig-chef');
+      if (btnSig) btnSig.onclick = async () => {
+        const valeur = lireSigChef();
+        if (valeur === undefined) return toast('Choisissez d’abord une image de signature.', 'err');
+        try {
+          const res = await api('/api/moi/signature', { method: 'PUT', body: { signature: valeur } });
+          S.signature = res.signature || null;
+          toast(valeur ? 'Signature enregistrée — elle apparaîtra sur les bulletins' : 'Signature retirée');
+        } catch (err) { toast(err.message, 'err'); }
+      };
+
       $('#etab-form').onsubmit = async (e) => {
         e.preventDefault();
         const data = Object.fromEntries(new FormData(e.target).entries());
         delete data.fm;
+        delete data['sig-chef'];
         try {
           const res = await api('/api/etablissement', { method: 'PUT', body: data });
           S.etab = res.etablissement;
@@ -2859,7 +2998,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                     <button class="btn btn-primary btn-sm" onclick="App.validerPaiement(${p.id})">✓ Valider</button>
                     <button class="btn btn-danger btn-sm" onclick="App.rejeterPaiement(${p.id})">✗</button>` : `
                     <span class="small muted">${esc(p.valideur || '')}</span>`}
-                  ${p.statut === 'paye' ? `<button class="icon-btn" title="Reçu PDF" onclick="window.open('/api/admin/paiements/${p.id}/recu.pdf','_blank')">📄</button>` : ''}
+                  ${p.statut === 'paye' ? `<button class="icon-btn" title="Reçu PDF" onclick="window.open(lienServeur('/api/admin/paiements/${p.id}/recu.pdf'),'_blank')">📄</button>` : ''}
                 </div></td>
               </tr>`).join('')}</tbody>
           </table></div>` : emptyState('💳', 'Aucun paiement enregistré.')}

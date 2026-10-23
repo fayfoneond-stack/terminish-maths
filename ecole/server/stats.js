@@ -243,7 +243,38 @@ function bulletinData(db, ecoleId, eleveId, periodeId) {
   const promo = computeClasse(db, ecoleId, { classe_id: eleve.classe_id, periode_id: periodeId });
   const ligne = promo.resultats.find(r => r.eleve.id === eleveId);
   const bulletin = db.prepare('SELECT * FROM bulletins WHERE eleve_id = ? AND periode_id = ?').get(eleveId, periodeId) || null;
-  return { promo, ligne, bulletin, eleve };
+
+  /* --- Qui enseigne quoi : nom + signature de chaque professeur --------- */
+  const profs = db.prepare(`
+    SELECT a.matiere_id, u.id, u.nom, u.signature
+    FROM affectations a JOIN utilisateurs u ON u.id = a.enseignant_id
+    WHERE a.classe_id = ? AND u.actif = 1
+    ORDER BY u.nom`).all(eleve.classe_id);
+  const professeurs = {};
+  profs.forEach(p => {
+    if (!professeurs[p.matiere_id]) professeurs[p.matiere_id] = { id: p.id, nom: p.nom, signature: p.signature || null };
+  });
+
+  /* --- Professeur principal : celui qui signe le bulletin --------------- */
+  const classe = db.prepare('SELECT * FROM classes WHERE id = ?').get(eleve.classe_id);
+  let principal = classe && classe.titulaire_id
+    ? db.prepare("SELECT id, nom, signature FROM utilisateurs WHERE id = ? AND ecole_id = ?").get(classe.titulaire_id, ecoleId)
+    : null;
+  if (!principal && profs.length) {
+    // à défaut : le premier professeur affecté à la classe, par ordre alphabétique
+    principal = { id: profs[0].id, nom: profs[0].nom, signature: profs[0].signature };
+  }
+  if (!principal && classe && classe.titulaire) principal = { id: null, nom: classe.titulaire, signature: null };
+
+  /* --- Chef d'établissement : nom affiché + sa signature ---------------- */
+  const chefUser = db.prepare("SELECT nom, signature FROM utilisateurs WHERE ecole_id = ? AND role = 'directeur' ORDER BY id LIMIT 1").get(ecoleId);
+  const chef = {
+    nom: (promo.etablissement && promo.etablissement.chef_nom) || (chefUser && chefUser.nom) || '',
+    titre: (promo.etablissement && promo.etablissement.chef_titre) || "Le Chef d'Établissement",
+    signature: (chefUser && chefUser.signature) || null
+  };
+
+  return { promo, ligne, bulletin, eleve, professeurs, principal: principal || null, chef };
 }
 
 module.exports = { computeClasse, bulletinData, mention, appreciation, mentionColor, statsOf, round2 };

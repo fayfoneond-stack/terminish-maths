@@ -2,13 +2,29 @@
 (function () {
   'use strict';
 
+  /**
+   * Adresse de base du serveur (API). Vide = même origine (cas normal).
+   * Utile quand l'interface est servie par un hébergeur statique (Firebase
+   * Hosting) et que l'API tourne ailleurs : voir public/config.js.
+   */
+  function apiBase() {
+    const base = (typeof window !== 'undefined' && window.TERMINISH_API_BASE) || '';
+    return String(base).replace(/\/+$/, '');
+  }
+  /** Transforme « /api/... », « /print/... », « /media/... » en URL absolue. */
+  function lienServeur(chemin) {
+    const base = apiBase();
+    if (!base) return chemin;
+    return base + (chemin.startsWith('/') ? chemin : '/' + chemin);
+  }
+
   async function api(path, opts = {}) {
     const init = { credentials: 'same-origin', headers: {}, ...opts };
     if (opts.body && !(opts.body instanceof FormData)) {
       init.headers['Content-Type'] = 'application/json';
       init.body = typeof opts.body === 'string' ? opts.body : JSON.stringify(opts.body);
     }
-    const res = await fetch(path, init);
+    const res = await fetch(lienServeur(path), init);
     const text = await res.text();
     let data = null;
     try { data = text ? JSON.parse(text) : null; } catch { data = text; }
@@ -145,6 +161,8 @@
   }
 
   window.api = api;
+  window.apiBase = apiBase;
+  window.lienServeur = lienServeur;
   window.esc = esc;
   window.fmt = fmt;
   window.money = money;

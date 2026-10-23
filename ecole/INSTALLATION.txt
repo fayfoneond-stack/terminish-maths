@@ -19,8 +19,10 @@ CONTENU
   DEPLOIEMENT.md     guide complet (VPS, Render, Nginx, sauvegardes)
   DEPLOIEMENT-GRATUIT.md  mise en ligne à 0 F (ordinateur + lien HTTPS)
   LIEN-ETERNEL.md    adresse fixe gratuite SANS CARTE (Tailscale) ; Oracle en annexe
+  FIREBASE.md        publier sur Firebase sans carte (ce qui marche, ce qui casse)
+  STOCKAGE-EXTERNE.md  Cloudinary / Drive / MEGA, plusieurs comptes
   INSTALLATION.txt   ce fichier
-  FIREBASE.md        faut-il migrer vers Firebase ? (chiffrage)
+  firebase.json      configuration de publication (Firebase Hosting)
 
 PRÉREQUIS : Node.js 22 ou plus. Rien d'autre. (Docker seulement pour l'option Docker.)
 
@@ -166,6 +168,78 @@ PRÉREQUIS : Node.js 22 ou plus. Rien d'autre. (Docker seulement pour l'option D
   Au démarrage, le lanceur VÉRIFIE réellement le mot de passe annoncé :
       « ✔ vérifié à l'instant »      → il fonctionne
       « ✘ non reconnu »              → un compte existe déjà : npm run motdepasse
+
+===============================================================================
+ BULLETINS : NOM ET SIGNATURE DU PROFESSEUR
+===============================================================================
+
+  Chaque professeur importe SA signature UNE SEULE FOIS :
+
+      Console → Enseignants → ✏️ (modifier)
+      → zone « Signature de l'enseignant »
+      → glisser une photo de la signature (ou Ctrl+V / choisir un fichier)
+      → Enregistrer
+
+  Elle apparaît ensuite sur tous ses bulletins, au-dessus de son nom.
+
+  Désigner le professeur principal d'une classe (celui qui signe) :
+
+      Console → Classes → modifier → « Professeur principal »
+      (il faut d'abord que l'enseignant existe et soit affecté à la classe)
+
+  Signature du chef d'établissement :
+
+      Console → Paramètres → Logo & signature → « Signature du chef
+      d'établissement » → glisser la photo → Enregistrer ma signature
+
+  Le bulletin affiche : nom du professeur sous chaque matière, puis deux
+  blocs signés (Professeur principal / Chef d'Établissement).
+  Le TUTEUR a été retiré du bulletin ; ses coordonnées restent dans la fiche
+  de l'élève (usage administratif).
+
+===============================================================================
+ STOCKAGE EXTERNE : CLOUDINARY, DRIVE, MEGA (plusieurs comptes)
+===============================================================================
+
+  Les signatures et les logos peuvent être stockés chez un fournisseur, avec
+  repli automatique sur le disque local (data/media) si tout échoue.
+
+      STORAGE_PROVIDERS=cloudinary,local          (défaut)
+
+      # plusieurs comptes Cloudinary, rotation automatique :
+      CLOUDINARY_ACCOUNTS=cloud1|key1|secret1;cloud2|key2|secret2
+
+      # Google Drive (compte de service) :
+      GOOGLE_DRIVE_SA_JSON=/chemin/cle.json
+      GOOGLE_DRIVE_FOLDER_ID=1AbC...
+
+      # MEGA (via rclone) :
+      MEGA_RCLONE_REMOTE=mega:Terminish
+
+  Diagnostic dans la console : GET /api/stockage/etat
+  Détails : STOCKAGE-EXTERNE.md
+
+===============================================================================
+ PUBLIER SUR FIREBASE
+===============================================================================
+
+  Firebase Hosting sert l'INTERFACE (gratuit, sans carte). Il ne peut pas
+  exécuter le serveur Node + SQLite (plan Blaze = carte bancaire obligatoire,
+  et disque éphémère = perte des notes).
+
+  Combinaison qui marche à 0 F :
+      interface  → Firebase Hosting
+      API + base → votre machine (Tailscale Funnel)
+
+  1. public/config.js :
+         window.TERMINISH_API_BASE = 'https://penguin.xxxx.ts.net';
+  2. sur le serveur :
+         export CORS_ORIGIN="https://mon-ecole.web.app"
+         export COOKIE_SECURE=1
+         bash deploy/gratuit/tout.sh
+  3. firebase deploy --only hosting
+
+  Détails, limites et alternatives payantes : FIREBASE.md
 
 ===============================================================================
  « CETTE PAGE NE FONCTIONNE PAS » / HTTP ERROR 502 (lien .ts.net)

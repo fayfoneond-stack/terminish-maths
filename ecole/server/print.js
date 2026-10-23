@@ -47,9 +47,13 @@ table.notes tfoot td { background: #0b3d2e; color: #fff; font-weight: 700; paddi
 .rang-big .n small { font-size: 10px; color: #6b7d74; font-weight: 600; }
 .mention { display: inline-block; padding: 2px 10px; border-radius: 999px; background: #e8f5ef; color: #0b6b4a; font-weight: 700; font-size: 10px; border: 1px solid #bfe0d1; }
 .appr { background: #f7faf8; border-left: 3px solid #f0b429; padding: 5px 8px; font-style: italic; color: #334b41; font-size: 9.4px; border-radius: 0 4px 4px 0; min-height: 30px; }
-.sign { display: flex; justify-content: space-between; margin-top: 10px; font-size: 9px; color: #4b6459; }
-.sign div { width: 30%; text-align: center; }
-.sign .line { margin-top: 26px; border-top: 1px dotted #9db3a9; padding-top: 3px; }
+table.notes td .prof { font-size: 7.4px; font-weight: 500; color: #6b7d74; font-style: italic; line-height: 1.15; }
+.sign { display: flex; justify-content: space-around; align-items: flex-end; margin-top: 10px; font-size: 9px; color: #4b6459; }
+.sign .sign-b { width: 40%; text-align: center; }
+.sign .role { font-size: 8.4px; text-transform: uppercase; letter-spacing: .4px; color: #0b3d2e; font-weight: 700; }
+.sign .sig { display: block; margin: 2px auto 0; max-height: 34px; max-width: 130px; object-fit: contain; }
+.sign .sig-vide { height: 34px; border-bottom: 1px dotted #b9c9c2; margin: 2px 12px 0; }
+.sign .nom { border-top: 1px solid #b9c9c2; margin-top: 2px; padding-top: 2px; font-weight: 700; color: #10241c; font-size: 8.6px; }
 .foot { position: absolute; bottom: 6mm; left: 8mm; right: 8mm; border-top: 1px solid #e3ece8; padding-top: 3px; display: flex; justify-content: space-between; font-size: 7.6px; color: #8a9c94; }
 .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; opacity: .045; font-size: 70px; font-weight: 900; transform: rotate(-28deg); color: #0b3d2e; letter-spacing: 4px; }
 .noprint { text-align: center; padding: 8px; }
@@ -63,7 +67,7 @@ function noteCell(v) {
   return `<td class="moy ${cls}">${fmt(v)}</td>`;
 }
 
-function renderBulletin({ promo, ligne, bulletin, eleve }) {
+function renderBulletin({ promo, ligne, bulletin, eleve, professeurs = {}, principal = null, chef = null }) {
   const etab = promo.etablissement;
   const periode = promo.periode;
   const classe = promo.classe;
@@ -71,9 +75,11 @@ function renderBulletin({ promo, ligne, bulletin, eleve }) {
   const evals = promo.resultats[0] && promo.resultats[0].lignes[0] ? Object.keys(promo.resultats[0].lignes[0].detail || {}) : [];
   const hasDevoir2 = evals.includes('devoir2');
 
-  const rows = ligne.lignes.map(l => `
+  const rows = ligne.lignes.map(l => {
+    const prof = professeurs[l.matiere_id] || professeurs[l.id] || null;
+    return `
     <tr>
-      <td class="mat">${esc(l.nom)}</td>
+      <td class="mat">${esc(l.nom)}${prof ? `<div class="prof">${esc(prof.nom)}</div>` : ''}</td>
       ${noteCell(l.detail.devoir1)}
       ${hasDevoir2 ? noteCell(l.detail.devoir2) : '<td>—</td>'}
       ${noteCell(l.detail.composition)}
@@ -82,7 +88,8 @@ function renderBulletin({ promo, ligne, bulletin, eleve }) {
       <td>${fmt(l.points)}</td>
       <td>${l.rang ?? '—'}</td>
       <td style="text-align:left;font-size:8.4px">${esc(l.appreciation)}</td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 
   const rangTxt = ligne.rang ? `${ligne.rang}<small>/${promo.resultats.length}</small>` : '—';
   const decision = (bulletin && bulletin.decision) || (ligne.moyenne != null && ligne.moyenne >= 10 ? 'Admis(e)' : ligne.moyenne != null ? 'Doit se rattraper' : '');
@@ -121,7 +128,7 @@ function renderBulletin({ promo, ligne, bulletin, eleve }) {
     <div><span class="k">Né(e) le :</span> <span class="v">${esc(dateFr(eleve.date_naissance))}</span></div>
     <div><span class="k">À :</span> <span class="v">${esc(eleve.lieu_naissance || '—')}</span></div>
     <div><span class="k">Effectif de la classe :</span> <span class="v">${stat.effectif_classe}</span></div>
-    <div><span class="k">Tuteur :</span> <span class="v">${esc(eleve.tuteur_nom || '—')} ${eleve.tuteur_tel ? '· ' + esc(eleve.tuteur_tel) : ''}</span></div>
+    <div><span class="k">Professeur principal :</span> <span class="v">${esc((principal && principal.nom) || '—')}</span></div>
   </div>
 
   <table class="notes">
@@ -173,9 +180,20 @@ function renderBulletin({ promo, ligne, bulletin, eleve }) {
   </div>
 
   <div class="sign">
-    <div>Le Titulaire de la classe<div class="line">${esc(classe.titulaire || '____________________')}</div></div>
-    <div>Le Parent / Tuteur<div class="line">Signature</div></div>
-    <div>${esc(etab.chef_titre || "Le Chef d'Établissement")}<div class="line">${esc(etab.chef_nom || '____________________')}</div></div>
+    <div class="sign-b">
+      <div class="role">Le Professeur principal</div>
+      ${principal && principal.signature
+        ? `<img class="sig" src="${esc(principal.signature)}" alt="signature">`
+        : '<div class="sig-vide">signature</div>'}
+      <div class="nom">${esc((principal && principal.nom) || '____________________')}</div>
+    </div>
+    <div class="sign-b">
+      <div class="role">${esc((chef && chef.titre) || "Le Chef d'Établissement")}</div>
+      ${chef && chef.signature
+        ? `<img class="sig" src="${esc(chef.signature)}" alt="signature">`
+        : '<div class="sig-vide">signature</div>'}
+      <div class="nom">${esc((chef && chef.nom) || '____________________')}</div>
+    </div>
   </div>
 
   <div class="foot">

@@ -4,6 +4,7 @@ const crypto = require('node:crypto');
 const path = require('node:path');
 const { db, hashPassword, verifyPassword, createEtablissement, createUser, now, today, addDays } = require('./db');
 const { computeClasse, bulletinData } = require('./stats');
+const stockage = require('./storage');
 const P = require('./paiements');
 const { genererRecuPDF } = require('./recu');
 const cloudinary = require('./cloudinary');
@@ -13,6 +14,27 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 app.set('trust proxy', true);
 app.use(express.json({ limit: '6mb' }));
+
+/**
+ * CORS optionnel — utile quand l'interface est servie par un hébergement
+ * statique (Firebase Hosting, par exemple) et que l'API tourne ailleurs.
+ *   CORS_ORIGIN=https://mon-ecole.web.app,https://mon-ecole.firebaseapp.com
+ * Rien n'est ouvert si la variable est absente (cas normal : même origine).
+ */
+const ORIGINES = String(process.env.CORS_ORIGIN || '')
+  .split(',').map(o => o.trim().replace(/\/+$/, '')).filter(Boolean);
+app.use((req, res, next) => {
+  const origine = req.headers.origin;
+  if (origine && ORIGINES.includes(origine.replace(/\/+$/, ''))) {
+    res.setHeader('Access-Control-Allow-Origin', origine);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    res.setHeader('Vary', 'Origin');
+  }
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
 app.use(express.urlencoded({ extended: true, limit: '6mb' }));
 
 /* ------------------------------------------------------------------ */
@@ -29,11 +51,18 @@ function parseCookies(req) {
 }
 // Mettre COOKIE_SECURE=1 derrière HTTPS (obligatoire en production)
 const COOKIE_SECURE = process.env.COOKIE_SECURE === '1' || process.env.COOKIE_SECURE === 'true';
+/**
+ * Même origine (cas normal) : SameSite=Lax.
+ * Interface servie par un autre domaine (Firebase Hosting + API ailleurs) :
+ * SameSite=None; Secure — imposé par les navigateurs, et Secure exige HTTPS
+ * côté API (Tailscale Funnel le fournit).
+ */
+const SAME_SITE = String(process.env.CORS_ORIGIN || '').trim() ? 'None' : 'Lax';
 function setSessionCookie(res, token) {
-  res.setHeader('Set-Cookie', `${COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax${COOKIE_SECURE ? '; Secure' : ''}; Max-Age=${60 * 60 * 24 * 30}`);
+  res.setHeader('Set-Cookie', `${COOKIE}=${token}; Path=/; HttpOnly; SameSite=${SAME_SITE}${(COOKIE_SECURE || SAME_SITE === 'None') ? '; Secure' : ''}; Max-Age=${60 * 60 * 24 * 30}`);
 }
 function clearSessionCookie(res) {
-  res.setHeader('Set-Cookie', `${COOKIE}=; Path=/; HttpOnly; SameSite=Lax${COOKIE_SECURE ? '; Secure' : ''}; Max-Age=0`);
+  res.setHeader('Set-Cookie', `${COOKIE}=; Path=/; HttpOnly; SameSite=${SAME_SITE}${(COOKIE_SECURE || SAME_SITE === 'None') ? '; Secure' : ''}; Max-Age=0`);
 }
 function auth(req, res, next) {
   const token = parseCookies(req)[COOKIE];
@@ -73,6 +102,15 @@ function ecoleOf(req, res) {
 function baseUrl(req) {
   const proto = req.get('x-forwarded-proto') || req.protocol || 'http';
   return `${proto}://${req.get('host')}`;
+}
+
+/** Enregistre une signature (data URL) et renvoie { url, provider } ou null. */
+async function enregistrerSignature(dataUrl, ecoleId) {
+  const brut = String(dataUrl || '').trim();
+  if (!brut) return null;                                  // signature retirée
+  if (brut.length < 60) throw new Error('Image de signature invalide');
+  const resultat = await stockage.enregistrer(brut, { categorie: 'signatures', ecoleId });
+  return { url: resultat.url, provider: resultat.provider };
 }
 
 const canSaisir = (req, classeId, matiereId) => {
@@ -129,12 +167,43 @@ app.get('/api/me', auth, (req, res) => {
   const affectations = req.user.role === 'enseignant'
     ? db.prepare('SELECT classe_id, matiere_id FROM affectations WHERE enseignant_id = ?').all(req.user.id)
     : [];
+  const moi = db.prepare('SELECT signature FROM utilisateurs WHERE id = ?').get(req.user.id);
   res.json({
     user: { id: req.user.id, nom: req.user.nom, email: req.user.email, role: req.user.role, ecole_id: req.user.ecole_id },
     etablissement: etab || null,
     eleve,
-    affectations
+    affectations,
+    signature: moi ? moi.signature : null
   });
+});
+
+/**
+ * Signature manuscrite de l'utilisateur connecté (chef d'établissement,
+ * professeur principal…). Importée une seule fois : elle est ensuite apposée
+ * automatiquement sur les bulletins.
+ *   PUT /api/moi/signature   { signature: "data:image/png;base64,…" }  → enregistre
+ *   PUT /api/moi/signature   { signature: "" }                         → retire
+ */
+app.put('/api/moi/signature', auth, staffOnly, async (req, res) => {
+  const { signature } = req.body || {};
+  if (signature === undefined) return res.status(400).json({ error: 'Signature manquante' });
+  try {
+    const sig = await enregistrerSignature(signature, req.user.ecole_id || 'global');
+    if (!sig) {
+      db.prepare('UPDATE utilisateurs SET signature = NULL, signature_provider = NULL WHERE id = ?').run(req.user.id);
+      return res.json({ ok: true, signature: null });
+    }
+    db.prepare('UPDATE utilisateurs SET signature = ?, signature_provider = ? WHERE id = ?')
+      .run(sig.url, sig.provider, req.user.id);
+    res.json({ ok: true, signature: sig.url, provider: sig.provider });
+  } catch (err) {
+    res.status(400).json({ error: `Signature non enregistrée : ${err.message}` });
+  }
+});
+
+/** Diagnostic du stockage externe (direction) : quels fournisseurs sont prêts ? */
+app.get('/api/stockage/etat', auth, directionOnly, (req, res) => {
+  res.json(stockage.etat());
 });
 
 /* Inscription self-service d'un établissement (essai gratuit 30 jours) */
@@ -303,8 +372,22 @@ function classeWithMatieres(ecoleId, c) {
     SELECT m.id, m.nom, m.code, m.groupe, cm.coefficient FROM classe_matieres cm
     JOIN matieres m ON m.id = cm.matiere_id WHERE cm.classe_id = ? ORDER BY m.groupe, m.nom`).all(c.id);
   const effectif = db.prepare("SELECT COUNT(*) AS n FROM eleves WHERE classe_id = ? AND statut = 'actif'").get(c.id).n;
-  return { ...c, matieres, effectif };
+  // Professeur principal : c'est lui qui signe le bulletin.
+  const prof = c.titulaire_id
+    ? db.prepare("SELECT id, nom, signature FROM utilisateurs WHERE id = ? AND ecole_id = ? AND role = 'enseignant'").get(c.titulaire_id, ecoleId)
+    : null;
+  return {
+    ...c, matieres, effectif,
+    professeur_principal: prof ? { id: prof.id, nom: prof.nom, signature: prof.signature || null } : null
+  };
 }
+/** Un professeur principal doit être un enseignant de la même école. */
+function verifierTitulaire(ecoleId, valeur) {
+  if (valeur === null || valeur === '' || valeur === 0) return null;   // « aucun »
+  const u = db.prepare("SELECT id FROM utilisateurs WHERE id = ? AND ecole_id = ? AND role = 'enseignant'").get(Number(valeur), ecoleId);
+  return u ? u.id : null;
+}
+
 app.get('/api/classes', auth, staffOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
   let classes = db.prepare('SELECT * FROM classes WHERE ecole_id = ? ORDER BY cycle DESC, niveau, nom').all(id);
@@ -316,10 +399,11 @@ app.get('/api/classes', auth, staffOnly, (req, res) => {
 });
 app.post('/api/classes', auth, directionOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
-  const { nom, niveau, cycle, serie, titulaire, matieres } = req.body || {};
+  const { nom, niveau, cycle, serie, titulaire, titulaire_id, matieres } = req.body || {};
   if (!nom) return res.status(400).json({ error: 'Le nom de la classe est requis' });
-  const info = db.prepare('INSERT INTO classes (ecole_id, nom, niveau, cycle, serie, annee, titulaire) VALUES (?,?,?,?,?,?,?)')
-    .run(id, nom, niveau || nom, cycle || 'college', serie || '', db.prepare('SELECT annee_scolaire FROM etablissements WHERE id = ?').get(id).annee_scolaire, titulaire || '');
+  const profId = titulaire_id === undefined ? null : verifierTitulaire(id, titulaire_id);
+  const info = db.prepare('INSERT INTO classes (ecole_id, nom, niveau, cycle, serie, annee, titulaire, titulaire_id) VALUES (?,?,?,?,?,?,?,?)')
+    .run(id, nom, niveau || nom, cycle || 'college', serie || '', db.prepare('SELECT annee_scolaire FROM etablissements WHERE id = ?').get(id).annee_scolaire, titulaire || '', profId);
   const classeId = Number(info.lastInsertRowid);
   (matieres || []).forEach(m => {
     db.prepare('INSERT OR IGNORE INTO classe_matieres (classe_id, matiere_id, coefficient) VALUES (?,?,?)')
@@ -331,9 +415,11 @@ app.put('/api/classes/:id', auth, directionOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
   const c = db.prepare('SELECT * FROM classes WHERE id = ? AND ecole_id = ?').get(req.params.id, id);
   if (!c) return res.status(404).json({ error: 'Classe introuvable' });
-  const { nom, niveau, cycle, serie, titulaire, matieres } = req.body || {};
-  db.prepare('UPDATE classes SET nom = ?, niveau = ?, cycle = ?, serie = ?, titulaire = ? WHERE id = ?')
-    .run(nom ?? c.nom, niveau ?? c.niveau, cycle ?? c.cycle, serie ?? c.serie, titulaire ?? c.titulaire, c.id);
+  const { nom, niveau, cycle, serie, titulaire, titulaire_id, matieres } = req.body || {};
+  const profId = titulaire_id === undefined ? undefined : verifierTitulaire(id, titulaire_id);
+  db.prepare('UPDATE classes SET nom = ?, niveau = ?, cycle = ?, serie = ?, titulaire = ?, titulaire_id = ? WHERE id = ?')
+    .run(nom ?? c.nom, niveau ?? c.niveau, cycle ?? c.cycle, serie ?? c.serie, titulaire ?? c.titulaire,
+      profId === undefined ? c.titulaire_id : profId, c.id);
   if (Array.isArray(matieres)) {
     db.prepare('DELETE FROM classe_matieres WHERE classe_id = ?').run(c.id);
     matieres.forEach(m => db.prepare('INSERT OR IGNORE INTO classe_matieres (classe_id, matiere_id, coefficient) VALUES (?,?,?)')
@@ -468,7 +554,7 @@ app.get('/api/eleves/:id', auth, staffOnly, (req, res) => {
 // La liste des collègues (e-mails compris) ne regarde que la direction.
 app.get('/api/enseignants', auth, directionOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
-  const users = db.prepare("SELECT id, nom, email, telephone, actif, derniere_connexion FROM utilisateurs WHERE ecole_id = ? AND role = 'enseignant' ORDER BY nom").all(id);
+  const users = db.prepare("SELECT id, nom, email, telephone, actif, derniere_connexion, signature FROM utilisateurs WHERE ecole_id = ? AND role = 'enseignant' ORDER BY nom").all(id);
   const out = users.map(u => {
     const aff = db.prepare(`SELECT a.id, a.classe_id, a.matiere_id, c.nom AS classe_nom, m.nom AS matiere_nom
       FROM affectations a JOIN classes c ON c.id = a.classe_id JOIN matieres m ON m.id = a.matiere_id
@@ -477,26 +563,48 @@ app.get('/api/enseignants', auth, directionOnly, (req, res) => {
   });
   res.json(out);
 });
-app.post('/api/enseignants', auth, directionOnly, (req, res) => {
+app.post('/api/enseignants', auth, directionOnly, async (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
-  const { nom, email, password, telephone, affectations } = req.body || {};
+  const { nom, email, password, telephone, affectations, signature } = req.body || {};
   if (!nom || !email || !password) return res.status(400).json({ error: 'Nom, email et mot de passe requis' });
   if (db.prepare('SELECT id FROM utilisateurs WHERE email = ?').get(String(email).toLowerCase())) {
     return res.status(409).json({ error: 'Cet email est déjà utilisé' });
   }
+  let sig = null;
+  if (signature) {
+    try { sig = await enregistrerSignature(signature, id); }
+    catch (err) { return res.status(400).json({ error: `Signature non enregistrée : ${err.message}` }); }
+  }
   const uid = createUser({ ecole_id: id, nom, email, password, role: 'enseignant', telephone });
+  if (sig) db.prepare('UPDATE utilisateurs SET signature = ?, signature_provider = ? WHERE id = ?').run(sig.url, sig.provider, uid);
   (affectations || []).forEach(a => {
-    if (!db.prepare('SELECT 1 FROM classes WHERE id = ? AND ecole_id = ?').get(a.classe_id, id)) return;
+    const classeId = Number(a && a.classe_id);
+    const matiereId = Number(a && a.matiere_id);
+    if (!classeId || !matiereId) return;
+    if (!db.prepare('SELECT 1 FROM classes WHERE id = ? AND ecole_id = ?').get(classeId, id)) return;
+    if (!db.prepare('SELECT 1 FROM matieres WHERE id = ? AND ecole_id = ?').get(matiereId, id)) return;
     db.prepare('INSERT OR IGNORE INTO affectations (ecole_id, enseignant_id, classe_id, matiere_id) VALUES (?,?,?,?)')
-      .run(id, uid, a.classe_id, a.matiere_id);
+      .run(id, uid, classeId, matiereId);
   });
   res.json({ ok: true, id: uid });
 });
-app.put('/api/enseignants/:id', auth, directionOnly, (req, res) => {
+app.put('/api/enseignants/:id', auth, directionOnly, async (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
   const u = db.prepare("SELECT * FROM utilisateurs WHERE id = ? AND ecole_id = ? AND role = 'enseignant'").get(req.params.id, id);
   if (!u) return res.status(404).json({ error: 'Enseignant introuvable' });
-  const { nom, telephone, actif, password, affectations } = req.body || {};
+  const { nom, telephone, actif, password, affectations, signature } = req.body || {};
+  if (signature !== undefined) {
+    if (!signature) {
+      db.prepare('UPDATE utilisateurs SET signature = NULL, signature_provider = NULL WHERE id = ?').run(u.id);
+    } else {
+      try {
+        const sig = await enregistrerSignature(signature, id);
+        db.prepare('UPDATE utilisateurs SET signature = ?, signature_provider = ? WHERE id = ?').run(sig.url, sig.provider, u.id);
+      } catch (err) {
+        return res.status(400).json({ error: `Signature non enregistrée : ${err.message}` });
+      }
+    }
+  }
   db.prepare('UPDATE utilisateurs SET nom = ?, telephone = ?, actif = ? WHERE id = ?')
     .run(nom ?? u.nom, telephone ?? u.telephone, actif === undefined ? u.actif : (actif ? 1 : 0), u.id);
   if (password) db.prepare('UPDATE utilisateurs SET mot_de_passe = ? WHERE id = ?').run(hashPassword(password), u.id);
@@ -1403,6 +1511,12 @@ app.get('/print/examen/:examenId', auth, staffOnly, (req, res) => {
 /* ------------------------------------------------------------------ */
 /* Statique                                                            */
 /* ------------------------------------------------------------------ */
+// Fichiers envoyés sur le disque local (signatures, pièces jointes).
+// Noms de fichiers aléatoires : un lien n'est pas devinable.
+app.use(stockage.PUBLIC_PREFIX, express.static(stockage.MEDIA_DIR, {
+  maxAge: '7d', fallthrough: true, index: false
+}));
+
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 app.use(express.static(PUBLIC_DIR, { extensions: ['html'] }));
 app.get('/app', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'app.html')));

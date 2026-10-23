@@ -29,8 +29,12 @@ verifier() {
   echo
   echo "Contrôles :"
   for f in INSTALLATION.txt LIEN-ETERNEL.md README.md DEPLOIEMENT-GRATUIT.md \
+           FIREBASE.md STOCKAGE-EXTERNE.md firebase.json \
+           server/index.js server/storage.js server/print.js \
+           public/config.js \
+           deploy/gratuit/tout.sh deploy/gratuit/service-auto.sh \
            deploy/gratuit/lien-stable.sh deploy/gratuit/demarrer.js \
-           deploy/vm/installer-vm.sh server/index.js; do
+           deploy/vm/installer-vm.sh; do
     if unzip -Z1 "$SORTIE" | grep -qx "$NOM/$f"; then
       vert "$f"
     else
