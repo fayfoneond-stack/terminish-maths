@@ -303,6 +303,22 @@ rotation), Google Drive, MEGA via rclone, et **repli local** systématique (`dat
 `/media/...`). Diagnostic : `GET /api/stockage/etat`. Tout est expliqué dans
 **[STOCKAGE-EXTERNE.md](STOCKAGE-EXTERNE.md)**.
 
+### Sur quelle base tourne le site ? (`npm run base`)
+
+Les données (élèves, notes, bulletins) vivent dans **un seul fichier SQLite** :
+`data/terminish-ecole.db` du dossier depuis lequel le site est lancé. Deux
+exemplaires du projet dans deux dossiers = deux bases différentes, sans le dire.
+
+```bash
+npm run base
+```
+
+Affiche, sans rien modifier : le dossier de données, le fichier et sa date de
+dernière écriture, le mode (démo / production), le nombre réel d'établissements,
+d'élèves, de notes et de bulletins, les **autres bases présentes** sur la
+machine, et — point clé — **quel processus utilise quelle base**, avec le port
+et le contrôle du tunnel (`502` si le tunnel ne pointe pas sur le même port).
+
 ### Principales tables
 
 `etablissements`, `utilisateurs`, `sessions`, `classes`, `matieres`, `classe_matieres`, `eleves`,

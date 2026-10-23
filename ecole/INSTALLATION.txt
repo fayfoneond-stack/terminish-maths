@@ -288,6 +288,26 @@ PRÉREQUIS : Node.js 22 ou plus. Rien d'autre. (Docker seulement pour l'option D
     • la composition par matière (nombre de notes, moyenne, ≥ 10, < 10).
 
 ===============================================================================
+ SUR QUELLE BASE TOURNE LE SITE ?
+===============================================================================
+
+    npm run base
+
+  Les notes, élèves et bulletins vivent dans UN SEUL fichier :
+
+      <dossier du projet>/data/terminish-ecole.db
+
+  La commande affiche le fichier exact, sa taille, sa date de dernière
+  écriture, son contenu réel (nombre d'écoles, d'élèves, de notes, de
+  bulletins), si c'est la base de DÉMONSTRATION ou de PRODUCTION, quelles
+  autres bases existent sur la machine, et quel processus utilise laquelle.
+
+  ⚠ Deux dossiers « TERMINISH ECOLE » et « TERMINISH ECOLE 1 » = DEUX bases
+    différentes. C'est le dossier de lancement qui décide, pas le zip.
+
+  Sauvegarde : npm run backup  (copie le fichier dans data/sauvegardes/)
+
+===============================================================================
  STOCKAGE EXTERNE : CLOUDINARY, DRIVE, MEGA (plusieurs comptes)
 ===============================================================================
 

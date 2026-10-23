@@ -13,7 +13,8 @@
     "local": "node deploy/gratuit/demarrer.js --sans-tunnel",
     "installer": "bash deploy/gratuit/installer-linux.sh",
     "motdepasse": "node server/motdepasse.js",
-    "lien": "node server/lien.js"
+    "lien": "node server/lien.js",
+    "base": "node server/base.js"
   },
   "keywords": [],
   "author": "",
