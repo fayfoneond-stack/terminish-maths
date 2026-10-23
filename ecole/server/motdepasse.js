@@ -11,6 +11,7 @@
  * seuls le mot de passe et les sessions ouvertes sont remplacés.
  */
 const { DatabaseSync } = require('node:sqlite');
+require('./env').chargerEnv();   // mêmes réglages que le site (.env)
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');

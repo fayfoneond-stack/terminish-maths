@@ -373,6 +373,11 @@ et le contrôle du tunnel (`502` si le tunnel ne pointe pas sur le même port).
 
 ## 6. Déploiement
 
+**Vous voulez que le site tourne sans votre ordinateur ?** Lisez
+**[HEBERGEMENT.md](HEBERGEMENT.md)** : une base d'hébergement gratuite, sans carte bancaire, avec
+disque permanent (la base SQLite y survit aux redémarrages). Installation en une commande
+(`deploy/alwaysdata/installer.sh`).
+
 **Budget zéro ?** Suivez **[DEPLOIEMENT-GRATUIT.md](DEPLOIEMENT-GRATUIT.md)** : le site tourne sur votre
 ordinateur et devient accessible en HTTPS via Cloudflare Tunnel (gratuit, sans compte).
 

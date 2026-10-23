@@ -1,31 +1,8 @@
 'use strict';
-/**
- * Lecture facultative d'un fichier .env à la racine du projet.
- * Utile pour conserver CORS_ORIGIN / COOKIE_SECURE / STORAGE_PROVIDERS entre
- * deux démarrages, y compris quand le site est lancé par systemd ou par
- * deploy/gratuit/tout.sh (qui ne transmettent pas les variables du shell).
- * Les variables déjà définies dans l'environnement ont la priorité.
- *   TERMINISH_ENV_FILE=/chemin/autre.env  pour imposer un autre fichier.
- */
-(function chargerEnv() {
-  const fs = require('node:fs');
-  const p = require('node:path');
-  const fichier = process.env.TERMINISH_ENV_FILE || p.join(__dirname, '..', '.env');
-  let texte = '';
-  try { texte = fs.readFileSync(fichier, 'utf8'); } catch { return; }
-  texte.split(/\r?\n/).forEach(ligne => {
-    const l = ligne.trim();
-    if (!l || l.startsWith('#')) return;
-    const i = l.indexOf('=');
-    if (i < 1) return;
-    const cle = l.slice(0, i).trim();
-    let valeur = l.slice(i + 1).trim();
-    if ((valeur.startsWith('"') && valeur.endsWith('"')) || (valeur.startsWith("'") && valeur.endsWith("'"))) {
-      valeur = valeur.slice(1, -1);
-    }
-    if (!(cle in process.env)) process.env[cle] = valeur;
-  });
-})();
+// Lecture facultative du fichier .env (voir server/env.js), AVANT tous les autres
+// modules : c'est ce qui permet à TERMINISH_DATA_DIR, CORS_ORIGIN, COOKIE_SECURE…
+// d'être connus dès la construction de la base.
+require('./env').chargerEnv();
 const express = require('express');
 const crypto = require('node:crypto');
 const path = require('node:path');
@@ -238,6 +215,11 @@ app.get('/api/stockage/etat', auth, directionOnly, (req, res) => {
 app.post('/api/inscription', (req, res) => {
   const { etablissement, nom, email, password, telephone, ville, type } = req.body || {};
   if (!etablissement || !nom || !email || !password) return res.status(400).json({ error: 'Tous les champs obligatoires doivent être remplis' });
+  // Le nom de l'établissement doit être un texte (un objet envoyé par erreur
+  // provoquerait une erreur 500 de la base, visible par le visiteur).
+  if (typeof etablissement !== 'string' || typeof nom !== 'string' || typeof email !== 'string') {
+    return res.status(400).json({ error: 'Nom d’établissement, nom et email doivent être des textes' });
+  }
   if (String(password).length < 6) return res.status(400).json({ error: 'Le mot de passe doit contenir au moins 6 caractères' });
   const exists = db.prepare('SELECT id FROM utilisateurs WHERE email = ?').get(String(email).trim().toLowerCase());
   if (exists) return res.status(409).json({ error: 'Un compte existe déjà avec cet email' });
@@ -1734,8 +1716,11 @@ app.get('/api/health', (req, res) => {
   }
 });
 
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Terminish École — serveur démarré sur http://0.0.0.0:${PORT}`);
+// Certains hébergeurs (alwaysdata) donnent l'adresse d'écoute dans $IP :
+// :: = toutes les interfaces en IPv6 *et* IPv4. Sinon on écoute partout.
+const HOTE = process.env.IP || process.env.HOST || '0.0.0.0';
+const server = app.listen(PORT, HOTE, () => {
+  console.log(`Terminish École — serveur démarré sur http://${HOTE}:${PORT}`);
   console.log(`Données : ${process.env.TERMINISH_DATA_DIR || path.join(__dirname, '..', 'data')}`);
 });
 

@@ -34,7 +34,8 @@ verifier() {
            public/config.js \
            deploy/gratuit/tout.sh deploy/gratuit/service-auto.sh \
            deploy/gratuit/lien-stable.sh deploy/gratuit/demarrer.js \
-           deploy/gratuit/firebase.sh server/base.js \
+           deploy/gratuit/firebase.sh server/base.js server/env.js \
+           deploy/alwaysdata/installer.sh HEBERGEMENT.md \
            deploy/vm/installer-vm.sh; do
     if unzip -Z1 "$SORTIE" | grep -qx "$NOM/$f"; then
       vert "$f"

@@ -16,6 +16,7 @@
  * en lecture seule.
  */
 const fs = require('node:fs');
+require('./env').chargerEnv();   // mêmes réglages que le site (.env)
 const path = require('node:path');
 const os = require('node:os');
 const { spawnSync } = require('node:child_process');

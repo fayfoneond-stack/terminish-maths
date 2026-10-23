@@ -91,6 +91,47 @@ PRÉREQUIS : Node.js 22 ou plus. Rien d'autre. (Docker seulement pour l'option D
   Pour une adresse qui ne change jamais : Tailscale (section suivante).
 
 ===============================================================================
+ LE SITE SANS LE CHROOMEBOOK : HÉBERGEMENT alwaysdata (0 F, sans carte)
+===============================================================================
+
+  Tant que le site tourne sur le Chromebook, il s'arrête avec lui. Une vraie
+  base d'hébergement, gratuite et sans carte bancaire :
+
+      alwaysdata  →  offre Free : 1 Go SSD permanent, Node.js 22, SSH,
+                     HTTPS Let's Encrypt, sauvegardes 3 jours, 0 € à vie.
+
+  Pourquoi celle-là : la base est un FICHIER SQLite. Les hébergements
+  « serverless » (Render free, Vercel, Netlify, Firebase Hosting) n'ont pas de
+  disque : la base y serait perdue à chaque redémarrage. alwaysdata en a un.
+
+  Mise en ligne (une seule fois) :
+
+    1. https://www.alwaysdata.com/fr/  → Gratuit (sans carte)
+       choisir un nom de compte = votre future adresse (ex. terminish-ecole)
+
+    2. Administration → Environnement > Node.js → version 22 (ou 24)
+
+    3. depuis le Chromebook :
+         scp terminish-ecole-deploiement.zip COMPTE@ssh-COMPTE.alwaysdata.net:~/
+
+    4. en SSH :
+         ssh COMPTE@ssh-COMPTE.alwaysdata.net
+         unzip -q terminish-ecole-deploiement.zip && mv terminish-ecole app && cd app
+         bash deploy/alwaysdata/installer.sh --email vous@mon-ecole.tg
+
+    5. Web > Sites > Ajouter un site
+         Type        : Node.js 22
+         Commande    : node /home/COMPTE/app/server/index.js
+         Répertoire  : /home/COMPTE/app
+       puis activer HTTPS (Let's Encrypt).
+
+    Résultat : https://COMPTE.alwaysdata.net  — le site tourne 24 h/24,
+    Chromebook éteint ou non.
+
+  Détail complet, reprise des données existantes et sauvegardes :
+    HEBERGEMENT.md
+
+===============================================================================
  FIREBASE : UNE ADRESSE DÉFINITIVE (https://mon-ecole.web.app)
 ===============================================================================
 
