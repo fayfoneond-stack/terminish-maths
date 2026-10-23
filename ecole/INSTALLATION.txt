@@ -175,8 +175,14 @@ PRÉREQUIS : Node.js 22 ou plus. Rien d'autre. (Docker seulement pour l'option D
   mais le SITE n'est pas démarré sur le port 3000 (fenêtre fermée, veille,
   redémarrage du conteneur Linux).
 
-      bash deploy/gratuit/service-auto.sh --etat     # diagnostic
-      bash deploy/gratuit/service-auto.sh --installer # il démarre tout seul
+      bash deploy/gratuit/tout.sh                    # REMET TOUT EN ROUTE
+      bash deploy/gratuit/tout.sh --verifier         # diagnostic seul
+
+  « ERR_NAME_NOT_RESOLVED » = le tunnel est FERMÉ (le nom .ts.net n'existe
+  que tant que Funnel est ouvert) : même commande, tout.sh le rouvre.
+
+      bash deploy/gratuit/service-auto.sh --etat     # état détaillé du service
+      bash deploy/gratuit/service-auto.sh --installer # le site démarre tout seul
 
   --installer met le site en service avec relance automatique : plus besoin
   de garder « npm run partage » ouvert. Le lien .ts.net ne change pas.

@@ -2,9 +2,9 @@
 
 ## ⬇️ Le fichier à prendre pour déployer
 
-### `terminish-ecole-deploiement.zip` — 185 Ko (22/10/2026)
+### `terminish-ecole-deploiement.zip` — 189 Ko (22/10/2026)
 
-sha256 : `43667af60f0cb4adedb0a6df60e0371193a264e3ad846f6a34c768adbbb1c072`
+sha256 : `59fe5ebae498bc3c30d0197271ab2e20f0f9589bf4e659612dc02e2e7e1becd6`
 
 Tout ce qu'il faut pour installer et mettre le site en ligne, et **rien de plus** :
 
@@ -22,7 +22,7 @@ terminish-ecole/
 └── README.md, LIEN-ETERNEL.md, DEPLOIEMENT.md, DEPLOIEMENT-GRATUIT.md, FIREBASE.md
 ```
 
-40 fichiers · aucun `node_modules` · aucune donnée · testé (extraction vierge,
+41 fichiers · aucun `node_modules` · aucune donnée · testé (extraction vierge,
 `npm ci`, démarrage, `/api/health` OK).
 
 ## Les autres archives (facultatives)

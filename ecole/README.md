@@ -290,6 +290,7 @@ ordinateur et devient accessible en HTTPS via Cloudflare Tunnel (gratuit, sans c
 vie, sans ouvrir de port (fonctionne même derrière le NAT du Chromebook). Une seule commande :
 
 ```bash
+bash deploy/gratuit/tout.sh                      # tout remettre en route (site + tunnel + test)
 bash deploy/gratuit/service-auto.sh --installer  # le site démarre tout seul (fini le 502)
 bash deploy/gratuit/lien-stable.sh --tailscale   # installe, connecte, ouvre le tunnel
 bash deploy/gratuit/lien-stable.sh --etat        # où en est-on ?

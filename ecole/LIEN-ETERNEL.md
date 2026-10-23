@@ -7,10 +7,20 @@
 > Une seule condition : le site doit tourner — donc le Chromebook doit rester allumé et
 > connecté pendant que des gens s'en servent.
 
-**Le tout-en-un** :
+**Le tout-en-un** (à relancer après chaque redémarrage du Chromebook) :
 
 ```bash
 cd ~/"TERMINISH ECOLE"
+bash deploy/gratuit/tout.sh
+```
+
+Ce script fait les cinq choses dans le bon ordre — dépendances, site sur le port 3000 (service
+ou lancement détaché), Tailscale connecté, tunnel public ouvert, puis **test réel** du lien depuis
+Internet. Il affiche à la fin l'adresse à utiliser.
+
+Première installation, étape par étape :
+
+```bash
 npm run partage                 # 1er terminal : lance le site (laisser ouvert)
 bash deploy/gratuit/lien-stable.sh --tailscale   # 2e terminal : crée l'adresse stable
 ```
@@ -122,6 +132,25 @@ https://mon-pc.requin-bleu.ts.net
 
 > Le nom exact dépend de votre machine et de votre réseau. Le script l'écrit aussi dans
 > `data/lien-stable.txt` : `cat data/lien-stable.txt` à tout moment.
+
+### 2.2 ter — « ERR_NAME_NOT_RESOLVED » : le tunnel est fermé
+
+Le nom `<machine>.ts.net` **n'existe dans le DNS public que tant que Funnel est ouvert**. Tunnel
+fermé (redémarrage, veille longue, session Tailscale arrêtée), et le navigateur ne résout plus le
+nom du tout — c'est encore plus net qu'une 502.
+
+| Message | Signification | Geste |
+|---|---|---|
+| `ERR_NAME_NOT_RESOLVED` | tunnel fermé | `bash deploy/gratuit/tout.sh` |
+| `HTTP ERROR 502` | tunnel ouvert, site arrêté | `bash deploy/gratuit/tout.sh` |
+| page qui s'affiche | tout va bien | rien |
+
+Une seule commande règle les deux cas :
+
+```bash
+bash deploy/gratuit/tout.sh            # remet tout en route
+bash deploy/gratuit/tout.sh --verifier # ne change rien, dit seulement ce qui manque
+```
 
 ### 2.2 bis — « HTTP ERROR 502 » : le site n'est pas démarré
 
