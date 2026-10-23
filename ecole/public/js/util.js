@@ -19,7 +19,9 @@
   }
 
   async function api(path, opts = {}) {
-    const init = { credentials: 'same-origin', headers: {}, ...opts };
+    // Interface et API sur deux domaines (Firebase Hosting + Tailscale) :
+    // il faut « include » pour que le cookie de session parte avec la requête.
+    const init = { credentials: apiBase() ? 'include' : 'same-origin', headers: {}, ...opts };
     if (opts.body && !(opts.body instanceof FormData)) {
       init.headers['Content-Type'] = 'application/json';
       init.body = typeof opts.body === 'string' ? opts.body : JSON.stringify(opts.body);

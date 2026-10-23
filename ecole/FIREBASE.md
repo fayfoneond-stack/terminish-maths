@@ -38,44 +38,71 @@ les notes d'un élève. Le problème n'est pas Firebase, c'est « une base dans 
 L'interface appelle l'API par son adresse absolue. Le fichier `public/config.js` contient cette
 adresse — **une seule ligne à changer**.
 
-### 2.1 Côté serveur (votre machine)
+### 2.1 La commande unique : `deploy/gratuit/firebase.sh`
 
 ```bash
-cd ~/"TERMINISH ECOLE"
+cd ~/"TERMINISH ECOLE 1"
 
-# accepter les appels venant de Firebase, et sécuriser le cookie
-export CORS_ORIGIN="https://mon-ecole.web.app,https://mon-ecole.firebaseapp.com"
-export COOKIE_SECURE=1
+# 1. l'API a besoin d'une adresse FIXE (gratuite, sans carte) :
+bash deploy/gratuit/lien-stable.sh --tailscale
 
-bash deploy/gratuit/tout.sh          # site + tunnel
+# 2. publication de l'interface + réglages du serveur, en une fois :
+bash deploy/gratuit/firebase.sh --projet NOM-DU-PROJET
+
+# 3. redémarrer le serveur pour qu'il prenne les nouveaux réglages :
+bash deploy/gratuit/tout.sh
 ```
 
-> `CORS_ORIGIN` fait deux choses : autorise ces origines, et passe le cookie de session en
-> `SameSite=None; Secure` — obligatoire quand l'interface et l'API sont sur deux domaines.
-> `COOKIE_SECURE=1` exige HTTPS : Tailscale Funnel le fournit.
+Le script fait quatre choses, et il est rejouable sans risque :
 
-### 2.2 Côté interface (le dossier `public/`)
+| Étape | Effet |
+|---|---|
+| trouve l'adresse du tunnel | `tailscale funnel status` → `https://machine.ts.net` |
+| écrit `public/config.js` | l'interface sait où joindre l'API (sauvegarde dans `public/config.js.avant-firebase`) |
+| écrit `.firebaserc` | associe le dossier au projet Firebase |
+| publie `public/` | `firebase deploy --only hosting` → `https://NOM.web.app` |
 
-1. Dans `public/config.js`, mettez l'adresse du tunnel :
+Il écrit aussi un bloc dans **`.env`** :
 
-```js
-window.TERMINISH_API_BASE = 'https://penguin.xxxx.ts.net';
+```
+# --- Terminish / Firebase (géré par deploy/gratuit/firebase.sh) ---
+CORS_ORIGIN=https://NOM.web.app,https://NOM.firebaseapp.com
+COOKIE_SECURE=1
+# --- fin du bloc Firebase ---
 ```
 
-2. Installez Firebase CLI (une fois) et connectez-vous :
+> Le serveur lit automatiquement `.env` au démarrage (aucune dépendance, aucune variable à
+> retaper). C'est ce qui fait que `tout.sh`, le service systemd et un démarrage manuel se
+> comportent tous de la même façon après un redémarrage du Chromebook.
+> `CORS_ORIGIN` autorise l'origine Firebase **et** passe le cookie en `SameSite=None; Secure`,
+> obligatoire quand l'interface et l'API sont sur deux domaines.
+
+Autres options du script :
 
 ```bash
-npm install -g firebase-tools
-firebase login
+bash deploy/gratuit/firebase.sh --etat        # où en est-on ?
+bash deploy/gratuit/firebase.sh --preparer    # écrit les fichiers, ne publie pas
+bash deploy/gratuit/firebase.sh --api https://xxxx.ts.net --projet NOM
+bash deploy/gratuit/firebase.sh --annuler     # revient au site 100 % local
 ```
 
-3. Dans le dossier `ecole/`, associez le projet :
+### 2.2 Ce qu'il faut faire à la main (une seule fois)
+
+1. Créer le projet sur <https://console.firebase.google.com> (nom libre, ex. `mon-ecole-togo`).
+   Le forfait **Spark (gratuit)** suffit : Hosting est inclus, aucune carte demandée.
+2. Se connecter à la CLI :
 
 ```bash
-cp .firebaserc.example .firebaserc
-nano .firebaserc        # remplacez "terminish-ecole" par l'identifiant de votre projet
-firebase deploy --only hosting
+npx firebase-tools login
 ```
+
+Un onglet s'ouvre : choisissez le compte Google, autorisez. Sur un Chromebook sans onglet :
+
+```bash
+npx firebase-tools login --no-localhost
+```
+
+3. Relancer `bash deploy/gratuit/firebase.sh --projet NOM-DU-PROJET`.
 
 Firebase affiche à la fin :
 
@@ -90,6 +117,18 @@ seule l'API doit être relancée (`bash deploy/gratuit/tout.sh`).
 
 Il publie uniquement `public/` (jamais `data/`, jamais `.env`), redirige `/app` vers `app.html`
 et met en cache CSS/JS une heure. Rien d'autre.
+
+### 2.4 Vérifier que la combinaison fonctionne
+
+| Test | Résultat attendu |
+|---|---|
+| Ouvrir `https://NOM.web.app` | la page de connexion s'affiche (servie par Google) |
+| Se connecter | le tableau de bord apparaît |
+| `curl -s https://NOM.web.app` | du HTML, jamais une erreur 404 |
+| Console du navigateur (F12) | aucune ligne rouge `CORS` / `blocked` |
+
+Si la page s'affiche mais que la connexion « tourne dans le vide » : l'API n'est pas joignable
+(tunnel arrêté, ou adresse du tunnel changée → relancer `firebase.sh`, qui réécrit `config.js`).
 
 ---
 

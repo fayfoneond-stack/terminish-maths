@@ -1,7 +1,35 @@
 'use strict';
+/**
+ * Lecture facultative d'un fichier .env à la racine du projet.
+ * Utile pour conserver CORS_ORIGIN / COOKIE_SECURE / STORAGE_PROVIDERS entre
+ * deux démarrages, y compris quand le site est lancé par systemd ou par
+ * deploy/gratuit/tout.sh (qui ne transmettent pas les variables du shell).
+ * Les variables déjà définies dans l'environnement ont la priorité.
+ *   TERMINISH_ENV_FILE=/chemin/autre.env  pour imposer un autre fichier.
+ */
+(function chargerEnv() {
+  const fs = require('node:fs');
+  const p = require('node:path');
+  const fichier = process.env.TERMINISH_ENV_FILE || p.join(__dirname, '..', '.env');
+  let texte = '';
+  try { texte = fs.readFileSync(fichier, 'utf8'); } catch { return; }
+  texte.split(/\r?\n/).forEach(ligne => {
+    const l = ligne.trim();
+    if (!l || l.startsWith('#')) return;
+    const i = l.indexOf('=');
+    if (i < 1) return;
+    const cle = l.slice(0, i).trim();
+    let valeur = l.slice(i + 1).trim();
+    if ((valeur.startsWith('"') && valeur.endsWith('"')) || (valeur.startsWith("'") && valeur.endsWith("'"))) {
+      valeur = valeur.slice(1, -1);
+    }
+    if (!(cle in process.env)) process.env[cle] = valeur;
+  });
+})();
 const express = require('express');
 const crypto = require('node:crypto');
 const path = require('node:path');
+
 const { db, hashPassword, verifyPassword, createEtablissement, createUser, now, today, addDays } = require('./db');
 const { computeClasse, bulletinData } = require('./stats');
 const stockage = require('./storage');

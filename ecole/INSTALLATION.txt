@@ -91,6 +91,34 @@ PRÉREQUIS : Node.js 22 ou plus. Rien d'autre. (Docker seulement pour l'option D
   Pour une adresse qui ne change jamais : Tailscale (section suivante).
 
 ===============================================================================
+ FIREBASE : UNE ADRESSE DÉFINITIVE (https://mon-ecole.web.app)
+===============================================================================
+
+  Firebase Hosting publie l'INTERFACE (HTML/CSS/JS) gratuitement, sans carte
+  bancaire, sur une adresse qui ne change jamais. Le SERVEUR (Node + base)
+  reste sur votre Chromebook : Firebase ne peut pas l'exécuter sans carte.
+
+  Le script fait tout d'un coup : il lit l'adresse fixe du tunnel Tailscale,
+  l'écrit dans public/config.js, associe le projet Firebase, publie, et
+  enregistre les réglages CORS + cookie dans le fichier .env.
+
+      1)  bash deploy/gratuit/lien-stable.sh --tailscale
+      2)  npx firebase-tools login
+      3)  bash deploy/gratuit/firebase.sh --projet NOM-DU-PROJET
+      4)  bash deploy/gratuit/tout.sh
+
+  Le projet se crée (une seule fois) sur https://console.firebase.google.com
+  → « Ajouter un projet » → forfait Spark (gratuit). Le nom choisi devient
+  l'adresse : https://NOM.web.app
+
+  Autres options :
+      bash deploy/gratuit/firebase.sh --etat       # où en est-on ?
+      bash deploy/gratuit/firebase.sh --preparer   # écrire sans publier
+      bash deploy/gratuit/firebase.sh --annuler    # revenir au site local
+
+  Détail complet : FIREBASE.md
+
+===============================================================================
  UN LIEN QUI NE CHANGE JAMAIS — GRATUIT, SANS CARTE BANCAIRE (Tailscale)
 ===============================================================================
 
