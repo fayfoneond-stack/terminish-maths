@@ -18,7 +18,7 @@
 set -uo pipefail
 
 RACINE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-PORT="${PORT:-3000}"
+PORT="${PORT:-}"          # vide = on déduit le bon port plus bas
 DATA_DIR="${TERMINISH_DATA_DIR:-$RACINE/data}"
 NOM="terminish-ecole"
 UNITE="$HOME/.config/systemd/user/${NOM}.service"
@@ -33,18 +33,36 @@ jaune() { printf '  \033[33m!\033[0m %s\n' "$1"; }
 etape() { printf '\n\033[1m%s\033[0m\n' "$1"; }
 info()  { printf '    \033[90m%s\033[0m\n' "$1"; }
 
-# Le site tourne peut-être sur un autre port que 3000 (3001 si 3000 était pris).
-# On adopte ce port pour ne pas démarrer une seconde instance inutile.
-if [ -z "${PORT_FORCE:-}" ]; then
-  port_ok() {
-    if command -v curl >/dev/null; then curl -fsS --max-time 2 "http://127.0.0.1:$1/api/health" >/dev/null 2>&1
-    else "$NODE_BIN" -e "fetch('http://127.0.0.1:$1/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))" >/dev/null 2>&1; fi
-  }
-  if ! port_ok "$PORT"; then
-    for _p in 3000 3001 3002 3003 3004 3005; do
-      if port_ok "$_p"; then PORT="$_p"; break; fi
-    done
+# --------------------------------------------------------------------------
+# Quel port utiliser ?
+#   1. celui que l'utilisateur impose (PORT=3005 bash tout.sh) ;
+#   2. sinon celui du tunnel Tailscale déjà ouvert (sinon : lien mort = 502) ;
+#   3. sinon celui où le site répond déjà ;
+#   4. sinon 3000.
+# --------------------------------------------------------------------------
+port_ok() {
+  if command -v curl >/dev/null; then curl -fsS --max-time 2 "http://127.0.0.1:$1/api/health" >/dev/null 2>&1
+  else "$NODE_BIN" -e "fetch('http://127.0.0.1:$1/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))" >/dev/null 2>&1; fi
+}
+port_du_tunnel() {
+  local sortie
+  for _c in "tailscale funnel status" "sudo -n tailscale funnel status"; do
+    sortie="$($_c 2>/dev/null)" || continue
+    printf '%s' "$sortie" | grep -oE 'proxy http://127\.0\.0\.1:[0-9]+' | head -n1 | grep -oE '[0-9]+$' && return 0
+  done
+  return 1
+}
+if [ -z "$PORT" ] && [ -z "${PORT_FORCE:-}" ]; then
+  PORT="$(port_du_tunnel || true)"
+  if [ -n "$PORT" ]; then
+    info "Tunnel Tailscale ouvert sur le port ${PORT} : c'est ce port qui sera utilisé."
   fi
+fi
+if [ -z "$PORT" ]; then
+  PORT=3000
+  for _p in 3000 3001 3002 3003 3004 3005; do
+    if port_ok "$_p"; then PORT="$_p"; break; fi
+  done
 fi
 
 site_repond() {

@@ -24,7 +24,24 @@ const valeur = (nom, defaut) => {
   const i = argv.indexOf(nom);
   return i >= 0 ? argv[i + 1] : defaut;
 };
-const PORT = Number(valeur('--port', process.env.PORT || 3000));
+/**
+ * Port d'écoute. Priorité : --port, puis $PORT, puis le port sur lequel un
+ * tunnel Tailscale est déjà ouvert (sinon le lien fixe renverrait une erreur
+ * 502), puis 3000.
+ */
+function portDuFunnel() {
+  for (const [cmd, args] of [['tailscale', ['funnel', 'status']], ['sudo', ['-n', 'tailscale', 'funnel', 'status']]]) {
+    let r;
+    try { r = spawnSync(cmd, args, { encoding: 'utf8', timeout: 5000 }); } catch (_) { continue; }
+    if (r && r.status === 0 && r.stdout) {
+      const m = /proxy http:\/\/127\.0\.0\.1:(\d+)/.exec(r.stdout);
+      if (m) return Number(m[1]);
+    }
+  }
+  return null;
+}
+const PORT_DEMANDE = valeur('--port', process.env.PORT || '');
+const PORT = Number(PORT_DEMANDE || portDuFunnel() || 3000);
 const SANS_TUNNEL = argv.includes('--sans-tunnel');
 const DEMO = argv.includes('--demo');
 const DATA_DIR = process.env.TERMINISH_DATA_DIR || path.join(RACINE, 'data');
