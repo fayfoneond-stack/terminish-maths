@@ -21,6 +21,9 @@
 set -uo pipefail
 
 RACINE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# systemd n'accepte pas les guillemets dans WorkingDirectory : on échappe
+# les espaces et les caractères spéciaux à la mode systemd (\x20).
+RACINE_SYSTEMD="$(printf '%s' "$RACINE" | sed -e 's/ /\\x20/g' -e 's/"/\\x22/g' -e 's/\\/\\\\/g')"
 PORT="${PORT:-3000}"
 DATA_DIR="${TERMINISH_DATA_DIR:-$RACINE/data}"
 NOM="terminish-ecole"
@@ -58,11 +61,16 @@ After=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=${RACINE}
-Environment=TERMINISH_SEED=prod
-Environment=PORT=${PORT}
-Environment=TERMINISH_DATA_DIR=${DATA_DIR}
-ExecStart=${NODE_BIN} ${RACINE}/server/index.js
+# ATTENTION AUX ESPACES dans le chemin (« TERMINISH ECOLE »).
+#   • Pas de WorkingDirectory= : il n'accepte pas les guillemets et couperait
+#     le chemin à l'espace → service en boucle (état « activating ») et site
+#     injoignable (HTTP 502). Le serveur n'en a pas besoin : tous ses chemins
+#     sont absolus (__dirname) et les données sont passées par variable.
+#   • ExecStart= et Environment= acceptent, eux, les guillemets.
+Environment="TERMINISH_SEED=prod"
+Environment="PORT=${PORT}"
+Environment="TERMINISH_DATA_DIR=${DATA_DIR}"
+ExecStart="${NODE_BIN}" "${RACINE}/server/index.js"
 Restart=always
 RestartSec=5
 # Un arrêt propre laisse le temps d'écrire la base.
@@ -104,8 +112,17 @@ installer() {
       info "Redémarrer : systemctl --user restart ${NOM}"
       info "Journaux   : journalctl --user -u ${NOM} -f"
     else
-      rouge "Le service est installé mais le site ne répond pas encore."
-      echo "   Voir : journalctl --user -u ${NOM} -n 30"
+      rouge "Le service est installé mais le site ne répond pas."
+      echo
+      info "Dernières lignes du service :"
+      journalctl --user -u "$NOM" -n 12 --no-pager 2>/dev/null | sed 's/^/     /'
+      echo
+      jaune "Bascule immédiate en lancement direct (le site sera en ligne)."
+      systemctl --user stop "$NOM" >/dev/null 2>&1
+      demarrer_fond
+      echo
+      echo "   Pour réessayer le service une fois la cause corrigée :"
+      echo "     bash deploy/gratuit/service-auto.sh --installer"
     fi
   else
     jaune "systemd n'est pas disponible dans ce conteneur : lancement détaché."
