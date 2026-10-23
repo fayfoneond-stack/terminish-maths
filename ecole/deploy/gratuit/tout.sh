@@ -73,6 +73,23 @@ site_repond() {
   fi
 }
 systemd_dispo() { systemctl --user show-environment >/dev/null 2>&1; }
+
+# Dossier du projet visé par le service systemd déjà installé (s'il existe).
+# C'est LA cause du « je lance TERMINISH ECOLE 1 mais c'est l'autre base qui
+# s'affiche » : l'unité garde le chemin absolu du dossier qui l'a installée.
+unite_racine() {
+  [ -f "$UNITE" ] || return 1
+  grep -oE 'ExecStart=.*' "$UNITE" 2>/dev/null | head -1 \
+    | grep -oE '"[^"]*/server/index\.js"' | head -1 | tr -d '"' | sed 's|/server/index\.js$||'
+}
+unite_port() {
+  [ -f "$UNITE" ] || return 1
+  grep -oE 'Environment="PORT=[0-9]+"' "$UNITE" 2>/dev/null | head -1 | grep -oE '[0-9]+'
+}
+unite_donnees() {
+  [ -f "$UNITE" ] || return 1
+  grep -oE 'Environment="TERMINISH_DATA_DIR=[^"]*"' "$UNITE" 2>/dev/null | head -1 | sed 's/.*=//; s/"$//'
+}
 ts() { command -v tailscale 2>/dev/null || echo ""; }
 ts_etat() {   # Running | NeedsLogin | Stopped | Absent
   local b; b="$(ts)"; [ -z "$b" ] && { echo Absent; return; }
@@ -135,6 +152,35 @@ fi
 
 # ---------------------------------------------------------------- 2. Le site
 etape "2/5 · Le site (port ${PORT})"
+if [ -f "$UNITE" ] && systemd_dispo; then
+  AUTRE="$(unite_racine || true)"
+  if [ -n "$AUTRE" ] && [ "$AUTRE" != "$RACINE" ]; then
+    jaune "Le service automatique pointe sur un AUTRE dossier :"
+    info "   ${AUTRE}"
+    info "   (celui que vous venez de lancer : ${RACINE})"
+    info "→ il est réinstallé pour CE dossier, avec le port ${PORT}."
+    PORT="$PORT" bash "$RACINE/deploy/gratuit/service-auto.sh" --installer >/dev/null 2>&1 \
+      && vert "Service réinstallé pour ce dossier" \
+      || jaune "Réinstallation impossible : le site sera lancé directement."
+    systemctl --user daemon-reload >/dev/null 2>&1
+  elif [ -n "$AUTRE" ]; then
+    UPORT="$(unite_port || true)"
+    UDATA="$(unite_donnees || true)"
+    if [ -n "$UPORT" ] && [ "$UPORT" != "$PORT" ]; then
+      jaune "Le service écoute sur le port ${UPORT}, le tunnel sur ${PORT} : il sera réinstallé."
+      PORT="$PORT" bash "$RACINE/deploy/gratuit/service-auto.sh" --installer >/dev/null 2>&1 \
+        && vert "Service réinstallé sur le port ${PORT}" || true
+      systemctl --user daemon-reload >/dev/null 2>&1
+    fi
+    if [ -n "$UDATA" ] && [ "$UDATA" != "$DATA_DIR" ]; then
+      jaune "Le service lit les données de ${UDATA} au lieu de ${DATA_DIR}."
+      info "→ réinstallation avec le bon dossier de données."
+      PORT="$PORT" TERMINISH_DATA_DIR="$DATA_DIR" \
+        bash "$RACINE/deploy/gratuit/service-auto.sh" --installer >/dev/null 2>&1 || true
+      systemctl --user daemon-reload >/dev/null 2>&1
+    fi
+  fi
+fi
 if site_repond; then
   vert "Le site répond déjà — rien à faire"
 elif [ "$VERIFIER_SEULEMENT" = "--verifier" ]; then
@@ -251,6 +297,14 @@ fi
 
 echo
 echo "──────────────────────────────────────────────────────────────"
+echo "  DOSSIER UTILISÉ :  ${RACINE}"
+echo "  BASE DE DONNÉES :  ${DATA_DIR}/terminish-ecole.db"
+if command -v curl >/dev/null && [ -n "${URL:-}" ]; then
+  INST="$(curl -s -m 6 "${URL}/api/health" 2>/dev/null | grep -o '"installation":"[^"]*"' | cut -d'"' -f4)"
+  [ -n "$INST" ] && echo "  Installation qui répond sur Internet : ${INST}"
+  [ -n "$INST" ] && [ "$INST" != "$(basename "$RACINE")" ] && \
+    rouge "Ce n'est PAS $(basename "$RACINE") : le tunnel pointe sur une autre installation !"
+fi
 if site_repond && [ -n "${URL:-}" ]; then
   echo "  LIEN À UTILISER :  ${URL}"
   echo "  Console admin   :  ${URL}/app"

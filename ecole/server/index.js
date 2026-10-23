@@ -1670,10 +1670,65 @@ app.use((err, req, res, next) => {
 });
 
 // Sonde de santé (Docker, Render, Fly, load-balancers)
+/**
+ * Quelle base sert réellement ce site ? (réservé à la direction)
+ * Répond à la question « suis-je sur TERMINISH ECOLE ou TERMINISH ECOLE 1 ? »
+ * sans passer par le terminal.
+ */
+app.get('/api/base', auth, directionOnly, (req, res) => {
+  const fs = require('node:fs');
+  const dossier = path.join(__dirname, '..');
+  const dossierDonnees = process.env.TERMINISH_DATA_DIR || path.join(dossier, 'data');
+  const fichier = path.join(dossierDonnees, 'terminish-ecole.db');
+  let info = { taille: null, modifie_le: null };
+  try {
+    const st = fs.statSync(fichier);
+    info = { taille: st.size, modifie_le: st.mtime.toISOString() };
+  } catch (_) { /* fichier encore absent */ }
+
+  const compter = (table, ou = '') => {
+    try { return db.prepare(`SELECT COUNT(*) AS n FROM ${table} ${ou}`).get().n; } catch { return null; }
+  };
+  let etablissements = [];
+  try {
+    etablissements = db.prepare('SELECT id, nom, ville, annee_scolaire FROM etablissements ORDER BY id').all();
+  } catch (_) { /* table absente */ }
+
+  let demo = false;
+  try { demo = !!db.prepare("SELECT 1 FROM utilisateurs WHERE email LIKE '%@demo.tg' LIMIT 1").get(); } catch (_) {}
+  if (!demo) demo = etablissements.some(e => /palmiers|saint-esprit|demo/i.test(e.nom || ''));
+
+  res.json({
+    dossier,
+    nom_dossier: path.basename(dossier),
+    dossier_donnees: dossierDonnees,
+    fichier,
+    ...info,
+    mode: demo ? 'demo' : 'production',
+    port: Number(PORT),
+    compteurs: {
+      etablissements: etablissements.length,
+      eleves: compter('eleves'),
+      classes: compter('classes'),
+      notes: compter('notes'),
+      bulletins: compter('bulletins'),
+      enseignants: compter('utilisateurs', "WHERE role = 'enseignant'")
+    },
+    etablissements
+  });
+});
+
 app.get('/api/health', (req, res) => {
   try {
     db.prepare('SELECT 1').get();
-    res.json({ ok: true, uptime: Math.round(process.uptime()), version: require('../package.json').version });
+    res.json({
+      ok: true,
+      uptime: Math.round(process.uptime()),
+      version: require('../package.json').version,
+      // permet de vérifier en une requête QUELLE installation répond
+      installation: path.basename(path.join(__dirname, '..')),
+      port: Number(PORT)
+    });
   } catch (err) {
     res.status(500).json({ ok: false, error: 'base de données indisponible' });
   }

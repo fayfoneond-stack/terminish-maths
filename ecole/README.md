@@ -313,6 +313,11 @@ exemplaires du projet dans deux dossiers = deux bases différentes, sans le dire
 npm run base
 ```
 
+Ou, sans terminal : menu de gauche, en bas → **🗄️ Base de données** (chef
+d'établissement). La fenêtre affiche le dossier, le fichier, sa date, sa taille,
+le mode démo/production et le contenu réel. C'est la preuve visuelle de ce que le
+site utilise réellement — utile quand deux dossiers « TERMINISH ECOLE » coexistent.
+
 Affiche, sans rien modifier : le dossier de données, le fichier et sa date de
 dernière écriture, le mode (démo / production), le nombre réel d'établissements,
 d'élèves, de notes et de bulletins, les **autres bases présentes** sur la

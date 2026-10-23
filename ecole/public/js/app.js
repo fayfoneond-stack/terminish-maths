@@ -321,6 +321,7 @@
           ${ecoleBloc}
           ${nav}
           <div class="sb-foot">
+            ${role === 'directeur' ? `<a href="#" id="btn-base" title="Voir le dossier et le fichier de données réellement utilisés">🗄️ Base de données</a><br>` : ''}
             <a href="/" target="_blank" rel="noopener">Site public ↗</a><br>
             <span>© 2026 Terminish École</span>
           </div>
@@ -341,6 +342,8 @@
       </div>`;
 
     $('#burger').onclick = () => $('#sidebar').classList.toggle('open');
+    const btnBase = $('#btn-base');
+    if (btnBase) btnBase.onclick = (e) => { e.preventDefault(); App.voirBase(); };
     $('#btn-logout').onclick = async () => {
       await api('/api/auth/logout', { method: 'POST' }).catch(() => {});
       S.me = null; location.hash = '';
@@ -1979,6 +1982,59 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
   };
 
   Object.assign(window.App, {
+    /** « Sur quelle base suis-je ? » — dossier, fichier, contenu, mode. */
+    async voirBase() {
+      let b;
+      try { b = await api('/api/base'); } catch (e) { toast(e.message, 'err'); return; }
+      const lignes = [
+        ['Dossier du site', b.dossier],
+        ['Fichier de données', b.fichier],
+        ['Taille', b.taille == null ? '—' : (b.taille > 1048576 ? (b.taille / 1048576).toFixed(1) + ' Mo' : Math.round(b.taille / 1024) + ' Ko')],
+        ['Dernière écriture', b.modifie_le ? dateFr(b.modifie_le) + ' ' + heureFr(b.modifie_le) : '—'],
+        ['Port d\'écoute', String(b.port)],
+        ['Mode', b.mode === 'demo' ? 'Démonstration (données fictives)' : 'Production']
+      ].map(([k, v]) => `<div class="kv" style="display:flex;justify-content:space-between;gap:14px;padding:4px 0;border-bottom:1px solid #eef2f0">
+          <span class="muted small">${esc(k)}</span>
+          <span class="small" style="font-family:monospace;text-align:right;word-break:break-all">${esc(v)}</span>
+        </div>`).join('');
+
+      const compteurs = Object.entries(b.compteurs || {})
+        .map(([k, v]) => `<span class="chip">${esc({
+          etablissements: 'établissements', eleves: 'élèves', classes: 'classes',
+          notes: 'notes', bulletins: 'bulletins', enseignants: 'enseignants'
+        }[k] || k)} <b>${v == null ? '—' : v}</b></span>`).join('');
+
+      const ecoles = (b.etablissements || []).map(e =>
+        `<li><b>${esc(e.nom)}</b> — ${esc(e.ville || '')} · ${esc(e.annee_scolaire || '')}</li>`).join('');
+
+      modal({
+        title: 'Base de données utilisée',
+        size: 'large',
+        body: `
+          ${b.mode === 'demo' ? `<div class="notice warn"><b>C'est une base de démonstration.</b>
+            Les écoles, élèves et notes sont fictifs (jeu d'exemple). Pour travailler en réel, démarrez
+            avec <code>TERMINISH_SEED=prod</code>.</div>` : `<div class="notice ok">Base de production.</div>`}
+          <div class="small">Tout ce que vous saisissez vit dans <b>un seul fichier</b>, celui-ci. Le
+            nom du dossier affiché ci-dessous doit correspondre à celui depuis lequel le site a été lancé.</div>
+          <div style="margin:10px 0">${lignes}</div>
+          <div class="small muted" style="margin-top:8px">Contenu réel :</div>
+          <div class="chips" style="margin:6px 0 10px">${compteurs}</div>
+          ${ecoles ? `<div class="small muted">Établissements présents :</div><ul class="small" style="margin:4px 0 0 18px">${ecoles}</ul>` : '<div class="small muted">Aucun établissement dans cette base.</div>'}
+          <div class="notice info" style="margin-top:12px">
+            Deux dossiers « TERMINISH ECOLE » = deux bases différentes. C'est le dossier de lancement qui
+            décide, pas l'adresse web. Contrôle en terminal : <code>npm run base</code>. Sauvegarde :
+            <code>npm run backup</code>.
+          </div>`,
+        footer: `<button class="btn btn-ghost btn-sm" data-close>Fermer</button>
+                 <button class="btn btn-primary btn-sm" id="btn-copier-base">📋 Copier le chemin</button>`
+      });
+      const copier = document.querySelector('#btn-copier-base');
+      if (copier) copier.onclick = async () => {
+        try { await navigator.clipboard.writeText(b.fichier); toast('Chemin copié'); }
+        catch (_) { toast('Copie impossible', 'err'); }
+      };
+    },
+
     imprimerClasse(classeId, periodeId, mode) {
       const suffixe = mode === 'composition' ? '&mode=composition' : '';
       window.open(lienServeur(`/print/classe/${classeId}?periode_id=${periodeId}${suffixe}`), '_blank');

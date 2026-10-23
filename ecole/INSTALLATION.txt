@@ -305,6 +305,14 @@ PRÉREQUIS : Node.js 22 ou plus. Rien d'autre. (Docker seulement pour l'option D
   ⚠ Deux dossiers « TERMINISH ECOLE » et « TERMINISH ECOLE 1 » = DEUX bases
     différentes. C'est le dossier de lancement qui décide, pas le zip.
 
+  Sans terminal : menu de gauche, tout en bas → « 🗄️ Base de données ».
+  La fenêtre donne le dossier exact, le fichier, la date et le contenu.
+
+  ⚠ Le service automatique (systemd) garde le chemin absolu du dossier qui
+    l'a installé. Si vous avez installé le service depuis « TERMINISH ECOLE »
+    puis lancez « TERMINISH ECOLE 1 », c'était l'ancien dossier qui répondait.
+    tout.sh détecte ce cas et réinstalle le service pour le dossier courant.
+
   Sauvegarde : npm run backup  (copie le fichier dans data/sauvegardes/)
 
 ===============================================================================

@@ -171,6 +171,31 @@ case "$API" in
 esac
 ok "API : $API"
 
+# Quel dossier répond réellement derrière cette adresse ?
+# (deux exemplaires du projet = deux bases différentes : on le dit tout de suite)
+if command -v curl >/dev/null 2>&1; then
+  SANTE="$(curl -s -m 6 "$API/api/health" 2>/dev/null)"
+  INST="$(printf '%s' "$SANTE" | grep -o '"installation":"[^"]*"' | cut -d'"' -f4)"
+  IPORT="$(printf '%s' "$SANTE" | grep -o '"port":[0-9]*' | cut -d: -f2)"
+  if [ -z "$INST" ]; then
+    alerte "L'API ne répond pas pour l'instant sur ${API}."
+    info "Le site publié s'affichera, mais la connexion échouera."
+    info "Démarrez-le d'abord : bash deploy/gratuit/tout.sh"
+  else
+    ok "L'API répond : dossier « ${INST} » · port ${IPORT}"
+    if [ "$INST" != "$(basename "$RACINE")" ]; then
+      alerte "ATTENTION : ce n'est pas le dossier que vous publiez ($(basename "$RACINE"))."
+      info "Le site Firebase affichera les données de « ${INST} », pas les vôtres."
+      info "Arrêtez l'autre instance, puis : bash deploy/gratuit/tout.sh"
+      if [ -t 0 ]; then
+        printf '  Continuer quand même ? [o/N] '
+        read -r REPONSE
+        case "$REPONSE" in o|O|oui|Oui) : ;; *) erreur "Publication annulée."; exit 1 ;; esac
+      fi
+    fi
+  fi
+fi
+
 # --- 4. config.js -----------------------------------------------------------
 if [ ! -f "$SAUVEGARDE" ]; then
   cp "$CONFIG" "$SAUVEGARDE"
