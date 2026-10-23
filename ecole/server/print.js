@@ -74,14 +74,16 @@ function renderBulletin({ promo, ligne, bulletin, eleve, professeurs = {}, princ
   const stat = promo.stats;
   const evals = promo.resultats[0] && promo.resultats[0].lignes[0] ? Object.keys(promo.resultats[0].lignes[0].detail || {}) : [];
   const hasDevoir2 = evals.includes('devoir2');
+  // Bulletin « composition seule » : on n'imprime que la composition.
+  const modeComposition = promo.scope && promo.scope.mode === 'composition';
 
   const rows = ligne.lignes.map(l => {
     const prof = professeurs[l.matiere_id] || professeurs[l.id] || null;
     return `
     <tr>
       <td class="mat">${esc(l.nom)}${prof ? `<div class="prof">${esc(prof.nom)}</div>` : ''}</td>
-      ${noteCell(l.detail.devoir1)}
-      ${hasDevoir2 ? noteCell(l.detail.devoir2) : '<td>—</td>'}
+      ${modeComposition ? '' : noteCell(l.detail.devoir1)}
+      ${modeComposition ? '' : (hasDevoir2 ? noteCell(l.detail.devoir2) : '<td>—</td>')}
       ${noteCell(l.detail.composition)}
       ${noteCell(l.moyenne)}
       <td>${l.coefficient}</td>
@@ -116,8 +118,8 @@ function renderBulletin({ promo, ligne, bulletin, eleve, professeurs = {}, princ
   </div>
 
   <div class="title">
-    <h2>Bulletin de notes — ${esc(periode.libelle)}</h2>
-    <div class="sub">${classe.cycle === 'college' ? 'Enseignement secondaire général — Collège' : 'Enseignement secondaire général — Lycée'} · Série ${esc(classe.serie || '—')}</div>
+    <h2>${modeComposition ? 'Bulletin de composition' : 'Bulletin de notes'} — ${esc(periode.libelle)}</h2>
+    <div class="sub">${classe.cycle === 'college' ? 'Enseignement secondaire général — Collège' : 'Enseignement secondaire général — Lycée'} · Série ${esc(classe.serie || '—')}${modeComposition ? ' · <b>Moyennes calculées sur la composition</b>' : ''}</div>
   </div>
 
   <div class="ident">
@@ -135,7 +137,8 @@ function renderBulletin({ promo, ligne, bulletin, eleve, professeurs = {}, princ
     <thead>
       <tr>
         <th style="width:27%">Matières</th>
-        <th>Devoir 1</th><th>Devoir 2</th><th>Composition</th>
+        ${modeComposition ? '' : '<th>Devoir 1</th><th>Devoir 2</th>'}
+        <th>Composition</th>
         <th>Moyenne</th><th>Coef.</th><th>Moy. × Coef.</th><th>Rang</th>
         <th style="width:17%">Appréciation</th>
       </tr>
@@ -143,7 +146,7 @@ function renderBulletin({ promo, ligne, bulletin, eleve, professeurs = {}, princ
     <tbody>${rows}</tbody>
     <tfoot>
       <tr>
-        <td colspan="4" style="text-align:right">TOTAUX</td>
+        <td colspan="${modeComposition ? 2 : 4}" style="text-align:right">TOTAUX</td>
         <td>${fmt(ligne.moyenne)}</td>
         <td>${fmt(ligne.total_coef)}</td>
         <td>${fmt(ligne.total_points)}</td>
@@ -158,11 +161,12 @@ function renderBulletin({ promo, ligne, bulletin, eleve, professeurs = {}, princ
       <div class="rang-big">
         <div class="n">${rangTxt}</div>
         <div>
-          <div style="font-size:9px;color:#6b7d74">Rang dans la classe</div>
+          <div style="font-size:9px;color:#6b7d74">Rang dans la classe${modeComposition ? ' (composition)' : ''}</div>
           <div class="mention">Mention : ${esc(ligne.mention)}</div>
         </div>
       </div>
       <div class="kv" style="margin-top:5px"><span>Moyenne générale de l'élève</span><strong>${fmt(ligne.moyenne)} / 20</strong></div>
+      ${!modeComposition && ligne.moyenne_composition != null ? `<div class="kv"><span>Moyenne de composition</span><strong>${fmt(ligne.moyenne_composition)} / 20</strong></div>` : ''}
       <div class="kv"><span>Moyenne de la classe</span><strong>${fmt(stat.moyenne)} / 20</strong></div>
       <div class="kv"><span>Plus forte moyenne</span><strong>${fmt(stat.max)} / 20</strong></div>
       <div class="kv"><span>Plus faible moyenne</span><strong>${fmt(stat.min)} / 20</strong></div>

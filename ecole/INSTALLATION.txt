@@ -152,11 +152,39 @@ PRÉREQUIS : Node.js 22 ou plus. Rien d'autre. (Docker seulement pour l'option D
     • une période clôturée bloque toute saisie des professeurs ;
     • une note ne peut concerner qu'un élève de la classe de l'évaluation.
 
-  Pour retirer un accès : Enseignants → modifier → décocher la classe/matière
-  (ou désactiver le compte). L'effet est immédiat.
+  Pour retirer un accès : Enseignants → 🚫 (bouton « Retirer l'accès »).
+  Les sessions en cours sont fermées immédiatement et les affectations
+  retirées ; ✅ « Rétablir » redonne l'accès. Les notes déjà saisies sont
+  conservées dans tous les cas.
+  Décocher une seule classe/matière (Enseignants → ✏️) reste possible pour
+  un retrait partiel.
 
 ===============================================================================
- MOT DE PASSE OUBLIÉ / REFUSÉ
+ MOT DE PASSE OUBLIÉ D'UN ENSEIGNANT (c'est le chef qui le redonne)
+===============================================================================
+
+  La plateforme n'envoie pas d'e-mail (elle reste à 0 F). Le chef
+  d'établissement est donc le seul à délivrer les identifiants.
+
+  1) L'enseignant ouvre la page de connexion et clique
+     « Mot de passe oublié ? », saisit son adresse et envoie.
+  2) Le chef ouvre Enseignants : un bandeau jaune « 🔔 Demandes de mot de
+     passe » apparaît en haut de page.
+  3) Il clique sur 🔑 « Nouveaux identifiants » : un mot de passe lisible
+     s'affiche (ex. baobab-solide-4821), avec un bouton 📋 Copier.
+     ⚠ Il n'est affiché qu'UNE fois : notez-le ou dictez-le tout de suite.
+     L'ancien mot de passe ne fonctionne plus et les sessions de
+     l'enseignant sont fermées.
+  4) Si le chef préfère imposer un mot de passe, il le tape dans le champ
+     « Mot de passe imposé » avant de cliquer (6 caractères minimum).
+
+  Le chef peut faire la même chose à tout moment, sans demande préalable :
+  Enseignants → 🔑 (utile au téléphone : « votre nouveau mot de passe est… »).
+  L'enseignant, lui, ne peut jamais se redonner un accès : le serveur refuse
+  (403, action réservée à la direction).
+
+===============================================================================
+ MOT DE PASSE DE L'ADMINISTRATEUR (console éditeur)
 ===============================================================================
 
     npm run motdepasse                                   # nouveau mot de passe
@@ -196,6 +224,36 @@ PRÉREQUIS : Node.js 22 ou plus. Rien d'autre. (Docker seulement pour l'option D
   blocs signés (Professeur principal / Chef d'Établissement).
   Le TUTEUR a été retiré du bulletin ; ses coordonnées restent dans la fiche
   de l'élève (usage administratif).
+
+===============================================================================
+ RANG ET BULLETINS DE COMPOSITION
+===============================================================================
+
+  Le RANG figure désormais partout :
+    • sur chaque bulletin individuel : gros chiffre « 5/20 » dans le bloc
+      « Résultats et positionnement », colonne « Rang » par matière,
+      et dans l'appréciation (« il occupe la 5e place sur 20 élèves ») ;
+    • sur la liste des bulletins de la classe (colonne Rang, triée) ;
+    • sur le relevé des examens blancs (colonne Rang, 1er en tête) ;
+    • dans les classements de la page Statistiques.
+
+  BULLETINS DE COMPOSITION SEULE (option) :
+    Console → Bulletins → « Type de bulletin » → Composition seule
+    → 🖨️ Bulletins de composition (toute la classe) ou 🖨️ sur un élève.
+
+    Le bulletin s'intitule « Bulletin de composition » : plus de colonnes
+    Devoir 1 / Devoir 2, seules les compositions sont imprimées, et les
+    moyennes générales comme les rangs sont recalculés sur la composition.
+    Les bulletins complets restent disponibles : c'est une option
+    d'affichage, rien n'est supprimé.
+
+  STATISTIQUES DE COMPOSITION (page Statistiques, vue par classe) :
+    • combien d'élèves ONT la moyenne en composition (≥ 10/20) ;
+    • combien NE L'ONT PAS (< 10/20) ;
+    • combien ne sont pas encore notés ;
+    • la répartition « qui a 1, qui a 2, qui a 3… jusqu'à 20 » (graphique
+      et tableau) ;
+    • la composition par matière (nombre de notes, moyenne, ≥ 10, < 10).
 
 ===============================================================================
  STOCKAGE EXTERNE : CLOUDINARY, DRIVE, MEGA (plusieurs comptes)

@@ -752,7 +752,9 @@ app.get('/api/bulletins/classe', auth, staffOnly, (req, res) => {
   if (!canAccessClasse(req, classeId)) return res.status(403).json({ error: 'Classe non affectée' });
   if (!periodeId && !examenId) return res.status(400).json({ error: 'Période ou examen requis' });
   const promo = computeClasse(db, ecoleId, {
-    classe_id: classeId, ...(examenId ? { examen_id: examenId } : { periode_id: periodeId })
+    classe_id: classeId,
+    ...(req.query.mode === 'composition' ? { mode: 'composition' } : {}),
+    ...(examenId ? { examen_id: examenId } : { periode_id: periodeId })
   });
   if (!promo) return res.status(404).json({ error: 'Classe introuvable' });
   if (periodeId) {
@@ -800,6 +802,7 @@ app.get('/api/stats/classe', auth, staffOnly, (req, res) => {
   if (!canAccessClasse(req, classeId)) return res.status(403).json({ error: 'Classe non affectée' });
   const promo = computeClasse(db, ecoleId, {
     classe_id: classeId,
+    ...(req.query.mode === 'composition' ? { mode: 'composition' } : {}),
     ...(req.query.examen_id ? { examen_id: Number(req.query.examen_id) } : { periode_id: Number(req.query.periode_id) })
   });
   if (!promo) return res.status(404).json({ error: 'Introuvable' });
@@ -816,8 +819,9 @@ app.get('/api/stats/etablissement', auth, staffOnly, (req, res) => {
     const ids = new Set(db.prepare('SELECT DISTINCT classe_id FROM affectations WHERE enseignant_id = ?').all(req.user.id).map(r => r.classe_id));
     classes = classes.filter(c => ids.has(c.id));
   }
+  const mode = req.query.mode === 'composition' ? 'composition' : undefined;
   const lignes = classes.map(c => {
-    const promo = computeClasse(db, ecoleId, { classe_id: c.id, periode_id: periodeId });
+    const promo = computeClasse(db, ecoleId, { classe_id: c.id, periode_id: periodeId, ...(mode ? { mode } : {}) });
     const absents = promo.resultats.filter(r => r.moyenne == null).length;
     return {
       classe: c,
@@ -826,6 +830,7 @@ app.get('/api/stats/etablissement', auth, staffOnly, (req, res) => {
       min: promo.stats.min, max: promo.stats.max,
       taux_reussite: promo.stats.taux_reussite,
       non_notes: absents,
+      composition: promo.stats.composition,
       meilleur: promo.classement[0] ? {
         nom: `${promo.classement[0].eleve.nom} ${promo.classement[0].eleve.prenom}`,
         moyenne: promo.classement[0].moyenne
@@ -1148,6 +1153,112 @@ app.post('/api/auth/password', auth, (req, res) => {
   if (!verifyPassword(ancien, user.mot_de_passe)) return res.status(400).json({ error: 'Mot de passe actuel incorrect' });
   db.prepare('UPDATE utilisateurs SET mot_de_passe = ? WHERE id = ?').run(hashPassword(nouveau), user.id);
   res.json({ ok: true });
+});
+
+/* ------------------------------------------------------------------ */
+/* Récupération d'identifiants                                         */
+/* ------------------------------------------------------------------ */
+
+/** Mot de passe lisible dicté au téléphone : « baobab-solide-4821 ». */
+const MOTS_MDP_A = ['baobab', 'colibri', 'calebasse', 'harmattan', 'savane', 'lagune',
+  'mangrove', 'fromager', 'hibiscus', 'zebu', 'mil', 'cocotier', 'flamboyant'];
+const MOTS_MDP_B = ['solide', 'brillant', 'paisible', 'nouveau', 'vivant', 'clair',
+  'fidele', 'ouvert', 'joyeux', 'rapide', 'tranquille'];
+function motDePasseLisible() {
+  const a = MOTS_MDP_A[crypto.randomInt(MOTS_MDP_A.length)];
+  const b = MOTS_MDP_B[crypto.randomInt(MOTS_MDP_B.length)];
+  return `${a}-${b}-${crypto.randomInt(1000, 9999)}`;
+}
+
+/**
+ * MOT DE PASSE OUBLIÉ (public).
+ * Sans e-mail sortant, la demande est déposée pour le chef d'établissement :
+ * il la voit dans sa console et régénère les identifiants en un clic.
+ * La réponse est toujours la même (on ne révèle pas si l'adresse existe).
+ */
+app.post('/api/auth/oubli', (req, res) => {
+  const email = String((req.body || {}).email || '').trim().toLowerCase();
+  if (!email) return res.status(400).json({ error: 'Adresse email requise' });
+  const u = db.prepare('SELECT id, ecole_id, role FROM utilisateurs WHERE email = ?').get(email);
+  const message = String((req.body || {}).message || '').slice(0, 400);
+  if (u) {
+    const deja = db.prepare("SELECT id FROM demandes_mdp WHERE email = ? AND statut = 'nouvelle'").get(email);
+    if (!deja) {
+      db.prepare('INSERT INTO demandes_mdp (ecole_id, email, role, message, statut, cree_le) VALUES (?,?,?,?,?,?)')
+        .run(u.ecole_id || null, email, u.role, message, 'nouvelle', now());
+    }
+  }
+  res.json({
+    ok: true,
+    message: "Demande enregistrée. Le chef d'établissement la verra dans sa console et vous donnera un nouveau mot de passe."
+  });
+});
+
+/** Demandes en attente (chef d'établissement). */
+app.get('/api/demandes-mdp', auth, directionOnly, (req, res) => {
+  const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
+  const rows = db.prepare(`
+    SELECT d.*, u.nom AS nom, u.actif, u.id AS utilisateur_id
+    FROM demandes_mdp d
+    LEFT JOIN utilisateurs u ON u.email = d.email
+    WHERE COALESCE(d.ecole_id, u.ecole_id) = ?
+    ORDER BY CASE d.statut WHEN 'nouvelle' THEN 0 ELSE 1 END, d.cree_le DESC
+    LIMIT 100`).all(ecoleId);
+  res.json(rows);
+});
+
+app.post('/api/demandes-mdp/:id/traiter', auth, directionOnly, (req, res) => {
+  const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
+  const d = db.prepare('SELECT * FROM demandes_mdp WHERE id = ?').get(Number(req.params.id));
+  if (!d) return res.status(404).json({ error: 'Demande introuvable' });
+  const u = db.prepare('SELECT id, ecole_id FROM utilisateurs WHERE email = ?').get(d.email);
+  if (u && u.ecole_id && u.ecole_id !== ecoleId) return res.status(403).json({ error: 'Accès refusé' });
+  if (!u && d.ecole_id !== ecoleId) return res.status(403).json({ error: 'Accès refusé' });
+  const statut = req.body && req.body.statut === 'ignoree' ? 'ignoree' : 'traitee';
+  db.prepare('UPDATE demandes_mdp SET statut = ?, traite_le = ?, traite_par = ? WHERE id = ?')
+    .run(statut, now(), req.user.id, d.id);
+  res.json({ ok: true });
+});
+
+/**
+ * NOUVEAUX IDENTIFIANTS pour un enseignant (chef d'établissement seulement).
+ * Le mot de passe est renvoyé UNE SEULE FOIS, en clair, pour être communiqué.
+ * Toutes ses sessions ouvertes sont fermées : l'ancien mot de passe ne sert
+ * plus à rien, même sur un appareil resté connecté.
+ */
+app.post('/api/enseignants/:id/identifiants', auth, directionOnly, (req, res) => {
+  const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
+  const u = db.prepare("SELECT * FROM utilisateurs WHERE id = ? AND ecole_id = ? AND role = 'enseignant'")
+    .get(Number(req.params.id), ecoleId);
+  if (!u) return res.status(404).json({ error: 'Enseignant introuvable' });
+
+  // Mot de passe imposé (facultatif) ou généré lisible
+  let mdp = String((req.body || {}).mot_de_passe || '').trim();
+  if (mdp && mdp.length < 6) return res.status(400).json({ error: '6 caractères minimum' });
+  if (!mdp) mdp = motDePasseLisible();
+
+  db.prepare('UPDATE utilisateurs SET mot_de_passe = ?, actif = 1 WHERE id = ?')
+    .run(hashPassword(mdp), u.id);
+  const fermees = db.prepare('DELETE FROM sessions WHERE user_id = ?').run(u.id).changes;
+  db.prepare("UPDATE demandes_mdp SET statut = 'traitee', traite_le = ?, traite_par = ? WHERE email = ? AND statut = 'nouvelle'")
+    .run(now(), req.user.id, u.email);
+
+  res.json({ ok: true, email: u.email, nom: u.nom, mot_de_passe: mdp, sessions_fermees: Number(fermees) });
+});
+
+/** Retirer / rétablir l'accès d'un enseignant (immédiat). */
+app.post('/api/enseignants/:id/acces', auth, directionOnly, (req, res) => {
+  const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
+  const u = db.prepare("SELECT * FROM utilisateurs WHERE id = ? AND ecole_id = ? AND role = 'enseignant'")
+    .get(Number(req.params.id), ecoleId);
+  if (!u) return res.status(404).json({ error: 'Enseignant introuvable' });
+  const actif = req.body && req.body.actif ? 1 : 0;
+  db.prepare('UPDATE utilisateurs SET actif = ? WHERE id = ?').run(actif, u.id);
+  if (!actif) {
+    db.prepare('DELETE FROM sessions WHERE user_id = ?').run(u.id);
+    db.prepare('DELETE FROM affectations WHERE enseignant_id = ?').run(u.id);
+  }
+  res.json({ ok: true, actif });
 });
 
 app.get('/api/paiement/options', auth, directionOnly, (req, res) => {
@@ -1476,7 +1587,8 @@ app.get('/print/bulletin/:eleveId', auth, (req, res) => {
   const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
   const periodeId = Number(req.query.periode_id);
   if (!periodeId) return res.status(400).send('Période manquante');
-  const data = bulletinData(db, ecoleId, Number(req.params.eleveId), periodeId);
+  const mode = req.query.mode === 'composition' ? 'composition' : undefined;
+  const data = bulletinData(db, ecoleId, Number(req.params.eleveId), periodeId, { mode });
   if (!data) return res.status(404).send('Élève introuvable');
   if (req.user.role === 'enseignant' && !canAccessClasse(req, data.eleve.classe_id)) return res.status(403).send('Accès refusé');
   if (req.user.role === 'eleve' && data.eleve.user_id !== req.user.id) return res.status(403).send('Accès refusé');
@@ -1490,9 +1602,10 @@ app.get('/print/classe/:classeId', auth, staffOnly, (req, res) => {
   const periodeId = Number(req.query.periode_id);
   const periode = db.prepare('SELECT * FROM periodes WHERE id = ? AND ecole_id = ?').get(periodeId, ecoleId);
   if (!periode) return res.status(400).send('Période invalide');
-  const promo = computeClasse(db, ecoleId, { classe_id: classeId, periode_id: periodeId });
+  const mode = req.query.mode === 'composition' ? 'composition' : undefined;
+  const promo = computeClasse(db, ecoleId, { classe_id: classeId, periode_id: periodeId, ...(mode ? { mode } : {}) });
   const eleves = db.prepare("SELECT id FROM eleves WHERE classe_id = ? AND statut = 'actif' ORDER BY nom, prenom").all(classeId);
-  const bulletins = eleves.map(e => bulletinData(db, ecoleId, e.id, periodeId)).filter(Boolean);
+  const bulletins = eleves.map(e => bulletinData(db, ecoleId, e.id, periodeId, { mode })).filter(Boolean);
   res.send(renderBulletinBatch(bulletins, periode));
 });
 

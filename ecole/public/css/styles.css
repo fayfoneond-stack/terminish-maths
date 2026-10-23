@@ -284,6 +284,8 @@ footer.landing-foot a { color: #cfe5da; text-decoration: none; }
 .kpi .val { font-size: 26px; font-weight: 800; letter-spacing: -1px; color: var(--vert-fonce); margin-top: 5px; }
 .kpi .sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 .kpi.accent { background: linear-gradient(135deg, var(--vert-fonce), #0f7d58); border-color: transparent; }
+.kpi.vert { background: #eef8f2; border-color: #bfe4d0; }
+.kpi.vert .val { color: #0b6b4a; }
 .kpi.accent .lbl, .kpi.accent .sub { color: #b7d9cb; }
 .kpi.accent .val { color: #fff; }
 

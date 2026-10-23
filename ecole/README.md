@@ -50,10 +50,17 @@ démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimest
 - Classes : cycles collège (trimestres) / lycée (semestres), séries, titulaire, matières et coefficients.
 - Matières : bibliothèque de l'établissement, groupes disciplinaires.
 - Enseignants : comptes et **affectations classe × matière** (matrice de cases à cocher).
+  **Le chef est le seul à gérer les identifiants** : 🔑 *Nouveaux identifiants* (mot de passe lisible,
+  affiché **une seule fois**, sessions de l'enseignant fermées), 🚫 *Retirer l'accès* / ✅ *Rétablir*,
+  et panneau **🔔 Demandes de mot de passe** alimenté par le lien « Mot de passe oublié » de l'écran
+  de connexion.
 - Bulletins : calcul automatique, appréciations et décisions, **publication aux familles**, impression
-  individuelle ou de toute la classe, export CSV.
+  individuelle ou de toute la classe, export CSV, et **bulletins de composition seule** (option
+  « Type de bulletin → Composition seule » : moyennes et rangs recalculés sur la composition).
 - Statistiques : par classe, par matière et pour tout l'établissement (moyenne, min/max, médiane, écart-type,
-  taux de réussite, histogramme, classements).
+  taux de réussite, histogramme, classements) + **volet composition** : nombre d'élèves ayant la moyenne
+  (≥ 10), n'ayant pas la moyenne (< 10), non notés, **répartition « qui a 1, qui a 2, qui a 3… »** et
+  tableau composition par matière.
 - Examens blancs : planification des épreuves (date, heure, durée, salle, coefficient), saisie des notes,
   résultats comparables aux bulletins de période.
 - Paramètres : identité, **logo importé**, titre du chef, année scolaire, devise, formule de calcul des
@@ -71,7 +78,7 @@ démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimest
 
 ### Élève / parent
 - Espace personnel : bulletins **uniquement après publication** par la direction.
-- Moyenne, rang, mention, appréciation et détail par matière ; impression du bulletin.
+- Moyenne, **rang dans la classe**, mention, appréciation et détail par matière ; impression du bulletin.
 
 ### Éditeur (SaaS)
 - Console multi-établissements : nombre d'écoles, élèves, revenus, essais en cours.
@@ -91,7 +98,12 @@ démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimest
   - `moy_co` : `(moyenne des devoirs + composition) ÷ 2`
   - une absence ou une note non saisie est exclue ;
 - Moyenne générale : `Σ (moyenne matière × coefficient) ÷ Σ coefficients` (seules les matières évaluées comptent).
-- Rang : classement « compétition » (1, 1, 3…), non classé si aucune moyenne.
+- Rang : classement « compétition » (1, 1, 3…), non classé si aucune moyenne. Il figure sur **chaque
+  bulletin** (bloc « Résultats et positionnement » + colonne Rang par matière) et sur les **relevés
+  d'examens blancs**.
+- **Bulletin de composition seule** (`?mode=composition`) : la moyenne de chaque matière devient la note
+  de composition ; les moyennes générales et les rangs sont recalculés sur ces notes. Utile en fin de
+  trimestre pour ne sortir que les compositions.
 - Mentions : < 10 Insuffisant, 10–12 Passable, 12–14 Assez bien, 14–16 Bien, 16–18 Très bien, ≥ 18 Excellent.
 - Statistiques : moyenne, min, max, médiane, écart-type (population) et taux de réussite (≥ 10/20).
 - Collège : 3 trimestres. Lycée : 2 semestres.
@@ -257,6 +269,33 @@ navigateur, puis enregistrée sur le stockage configuré (`STORAGE_PROVIDERS`). 
 automatiquement sur tous les bulletins de l'enseignant, au-dessus de son nom.
 Le chef d'établissement importe la sienne depuis *Paramètres → Logo & signature*.
 
+### Identifiants des enseignants (récupération de mot de passe)
+
+Il n'y a **pas d'envoi d'e-mail** dans la plateforme (contrainte 0 F). La récupération passe donc par
+le chef d'établissement, seul habilité :
+
+| Situation | Ce que fait le chef | Effet |
+|---|---|---|
+| Un enseignant a perdu son mot de passe | *Enseignants* → 🔑 | Nouveau mot de passe lisible (ex. `baobab-solide-4821`), affiché **une seule fois**, copiable ; anciennes sessions fermées, compte réactivé, demandes marquées traitées |
+| Il veut imposer un mot de passe connu | 🔑 → champ « Mot de passe imposé » | Le mot de passe choisi est appliqué (minimum 6 caractères) |
+| Il veut retirer l'accès immédiatement | 🚫 | `actif = 0` : sessions fermées (déconnexion immédiate), affectations retirées ; les notes déjà saisies sont conservées |
+| Il veut rétablir | ✅ | `actif = 1`, l'enseignant se reconnecte et les affectations peuvent être réattribuées |
+
+L'enseignant, lui, ne peut **jamais** se redonner un accès : l'endpoint est réservé à la direction
+(`directionOnly`). Depuis l'écran de connexion, « Mot de passe oublié ? » dépose une **demande**
+(`demandes_mdp`) qui apparaît en haut de la page *Enseignants* ; la réponse est toujours la même,
+que l'adresse existe ou non (pas de fuite d'information).
+
+### Bulletins de composition seule
+
+- Interface : *Bulletins* → **Type de bulletin → Composition seule**, puis 🖨️ *Bulletins de composition*.
+- URL directe : `/print/classe/:classeId?periode_id=…&mode=composition` (ou `/print/bulletin/:eleveId?...`).
+- Le bulletin s'intitule alors « **Bulletin de composition** », les colonnes Devoir 1 / Devoir 2
+  disparaissent, seules les compositions et les moyennes de composition sont imprimées, avec le rang
+  recalculé sur ces notes.
+- Les bulletins complets restent disponibles : l'option **remplace l'affichage à l'écran**, elle ne
+  supprime rien.
+
 ### Stockage externe
 
 `server/storage.js` centralise l'envoi des fichiers : Cloudinary (jusqu'à plusieurs comptes en
@@ -289,9 +328,14 @@ rotation), Google Drive, MEGA via rclone, et **repli local** systématique (`dat
 | POST | `/api/notes/saisie` | personnel (affectations) |
 | GET | `/api/bulletins/classe` | personnel |
 | PUT/POST | `/api/bulletins/...` | direction |
-| GET | `/api/stats/classe`, `/api/stats/etablissement` | personnel |
+| GET | `/api/stats/classe`, `/api/stats/etablissement` (`?mode=composition`) | personnel |
 | CRUD | `/api/examens`, `/api/examens/:id/epreuves` | direction |
 | GET | `/api/eleve/espace` | élève |
+| POST | `/api/auth/oubli` | public (demande de nouveau mot de passe) |
+| GET | `/api/demandes-mdp` | direction (demandes à traiter) |
+| POST | `/api/demandes-mdp/:id/traiter` | direction |
+| POST | `/api/enseignants/:id/identifiants` | direction (nouveau mot de passe, affiché une fois) |
+| POST | `/api/enseignants/:id/acces` | direction (`actif` 0/1, révoque les sessions) |
 | GET | `/api/paiement/options` | direction (opérateurs, tarifs) |
 | POST | `/api/paiement/declarer` | direction (déclaration Mobile Money) |
 | POST | `/api/paiement/cinetpay/initier` | direction (si CinetPay configuré) |
@@ -302,7 +346,7 @@ rotation), Google Drive, MEGA via rclone, et **repli local** systématique (`dat
 | GET | `/api/admin/paiements/:id/recu.pdf` | super administrateur |
 | GET/PATCH | `/api/admin/paiements`, `/api/admin/reglages` | super administrateur |
 | GET | `/api/admin/*` | super administrateur |
-| GET | `/print/bulletin/:id`, `/print/classe/:id`, `/print/examen/:id` | personnel / élève concerné |
+| GET | `/print/bulletin/:id`, `/print/classe/:id`, `/print/examen/:id` (`?mode=composition`) | personnel / élève concerné |
 
 ---
 

@@ -90,6 +90,10 @@ function computeClasse(db, ecoleId, scope) {
 
   const etab = db.prepare('SELECT * FROM etablissements WHERE id = ?').get(ecoleId);
   const formule = etab.formule_moyenne || 'co2';
+  // mode « composition » : la moyenne de chaque matière ne retient QUE la
+  // composition (les devoirs sont ignorés). Sert au bulletin de composition
+  // et aux statistiques de fin de trimestre.
+  const compositionSeule = scope.mode === 'composition';
 
   const matieres = db.prepare(`
     SELECT m.id, m.nom, m.code, m.groupe, cm.coefficient
@@ -159,12 +163,14 @@ function computeClasse(db, ecoleId, scope) {
         const n = notesByEval.get(ev.id)?.get(el.id);
         detail[ev.type] = n && !n.absent ? n.valeur : null;
       });
-      moyenne = moyenneMatiere(notes, formule);
+      const noteComposition = detail.composition != null ? detail.composition : null;
+      moyenne = compositionSeule ? noteComposition : moyenneMatiere(notes, formule);
       return {
         matiere_id: m.id, nom: m.nom, groupe: m.groupe, coefficient,
         moyenne: moyenne == null ? null : round2(moyenne),
         points: moyenne == null ? null : round2(moyenne * coefficient),
-        detail, appreciation: appreciation(moyenne)
+        detail, composition: noteComposition,
+        appreciation: appreciation(moyenne)
       };
     });
 
@@ -172,12 +178,22 @@ function computeClasse(db, ecoleId, scope) {
     const totalCoef = evaluees.reduce((a, l) => a + l.coefficient, 0);
     const totalPoints = evaluees.reduce((a, l) => a + l.points, 0);
     const moyenne = totalCoef > 0 ? round2(totalPoints / totalCoef) : null;
+
+    // Moyenne « composition seule » de l'élève, coefficients compris.
+    const lignesComp = lignes.filter(l => l.composition != null);
+    const coefComp = lignesComp.reduce((a, l) => a + l.coefficient, 0);
+    const moyenneComposition = coefComp > 0
+      ? round2(lignesComp.reduce((a, l) => a + l.composition * l.coefficient, 0) / coefComp)
+      : null;
+
     return {
       eleve: el,
       lignes,
       total_coef: round2(totalCoef),
       total_points: round2(totalPoints),
       moyenne,
+      moyenne_composition: moyenneComposition,
+      matieres_composition: lignesComp.length,
       matieres_evaluees: evaluees.length,
       matieres_total: matieres.length,
       mention: mention(moyenne),
@@ -224,6 +240,43 @@ function computeClasse(db, ecoleId, scope) {
   const mentions = {};
   resultats.forEach(r => { mentions[r.mention] = (mentions[r.mention] || 0) + 1; });
 
+  /* --- Composition : combien ont la moyenne, combien ne l'ont pas -------- */
+  const moyComp = resultats.map(r => r.moyenne_composition);
+  const compValides = moyComp.filter(v => v != null);
+  const reussiteComp = compValides.filter(v => v >= 10).length;
+  const echecComp = compValides.filter(v => v < 10).length;
+  const composition = {
+    effectif: compValides.length,                       // élèves ayant au moins une composition
+    non_notes: resultats.length - compValides.length,    // aucune composition saisie
+    moyenne: compValides.length ? round2(compValides.reduce((a, b) => a + b, 0) / compValides.length) : null,
+    reussite: reussiteComp,                             // moyenne ≥ 10
+    echec: echecComp,                                   // moyenne < 10
+    taux_reussite: compValides.length ? round2((reussiteComp / compValides.length) * 100) : null,
+    min: compValides.length ? round2(Math.min(...compValides)) : null,
+    max: compValides.length ? round2(Math.max(...compValides)) : null
+  };
+
+  // « Qui a 1, qui a 2, qui a 3… » : effectif par note entière de 0 à 20,
+  // calculé sur la moyenne de composition de chaque élève (arrondie au plus
+  // proche, 20 inclus).
+  const repartitionComposition = [];
+  for (let n = 0; n <= 20; n++) {
+    const combien = compValides.filter(v => Math.min(20, Math.max(0, Math.round(v))) === n).length;
+    repartitionComposition.push({ note: n, n: combien });
+  }
+
+  // Même chose par matière : combien d'élèves au-dessus / en dessous de 10
+  const compositionParMatiere = matieres.map((m, mi) => {
+    const vals = resultats.map(r => r.lignes[mi].composition).filter(v => v != null);
+    return {
+      id: m.id, nom: m.nom,
+      saisies: vals.length,
+      moyenne: vals.length ? round2(vals.reduce((a, b) => a + b, 0) / vals.length) : null,
+      reussite: vals.filter(v => v >= 10).length,
+      echec: vals.filter(v => v < 10).length
+    };
+  });
+
   const classement = [...resultats].filter(r => r.moyenne != null).sort((a, b) => b.moyenne - a.moyenne);
 
   return {
@@ -232,15 +285,23 @@ function computeClasse(db, ecoleId, scope) {
     periode: scope.periode_id ? db.prepare('SELECT * FROM periodes WHERE id = ?').get(scope.periode_id) : null,
     examen: scope.examen_id ? db.prepare('SELECT * FROM examens WHERE id = ?').get(scope.examen_id) : null,
     matieres, resultats, classement, matieres_stats: matieresStats,
-    stats: { ...stats, mentions, buckets, effectif_classe: eleves.length },
+    stats: {
+      ...stats, mentions, buckets, effectif_classe: eleves.length,
+      composition, repartition_composition: repartitionComposition,
+      composition_par_matiere: compositionParMatiere,
+      mode: compositionSeule ? 'composition' : 'complete'
+    },
     scope
   };
 }
 
-function bulletinData(db, ecoleId, eleveId, periodeId) {
+function bulletinData(db, ecoleId, eleveId, periodeId, options = {}) {
   const eleve = db.prepare('SELECT * FROM eleves WHERE id = ? AND ecole_id = ?').get(eleveId, ecoleId);
   if (!eleve || !eleve.classe_id) return null;
-  const promo = computeClasse(db, ecoleId, { classe_id: eleve.classe_id, periode_id: periodeId });
+  const promo = computeClasse(db, ecoleId, {
+    classe_id: eleve.classe_id, periode_id: periodeId,
+    ...(options.mode ? { mode: options.mode } : {})
+  });
   const ligne = promo.resultats.find(r => r.eleve.id === eleveId);
   const bulletin = db.prepare('SELECT * FROM bulletins WHERE eleve_id = ? AND periode_id = ?').get(eleveId, periodeId) || null;
 

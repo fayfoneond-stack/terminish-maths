@@ -129,6 +129,9 @@
             <div class="field"><label>Adresse email</label><input type="email" name="email" id="login-email" required autocomplete="username" placeholder="vous@ecole.tg"></div>
             <div class="field"><label>Mot de passe</label><input type="password" name="password" id="login-password" required autocomplete="current-password" placeholder="••••••••"></div>
             <button class="btn btn-primary btn-block" type="submit" id="login-btn">Se connecter</button>
+            <p class="small" style="text-align:center;margin:10px 0 0">
+              <a href="#" id="lien-oubli">Mot de passe oublié ?</a>
+            </p>
             <div class="demo-accounts">
               <div class="lbl">Comptes de démonstration</div>
               <button type="button" data-demo="directeur@demo.tg|demo1234"><span>👔</span><span><b>Direction</b> — chef d'établissement</span><span class="role">directeur</span></button>
@@ -162,6 +165,35 @@
       } catch (err) {
         renderLogin(err.message);
       }
+    };
+    const lienOubli = $('#lien-oubli');
+    if (lienOubli) lienOubli.onclick = (ev) => {
+      ev.preventDefault();
+      const emailSaisi = $('#login-email').value || '';
+      const m = modal({
+        title: 'Mot de passe oublié',
+        body: `<div class="notice info">Votre demande sera transmise au <b>chef d'établissement</b>.
+            C'est lui qui délivre les identifiants : il vous en donnera un nouveau
+            (par téléphone ou en main propre).</div>
+          <form id="oubli-form">
+            <div class="field"><label>Votre adresse email *</label>
+              <input type="email" name="email" id="oubli-email" required value="${esc(emailSaisi)}" placeholder="vous@ecole.tg"></div>
+            <div class="field"><label>Précisez (facultatif)</label>
+              <input name="message" placeholder="Ex. : je suis le professeur de SVT en 4ème B"></div>
+          </form>`,
+        footer: `<button class="btn btn-ghost btn-sm" data-close>Annuler</button>
+                 <button class="btn btn-primary btn-sm" id="oubli-envoyer">Envoyer la demande</button>`
+      });
+      m.root.querySelector('#oubli-envoyer').onclick = async () => {
+        const form = m.root.querySelector('#oubli-form');
+        if (!form.reportValidity()) return;
+        const data = Object.fromEntries(new FormData(form).entries());
+        try {
+          const res = await api('/api/auth/oubli', { method: 'POST', body: data });
+          m.close();
+          toast(res.message || 'Demande envoyée au chef d\'établissement');
+        } catch (e) { toast(e.message, 'err'); }
+      };
     };
     setTimeout(() => $('#login-email') && $('#login-email').focus(), 60);
   }
@@ -423,6 +455,20 @@
       </div>`;
     }).join('')}</div>`;
   }
+  /** Répartition des moyennes de composition : « qui a 1, qui a 2, … ». */
+  function histoComposition(rep) {
+    const r = rep || [];
+    const max = Math.max(1, ...r.map(b => b.n));
+    const total = r.reduce((a, b) => a + b.n, 0);
+    if (!total) return '<div class="muted small" style="padding:10px 0">Aucune composition saisie pour cette période.</div>';
+    return `<div class="hist">${r.map(b => `
+      <div class="col" title="${b.n} élève(s) avec ${b.note}/20">
+        <div class="n">${b.n || ''}</div>
+        <div class="bar" style="height:${Math.max(3, (b.n / max) * 100)}%"></div>
+        <div class="lb">${b.note}</div>
+      </div>`).join('')}</div>`;
+  }
+
   function histo(buckets) {
     const max = Math.max(1, ...buckets.map(b => b.n));
     return `<div class="hist">${buckets.map(b => `
@@ -844,8 +890,14 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       toast('Export CSV téléchargé');
     },
 
-    imprimerBulletin(eleveId, periodeId) {
-      window.open(lienServeur(`/print/bulletin/${eleveId}?periode_id=${periodeId}`), '_blank');
+    imprimerBulletin(eleveId, periodeId, mode) {
+      const suffixe = mode === 'composition' ? '&mode=composition' : '';
+      window.open(lienServeur(`/print/bulletin/${eleveId}?periode_id=${periodeId}${suffixe}`), '_blank');
+    },
+
+    /** Bulletins de composition seule pour toute la classe (téléchargement imprimable). */
+    imprimerComposition(classeId, periodeId) {
+      window.open(lienServeur(`/print/classe/${classeId}?periode_id=${periodeId}&mode=composition`), '_blank');
     }
   });
 
@@ -1124,7 +1176,30 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       const list = await api('/api/enseignants');
       S.enseignants = list;
       const direction = S.me.role === 'directeur';
+      let demandes = [];
+      if (direction) { try { demandes = await api('/api/demandes-mdp'); } catch (_) { demandes = []; } }
+      const enAttente = demandes.filter(d => d.statut === 'nouvelle');
       return `
+        ${direction && enAttente.length ? `
+        <div class="panel" style="border-left:4px solid var(--or)">
+          <div class="panel-head">
+            <div><h2>🔔 Demandes de mot de passe (${enAttente.length})</h2>
+              <div class="sub">Ces personnes ne peuvent plus se connecter. Donnez-leur de nouveaux identifiants.</div></div>
+          </div>
+          <div class="table-wrap"><table class="data">
+            <thead><tr><th>Date</th><th>Personne</th><th>Précision</th><th></th></tr></thead>
+            <tbody>${enAttente.map(d => `
+              <tr>
+                <td class="small">${dateFr(d.cree_le)} ${heureFr(d.cree_le)}</td>
+                <td><div class="strong">${esc(d.nom || '—')}</div><div class="muted small">${esc(d.email)}</div></td>
+                <td class="small">${esc(d.message || '—')}</td>
+                <td class="right"><div class="row-actions">
+                  ${d.utilisateur_id ? `<button class="btn btn-primary btn-sm" onclick="App.nouveauxIdentifiants(${d.utilisateur_id})">🔑 Nouveaux identifiants</button>` : ''}
+                  <button class="icon-btn" title="Marquer comme traitée" onclick="App.traiterDemande(${d.id})">✓</button>
+                </div></td>
+              </tr>`).join('')}</tbody>
+          </table></div>
+        </div>` : ''}
         <div class="panel">
           <div class="panel-head">
             <div><h2>Corps enseignant</h2><div class="sub">${list.filter(e => e.actif).length} enseignant(s) actif(s)</div></div>
@@ -1140,11 +1215,16 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                 <td class="center">${badgeStatut(e.actif ? 'actif' : 'inactif')}</td>
                 <td class="right"><div class="row-actions">
                   <button class="icon-btn" title="Modifier" onclick="App.editerEnseignant(${e.id})">✏️</button>
-                  ${direction ? `<button class="icon-btn danger" title="Désactiver" onclick="App.desactiverEnseignant(${e.id})">🚫</button>` : ''}
+                  ${direction ? `<button class="icon-btn" title="Nouveaux identifiants (mot de passe perdu)" onclick="App.nouveauxIdentifiants(${e.id})">🔑</button>` : ''}
+                  ${direction ? `<button class="icon-btn ${e.actif ? 'danger' : ''}" title="${e.actif ? 'Retirer l’accès' : 'Rétablir l’accès'}" onclick="App.changerAcces(${e.id}, ${e.actif ? 0 : 1})">${e.actif ? '🚫' : '✅'}</button>` : ''}
                 </div></td>
               </tr>`).join('')}</tbody></table></div>` : emptyState('👩‍🏫', 'Aucun enseignant enregistré.',
               direction ? '<button class="btn btn-primary btn-sm" onclick="App.nouvelEnseignant()">➕ Ajouter un enseignant</button>' : '')}
-          <div class="notice info" style="margin-top:14px"><b>Saisie à distance :</b> chaque enseignant reçoit ses identifiants et ne peut saisir des notes que dans les classes et matières qui lui sont affectées. Il peut le faire depuis son domicile.</div>
+          <div class="notice info" style="margin-top:14px">
+            <b>Vous délivrez les identifiants.</b> Un enseignant a perdu son mot de passe ?
+            Cliquez sur 🔑 : un nouveau mot de passe s'affiche, à lui dicter au téléphone.
+            Pour lui retirer l'accès immédiatement : 🚫 (sessions fermées, affectations retirées) — ✅ pour le rétablir.
+          </div>
         </div>`;
     }
   };
@@ -1316,6 +1396,70 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         } catch (err) { toast(err.message, 'err'); }
       };
     },
+    /** Nouveaux identifiants : le mot de passe s'affiche UNE fois, à dicter. */
+    async nouveauxIdentifiants(id) {
+      const e = (S.enseignants || []).find(x => x.id === id);
+      const m = modal({
+        title: `Nouveaux identifiants — ${e ? e.nom : 'enseignant'}`,
+        body: `<div class="notice warn">L'ancien mot de passe ne fonctionnera plus et
+            toutes ses sessions ouvertes sont fermées.</div>
+          <div class="field"><label>Mot de passe imposé (facultatif)</label>
+            <input id="mdp-impose" placeholder="Laisser vide pour en générer un lisible"></div>
+          <div id="mdp-resultat"></div>`,
+        footer: `<button class="btn btn-ghost btn-sm" data-close>Fermer</button>
+                 <button class="btn btn-primary btn-sm" id="mdp-generer">🔑 Générer</button>`
+      });
+      m.root.querySelector('#mdp-generer').onclick = async () => {
+        const impose = m.root.querySelector('#mdp-impose').value.trim();
+        try {
+          const res = await api(`/api/enseignants/${id}/identifiants`, {
+            method: 'POST', body: impose ? { mot_de_passe: impose } : {}
+          });
+          const zone = m.root.querySelector('#mdp-resultat');
+          zone.innerHTML = `
+            <div class="notice ok" style="margin-top:10px">
+              <div class="small muted">Identifiant</div>
+              <div style="font-family:monospace;font-size:15px;font-weight:700">${esc(res.email)}</div>
+              <div class="small muted" style="margin-top:8px">Mot de passe</div>
+              <div style="font-family:monospace;font-size:19px;font-weight:800;letter-spacing:.5px">${esc(res.mot_de_passe)}</div>
+              <button class="btn btn-ghost btn-sm" style="margin-top:8px" id="copier-id">📋 Copier</button>
+              <div class="small" style="margin-top:8px">Notez-le maintenant : il ne sera plus affiché.</div>
+            </div>`;
+          zone.querySelector('#copier-id').onclick = async () => {
+            try {
+              await navigator.clipboard.writeText(`${res.email} / ${res.mot_de_passe}`);
+              toast('Identifiants copiés');
+            } catch (_) { toast('Copie impossible : notez-les à la main', 'err'); }
+          };
+          toast('Nouveaux identifiants générés');
+          renderRoute();
+        } catch (err) { toast(err.message, 'err'); }
+      };
+      return m;
+    },
+
+    async changerAcces(id, actif) {
+      const e = (S.enseignants || []).find(x => x.id === id);
+      const ok = await confirmer(actif
+        ? `Rétablir l'accès de <b>${esc(e ? e.nom : '')}</b> ? Il pourra de nouveau se connecter.`
+        : `Retirer l'accès de <b>${esc(e ? e.nom : '')}</b> ?<br><span class="small">Ses sessions sont fermées et ses affectations retirées. Ses notes déjà saisies sont conservées.</span>`,
+        { titre: actif ? 'Rétablir l\'accès' : 'Retirer l\'accès', danger: !actif, ok: actif ? 'Rétablir' : 'Retirer' });
+      if (!ok) return;
+      try {
+        await api(`/api/enseignants/${id}/acces`, { method: 'POST', body: { actif } });
+        toast(actif ? 'Accès rétabli' : 'Accès retiré');
+        renderRoute();
+      } catch (err) { toast(err.message, 'err'); }
+    },
+
+    async traiterDemande(id) {
+      try {
+        await api(`/api/demandes-mdp/${id}/traiter`, { method: 'POST', body: { statut: 'traitee' } });
+        toast('Demande marquée comme traitée');
+        renderRoute();
+      } catch (e) { toast(e.message, 'err'); }
+    },
+
     async desactiverEnseignant(id) {
       const e = S.enseignants.find(x => x.id === id);
       const ok = await confirmer(`Désactiver le compte de <b>${esc(e.nom)}</b> ? Il ne pourra plus se connecter et ses affectations seront retirées.`, {
@@ -1694,10 +1838,12 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       const periode = S.periodes.find(p => p.id === periodeId);
 
       const direction = S.me.role === 'directeur';
+      const compoSeule = q.mode === 'composition' && !examenMode;
       let promo = null;
       if (classe && (examenMode ? q.examen_id : periodeId)) {
         const params = new URLSearchParams({ classe_id: classe.id });
         if (examenMode) params.set('examen_id', q.examen_id); else params.set('periode_id', periodeId);
+        if (compoSeule) params.set('mode', 'composition');
         promo = await api('/api/bulletins/classe?' + params.toString());
       }
 
@@ -1719,12 +1865,17 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
               </optgroup>` : ''}
             </select>
           </div>
+          ${!examenMode ? `<div class="field" style="min-width:170px"><label>Type de bulletin</label>
+            <select id="b-mode">
+              <option value="complet" ${!compoSeule ? 'selected' : ''}>Toutes les notes</option>
+              <option value="composition" ${compoSeule ? 'selected' : ''}>Composition seule</option>
+            </select></div>` : ''}
           <div class="spacer"></div>
           ${promo ? `
             <button class="btn btn-ghost btn-sm" onclick="App.exporterBulletins()">⬇️ CSV</button>
             ${examenMode
               ? `<button class="btn btn-ghost btn-sm" onclick="App.imprimerExamen(${q.examen_id},${classe.id})">🖨️ Relevé de la classe</button>`
-              : `<button class="btn btn-ghost btn-sm" onclick="App.imprimerClasse(${classe.id},${periodeId})">🖨️ Imprimer la classe</button>`}
+              : `<button class="btn ${compoSeule ? 'btn-primary' : 'btn-ghost'} btn-sm" onclick="App.imprimerClasse(${classe.id},${periodeId},'${compoSeule ? 'composition' : 'complet'}')">🖨️ ${compoSeule ? 'Bulletins de composition' : 'Imprimer la classe'}</button>`}
             ${direction && !examenMode ? `<button class="btn btn-primary btn-sm" id="btn-publier">${promo.resultats.some(r => r.bulletin && r.bulletin.publie) ? '🔓 Dépublier' : '📢 Publier les bulletins'}</button>` : ''}
           ` : ''}
         </div>`;
@@ -1745,8 +1896,8 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       return `
         <div class="panel">
           <div class="panel-head">
-            <div><h2>${esc(classe.nom)} — ${esc(libelleSource)}</h2>
-              <div class="sub">${examenMode ? 'Simulation de résultats type examen blanc' : 'Bulletins officiels de la période'} · ${stat.effectif_classe} élève(s) · ${promo.matieres.length} matières</div></div>
+            <div><h2>${esc(classe.nom)} — ${esc(libelleSource)}${compoSeule ? ' · composition' : ''}</h2>
+              <div class="sub">${examenMode ? 'Simulation de résultats type examen blanc' : (compoSeule ? 'Bulletins de composition seule (moyennes calculées sur la composition)' : 'Bulletins officiels de la période')} · ${stat.effectif_classe} élève(s) · ${promo.matieres.length} matières</div></div>
           </div>
           ${toolbar}
           ${!examenMode && nonNotes ? `<div class="notice warn"><b>${nonNotes} élève(s)</b> n'ont pas encore de moyenne complète. Les bulletins restent imprimables mais seront incomplets.</div>` : ''}
@@ -1762,7 +1913,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
 
           <div class="table-wrap"><table class="data">
             <thead><tr>
-              <th class="center">Rang</th><th>Élève</th><th class="center">Moyenne</th><th>Mention</th>
+              <th class="center">Rang</th><th>Élève</th><th class="center">Moyenne</th>${compoSeule ? '' : '<th class="center">Compo.</th>'}<th>Mention</th>
               <th class="center">Matières</th><th>Appréciation</th>
               ${!examenMode ? '<th class="center">Publication</th>' : ''}
               <th></th>
@@ -1772,19 +1923,21 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                 <td class="center"><b>${r.rang ?? '—'}</b></td>
                 <td><div class="strong">${esc(r.eleve.nom)} ${esc(r.eleve.prenom)}</div><div class="muted small">${esc(r.eleve.matricule)}</div></td>
                 <td class="center">${badgeMoy(r.moyenne)}</td>
+                ${compoSeule ? '' : `<td class="center small">${r.moyenne_composition == null ? '—' : fmt(r.moyenne_composition)}</td>`}
                 <td class="small">${esc(r.mention)}</td>
                 <td class="center small">${r.matieres_evaluees}/${r.matieres_total}</td>
                 <td class="small" style="max-width:280px">${esc((r.bulletin && r.bulletin.appreciation) || r.appreciation)}
                   ${direction && !examenMode ? `<button class="icon-btn" style="padding:1px 6px;margin-left:4px" title="Modifier l'appréciation" onclick="App.appreciation(${r.eleve.id},${periodeId})">✏️</button>` : ''}</td>
                 ${!examenMode ? `<td class="center">${r.bulletin && r.bulletin.publie ? '<span class="tag vert">Publié</span>' : '<span class="tag gris">Brouillon</span>'}</td>` : ''}
                 <td class="right"><div class="row-actions">
-                  ${!examenMode ? `<button class="icon-btn" title="Bulletin imprimable" onclick="App.imprimerBulletin(${r.eleve.id},${periodeId})">🖨️</button>` : ''}
+                  ${!examenMode ? `<button class="icon-btn" title="Bulletin imprimable" onclick="App.imprimerBulletin(${r.eleve.id},${periodeId},'${compoSeule ? 'composition' : 'complet'}')">🖨️</button>` : ''}
                   <button class="icon-btn" title="Détail des notes" onclick="App.detailEleve(${r.eleve.id})">👁️</button>
                 </div></td>
               </tr>`).join('')}</tbody>
           </table></div>
           <div class="small muted" style="margin-top:10px">
-            Formule appliquée : ${S.etab.formule_moyenne === 'moy_co' ? 'moyenne des devoirs et composition à parts égales' : '(moyenne des devoirs + 2 × composition) ÷ 3'}.
+            ${compoSeule ? 'Moyenne de chaque matière = note de composition. La moyenne générale est la moyenne des compositions pondérée par les coefficients.'
+              : `Formule appliquée : ${S.etab.formule_moyenne === 'moy_co' ? 'moyenne des devoirs et composition à parts égales' : '(moyenne des devoirs + 2 × composition) ÷ 3'}.`}
             Moyenne générale = Σ (moyenne × coefficient) ÷ Σ coefficients.
           </div>
         </div>`;
@@ -1794,12 +1947,19 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       const q = S.query;
       const navigate = (params) => App.go('bulletins', params);
       const classValue = () => $('#b-classe').value;
-      $('#b-classe').onchange = () => navigate({ classe_id: classValue() });
+      const modeValue = () => ($('#b-mode') && $('#b-mode').value === 'composition') ? 'composition' : null;
+      const avecMode = (params) => {
+        const m = modeValue();
+        if (m && !params.examen_id) params.mode = m;
+        return params;
+      };
+      $('#b-classe').onchange = () => navigate(avecMode({ classe_id: classValue() }));
       $('#b-source').onchange = (e) => {
         const [type, id] = e.target.value.split(':');
-        if (type === 'p') navigate({ classe_id: classValue(), periode_id: id });
+        if (type === 'p') navigate({ classe_id: classValue(), periode_id: id, ...(modeValue() ? { mode: modeValue() } : {}) });
         else navigate({ classe_id: classValue(), examen_id: id });
       };
+      if ($('#b-mode')) $('#b-mode').onchange = () => navigate(avecMode({ classe_id: classValue(), periode_id: q.periode_id }));
       const btn = $('#btn-publier');
       if (btn) btn.onclick = async () => {
         const promo = S.promoCourante;
@@ -1819,8 +1979,9 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
   };
 
   Object.assign(window.App, {
-    imprimerClasse(classeId, periodeId) {
-      window.open(lienServeur(`/print/classe/${classeId}?periode_id=${periodeId}`), '_blank');
+    imprimerClasse(classeId, periodeId, mode) {
+      const suffixe = mode === 'composition' ? '&mode=composition' : '';
+      window.open(lienServeur(`/print/classe/${classeId}?periode_id=${periodeId}${suffixe}`), '_blank');
     },
 
     telechargerRecu(paiementId) {
@@ -2007,6 +2168,43 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
             <div class="kpi"><div class="lbl">Écart-type</div><div class="val" style="font-size:23px">${fmt(stat.ecart_type)}</div><div class="sub">dispersion</div></div>
             <div class="kpi"><div class="lbl">Médiane</div><div class="val" style="font-size:23px">${fmt(stat.mediane)}</div><div class="sub">50% au-dessus</div></div>
           </div>
+
+          ${stat.composition ? `
+          <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+            <div class="kpi accent"><div class="lbl">Moyenne en composition</div><div class="val" style="font-size:23px">${fmt(stat.composition.moyenne)}</div><div class="sub">sur 20 · ${stat.composition.effectif} élève(s) noté(s)</div></div>
+            <div class="kpi vert"><div class="lbl">Ont la moyenne en composition</div><div class="val" style="font-size:23px">${stat.composition.reussite}</div><div class="sub">≥ 10/20${stat.composition.taux_reussite == null ? '' : ' · ' + stat.composition.taux_reussite + '%'}</div></div>
+            <div class="kpi"><div class="lbl">N'ont pas la moyenne</div><div class="val" style="font-size:23px">${stat.composition.echec}</div><div class="sub">&lt; 10/20</div></div>
+            <div class="kpi"><div class="lbl">Non notés en composition</div><div class="val" style="font-size:23px">${stat.composition.non_notes}</div><div class="sub">aucune composition saisie</div></div>
+          </div>
+
+          <div class="two-col">
+            <div class="panel" style="box-shadow:none;margin:0">
+              <div class="panel-head"><div><h2>Répartition des compositions</h2>
+                <div class="sub">Combien d'élèves ont 1, 2, 3… sur 20</div></div>
+                <div class="right"><button class="btn btn-ghost btn-sm" onclick="App.imprimerComposition(${classe.id},${periodeId})">🖨️ Bulletins de composition</button></div>
+              </div>
+              ${histoComposition(stat.repartition_composition)}
+              <div class="table-wrap" style="margin-top:10px"><table class="data">
+                <thead><tr><th>Moyenne de composition</th>${(stat.repartition_composition || []).map(b => `<th class="center">${b.note}</th>`).join('')}</tr></thead>
+                <tbody><tr><td class="strong">Nombre d'élèves</td>${(stat.repartition_composition || []).map(b => `<td class="center ${b.n ? 'strong' : 'muted'}">${b.n || '·'}</td>`).join('')}</tr></tbody>
+              </table></div>
+            </div>
+            <div class="panel" style="box-shadow:none;margin:0">
+              <div class="panel-head"><div><h2>Composition par matière</h2>
+                <div class="sub">Moyenne des compositions, réussite et échec</div></div></div>
+              <div class="table-wrap"><table class="data">
+                <thead><tr><th>Matière</th><th class="center">Notes</th><th class="center">Moyenne</th><th class="center">≥ 10</th><th class="center">&lt; 10</th></tr></thead>
+                <tbody>${(stat.composition_par_matiere || []).map(m => `
+                  <tr>
+                    <td class="strong">${esc(m.nom)}</td>
+                    <td class="center small">${m.saisies}</td>
+                    <td class="center">${badgeMoy(m.moyenne)}</td>
+                    <td class="center small">${m.reussite}</td>
+                    <td class="center small">${m.echec}</td>
+                  </tr>`).join('') || `<tr><td colspan="5">${emptyState('📝', 'Aucune composition saisie.')}</td></tr>`}</tbody>
+              </table></div>
+            </div>
+          </div>` : ''}
 
           <div class="two-col">
             <div class="panel" style="box-shadow:none;margin:0">
