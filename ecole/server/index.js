@@ -1753,18 +1753,44 @@ app.get('/api/health', (req, res) => {
   }
 });
 
-// Certains hébergeurs (alwaysdata) donnent l'adresse d'écoute dans $IP :
-// :: = toutes les interfaces en IPv6 *et* IPv4. Sinon on écoute partout.
-const HOTE = process.env.IP || process.env.HOST || '0.0.0.0';
-const server = app.listen(PORT, HOTE, () => {
-  console.log(`Terminish École — serveur démarré sur http://${HOTE}:${PORT}`);
-  console.log(`Données : ${process.env.TERMINISH_DATA_DIR || path.join(__dirname, '..', 'data')}`);
-});
+// ------------------------------------------------------------------ écoute
+// Certains hébergeurs (alwaysdata, Render…) imposent l'adresse et le port :
+//   $IP   l'adresse sur laquelle écouter (souvent une adresse IPv6)
+//   $PORT le port attribué au site
+// Si $IP est absent, on essaie « :: » (IPv6 *et* IPv4 sur la même socket),
+// puis « 0.0.0.0 ». Sans cela, un proxy qui joint le site en IPv6 ne trouve
+// personne et l'hébergeur affiche « Upstream not ready ».
+const ADRESSES = [process.env.IP, process.env.HOST, '::', '0.0.0.0']
+  .filter((a, i, liste) => a && liste.indexOf(a) === i);
+
+let server = null;   // affecté dès que l'écoute réussit
+
+function ecouter(i) {
+  const hote = ADRESSES[i];
+  if (!hote) {
+    console.error(`Aucune adresse d'écoute disponible (port ${PORT}) — arrêt.`);
+    process.exit(1);
+  }
+  const essai = app.listen(PORT, hote, () => {
+    server = essai;
+    console.log(`Terminish École — serveur démarré sur http://${hote}:${PORT}`);
+    console.log(`Données : ${process.env.TERMINISH_DATA_DIR || path.join(__dirname, '..', 'data')}`);
+  });
+  essai.on('error', err => {
+    console.error(`Écoute impossible sur ${hote}:${PORT} (${err.code || err.message})`);
+    try { essai.close(); } catch (_) {}
+    setTimeout(() => ecouter(i + 1), 50);
+  });
+  return essai;
+}
+
+ecouter(0);
 
 // Arrêt propre (docker stop, systemctl stop, redéploiement)
 ['SIGTERM', 'SIGINT'].forEach(sig => {
   process.on(sig, () => {
     console.log(`\n${sig} reçu — arrêt du serveur...`);
+    if (!server) process.exit(0);
     server.close(() => {
       try { db.close(); } catch (_) {}
       process.exit(0);
