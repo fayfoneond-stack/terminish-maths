@@ -122,6 +122,10 @@ PRÉREQUIS : Node.js 22 ou plus. Rien d'autre. (Docker seulement pour l'option D
  UN LIEN QUI NE CHANGE JAMAIS — GRATUIT, SANS CARTE BANCAIRE (Tailscale)
 ===============================================================================
 
+  ⚠ Depuis le 23/10/2026, npm run partage RÉUTILISE l'adresse fixe si elle
+    existe : il affiche « Lien PERMANENT : https://....ts.net » et n'ouvre
+    aucun lien jetable. S'il n'y en a pas, il rappelle la commande à lancer.
+
   Un lien xxxx.trycloudflare.com est éphémère : il meurt avec la commande.
   Pour une adresse stable SANS carte bancaire, utilisez Tailscale Funnel :
   vous obtenez https://<machine>.<reseau>.ts.net, gratuit à vie, HTTPS inclus,

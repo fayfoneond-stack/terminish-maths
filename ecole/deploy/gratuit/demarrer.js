@@ -62,7 +62,9 @@ if (!fs.existsSync(path.join(RACINE, 'node_modules', 'express'))) {
 fs.mkdirSync(DATA_DIR, { recursive: true });
 const FICHIER_COMPTE = path.join(DATA_DIR, 'compte-administrateur.txt');
 const FICHIER_LIEN = path.join(DATA_DIR, 'lien-public.txt');
+const FICHIER_STABLE = path.join(DATA_DIR, 'lien-stable.txt');
 let lienPublic = null;
+let lienFixe = false;   // true = adresse Tailscale Funnel (ne change jamais)
 
 const MOTS_A = ['palmier', 'baobab', 'colibri', 'calebasse', 'harmattan', 'savane',
   'lagune', 'mangrove', 'fromager', 'hibiscus', 'zebu', 'mil'];
@@ -295,8 +297,14 @@ function arreter(code = 0) {
     if (fs.existsSync(FICHIER_LIEN)) fs.unlinkSync(FICHIER_LIEN);
   } catch (_) { /* sans conséquence */ }
   console.log('\n👋 Arrêt. À bientôt !');
-  if (lienPublic) console.log(`   Le lien ${lienPublic} ne fonctionne plus (l’adresse est libérée).`);
-  console.log('   Pour repartir : npm run partage\n');
+  if (lienPublic && lienFixe) {
+    console.log(`   L’adresse ${lienPublic} reste la même au prochain démarrage.`);
+    console.log('   Elle ne répondra plus tant que le site est arrêté.');
+    console.log('   Pour repartir : bash deploy/gratuit/tout.sh\n');
+  } else {
+    if (lienPublic) console.log(`   Le lien ${lienPublic} ne fonctionne plus (l’adresse est libérée).`);
+    console.log('   Pour repartir : npm run partage\n');
+  }
   process.exit(code);
 }
 process.on('SIGINT', () => arreter(0));
@@ -360,6 +368,67 @@ function afficherModeLocal(aCloudflared) {
   console.log('\n  Laissez cette fenêtre ouverte. Ctrl+C pour arrêter.\n');
 }
 
+/**
+ * Adresse FIXE (Tailscale Funnel) déjà ouverte sur cette machine, s'il y en a une.
+ * C'est la seule façon d'obtenir une adresse qui ne change jamais, gratuitement
+ * et sans carte bancaire : https://machine.reseau.ts.net
+ */
+function funnelActif() {
+  const essais = [
+    ['tailscale', ['funnel', 'status']],
+    ['sudo', ['-n', 'tailscale', 'funnel', 'status']]
+  ];
+  for (const [cmd, args] of essais) {
+    let r;
+    try { r = spawnSync(cmd, args, { encoding: 'utf8', timeout: 5000 }); } catch (_) { continue; }
+    if (r && r.status === 0 && r.stdout) {
+      const m = /https:\/\/[a-z0-9.-]+\.ts\.net/i.exec(r.stdout);
+      if (m) return m[0];
+    }
+  }
+  try {
+    const t = fs.readFileSync(FICHIER_STABLE, 'utf8').trim();
+    const m = /https:\/\/[a-z0-9.-]+\.ts\.net/i.exec(t);
+    if (m) return m[0];
+  } catch (_) { /* pas de fichier */ }
+  return null;
+}
+
+function tailscaleInstalle() {
+  try {
+    const r = spawnSync('tailscale', ['version'], { encoding: 'utf8', timeout: 4000 });
+    return !r.error && r.status === 0;
+  } catch (_) { return false; }
+}
+
+/** Affiche l'adresse fixe et n'ouvre AUCUN tunnel éphémère. */
+function afficherLienFixe(url) {
+  lienPublic = url;
+  lienFixe = true;
+  try {
+    fs.writeFileSync(FICHIER_STABLE, url + '\n');
+    fs.writeFileSync(FICHIER_LIEN, [
+      url, '',
+      'Adresse FIXE (Tailscale Funnel) : elle ne change JAMAIS.',
+      `serveur local : ${local}`, '',
+      'Elle fonctionne tant que le site tourne.',
+      'Après un redémarrage : bash deploy/gratuit/tout.sh', ''
+    ].join('\n'));
+  } catch (_) { /* disque en lecture seule : sans conséquence */ }
+
+  cadre('VOTRE SITE EST EN LIGNE — ADRESSE FIXE');
+  console.log(`  🔒 Lien PERMANENT : ${url}`);
+  console.log(`  💻 Sur place      : ${local}`);
+  console.log('');
+  afficherComptes('  ');
+  prevenirSiInvalide();
+  console.log('\n  ✅ Cette adresse ne change jamais : vous pouvez la partager');
+  console.log('      une seule fois (élèves, parents, enseignants).');
+  console.log('\n  Après un redémarrage du Chromebook :');
+  console.log('      bash deploy/gratuit/tout.sh');
+  console.log('\n  Ctrl+C pour arrêter.\n');
+}
+
 /** Lance un tunnel : chaque tentative produit un nouveau lien public. */
 function demarrerTunnel(cheminBinaire) {
   let affiche = false;
@@ -395,6 +464,8 @@ function demarrerTunnel(cheminBinaire) {
         console.log('\n  ⚠️  Ce lien change à chaque redémarrage : envoyez-le juste');
         console.log('      avant une démonstration. Il reste valable tant que cette');
         console.log('      fenêtre est ouverte.');
+        console.log('      Pour une adresse qui NE CHANGE JAMAIS :');
+        console.log('          bash deploy/gratuit/lien-stable.sh --tailscale');
         console.log(`\n  Le lien est aussi noté dans ${FICHIER_LIEN.replace(os.homedir(), '~')}`);
         console.log('  (à retrouver plus tard : npm run lien)');
         console.log('\n  Ctrl+C pour arrêter.\n');
@@ -425,6 +496,23 @@ function demarrerTunnel(cheminBinaire) {
 }
 
 setTimeout(() => {
+  // 1. Une adresse FIXE existe déjà (Tailscale Funnel) : on la réutilise.
+  //    C'est la seule qui ne change jamais — priorité absolue.
+  if (!SANS_TUNNEL) {
+    const fixe = funnelActif();
+    if (fixe) { afficherLienFixe(fixe); return; }
+  }
+
+  // 2. Pas d'adresse fixe : rappeler qu'elle tient en une commande.
+  if (!SANS_TUNNEL && tailscaleInstalle()) {
+    console.log('💡 Tailscale est installé mais aucune adresse FIXE n’est ouverte.');
+    console.log('   Pour ne plus jamais changer de lien :');
+    console.log('       sudo tailscale funnel --bg ' + PORT);
+    console.log('   puis relancez : npm run partage:demo -- --port ' + PORT);
+    console.log('   (détails : LIEN-ETERNEL.md)');
+    console.log('');
+  }
+
   const cloudflare = SANS_TUNNEL ? null : trouverCloudflared();
   const aCloudflared = Boolean(cloudflare);
 

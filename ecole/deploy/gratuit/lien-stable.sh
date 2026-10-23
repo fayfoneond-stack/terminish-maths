@@ -43,6 +43,15 @@ while [ $# -gt 0 ]; do
 done
 [ -z "$MODE" ] && { erreur "Choisissez : --tailscale, --ip, --duckdns NOM TOKEN, ou --etat"; exit 1; }
 
+# Le site tourne peut-être sur un autre port (3001 quand 3000 était occupé) :
+# on adopte le port qui répond réellement, au lieu d'échouer.
+port_actif() { curl -fsS --max-time 2 "http://127.0.0.1:$1/api/health" >/dev/null 2>&1; }
+if ! port_actif "$PORT"; then
+  for p in 3000 3001 3002 3003 3004 3005; do
+    if port_actif "$p"; then PORT="$p"; info "Site détecté sur le port ${PORT}."; break; fi
+  done
+fi
+
 ip_publique() {
   # TERMINISH_IP permet de forcer la valeur (réseaux filtrés, tests)
   if [ -n "${TERMINISH_IP:-}" ]; then echo "$TERMINISH_IP"; return 0; fi

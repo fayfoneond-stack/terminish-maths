@@ -25,6 +25,26 @@ npm run partage                 # 1er terminal : lance le site (laisser ouvert)
 bash deploy/gratuit/lien-stable.sh --tailscale   # 2e terminal : crée l'adresse stable
 ```
 
+### Une fois l'adresse fixe ouverte, `npm run partage` la réutilise
+
+Depuis la version du 23/10/2026, `npm run partage` **ne crée plus de lien éphémère** s'il
+trouve une adresse Tailscale Funnel sur la machine : il affiche directement
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│ VOTRE SITE EST EN LIGNE — ADRESSE FIXE                         │
+└────────────────────────────────────────────────────────────────┘
+  🔒 Lien PERMANENT : https://penguin.xxxx.ts.net
+```
+
+et ignore cloudflared. Autrement dit : une fois Tailscale configuré, la commande que vous
+tapez déjà donne l'adresse permanente. Si aucune adresse fixe n'existe, il rappelle la
+commande à lancer (`sudo tailscale funnel --bg <port>`) au lieu de vous laisser avec un
+lien jetable sans le savoir.
+
+`lien-stable.sh` et `tout.sh` **détectent le port réellement utilisé** (3001 si 3000 était
+occupé) : plus besoin de préciser `PORT=3001` à la main.
+
 ---
 
 ## 1. Pourquoi un lien `trycloudflare.com` ne peut pas être éternel
