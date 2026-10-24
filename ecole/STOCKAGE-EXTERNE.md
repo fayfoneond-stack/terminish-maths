@@ -165,6 +165,12 @@ Le plus simple, sur le serveur (l'assistant demande les trois valeurs) :
 bash deploy/alwaysdata/cloudinary.sh --configurer
 ```
 
+⚠️ **Quelle clé ?** Prenez la clé de la ligne **« Root »** (badge *Root*) dans
+Settings → API Keys. Une clé créée avec « Generate New API Key » reçoit le rôle
+*Media Library User* sans accès à aucun dossier : le ping réussit, mais tout
+envoi échoue avec `Request forbidden due to missing permissions (actions=["create"])`.
+La clé Root a tous les droits — c'est celle qu'il faut pour un établissement.
+
 Il écrit dans `.env`, en **conservant** MEGA (l'ordre devient `mega,cloudinary,local`
 si MEGA est configuré), puis :
 

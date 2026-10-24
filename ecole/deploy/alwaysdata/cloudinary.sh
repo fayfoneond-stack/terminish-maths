@@ -235,8 +235,35 @@ fi
 if printf '%s\n' "${ACTIONS[@]}" | grep -qx tester; then
   titre "Envoi d'une image de test par l'application"
   if [ -d "$RACINE/node_modules/express" ]; then
-    ( cd "$RACINE" && STORAGE_PROVIDERS=cloudinary node server/stockage.js --test cloudinary ) \
-      || erreur "Le test a échoué : lisez le message ci-dessus."
+    SORTIE_TEST=$( cd "$RACINE" && STORAGE_PROVIDERS=cloudinary node server/stockage.js --test cloudinary 2>&1 )
+    CODE_TEST=$?
+    printf '%s\n' "$SORTIE_TEST"
+    if [ "$CODE_TEST" -ne 0 ]; then
+      case "$SORTIE_TEST" in
+        *"missing permissions"*|*"not allowed to create"*)
+          alerte "Cette clé API n'a pas le droit d'envoyer des fichiers."
+          cat <<FIN
+
+  Cause : la clé créée avec « Generate New API Key » a le rôle
+  « Media Library User » sans accès à aucun dossier → tout envoi est refusé.
+
+  Solution (2 minutes) :
+    1. console.cloudinary.com → Settings → API Keys
+    2. ligne « Root » (badge Root) → cliquez sur les ** de la colonne API Secret
+       (Cloudinary redemande parfois votre mot de passe)
+    3. relancez :  bash deploy/alwaysdata/cloudinary.sh --configurer
+       → Cloud name : la même valeur qu'avant
+       → API Key    : la clé de la ligne Root
+       → API Secret : le secret de la ligne Root
+    La clé « Root » a tous les droits : c'est celle qu'il faut pour une école.
+
+FIN
+          ;;
+        *)
+          erreur "Le test a échoué : lisez le message ci-dessus."
+          ;;
+      esac
+    fi
   else
     alerte "Dépendances absentes : lancez d'abord deploy/alwaysdata/installer.sh"
   fi
