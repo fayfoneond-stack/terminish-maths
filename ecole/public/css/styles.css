@@ -20,6 +20,10 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
+/* Un tableau large ne doit jamais élargir toute la page sur téléphone :
+   c'est son conteneur (.table-wrap) qui défile. */
+html { -webkit-text-size-adjust: 100%; }
+body { overflow-x: hidden; }
 body {
   font-family: var(--sans);
   background: var(--fond);
@@ -271,11 +275,73 @@ footer.landing-foot a { color: #cfe5da; text-decoration: none; }
 .userbox span { font-size: 10.5px; color: var(--muted); text-transform: capitalize; }
 .content { padding: clamp(14px, 3vw, 28px); max-width: 1420px; width: 100%; }
 .burger { display: none; background: #fff; border: 1px solid var(--bord); border-radius: 9px; padding: 7px 10px; cursor: pointer; }
+/* Voile du menu mobile : masqué par défaut (visible seulement quand le tiroir
+   est ouvert, et seulement sur petit écran). */
+.sb-voile { display: none; }
+/* ---------------- Téléphone / tablette ----------------
+   Le menu latéral devient un tiroir : il glisse par-dessus la page, se ferme
+   au choix d'une rubrique ou d'un appui à côté, et ne mange pas plus de 86 %
+   de la largeur (au-delà, on ne voyait plus le site derrière). */
 @media (max-width: 960px) {
   .app-shell { grid-template-columns: 1fr; }
-  .sidebar { position: fixed; inset: 0 auto 0 0; width: 262px; z-index: 60; transform: translateX(-100%); transition: transform .18s ease; height: 100vh; }
-  .sidebar.open { transform: none; box-shadow: 0 0 0 100vmax rgba(7, 43, 32, .45); }
+  .sidebar {
+    position: fixed; inset: 0 auto 0 0; width: min(86vw, 300px); z-index: 70;
+    transform: translateX(-100%); transition: transform .2s ease;
+    height: 100vh; height: 100dvh;            /* 100dvh : tient compte de la barre du navigateur */
+    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    overscroll-behavior: contain;
+  }
+  .sidebar.open { transform: none; }
   .burger { display: block; }
+  /* Voile sombre : il capte l'appui « à côté » pour refermer le menu. */
+  .sb-voile {
+    position: fixed; inset: 0; z-index: 65;
+    background: rgba(7, 43, 32, .45); border: 0; padding: 0; margin: 0; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sb-voile.show { display: block; }
+  /* Barre du haut : le nom de l'école passait sous le menu. */
+  .topbar { gap: 8px; padding: 10px 12px; }
+  .topbar h1 { font-size: 15.5px; }
+  .topbar .crumb { font-size: 11px; }
+  .userbox { display: none; }
+  .topbar-right { gap: 6px; }
+  .topbar-right .tag { font-size: 10px; padding: 3px 7px; }
+  .content { padding: 12px; }
+  .panel { padding: 13px; }
+}
+@media (max-width: 560px) {
+  /* Écran de téléphone : on garde l'essentiel (titre + avatar + déconnexion). */
+  #annee-tag { display: none; }
+  .burger { padding: 6px 9px; font-size: 16px; }
+  .topbar h1 { font-size: 14.5px; }
+  .cards { grid-template-columns: 1fr 1fr; gap: 9px; }
+  .kpi { padding: 11px 12px; }
+  .kpi .val { font-size: 21px; }
+  .panel-head { gap: 6px; }
+  .panel-head .right { width: 100%; margin-left: 0; }
+  .panel-head .right .btn { flex: 1; justify-content: center; }
+  .btn { padding: 8px 12px; }
+  .modal-back { padding: 10px 8px; }
+  .modal header { padding: 12px 14px; }
+  .modal .body, .modal .modal-body { padding: 12px 14px; }
+  .modal footer { padding: 10px 14px; flex-wrap: wrap; }
+  .modal footer .btn { flex: 1; justify-content: center; }
+  /* Tableaux : défilement horizontal fluide au doigt, sans écraser les colonnes */
+  .table-wrap { margin: 0 -4px; }
+  table.data { font-size: 12px; }
+  table.data th, table.data td { padding: 7px 8px; }
+  /* 16 px minimum : sinon le navigateur du téléphone zoome tout seul dès qu'on
+     touche un champ (et la page reste zoomée après). */
+  input, select, textarea { font-size: 16px; }
+  /* Champs de filtre : une ligne entière, plus faciles à viser au doigt.
+     min-width:0 est indispensable : certains champs portent un min-width
+     en ligne (330px pour le choix d'épreuve) qui débordait de l'écran. */
+  .toolbar > * { flex: 1 1 100%; }
+  .toolbar .field { min-width: 0 !important; }
+  .toolbar .btn { flex: 0 0 auto; }
+  .toolbar .spacer { display: none; }
+  .icon-btn { padding: 7px 9px; }
 }
 
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 18px; }

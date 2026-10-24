@@ -341,7 +341,40 @@
         </div>
       </div>`;
 
-    $('#burger').onclick = () => $('#sidebar').classList.toggle('open');
+    /* ---------------- Menu latéral sur téléphone ----------------
+       Sur petit écran le menu est un tiroir. Il doit se refermer dès qu'on
+       choisit une rubrique ou qu'on touche la page à côté, sinon il reste
+       par-dessus le site (on ne voyait plus rien derrière). */
+    const voile = document.createElement('button');
+    voile.className = 'sb-voile';
+    voile.type = 'button';
+    voile.setAttribute('aria-label', 'Fermer le menu');
+    voile.tabIndex = -1;
+    document.getElementById('app').appendChild(voile);
+
+    const fermerMenu = () => {
+      $('#sidebar').classList.remove('open');
+      voile.classList.remove('show');
+    };
+    const ouvrirMenu = () => {
+      $('#sidebar').classList.add('open');
+      voile.classList.add('show');
+    };
+    $('#burger').onclick = () => {
+      if ($('#sidebar').classList.contains('open')) fermerMenu(); else ouvrirMenu();
+    };
+    voile.onclick = fermerMenu;
+    $('#sidebar').addEventListener('click', (e) => {
+      if (e.target.closest('.sb-item')) fermerMenu();
+    });
+    // Échap referme (clavier des Chromebooks), et un retour à l'accueil aussi.
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') fermerMenu();
+    });
+    // Rotation du téléphone ou retour au grand écran : on referme le tiroir.
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 960) fermerMenu();
+    });
     const btnBase = $('#btn-base');
     if (btnBase) btnBase.onclick = (e) => { e.preventDefault(); App.voirBase(); };
     $('#btn-logout').onclick = async () => {
@@ -350,9 +383,6 @@
       renderLogin();
       toast('Vous êtes déconnecté');
     };
-    $('#content').addEventListener('click', (e) => {
-      if (e.target.closest('.sb-item')) $('#sidebar').classList.remove('open');
-    });
   }
 
   function parseHash() {
@@ -379,6 +409,11 @@
     if (!(ACCESS[S.me.role] || []).includes(route)) route = defaultRoute();
     S.route = route; S.query = query;
 
+    // Sur téléphone, toute navigation referme le tiroir : la page reste visible.
+    const sb = $('#sidebar');
+    if (sb) sb.classList.remove('open');
+    const vl = document.querySelector('.sb-voile');
+    if (vl) vl.classList.remove('show');
     $$('.sb-item').forEach(a => a.classList.toggle('active', a.dataset.route === route));
     const [titre, sub] = TITRES[route] || ['Terminish École', ''];
     if ($('#page-title')) { $('#page-title').textContent = titre; $('#page-sub').textContent = sub; }
