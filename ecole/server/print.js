@@ -48,6 +48,12 @@ table.notes tfoot td { background: #0b3d2e; color: #fff; font-weight: 700; paddi
 .mention { display: inline-block; padding: 2px 10px; border-radius: 999px; background: #e8f5ef; color: #0b6b4a; font-weight: 700; font-size: 10px; border: 1px solid #bfe0d1; }
 .appr { background: #f7faf8; border-left: 3px solid #f0b429; padding: 5px 8px; font-style: italic; color: #334b41; font-size: 9.4px; border-radius: 0 4px 4px 0; min-height: 30px; }
 table.notes td .prof { font-size: 7.4px; font-weight: 500; color: #6b7d74; font-style: italic; line-height: 1.15; }
+/* Colonne « Signature du professeur » : la signature importée s'affiche, sinon
+   la case reste vide pour être signée à la main sur le bulletin imprimé. */
+table.notes th.sigcol { width: 11%; }
+table.notes th.sigcol .th-sub { font-size: 6.6px; font-weight: 500; letter-spacing: 0; text-transform: none; opacity: .8; }
+table.notes td.sigcell { padding: 1px 3px; }
+table.notes td.sigcell img.sig-mat { display: block; margin: 0 auto; max-height: 22px; max-width: 100%; object-fit: contain; }
 .sign { display: flex; justify-content: space-around; align-items: flex-end; margin-top: 10px; font-size: 9px; color: #4b6459; }
 .sign .sign-b { width: 40%; text-align: center; }
 .sign .role { font-size: 8.4px; text-transform: uppercase; letter-spacing: .4px; color: #0b3d2e; font-weight: 700; }
@@ -90,6 +96,9 @@ function renderBulletin({ promo, ligne, bulletin, eleve, professeurs = {}, princ
       <td>${fmt(l.points)}</td>
       <td>${l.rang ?? '—'}</td>
       <td style="text-align:left;font-size:8.4px">${esc(l.appreciation)}</td>
+      <td class="sigcell">${prof && prof.signature
+        ? `<img class="sig-mat" src="${esc(prof.signature)}" alt="signature de ${esc(prof.nom)}">`
+        : ''}</td>
     </tr>`;
   }).join('');
 
@@ -149,7 +158,8 @@ function renderBulletin({ promo, ligne, bulletin, eleve, professeurs = {}, princ
         ${modeComposition ? '' : '<th>Devoir 1</th><th>Devoir 2</th>'}
         <th>Composition</th>
         <th>Moyenne</th><th>Coef.</th><th>Moy. × Coef.</th><th>Rang</th>
-        <th style="width:17%">Appréciation</th>
+        <th style="width:15%">Appréciation</th>
+        <th class="sigcol">Signature<br><span class="th-sub">du professeur</span></th>
       </tr>
     </thead>
     <tbody>${rows}</tbody>
@@ -159,7 +169,7 @@ function renderBulletin({ promo, ligne, bulletin, eleve, professeurs = {}, princ
         <td>${fmt(ligne.moyenne)}</td>
         <td>${fmt(ligne.total_coef)}</td>
         <td>${fmt(ligne.total_points)}</td>
-        <td colspan="2"></td>
+        <td colspan="3"></td>
       </tr>
     </tfoot>
   </table>
