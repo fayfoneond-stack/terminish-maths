@@ -84,11 +84,27 @@ if printf '%s\n' "${ACTIONS[@]}" | grep -qx installer; then
     else
       wget -q "$URL" -O "$TMP/rclone.zip" || { erreur "Téléchargement impossible"; rm -rf "$TMP"; exit 1; }
     fi
+    # Décompression : unzip si présent, sinon python3 (toujours disponible chez
+    # alwaysdata), sinon dpkg-deb sur le paquet .deb (pas besoin de root).
     if command -v unzip >/dev/null 2>&1; then
       unzip -q "$TMP/rclone.zip" -d "$TMP"
+    elif command -v python3 >/dev/null 2>&1; then
+      info "unzip absent : décompression avec python3…"
+      python3 - "$TMP/rclone.zip" "$TMP" <<'PYZIP' || { erreur "Décompression impossible."; rm -rf "$TMP"; exit 1; }
+import sys, zipfile
+zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])
+PYZIP
+    elif command -v dpkg-deb >/dev/null 2>&1 && [ "$RARCH" = "amd64" ]; then
+      info "unzip absent : récupération du paquet .deb…"
+      if command -v curl >/dev/null 2>&1; then
+        curl -fsSL "https://downloads.rclone.org/rclone-current-linux-amd64.deb" -o "$TMP/rclone.deb"
+      else
+        wget -q "https://downloads.rclone.org/rclone-current-linux-amd64.deb" -O "$TMP/rclone.deb"
+      fi
+      dpkg-deb -x "$TMP/rclone.deb" "$TMP" || { erreur "Extraction du .deb impossible."; rm -rf "$TMP"; exit 1; }
     else
-      erreur "unzip est nécessaire pour décompresser rclone."
-      info "Installez-le (apt install unzip) ou déposez le binaire manuellement dans ~/bin."
+      erreur "Impossible de décompresser rclone (ni unzip, ni python3, ni dpkg-deb)."
+      info "Solution : télécharger rclone sur https://rclone.org/downloads/ puis déposer le binaire dans ~/bin."
       rm -rf "$TMP"; exit 1
     fi
     TROUVE="$(find "$TMP" -type f -name rclone | head -1)"
@@ -187,7 +203,7 @@ if printf '%s\n' "${ACTIONS[@]}" | grep -qx verifier; then
         node -e '
           try {
             const q = require("/tmp/rclone-about.json");
-            const go = n => n ? (n/1073741824).toFixed(2) + " Go" : "—";
+            const go = n => (n === null || n === undefined) ? "—" : (n/1073741824).toFixed(2) + " Go";
             console.log("  \033[32m✔\033[0m espace MEGA : " + go(q.used) + " utilisés / " + go(q.total) + " (libre " + go(q.free) + ")");
           } catch (_) {}
         ' 2>/dev/null || info "quota MEGA non communiqué (normal)"
