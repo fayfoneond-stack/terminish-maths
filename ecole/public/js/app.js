@@ -1088,7 +1088,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
             <tbody>${S.matieres.map(m => {
               const classes = S.classes.filter(c => c.matieres.some(x => x.id === m.id));
               return `<tr>
-                <td class="strong">${esc(m.nom)}</td>
+                <td class="strong">${esc(m.nom)}${m.nom_college ? `<div class="muted small">au collège : ${esc(m.nom_college)}</div>` : ''}</td>
                 <td><span class="tag gris">${esc(m.code || '—')}</span></td>
                 <td class="muted">${esc(m.groupe || '—')}</td>
                 <td class="center">${classes.length}</td>
@@ -1105,7 +1105,11 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
 
   function matiereFormHtml(m = {}) {
     return `
-      <div class="field"><label>Nom de la matière *</label><input name="nom" required value="${esc(m.nom || '')}" placeholder="Mathématiques"></div>
+      <div class="field"><label>Nom de la matière *</label><input name="nom" required value="${esc(m.nom || '')}" placeholder="Mathématiques">
+        <div class="hint">Nom utilisé au lycée (et partout par défaut).</div></div>
+      <div class="field"><label>Nom au collège <span class="muted">(facultatif)</span></label>
+        <input name="nom_college" value="${esc(m.nom_college || '')}" placeholder="Physique-Chimie et Technologie (PCT)">
+        <div class="hint">Si le collège emploie un autre intitulé. Laisser vide pour garder le même nom.</div></div>
       <div class="grid2">
         <div class="field"><label>Code / abréviation</label><input name="code" value="${esc(m.code || '')}" placeholder="MATH"></div>
         <div class="field"><label>Groupe</label><select name="groupe">
@@ -2252,7 +2256,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                 <thead><tr><th>Matière</th><th class="center">Notes</th><th class="center">Moyenne</th><th class="center">≥ 10</th><th class="center">&lt; 10</th></tr></thead>
                 <tbody>${(stat.composition_par_matiere || []).map(m => `
                   <tr>
-                    <td class="strong">${esc(m.nom)}</td>
+                    <td class="strong">${esc(m.nom)}${m.nom_college ? `<div class="muted small">au collège : ${esc(m.nom_college)}</div>` : ''}</td>
                     <td class="center small">${m.saisies}</td>
                     <td class="center">${badgeMoy(m.moyenne)}</td>
                     <td class="center small">${m.reussite}</td>
@@ -2282,7 +2286,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
               <thead><tr><th>Matière</th><th class="center">Coef.</th><th class="center">Moyenne</th><th class="center">Min</th><th class="center">Max</th><th class="center">Écart-type</th><th class="center">Réussite</th><th>Niveau</th></tr></thead>
               <tbody>${d.matieres_stats.map(m => `
                 <tr>
-                  <td class="strong">${esc(m.nom)}</td>
+                  <td class="strong">${esc(m.nom)}${m.nom_college ? `<div class="muted small">au collège : ${esc(m.nom_college)}</div>` : ''}</td>
                   <td class="center">${m.coefficient}</td>
                   <td class="center">${badgeMoy(m.moyenne)}</td>
                   <td class="center small">${fmt(m.min)}</td>

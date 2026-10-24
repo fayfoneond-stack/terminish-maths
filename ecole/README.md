@@ -258,6 +258,7 @@ enseignants ; une note ne peut viser qu'un élève de la classe de l'évaluation
 
 | Élément du bulletin | D'où il vient |
 |---|---|
+| Nom de la matière | `matieres.nom` (lycée) ou `matieres.nom_college` si la classe est au collège |
 | Nom du professeur, sous chaque matière | affectations (classe + matière) |
 | **Colonne « Signature du professeur »**, à droite du tableau | signature importée de l'enseignant affecté à la matière (case vide s'il n'en a pas : elle se signe à la main sur le bulletin imprimé) |
 | Bloc « Le Professeur titulaire » | `classes.titulaire_id` → nom **et signature** de l'enseignant |

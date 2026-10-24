@@ -95,10 +95,20 @@ function computeClasse(db, ecoleId, scope) {
   // et aux statistiques de fin de trimestre.
   const compositionSeule = scope.mode === 'composition';
 
-  const matieres = db.prepare(`
-    SELECT m.id, m.nom, m.code, m.groupe, cm.coefficient
+  const matieresBrutes = db.prepare(`
+    SELECT m.id, m.nom, m.nom_college, m.code, m.groupe, cm.coefficient
     FROM classe_matieres cm JOIN matieres m ON m.id = cm.matiere_id
     WHERE cm.classe_id = ? ORDER BY m.groupe, m.nom`).all(classe.id);
+
+  // Au collège, certaines matières portent un nom différent (« Physique-Chimie
+  // et Technologie (PCT) » au lieu de « Physique-Chimie » au lycée). Le nom
+  // retenu ici sert au bulletin, aux statistiques et à la saisie des notes.
+  const matieres = matieresBrutes.map(m => ({
+    ...m,
+    nom: (classe.cycle === 'college' && String(m.nom_college || '').trim())
+      ? String(m.nom_college).trim()
+      : m.nom
+  }));
 
   const eleves = db.prepare(`
     SELECT id, matricule, nom, prenom, sexe, date_naissance, lieu_naissance, tuteur_nom, tuteur_tel

@@ -240,6 +240,19 @@ ensureColumn('etablissements', 'logo_public_id', 'TEXT');
 // En-tête officiel du bulletin (ministère, tutelle, région…), librement rédigé
 // par chaque établissement. NULL = valeur par défaut ; '' = ligne masquée.
 ensureColumn('etablissements', 'tutelle', 'TEXT');
+// Nom de la matière au COLLÈGE, quand il diffère de celui du lycée :
+// « Physique-Chimie et Technologie (PCT) » au collège, « Physique-Chimie »
+// au lycée. NULL ou vide = même nom dans les deux cycles.
+const avaitNomCollege = db.prepare('PRAGMA table_info(matieres)').all().some(c => c.name === 'nom_college');
+ensureColumn('matieres', 'nom_college', 'TEXT');
+if (!avaitNomCollege) {
+  // Première mise à jour de cette base : on reprend l'intitulé officiel du
+  // collège pour les matières déjà existantes. Un établissement peut ensuite
+  // vider le champ pour revenir au même nom dans les deux cycles.
+  db.prepare(`UPDATE matieres SET nom_college = ?
+              WHERE nom_college IS NULL AND (code = 'PC' OR nom LIKE 'Physique-Chimie%')`)
+    .run('Physique-Chimie et Technologie (PCT)');
+}
 
 // Bulletin : signature manuscrite scannée de l'enseignant (importée une fois),
 // professeur titulaire de la classe, et signature du chef d'établissement.
@@ -408,13 +421,15 @@ function seedDemo() {
   createUser({ ecole_id: ecoleId, nom: 'M. Kodjo AMEGAN', email: 'directeur@demo.tg', password: 'demo1234', role: 'directeur', telephone: '+228 90 11 22 33' });
   createUser({ ecole_id: null, nom: 'Administrateur Terminish', email: 'admin@terminish.tg', password: 'admin1234', role: 'super_admin' });
 
+  // 4e colonne : nom utilisé au collège (vide = même nom dans les deux cycles)
   const matieres = [
-    ['Mathématiques', 'MATH', 'Scientifique'], ['Physique-Chimie', 'PC', 'Scientifique'],
-    ['Sciences de la Vie et de la Terre', 'SVT', 'Scientifique'], ['Français', 'FR', 'Littéraire'],
-    ['Anglais', 'ANG', 'Littéraire'], ['Histoire-Géographie', 'HG', 'Littéraire'],
-    ['Éducation Civique et Morale', 'ECM', 'Autres'], ['Éducation Physique et Sportive', 'EPS', 'Autres']
-  ].map(([nom, code, groupe]) => {
-    const info = db.prepare('INSERT INTO matieres (ecole_id, nom, code, groupe) VALUES (?,?,?,?)').run(ecoleId, nom, code, groupe);
+    ['Mathématiques', 'MATH', 'Scientifique', ''], ['Physique-Chimie', 'PC', 'Scientifique', 'Physique-Chimie et Technologie (PCT)'],
+    ['Sciences de la Vie et de la Terre', 'SVT', 'Scientifique', 'Sciences de la Vie et de la Terre (SVT)'], ['Français', 'FR', 'Littéraire', ''],
+    ['Anglais', 'ANG', 'Littéraire', ''], ['Histoire-Géographie', 'HG', 'Littéraire', ''],
+    ['Éducation Civique et Morale', 'ECM', 'Autres', ''], ['Éducation Physique et Sportive', 'EPS', 'Autres', '']
+  ].map(([nom, code, groupe, nomCollege]) => {
+    const info = db.prepare('INSERT INTO matieres (ecole_id, nom, code, groupe, nom_college) VALUES (?,?,?,?,?)')
+      .run(ecoleId, nom, code, groupe, nomCollege || null);
     return { id: Number(info.lastInsertRowid), nom, code };
   });
 

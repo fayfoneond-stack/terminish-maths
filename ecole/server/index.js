@@ -373,36 +373,39 @@ app.post('/api/matieres/init', auth, directionOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
   const existantes = db.prepare('SELECT COUNT(*) AS n FROM matieres WHERE ecole_id = ?').get(id).n;
   if (existantes > 0) return res.status(400).json({ error: 'Des matières existent déjà dans cet établissement' });
+  // 4e valeur : nom employé au collège (vide = identique au lycée)
   const modele = [
-    ['Mathématiques', 'MATH', 'Scientifique'],
-    ['Physique-Chimie', 'PC', 'Scientifique'],
-    ['Sciences de la Vie et de la Terre', 'SVT', 'Scientifique'],
-    ['Français', 'FR', 'Littéraire'],
-    ['Anglais', 'ANG', 'Littéraire'],
-    ['Histoire-Géographie', 'HG', 'Littéraire'],
-    ['Éducation Civique et Morale', 'ECM', 'Autres'],
-    ['Éducation Physique et Sportive', 'EPS', 'Autres']
+    ['Mathématiques', 'MATH', 'Scientifique', ''],
+    ['Physique-Chimie', 'PC', 'Scientifique', 'Physique-Chimie et Technologie (PCT)'],
+    ['Sciences de la Vie et de la Terre', 'SVT', 'Scientifique', 'Sciences de la Vie et de la Terre (SVT)'],
+    ['Français', 'FR', 'Littéraire', ''],
+    ['Anglais', 'ANG', 'Littéraire', ''],
+    ['Histoire-Géographie', 'HG', 'Littéraire', ''],
+    ['Éducation Civique et Morale', 'ECM', 'Autres', ''],
+    ['Éducation Physique et Sportive', 'EPS', 'Autres', '']
   ];
-  const insert = db.prepare('INSERT INTO matieres (ecole_id, nom, code, groupe) VALUES (?,?,?,?)');
-  modele.forEach(m => insert.run(id, m[0], m[1], m[2]));
+  const insert = db.prepare('INSERT INTO matieres (ecole_id, nom, code, groupe, nom_college) VALUES (?,?,?,?,?)');
+  modele.forEach(m => insert.run(id, m[0], m[1], m[2], m[3] || null));
   res.json({ ok: true, count: modele.length });
 });
 
 app.post('/api/matieres', auth, directionOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
-  const { nom, code, groupe } = req.body || {};
+  const { nom, code, groupe, nom_college } = req.body || {};
   if (!nom) return res.status(400).json({ error: 'Le nom est requis' });
-  const info = db.prepare('INSERT INTO matieres (ecole_id, nom, code, groupe) VALUES (?,?,?,?)')
-    .run(id, nom, code || '', groupe || 'Autres');
+  const info = db.prepare('INSERT INTO matieres (ecole_id, nom, code, groupe, nom_college) VALUES (?,?,?,?,?)')
+    .run(id, nom, code || '', groupe || 'Autres', String(nom_college || '').trim());
   res.json({ ok: true, id: Number(info.lastInsertRowid) });
 });
 app.put('/api/matieres/:id', auth, directionOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
   const m = db.prepare('SELECT * FROM matieres WHERE id = ? AND ecole_id = ?').get(req.params.id, id);
   if (!m) return res.status(404).json({ error: 'Matière introuvable' });
-  const { nom, code, groupe } = req.body || {};
-  db.prepare('UPDATE matieres SET nom = ?, code = ?, groupe = ? WHERE id = ?')
-    .run(nom ?? m.nom, code ?? m.code, groupe ?? m.groupe, m.id);
+  const { nom, code, groupe, nom_college } = req.body || {};
+  // Une chaîne vide est une réponse volontaire : « même nom qu'au lycée ».
+  const college = nom_college === undefined ? m.nom_college : String(nom_college).trim();
+  db.prepare('UPDATE matieres SET nom = ?, code = ?, groupe = ?, nom_college = ? WHERE id = ?')
+    .run(nom ?? m.nom, code ?? m.code, groupe ?? m.groupe, college, m.id);
   res.json({ ok: true });
 });
 app.delete('/api/matieres/:id', auth, directionOnly, (req, res) => {
@@ -700,7 +703,15 @@ function grilleData(ecoleId, classeId, matiereId, periodeId) {
     const rows = db.prepare('SELECT eleve_id, valeur, absent, modifie_le FROM notes WHERE evaluation_id = ?').all(ev.id);
     notes[ev.id] = Object.fromEntries(rows.map(r => [r.eleve_id, r]));
   });
-  return { classe, matiere: { ...matiere, coefficient: cm ? cm.coefficient : 1 }, periode, evaluations: evals, eleves, notes };
+  // Nom affiché selon le cycle de la classe : « Physique-Chimie et Technologie
+  // (PCT) » au collège, « Physique-Chimie » au lycée.
+  const nomAffiche = (classe.cycle === 'college' && String(matiere.nom_college || '').trim())
+    ? String(matiere.nom_college).trim()
+    : matiere.nom;
+  return {
+    classe, matiere: { ...matiere, nom_affiche: nomAffiche, coefficient: cm ? cm.coefficient : 1 },
+    periode, evaluations: evals, eleves, notes
+  };
 }
 app.get('/api/notes/grille', auth, staffOnly, (req, res) => {
   const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
