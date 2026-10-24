@@ -159,17 +159,39 @@ application). Inscription : <https://cloudinary.com/users/register/free> (Google
 
 ### 4.1 Un seul compte
 
+Le plus simple, sur le serveur (l'assistant demande les trois valeurs) :
+
 ```bash
-CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+bash deploy/alwaysdata/cloudinary.sh --configurer
 ```
 
-ou, séparément :
+Il écrit dans `.env`, en **conservant** MEGA (l'ordre devient `mega,cloudinary,local`
+si MEGA est configuré), puis :
+
+```bash
+bash deploy/alwaysdata/cloudinary.sh --verifier   # appelle réellement Cloudinary
+bash deploy/alwaysdata/cloudinary.sh --tester     # envoie une image de 1 pixel
+```
+
+À la main, si vous préférez :
 
 ```ini
 CLOUDINARY_CLOUD_NAME=mon-ecole
 CLOUDINARY_API_KEY=123456789012345
 CLOUDINARY_API_SECRET=abcdefghijklmnop
 STORAGE_PROVIDERS=cloudinary,local
+```
+
+ou en une seule ligne :
+
+```bash
+CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+```
+
+Retirer Cloudinary sans rien casser (les images déjà envoyées restent accessibles) :
+
+```bash
+bash deploy/alwaysdata/cloudinary.sh --supprimer
 ```
 
 ### 4.2 Plusieurs comptes (rotation automatique)

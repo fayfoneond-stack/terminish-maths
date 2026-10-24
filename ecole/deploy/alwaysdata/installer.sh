@@ -151,7 +151,9 @@ COOKIE_SECURE=1
 # Par défaut : tout reste sur le disque, dans data/media (1 Go sur alwaysdata).
 # MEGA (25 Go gratuits) : bash deploy/alwaysdata/rclone.sh --installer --configurer
 #   écrit automatiquement RCLONE_BIN, MEGA_RCLONE_REMOTE et STORAGE_PROVIDERS.
-# Cloudinary : CLOUDINARY_CLOUD_NAME=... / CLOUDINARY_API_KEY=... / CLOUDINARY_API_SECRET=...
+# Cloudinary (25 crédits/mois) : bash deploy/alwaysdata/cloudinary.sh --configurer
+#   écrit CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET
+#   et ajoute cloudinary à STORAGE_PROVIDERS.
 # Google Drive : GOOGLE_DRIVE_SA_JSON=/chemin/compte-de-service.json
 #                GOOGLE_DRIVE_FOLDER_ID=identifiant_du_dossier
 # Ordre d'essai : STORAGE_PROVIDERS=mega,cloudinary,local

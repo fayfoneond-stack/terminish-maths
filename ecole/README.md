@@ -309,6 +309,7 @@ sortent : les notes et les bulletins restent dans SQLite.
 npm run stockage                    # état des fournisseurs
 npm run stockage -- --test mega     # envoi réel d'un fichier de test
 bash deploy/alwaysdata/rclone.sh --installer --configurer   # MEGA en 2 étapes
+bash deploy/alwaysdata/cloudinary.sh --configurer            # Cloudinary (CDN)
 ```
 
 Depuis l'application : **Réglages → Stockage externe** affiche l'état de chaque fournisseur et

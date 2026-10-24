@@ -2,9 +2,9 @@
 
 ## ⬇️ Le fichier à prendre pour déployer
 
-### `terminish-ecole-deploiement.zip` — 251 Ko (23/10/2026)
+### `terminish-ecole-deploiement.zip` — 264 Ko (24/10/2026)
 
-sha256 : `53d0707929cd9e213dacc96e03823e1823a55bfab23c958fbb9674150de71da8`
+sha256 : `653c4ec4213344bb91bf6ca0f8318e3f15340ebd4caa4fe07323015bea9223e4`
 
 Tout ce qu'il faut pour installer et mettre le site en ligne, et **rien de plus** :
 
@@ -18,7 +18,7 @@ terminish-ecole/
 ├── public/               site vitrine + application (HTML, CSS, JS)
 ├── deploy/               Caddy, Nginx, systemd, lanceur, installateur Linux,
 │                         lien-stable.sh (adresse fixe Tailscale) + paquet.sh
-│                         alwaysdata/installer.sh et alwaysdata/rclone.sh
+│                         alwaysdata/installer.sh, rclone.sh, cloudinary.sh
 ├── package.json / package-lock.json    dépendances (versions figées)
 ├── Dockerfile / docker-compose.yml     mise en ligne Docker + HTTPS automatique
 ├── render.yaml                         déploiement Render (disque persistant)
@@ -26,7 +26,7 @@ terminish-ecole/
 └── README.md, LIEN-ETERNEL.md, DEPLOIEMENT.md, DEPLOIEMENT-GRATUIT.md, FIREBASE.md
 ```
 
-53 fichiers · aucun `node_modules` · aucune donnée · testé (extraction vierge,
+54 fichiers · aucun `node_modules` · aucune donnée · testé (extraction vierge,
 `npm ci`, démarrage, `/api/health` OK, `npm run stockage` OK).
 
 ## Les autres archives (facultatives)
