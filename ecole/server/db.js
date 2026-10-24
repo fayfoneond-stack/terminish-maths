@@ -242,7 +242,7 @@ ensureColumn('etablissements', 'logo_public_id', 'TEXT');
 ensureColumn('etablissements', 'tutelle', 'TEXT');
 
 // Bulletin : signature manuscrite scannée de l'enseignant (importée une fois),
-// professeur principal de la classe, et signature du chef d'établissement.
+// professeur titulaire de la classe, et signature du chef d'établissement.
 ensureColumn('utilisateurs', 'signature', 'TEXT');
 ensureColumn('utilisateurs', 'signature_provider', 'TEXT');
 ensureColumn('classes', 'titulaire_id', 'INTEGER');

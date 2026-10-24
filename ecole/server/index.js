@@ -184,7 +184,7 @@ app.get('/api/me', auth, (req, res) => {
 
 /**
  * Signature manuscrite de l'utilisateur connecté (chef d'établissement,
- * professeur principal…). Importée une seule fois : elle est ensuite apposée
+ * professeur titulaire…). Importée une seule fois : elle est ensuite apposée
  * automatiquement sur les bulletins.
  *   PUT /api/moi/signature   { signature: "data:image/png;base64,…" }  → enregistre
  *   PUT /api/moi/signature   { signature: "" }                         → retire
@@ -419,7 +419,7 @@ function classeWithMatieres(ecoleId, c) {
     SELECT m.id, m.nom, m.code, m.groupe, cm.coefficient FROM classe_matieres cm
     JOIN matieres m ON m.id = cm.matiere_id WHERE cm.classe_id = ? ORDER BY m.groupe, m.nom`).all(c.id);
   const effectif = db.prepare("SELECT COUNT(*) AS n FROM eleves WHERE classe_id = ? AND statut = 'actif'").get(c.id).n;
-  // Professeur principal : c'est lui qui signe le bulletin.
+  // Professeur titulaire de la classe : c'est lui qui signe le bulletin.
   const prof = c.titulaire_id
     ? db.prepare("SELECT id, nom, signature FROM utilisateurs WHERE id = ? AND ecole_id = ? AND role = 'enseignant'").get(c.titulaire_id, ecoleId)
     : null;
@@ -428,7 +428,7 @@ function classeWithMatieres(ecoleId, c) {
     professeur_principal: prof ? { id: prof.id, nom: prof.nom, signature: prof.signature || null } : null
   };
 }
-/** Un professeur principal doit être un enseignant de la même école. */
+/** Un professeur titulaire doit être un enseignant de la même école. */
 function verifierTitulaire(ecoleId, valeur) {
   if (valeur === null || valeur === '' || valeur === 0) return null;   // « aucun »
   const u = db.prepare("SELECT id FROM utilisateurs WHERE id = ? AND ecole_id = ? AND role = 'enseignant'").get(Number(valeur), ecoleId);

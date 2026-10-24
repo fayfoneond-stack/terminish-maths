@@ -283,9 +283,9 @@ PRÉREQUIS : Node.js 22 ou plus. Rien d'autre. (Docker seulement pour l'option D
 
   Elle apparaît ensuite sur tous ses bulletins, au-dessus de son nom.
 
-  Désigner le professeur principal d'une classe (celui qui signe) :
+  Désigner le professeur titulaire d'une classe (celui qui signe) :
 
-      Console → Classes → modifier → « Professeur principal »
+      Console → Classes → modifier → « Professeur titulaire »
       (il faut d'abord que l'enseignant existe et soit affecté à la classe)
 
   Signature du chef d'établissement :
@@ -294,7 +294,7 @@ PRÉREQUIS : Node.js 22 ou plus. Rien d'autre. (Docker seulement pour l'option D
       d'établissement » → glisser la photo → Enregistrer ma signature
 
   Le bulletin affiche : nom du professeur sous chaque matière, puis deux
-  blocs signés (Professeur principal / Chef d'Établissement).
+  blocs signés (Professeur titulaire / Chef d'Établissement).
   Le TUTEUR a été retiré du bulletin ; ses coordonnées restent dans la fiche
   de l'élève (usage administratif).
 

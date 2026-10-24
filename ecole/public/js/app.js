@@ -949,7 +949,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     }
   };
 
-  /** Liste des enseignants (pour désigner le professeur principal). */
+  /** Liste des enseignants (pour désigner le professeur titulaire). */
   async function chargerEnseignants() {
     if (S.enseignants && S.enseignants.length) return S.enseignants;
     try { S.enseignants = await api('/api/enseignants'); } catch (_) { S.enseignants = []; }
@@ -972,7 +972,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         <div class="field"><label>Série (lycée)</label><input name="serie" value="${esc(c.serie || '')}" placeholder="A, C, D..."></div>
       </div>
       <div class="grid2">
-        <div class="field"><label>Professeur principal (signe le bulletin)</label>
+        <div class="field"><label>Professeur titulaire de la classe (signe le bulletin)</label>
           <select name="titulaire_id" id="cl-titulaire">
             <option value="">— Aucun —</option>
             ${(S.enseignants || []).map(e => `<option value="${e.id}" ${Number(c.titulaire_id) === e.id ? 'selected' : ''}>${esc(e.nom)}</option>`).join('')}

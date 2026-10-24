@@ -139,7 +139,7 @@ function renderBulletin({ promo, ligne, bulletin, eleve, professeurs = {}, princ
     <div><span class="k">Né(e) le :</span> <span class="v">${esc(dateFr(eleve.date_naissance))}</span></div>
     <div><span class="k">À :</span> <span class="v">${esc(eleve.lieu_naissance || '—')}</span></div>
     <div><span class="k">Effectif de la classe :</span> <span class="v">${stat.effectif_classe}</span></div>
-    <div><span class="k">Professeur principal :</span> <span class="v">${esc((principal && principal.nom) || '—')}</span></div>
+    <div><span class="k">Professeur titulaire :</span> <span class="v">${esc((principal && principal.nom) || '—')}</span></div>
   </div>
 
   <table class="notes">
@@ -194,7 +194,7 @@ function renderBulletin({ promo, ligne, bulletin, eleve, professeurs = {}, princ
 
   <div class="sign">
     <div class="sign-b">
-      <div class="role">Le Professeur principal</div>
+      <div class="role">Le Professeur titulaire</div>
       ${principal && principal.signature
         ? `<img class="sig" src="${esc(principal.signature)}" alt="signature">`
         : '<div class="sig-vide">signature</div>'}

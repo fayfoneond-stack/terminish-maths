@@ -316,7 +316,7 @@ function bulletinData(db, ecoleId, eleveId, periodeId, options = {}) {
     if (!professeurs[p.matiere_id]) professeurs[p.matiere_id] = { id: p.id, nom: p.nom, signature: p.signature || null };
   });
 
-  /* --- Professeur principal : celui qui signe le bulletin --------------- */
+  /* --- Professeur titulaire : celui qui signe le bulletin --------------- */
   const classe = db.prepare('SELECT * FROM classes WHERE id = ?').get(eleve.classe_id);
   let principal = classe && classe.titulaire_id
     ? db.prepare("SELECT id, nom, signature FROM utilisateurs WHERE id = ? AND ecole_id = ?").get(classe.titulaire_id, ecoleId)

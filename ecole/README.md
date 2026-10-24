@@ -259,7 +259,7 @@ enseignants ; une note ne peut viser qu'un élève de la classe de l'évaluation
 | Élément du bulletin | D'où il vient |
 |---|---|
 | Nom du professeur, sous chaque matière | affectations (classe + matière) |
-| Bloc « Le Professeur principal » | `classes.titulaire_id` → nom **et signature** de l'enseignant |
+| Bloc « Le Professeur titulaire » | `classes.titulaire_id` → nom **et signature** de l'enseignant |
 | Bloc « Le Chef d'Établissement » | `etablissements.chef_nom` / `chef_titre` + signature du compte direction |
 | Le tuteur | **supprimé du bulletin** (les coordonnées du tuteur restent dans la fiche élève) |
 
