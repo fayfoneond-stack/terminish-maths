@@ -8,8 +8,9 @@
 #       bash deploy/alwaysdata/cloudinary.sh --tester
 #
 #   Options :
-#       --configurer        enregistre les identifiants dans .env
-#       --verifier          contrôle les identifiants auprès de Cloudinary
+#       --configurer        enregistre les identifiants puis VÉRIFIE qu'ils
+#                           ont le droit d'envoyer (un pixel de test est envoyé)
+#       --verifier          contrôle les identifiants + le droit d'écriture
 #       --tester            envoie une image de 1 pixel par l'application
 #       --cloud NOM         Cloud name (sinon demandé)
 #       --cle CLE           API Key (sinon demandée)
@@ -19,8 +20,13 @@
 #       -h | --help
 #
 #   Où trouver les trois valeurs :
-#       console.cloudinary.com → Dashboard
+#       console.cloudinary.com → Settings → API Keys
 #       « Cloud name », « API Key », « API Secret »
+#
+#   ⚠ Prenez une clé dont le RÔLE autorise l'envoi : « Master Admin »
+#     (bouton « + Generate New API Key »). Une clé « Media Library User »
+#     passe le ping mais refuse toute écriture :
+#     Request forbidden due to missing permissions (actions=["create"])
 #
 #   Créer un compte : https://cloudinary.com/users/register_free
 #   Gratuit : 25 crédits/mois, aucune carte bancaire.
@@ -67,6 +73,54 @@ FIN="# --- fin du bloc stockage Cloudinary ---"
 
 # Valeur d'une clé dans .env (vide si absente)
 lire_env() { grep -E "^$1=" "$ENVFILE" 2>/dev/null | tail -1 | cut -d= -f2-; }
+
+# Envoi réel d'un pixel (même signature que l'application) : seule façon de
+# savoir si la clé a le DROIT d'envoyer, ce que le ping ne dit pas.
+# Affiche : OK <url>  |  PERMIS <message>  |  REFUS <message>  |  RESEAU <message>
+sonde_envoi() {
+  CLOUD="$1" CLE="$2" SECRET="$3" DOSSIER="$4" node -e '
+    const crypto = require("crypto");
+    (async () => {
+      const cloud = process.env.CLOUD, key = process.env.CLE, secret = process.env.SECRET;
+      const dossier = (process.env.DOSSIER || "terminish") + "/sonde";
+      const base = (process.env.CLOUDINARY_API_BASE || "https://api.cloudinary.com").replace(/\/+$/, "");
+      const timestamp = Math.floor(Date.now() / 1000);
+      const params = { folder: dossier, timestamp };
+      const aSigner = Object.keys(params).sort().map(k => k + "=" + params[k]).join("&");
+      const signature = crypto.createHash("sha1").update(aSigner + secret).digest("hex");
+      const pixel = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+      const corps = new URLSearchParams({ ...params, api_key: key, signature, file: pixel });
+      try {
+        const r = await fetch(`${base}/v1_1/${encodeURIComponent(cloud)}/image/upload`,
+          { method: "POST", body: corps, signal: AbortSignal.timeout(20000) });
+        const d = await r.json().catch(() => null);
+        if (r.ok && d && d.secure_url) { console.log("OK " + d.secure_url); process.exit(0); }
+        const msg = (d && d.error && d.error.message) || ("HTTP " + r.status);
+        console.log(((r.status === 401 || r.status === 403) ? "PERMIS " : "REFUS ") + msg);
+      } catch (e) { console.log("RESEAU " + e.message); }
+    })();
+  ' 2>/dev/null
+}
+
+conseil_cle() {
+  cat <<FIN
+
+  Cause : l'API Key est valide (le ping passe) mais son RÔLE interdit l'envoi.
+  La clé « Untitled » créée par défaut a le rôle « Media Library User » sans
+  accès à aucun dossier → toute création de fichier est refusée.
+
+  Solution (2 minutes), dans console.cloudinary.com → Settings → API Keys :
+    1. « + Generate New API Key »
+    2. Key Name : Terminish
+    3. Role : « Master Admin »   ← le rôle qui a tous les droits
+    4. Create → le SECRET s'affiche UNE SEULE FOIS : copiez-le tout de suite
+    5. relancez :  bash deploy/alwaysdata/cloudinary.sh --configurer
+
+  (Une clé « Media Library User » ne peut pas convenir sans droits sur un
+   dossier, réglables uniquement par l'API Admin : inutile pour une école.)
+
+FIN
+}
 
 # Réécrit .env en retirant puis réajoutant le bloc Cloudinary
 ecrire_bloc() {
@@ -176,6 +230,19 @@ if printf '%s\n' "${ACTIONS[@]}" | grep -qx configurer; then
   ok "Ordre d'essai : $ORDRE"
   info "Cloud name : $CLOUD · API Key : ${CLE:0:4}…${CLE: -2} · Secret : ••••"
 
+  # Contrôle immédiat : une clé valide peut quand même être privée d'écriture.
+  info "Envoi d'un pixel de contrôle…"
+  REP="$(sonde_envoi "$CLOUD" "$CLE" "$SECRET" "$DOSSIER")"
+  case "$REP" in
+    OK\ *)     ok "Envoi autorisé : cette clé peut écrire"
+                info "${REP#OK }" ;;
+    PERMIS*)    erreur "Cette clé ne peut PAS envoyer de fichiers (rôle insuffisant)."
+                conseil_cle ;;
+    REFUS*)     erreur "Envoi refusé : ${REP#REFUS }" ;;
+    RESEAU*)    alerte "Réseau indisponible : ${REP#RESEAU } (identifiants enregistrés)" ;;
+    *)          alerte "Contrôle impossible (node absent) : lancez --tester plus tard" ;;
+  esac
+
   cat <<FIN
 
   ⚠ Le site doit être redémarré pour lire le nouveau .env :
@@ -228,6 +295,21 @@ if printf '%s\n' "${ACTIONS[@]}" | grep -qx verifier; then
       ECHEC*) erreur "Réponse inattendue : ${REP#ECHEC }" ;;
       *) alerte "Vérification impossible (node absent ou réseau bloqué)" ;;
     esac
+
+    # Le ping ne prouve pas le droit d'écrire : on tente un vrai envoi.
+    case "$REP" in
+      OK)
+        info "Contrôle du droit d'écriture (envoi d'un pixel)…"
+        REP2="$(sonde_envoi "$CLOUD" "$CLE" "$SECRET" "$DOSSIER")"
+        case "$REP2" in
+          OK\ *)  ok "Envoi autorisé : cette clé peut écrire" ; info "${REP2#OK }" ;;
+          PERMIS*) erreur "Cette clé ne peut PAS envoyer de fichiers (rôle insuffisant)."
+                   conseil_cle ;;
+          REFUS*)  erreur "Envoi refusé : ${REP2#REFUS }" ;;
+          RESEAU*) alerte "Réseau : ${REP2#RESEAU }" ;;
+          *)       alerte "Contrôle impossible (node absent)" ;;
+        esac ;;
+    esac
   fi
 fi
 
@@ -242,22 +324,7 @@ if printf '%s\n' "${ACTIONS[@]}" | grep -qx tester; then
       case "$SORTIE_TEST" in
         *"missing permissions"*|*"not allowed to create"*)
           alerte "Cette clé API n'a pas le droit d'envoyer des fichiers."
-          cat <<FIN
-
-  Cause : la clé créée avec « Generate New API Key » a le rôle
-  « Media Library User » sans accès à aucun dossier → tout envoi est refusé.
-
-  Solution (2 minutes) :
-    1. console.cloudinary.com → Settings → API Keys
-    2. ligne « Root » (badge Root) → cliquez sur les ** de la colonne API Secret
-       (Cloudinary redemande parfois votre mot de passe)
-    3. relancez :  bash deploy/alwaysdata/cloudinary.sh --configurer
-       → Cloud name : la même valeur qu'avant
-       → API Key    : la clé de la ligne Root
-       → API Secret : le secret de la ligne Root
-    La clé « Root » a tous les droits : c'est celle qu'il faut pour une école.
-
-FIN
+          conseil_cle
           ;;
         *)
           erreur "Le test a échoué : lisez le message ci-dessus."

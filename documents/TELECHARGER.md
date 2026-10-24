@@ -2,9 +2,9 @@
 
 ## ⬇️ Le fichier à prendre pour déployer
 
-### `terminish-ecole-deploiement.zip` — 264 Ko (24/10/2026)
+### `terminish-ecole-deploiement.zip` — 266 Ko (24/10/2026)
 
-sha256 : `8c36d5d192f9ed295d507c62dd2871d8748df54b972fab844c360fb037be8595`
+sha256 : `ce1187091d5686b48d9efaa14f3a05a0fe36b27ad4a7c81c56b98bdb24622f09`
 
 Tout ce qu'il faut pour installer et mettre le site en ligne, et **rien de plus** :
 
