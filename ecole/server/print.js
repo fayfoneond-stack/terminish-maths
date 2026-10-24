@@ -93,6 +93,15 @@ function renderBulletin({ promo, ligne, bulletin, eleve, professeurs = {}, princ
     </tr>`;
   }).join('');
 
+  // En-tête officiel (ministère, tutelle, région, devise de l'école…) :
+  // chaque établissement écrit ce qu'il veut dans Réglages → Identité.
+  //   valeur saisie → affichée telle quelle
+  //   champ vidé    → aucune ligne
+  //   jamais touché → phrase par défaut ci-dessous
+  const tutelle = etab.tutelle == null
+    ? 'République Togolaise · Ministère des Enseignements'
+    : String(etab.tutelle).trim();
+
   const rangTxt = ligne.rang ? `${ligne.rang}<small>/${promo.resultats.length}</small>` : '—';
   const decision = (bulletin && bulletin.decision) || (ligne.moyenne != null && ligne.moyenne >= 10 ? 'Admis(e)' : ligne.moyenne != null ? 'Doit se rattraper' : '');
 
@@ -107,7 +116,7 @@ function renderBulletin({ promo, ligne, bulletin, eleve, professeurs = {}, princ
   <div class="head">
     ${(etab.logo_url || etab.logo) ? `<img class="logo" src="${etab.logo_url || etab.logo}" alt="logo">` : `<div class="logo-ph">${esc((etab.nom || 'E').slice(0, 1))}</div>`}
     <div class="ecole">
-      <div class="ministry">République Togolaise · Ministère des Enseignements</div>
+      ${tutelle ? `<div class="ministry">${esc(tutelle)}</div>` : ''}
       <h1>${esc(etab.nom)}</h1>
       <div class="meta">
         ${etab.adresse ? esc(etab.adresse) + ' — ' : ''}${etab.ville ? esc(etab.ville) : ''}${etab.bp ? ' · ' + esc(etab.bp) : ''}<br>

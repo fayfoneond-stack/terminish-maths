@@ -2516,6 +2516,11 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
             <div class="panel">
               <div class="panel-head"><div><h2>Identité de l'établissement</h2><div class="sub">Ces informations apparaissent sur les bulletins</div></div></div>
               <div class="grid2">
+                <div class="field" style="grid-column:1/-1">
+                  <label>En-tête officiel (ministère, tutelle)</label>
+                  <input name="tutelle" value="${esc(e.tutelle == null ? 'République Togolaise · Ministère des Enseignements' : e.tutelle)}" placeholder="République Togolaise · Ministère des Enseignements">
+                  <div class="hint">Première ligne du bulletin. Écrivez ce qui vous convient (votre pays, votre ministère, votre devise…). Videz le champ pour ne rien afficher.</div>
+                </div>
                 <div class="field" style="grid-column:1/-1"><label>Nom de l'établissement *</label><input name="nom" required value="${esc(e.nom)}"></div>
                 <div class="field"><label>Type</label><select name="type">
                   ${[['mixte', 'Collège + Lycée'], ['college', 'Collège'], ['lycee', 'Lycée']].map(([v, l]) => `<option value="${v}" ${e.type === v ? 'selected' : ''}>${l}</option>`).join('')}

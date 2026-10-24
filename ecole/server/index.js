@@ -308,7 +308,7 @@ app.get('/api/etablissement', auth, (req, res) => {
 app.put('/api/etablissement', auth, directionOnly, async (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
   const allowed = ['nom', 'type', 'ville', 'adresse', 'bp', 'telephone', 'email', 'devise', 'logo',
-    'chef_nom', 'chef_titre', 'annee_scolaire', 'formule_moyenne'];
+    'chef_nom', 'chef_titre', 'annee_scolaire', 'formule_moyenne', 'tutelle'];
   const sets = [], vals = [];
   allowed.forEach(k => {
     if (req.body[k] !== undefined) { sets.push(`${k} = ?`); vals.push(req.body[k]); }

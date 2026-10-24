@@ -237,6 +237,9 @@ ensureColumn('paiements', 'canal', "TEXT DEFAULT 'manuel'");
 // la source de vérité, `logo_url` n'est qu'une copie optimisée sur le CDN.
 ensureColumn('etablissements', 'logo_url', 'TEXT');
 ensureColumn('etablissements', 'logo_public_id', 'TEXT');
+// En-tête officiel du bulletin (ministère, tutelle, région…), librement rédigé
+// par chaque établissement. NULL = valeur par défaut ; '' = ligne masquée.
+ensureColumn('etablissements', 'tutelle', 'TEXT');
 
 // Bulletin : signature manuscrite scannée de l'enseignant (importée une fois),
 // professeur principal de la classe, et signature du chef d'établissement.
@@ -292,14 +295,15 @@ const today = () => new Date().toISOString().slice(0, 10);
 function createEtablissement(data) {
   const stmt = db.prepare(`INSERT INTO etablissements
     (nom, type, ville, adresse, bp, telephone, email, devise, logo, chef_nom, chef_titre,
-     annee_scolaire, formule_moyenne, plan, statut, date_fin_abonnement, created_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+     annee_scolaire, formule_moyenne, plan, statut, date_fin_abonnement, tutelle, created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
   const info = stmt.run(
     data.nom, data.type || 'mixte', data.ville || '', data.adresse || '', data.bp || '',
     data.telephone || '', data.email || '', data.devise || 'FCFA', data.logo || null,
     data.chef_nom || '', data.chef_titre || "Le Chef d'Établissement",
     data.annee_scolaire || '2025-2026', data.formule_moyenne || 'co2',
-    data.plan || 'essai', data.statut || 'essai', data.date_fin_abonnement || addDays(30), now()
+    data.plan || 'essai', data.statut || 'essai', data.date_fin_abonnement || addDays(30),
+    data.tutelle == null ? null : String(data.tutelle), now()
   );
   const ecoleId = Number(info.lastInsertRowid);
   seedPeriodes(ecoleId, data.type || 'mixte');
