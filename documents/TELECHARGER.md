@@ -45,6 +45,40 @@ Sur le Chromebook : Fichiers → clic droit sur le PDF → « Informations »
 
 ---
 
+## 📄 La version LaTeX (source modifiable)
+
+### `MANUEL-CHEF-ETABLISSEMENT.tex` — 830 lignes (25/10/2026)
+
+Le manuel du chef d'établissement **en LaTeX**, prêt à compiler : classes,
+élèves, comptes des enseignants, examens blancs, saisie des notes, résultats et
+fiche de fin de trimestre. Encadrés colorés, tableaux à largeur automatique,
+sommaire et pagination automatiques.
+
+**⬇️ Télécharger le source :**
+
+`https://github.com/fayfoneond-stack/terminish-maths/raw/arena/c4eb5c08-terminish-maths/documents/MANUEL-CHEF-ETABLISSEMENT.tex`
+
+**Le compiler gratuitement, sans rien installer (Chromebook : c'est la bonne méthode) :**
+
+1. `https://overleaf.com` → compte gratuit (pas de carte bancaire)
+2. **New Project → Blank Project**
+3. Effacer le contenu de `main.tex`, coller **tout** le fichier `.tex`, puis
+   **Recompile** → le PDF apparaît à droite et se télécharge.
+
+**Le compiler en local** (ordinateur avec TeX Live installé) :
+
+```bash
+pdflatex MANUEL-CHEF-ETABLISSEMENT.tex
+pdflatex MANUEL-CHEF-ETABLISSEMENT.tex   # 2e passe : numéros du sommaire
+```
+
+Dépendances : `inputenc`, `fontenc`, `lmodern`, `babel` (french), `geometry`,
+`xcolor`, `amssymb`, `array`, `tabularx`, `booktabs`, `enumitem`, `fancyhdr`,
+`titlesec`, `needspace`, `tcolorbox` (`most`), `hyperref`. Toutes sont fournies
+dans une installation TeX Live standard ; sur Overleaf, aucune n'est à installer.
+
+---
+
 ## ⬇️ Le fichier à prendre pour déployer
 
 ### `terminish-ecole-deploiement.zip` — 266 Ko (25/10/2026)

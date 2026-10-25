@@ -1,0 +1,829 @@
+% =============================================================================
+%  Terminish École — Manuel du chef d'établissement
+%  Créer une classe, inscrire les élèves, créer les comptes des enseignants,
+%  programmer un examen blanc, saisir les notes, lire les résultats.
+%
+%  Compilation :
+%    - Overleaf : compilateur pdfLaTeX (par défaut suffit)
+%    - en local  : pdflatex manuel.tex  (deux fois, pour le sommaire)
+%
+%  Auteur : Terminish École — version 1.1 — octobre 2026
+%  Établissement de référence : CEG BOROME — HIHEATRO (Togo)
+%  Adresse de l'application : https://kodjone.alwaysdata.net
+% =============================================================================
+\documentclass[11pt,a4paper]{article}
+
+% ---------------------------------------------------------------- encodage
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\frenchspacing
+
+% ---------------------------------------------------------------- mise en page
+\usepackage[a4paper,top=2.2cm,bottom=2cm,left=2cm,right=2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{needspace}
+\usepackage[most]{tcolorbox}
+\usepackage[unicode,hidelinks]{hyperref}
+
+% ---------------------------------------------------------------- couleurs
+\definecolor{vert}{HTML}{0B6B4A}
+\definecolor{vertmoyen}{HTML}{1F9D6B}
+\definecolor{vertclair}{HTML}{E8F5EF}
+\definecolor{or}{HTML}{B07A10}
+\definecolor{orclair}{HTML}{FDF6E3}
+\definecolor{rouge}{HTML}{B3261E}
+\definecolor{rougeclair}{HTML}{FDECEB}
+\definecolor{bleu}{HTML}{1D4E89}
+\definecolor{bleuclair}{HTML}{EEF4FB}
+\definecolor{gris}{HTML}{5B6B66}
+\definecolor{grisclair}{HTML}{F4F6F5}
+\definecolor{bord}{HTML}{D7E0DC}
+\definecolor{encre}{HTML}{16241F}
+
+% ---------------------------------------------------------------- titres
+\titleformat{\section}
+  {\needspace{6\baselineskip}\normalfont\Large\bfseries\color{vert}}
+  {\thesection.}{0.6em}{}
+\titlespacing*{\section}{0pt}{1.6\baselineskip}{0.5\baselineskip}
+
+\titleformat{\subsection}
+  {\needspace{4\baselineskip}\normalfont\large\bfseries\color{encre}}
+  {\thesubsection}{0.6em}{}
+\titlespacing*{\subsection}{0pt}{1.1\baselineskip}{0.35\baselineskip}
+
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries\color{gris}}
+  {}{0em}{}
+
+% ---------------------------------------------------------------- en-tête / pied
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\fancyhead[L]{\footnotesize\color{gris}Terminish École — Manuel du chef d'établissement}
+\fancyhead[R]{\footnotesize\color{gris}CEG BOROME — HIHEATRO}
+\fancyfoot[L]{\footnotesize\color{gris}Version 1.1 — octobre 2026}
+\fancyfoot[R]{\footnotesize\bfseries\color{vert}\thepage}
+
+% ---------------------------------------------------------------- listes
+\setlist[itemize]{leftmargin=1.3em,itemsep=2pt,topsep=3pt}
+\setlist[enumerate]{leftmargin=1.6em,itemsep=2pt,topsep=3pt}
+
+% ---------------------------------------------------------------- boîtes
+\newtcolorbox{boitecle}[1][]{
+  enhanced, breakable, colback=vertclair, colframe=vert,
+  boxrule=0pt, leftrule=2.6pt, arc=1.2pt, outer arc=1.2pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  fonttitle=\bfseries\small, coltitle=vert,
+  title={\textcolor{vert}{\checkmark}\enspace #1}
+}
+\newtcolorbox{boiteastuce}[1][]{
+  enhanced, breakable, colback=vertclair, colframe=vertmoyen,
+  boxrule=0pt, leftrule=2.6pt, arc=1.2pt, outer arc=1.2pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  fonttitle=\bfseries\small, coltitle=vert,
+  title={\textcolor{vertmoyen}{$\star$}\enspace #1}
+}
+\newtcolorbox{boiteattention}[1][]{
+  enhanced, breakable, colback=orclair, colframe=or,
+  boxrule=0pt, leftrule=2.6pt, arc=1.2pt, outer arc=1.2pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  fonttitle=\bfseries\small, coltitle=or,
+  title={\textcolor{or}{!}\enspace #1}
+}
+\newtcolorbox{boiteerreur}[1][]{
+  enhanced, breakable, colback=rougeclair, colframe=rouge,
+  boxrule=0pt, leftrule=2.6pt, arc=1.2pt, outer arc=1.2pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  fonttitle=\bfseries\small, coltitle=rouge,
+  title={\textcolor{rouge}{$\times$}\enspace #1}
+}
+\newtcolorbox{boiteinfo}[1][]{
+  enhanced, breakable, colback=bleuclair, colframe=bleu,
+  boxrule=0pt, leftrule=2.6pt, arc=1.2pt, outer arc=1.2pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  fonttitle=\bfseries\small, coltitle=bleu,
+  title={\textcolor{bleu}{i}\enspace #1}
+}
+
+% boîte pour les commandes et les formats à recopier
+\newtcolorbox{boitecode}{
+  enhanced, breakable, colback=grisclair, colframe=bord,
+  boxrule=0.4pt, arc=1.2pt, left=8pt, right=8pt, top=6pt, bottom=6pt,
+  fontupper=\ttfamily\small
+}
+
+% ---------------------------------------------------------------- raccourcis
+\newcommand{\menu}[1]{\textbf{«\,#1\,»}}
+\newcommand{\bouton}[1]{\textbf{#1}}
+\newcommand{\champ}[1]{\textit{#1}}
+\newcommand{\coeur}{\textcolor{vert}{\checkmark}}
+\newcommand{\croix}{\textcolor{rouge}{$\times$}}
+
+\title{Manuel du chef d'établissement}
+\author{Terminish École}
+\date{Version 1.1 — octobre 2026}
+
+% =============================================================================
+\begin{document}
+
+% ---------------------------------------------------------------- couverture
+\begin{titlepage}
+\pagecolor{vert}
+\color{white}
+\vspace*{3.2cm}
+{\small\color{vertclair}TERMINISH ÉCOLE}\\[2mm]
+{\Huge\bfseries Manuel du chef\\[1mm] d'établissement}\\[6mm]
+{\large\color{vertclair}Classes · Élèves · Enseignants · Examens blancs · Notes · Résultats}\\[3cm]
+{\large CEG BOROME — HIHEATRO (Togo)}\\[2mm]
+{\large https://kodjone.alwaysdata.net}\\[2mm]
+{\color{vertclair}Version 1.1 — octobre 2026}
+\vfill
+{\small\color{vertclair}Ce manuel décrit exactement ce que l'application affiche : chaque champ,\\
+chaque bouton, chaque message d'erreur y figure tel quel.}
+\end{titlepage}
+\pagecolor{white}
+\color{encre}
+
+% ---------------------------------------------------------------- sommaire
+\tableofcontents
+\newpage
+
+% =============================================================================
+\section{Comment utiliser ce manuel}
+
+Ce manuel ne porte que sur le travail du \textbf{chef d'établissement} : c'est lui
+qui crée les classes, inscrit les élèves, ouvre les comptes des enseignants,
+programme les examens blancs, puis lit et publie les résultats. Les enseignants,
+eux, n'ont qu'un écran à connaître : la saisie des notes.
+
+\begin{boiteastuce}[Le principe à retenir]
+L'ordre des opérations n'est pas une recommandation : c'est une
+\textbf{contrainte du logiciel}. Le site refuse de créer une classe s'il n'y a
+aucune matière, et refuse d'affecter un enseignant à une matière qui n'est pas
+enseignée dans la classe. Respectez la chaîne ci-dessous, et vous ne verrez
+aucun message de blocage.
+\end{boiteastuce}
+
+\subsection{L'ordre obligatoire des six étapes}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{}c >{\raggedright}p{3.9cm} >{\raggedright}p{2.9cm} X@{}}
+\toprule
+\textbf{\#} & \textbf{Étape} & \textbf{Menu} & \textbf{Pourquoi avant la suivante} \\
+\midrule
+1 & Créer les \textbf{matières} & Matières & La classe choisit ses matières dans cette liste \\
+2 & Créer les \textbf{classes} et choisir les coefficients & Classes & L'élève doit avoir une classe d'accueil \\
+3 & Créer les comptes des \textbf{enseignants} & Enseignants & On affecte un professeur à une classe \emph{et} une matière \\
+4 & \textbf{Inscrire les élèves} & Élèves & — \\
+5 & \textbf{Saisir les notes} & Saisie des notes & Il faut classe + matière + période \\
+6 & Lire et publier les \textbf{résultats} & Bulletins & Il faut des notes pour calculer \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{boiteattention}[Le message que vous verrez si l'ordre n'est pas respecté]
+Si vous cliquez sur \bouton{+ Nouvelle classe} alors qu'aucune matière n'existe,
+le site affiche : \menu{Créez d'abord au moins une matière}. Ce n'est pas une
+panne : c'est la première étape qui manque.
+\end{boiteattention}
+
+\subsection{Les quatre rôles}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{} >{\raggedright}p{3.4cm} >{\raggedright}p{4.2cm} X@{}}
+\toprule
+\textbf{Rôle} & \textbf{Ce qu'il voit} & \textbf{Ce qu'il peut faire} \\
+\midrule
+Chef d'établissement & Tous les écrans, toutes les classes & Tout : réglages, classes, élèves,
+comptes des enseignants, publication, abonnement \\
+Enseignant & Ses classes et ses matières seulement & Saisir et corriger ses notes ;
+ne gère aucun identifiant \\
+Élève & Ses résultats publiés & Consulter ses bulletins, une fois publiés \\
+Éditeur de la plateforme & La console commerciale & Créer les établissements clients ;
+n'accède pas aux notes \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{boitecle}[Une règle simple]
+Seul le chef d'établissement crée, modifie et supprime les comptes des
+enseignants. Un professeur ne peut pas s'inscrire lui-même : c'est volontaire,
+pour qu'aucun compte fantôme ne puisse saisir des notes.
+\end{boitecle}
+
+\newpage
+
+% =============================================================================
+\section{Créer une classe}
+
+\textbf{Chemin :} menu de gauche \menu{Classes} $\rightarrow$ bouton bleu
+\bouton{+ Nouvelle classe}.
+
+La page présente deux groupes : \textbf{Collège} (trimestres T1, T2, T3) et
+\textbf{Lycée} (semestres S1, S2). Une classe appartient à l'un des deux, et cela
+décide de tout le reste.
+
+\subsection{Les sept champs du formulaire}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{} >{\raggedright}p{3.5cm} c >{\raggedright}p{3.4cm} X@{}}
+\toprule
+\textbf{Champ} & \textbf{Obligatoire} & \textbf{Exemple} & \textbf{Effet} \\
+\midrule
+Nom de la classe & oui & 6ème A & Nom imprimé sur le bulletin \\
+Niveau & non & 6ème & Sert aux statistiques par niveau \\
+Cycle & oui & Collège ou Lycée & \textbf{Décide des périodes} : T1/T2/T3 ou S1/S2 \\
+Série & non & A, C, D & Lycée uniquement ; vide au collège \\
+Professeur titulaire & non & M. ADJOVI & Il \textbf{signe} les bulletins de cette classe \\
+Nom affiché si aucun compte & non & M. ADJOVI & Pour un professeur sans compte sur le site \\
+Matières et coefficients & oui & voir ci-dessous & Seules les matières cochées paraissent au bulletin \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{boiteattention}[Le cycle est le choix le plus lourd de conséquences]
+Une classe créée en \textbf{Collège} travaillera sur T1, T2, T3 ; une classe créée
+en \textbf{Lycée} sur S1, S2. Le cycle reste modifiable ensuite par le crayon,
+mais les notes déjà saisies sur les périodes de l'ancien cycle ne suivent pas.
+Vérifiez ce champ avant de valider.
+\end{boiteattention}
+
+\subsection{Le tableau « Matières et coefficients »}
+
+C'est la partie décisive du formulaire. Il affiche une ligne par matière créée,
+avec trois colonnes : le nom, la case \menu{Enseignée}, le coefficient.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Matière} & \textbf{Enseignée} & \textbf{Coefficient} \\
+\midrule
+Français & $\blacksquare$ & 3 \\
+Mathématiques & $\blacksquare$ & 4 \\
+Anglais & $\blacksquare$ & 2 \\
+Physique-Chimie et Technologie (PCT) & $\blacksquare$ & 2 \\
+Sciences de la Vie et de la Terre & $\blacksquare$ & 1 \\
+Histoire-Géographie & $\blacksquare$ & 2 \\
+Éducation civique & $\blacksquare$ & 1 \\
+Éducation physique et sportive & $\blacksquare$ & 1 \\
+Espagnol & $\square$ & 1 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+  \item Case \textbf{cochée} : la matière est évaluée, elle sera \textbf{imprimée}
+        sur le bulletin et sa note comptera dans la moyenne générale.
+  \item Case \textbf{décochée} : la matière n'existe pas dans cette classe ;
+        elle n'apparaît nulle part, ni à la saisie, ni au bulletin.
+  \item \textbf{Coefficient} : son poids dans la moyenne générale, de 0,5 en 0,5
+        (minimum 0,5 ; maximum 20).
+\end{itemize}
+
+\begin{boiteastuce}[Le coefficient en une phrase]
+La moyenne générale n'est pas la moyenne simple des matières : chaque matière
+pèse selon son coefficient. Un 12 en mathématiques (coefficient 4) pèse deux fois
+plus qu'un 12 en anglais (coefficient 2).
+\end{boiteastuce}
+
+\subsection{Ce que produit la création}
+
+Une \textbf{carte de classe} apparaît, avec le nom, l'effectif, le nom du
+professeur titulaire, des pastilles de matières (\texttt{MATH $\times$4},
+\texttt{FRAN $\times$3}, etc.) et quatre boutons :
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{} >{\raggedright}p{2.3cm} X@{}}
+\toprule
+\textbf{Bouton} & \textbf{Effet} \\
+\midrule
+Élèves & Ouvre la liste des élèves filtrée sur cette classe \\
+Saisir & Ouvre la grille de notes filtrée sur cette classe \\
+Crayon & Modifier la classe (champs, matières, coefficients, titulaire) \\
+Corbeille & Supprimer la classe (refusé si des élèves y sont encore inscrits) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Les trois erreurs classiques}
+
+\begin{boiteerreur}[À éviter absolument]
+\begin{enumerate}
+  \item \textbf{Se tromper de cycle.} Une classe de collège créée en « Lycée »
+        proposera S1 et S2 au lieu de T1, T2, T3.
+  \item \textbf{Oublier de cocher une matière.} Elle sera absente du bulletin et
+        sa note ne comptera pas : l'élève sera classé sur un total incomplet.
+  \item \textbf{Écrire deux fois le même nom différemment.} \texttt{6ème A} et
+        \texttt{6eme A} sont deux classes distinctes. Choisissez une orthographe
+        et gardez-la partout, y compris dans l'import des élèves.
+\end{enumerate}
+\end{boiteerreur}
+
+\newpage
+
+% =============================================================================
+\section{Enregistrer les élèves}
+
+Deux méthodes existent : l'inscription individuelle, et l'import d'une liste
+entière. Pour 143 élèves, l'import prend deux minutes ; l'inscription
+individuelle prend une soirée.
+
+\subsection{Un élève à la fois}
+
+\textbf{Chemin :} \menu{Élèves} $\rightarrow$ \bouton{+ Nouvel élève}.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{} >{\raggedright}p{4.3cm} c X@{}}
+\toprule
+\textbf{Champ} & \textbf{Obligatoire} & \textbf{Remarque} \\
+\midrule
+Nom & oui & Mis en majuscules automatiquement à l'enregistrement \\
+Prénom(s) & oui & \\
+Sexe & non & Masculin ou Féminin ; sert aux statistiques \\
+Classe & non & Si vide, l'élève reste « Non affecté » et n'apparaît pas à la saisie \\
+Date de naissance & non & Sélecteur de date, format année-mois-jour \\
+Lieu de naissance & non & \\
+Nom du tuteur & non & Administratif : \textbf{jamais imprimé} sur le bulletin \\
+Téléphone du tuteur & non & Administratif \\
+Matricule & non & \textbf{Laisser vide} : généré sous la forme année + numéro \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+À l'enregistrement, un message confirme et donne le matricule attribué, par
+exemple : \menu{Élève inscrit — matricule 20260001}.
+
+\begin{boiteattention}[Le tuteur ne figure jamais sur le bulletin]
+Le nom et le téléphone du tuteur sont des informations de secrétariat,
+conservées dans le dossier de l'élève. Le bulletin est remis à la famille : il ne
+contient ni ces coordonnées, ni la mention d'un tuteur.
+\end{boiteattention}
+
+\subsection{Importer toute une liste}
+
+\textbf{Chemin :} \menu{Élèves} $\rightarrow$ \bouton{Importer}.
+
+Le format attendu est une ligne par élève, dans cet ordre exact :
+
+\begin{boitecode}
+NOM ; PRÉNOM ; SEXE ; DATE DE NAISSANCE ; CLASSE ; TUTEUR ; TÉLÉPHONE\\[4pt]
+\hspace*{1em}ADJOVI;Ama;F;2012-03-14;6ème A;ADJOVI Kossi;+228 90 00 00 00\\
+\hspace*{1em}KOUASSI;Elom;M;2011-11-02;5ème A;;
+\end{boitecode}
+
+\begin{itemize}
+  \item Le séparateur peut être le point-virgule, la virgule ou une
+        \textbf{tabulation} : un copier-coller direct depuis Excel fonctionne.
+  \item La colonne \texttt{CLASSE} doit correspondre \textbf{exactement} à un nom
+        de classe existant.
+  \item Si la colonne classe est vide, utilisez le menu
+        \champ{Classe par défaut} du formulaire d'import.
+  \item Les matricules se génèrent tout seuls : ne les écrivez pas.
+  \item Un bilan s'affiche à la fin : nombre d'élèves créés, et lignes refusées
+        avec leur numéro.
+\end{itemize}
+
+\begin{boiteastuce}[Créer les classes d'abord, importer ensuite]
+L'import se fait toujours après la création des classes. Si une classe manque,
+laissez la colonne vide et choisissez une classe par défaut : vous déplacerez les
+élèves ensuite, individuellement.
+\end{boiteastuce}
+
+\subsection{Retrouver, exporter, archiver}
+
+\begin{itemize}
+  \item La \textbf{recherche} filtre par nom, prénom ou matricule.
+  \item Le filtre \textbf{Classe} isole une division ; le filtre \textbf{Statut}
+        sépare les actifs des archivés.
+  \item \bouton{Export CSV} télécharge la liste complète, ouvrable dans Excel :
+        c'est votre sauvegarde des inscriptions.
+  \item La \textbf{corbeille} d'une ligne n'efface rien : elle \textbf{archive}.
+        L'élève sort des listes actives, de la saisie et des bulletins, mais son
+        dossier et ses notes restent. Pour le réintégrer, repassez son statut sur
+        « Actif ».
+\end{itemize}
+
+\newpage
+
+% =============================================================================
+\section{Créer le compte d'un enseignant}
+
+\textbf{Chemin :} \menu{Enseignants} $\rightarrow$ \bouton{+ Ajouter un enseignant}.
+
+\subsection{Les cinq zones du formulaire}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{} >{\raggedright}p{4.2cm} c X@{}}
+\toprule
+\textbf{Zone} & \textbf{Obligatoire} & \textbf{Détail} \\
+\midrule
+Nom complet & oui & Par exemple : M. Komlan AGBEKO \\
+Téléphone & non & Pour le joindre ; ne sert pas à la connexion \\
+Email de connexion & oui & C'est son \textbf{identifiant}. Non modifiable ensuite : le champ
+est grisé à la réédition \\
+Mot de passe & oui & 6 caractères minimum ; affiché en clair pendant la saisie \\
+Signature de l'enseignant & non & Photo de sa signature ; elle sera apposée sur les bulletins \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{boiteattention}[Notez le mot de passe avant de fermer la fenêtre]
+Le mot de passe s'affiche en clair dans le formulaire, mais il n'est plus
+consultable après l'enregistrement. Notez-le, puis dictez-le de vive voix à
+l'intéressé. S'il est perdu : bouton \bouton{clé} de sa ligne, qui en génère un
+nouveau, affiché une seule fois.
+\end{boiteattention}
+
+\subsection{La grille « Classes et matières affectées »}
+
+C'est un tableau croisé : les \textbf{classes} en lignes, les \textbf{matières} en
+colonnes. Chaque case cochée crée une affectation.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Classe} & \textbf{Français} & \textbf{Mathématiques} & \textbf{Anglais} & \textbf{PCT} \\
+\midrule
+6ème A & $\square$ & $\blacksquare$ & $\square$ & $\blacksquare$ \\
+5ème B & $\square$ & $\square$ & $\square$ & $\square$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+  \item Une case \textbf{grise} signifie que la matière n'est pas enseignée dans
+        cette classe : elle est impossible à cocher tant que la matière n'a pas
+        été ajoutée à la classe.
+  \item Chaque case cochée donne au professeur l'accès à cette classe et à cette
+        matière dans l'écran \menu{Saisie des notes}.
+\end{itemize}
+
+\subsection{Les quatre boutons de la ligne}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{} >{\raggedright}p{2.6cm} X@{}}
+\toprule
+\textbf{Bouton} & \textbf{Effet} \\
+\midrule
+Crayon & Modifier nom, téléphone, mot de passe, signature, affectations. L'email reste figé \\
+Clé & \textbf{Nouveaux identifiants} : génère un mot de passe, affiché une seule fois, et
+ferme toutes ses sessions en cours \\
+Interdit & Retire l'accès immédiatement (sessions fermées, affectations retirées) \\
+Validation & Rétablit l'accès \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Les demandes de mot de passe envoyées par les professeurs apparaissent en haut de
+cette page, dans un bloc orangé \menu{Demandes de mot de passe}, avec le bouton
+\bouton{Nouveaux identifiants} et le bouton de traitement.
+
+\begin{boiteerreur}[L'erreur numéro un avec les enseignants]
+\textbf{Créer le compte ne suffit pas.} Un enseignant dont \emph{aucune} case n'est
+cochée dans la grille d'affectations se connecte, puis ne voit rien : l'écran
+affiche \menu{Aucune classe ne vous est affectée}. Vérifiez toujours la colonne
+\menu{Affectations} de la liste des enseignants : elle doit montrer au moins une
+pastille du type \texttt{6ème A · Mathématiques}.
+\end{boiteerreur}
+
+\newpage
+
+% =============================================================================
+\section{Programmer un examen blanc}
+
+Un examen blanc se compose en deux temps : \textbf{un examen} (le contenant :
+nom, dates), puis \textbf{des épreuves} (le contenu : une matière, une classe, une
+date, une durée, un coefficient). Un examen sans épreuve ne produit aucun
+résultat.
+
+\subsection{Créer l'examen}
+
+\textbf{Chemin :} \menu{Examens blancs} $\rightarrow$ \bouton{+ Nouvel examen blanc}.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{} >{\raggedright}p{4.4cm} X@{}}
+\toprule
+\textbf{Champ} & \textbf{Exemple} \\
+\midrule
+Nom de l'examen & Examen blanc n°1 — Tle D \\
+Période de rattachement & 2ème Trimestre, ou « Aucune » \\
+Début & jour de la première épreuve \\
+Fin & jour de la dernière épreuve \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Ajouter les épreuves}
+
+Sur la carte de l'examen : \bouton{+ Ajouter une épreuve}.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{} >{\raggedright}p{3.6cm} c X@{}}
+\toprule
+\textbf{Champ} & \textbf{Défaut} & \textbf{Rôle} \\
+\midrule
+Classe & — & L'épreuve concerne une seule classe \\
+Matière & — & La liste ne propose que les matières de la classe choisie \\
+Date & aujourd'hui & Jour de l'épreuve \\
+Heure & 08:00 & Heure de début \\
+Durée (minutes) & 120 & Pas de 15 minutes, minimum 15 \\
+Coefficient & 1 & Poids dans la moyenne de l'examen (1 à 20) \\
+Salle & vide & Par exemple : Salle A1 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{boiteastuce}[Un examen pour plusieurs classes demande plusieurs épreuves]
+Si l'examen blanc porte sur trois classes (6ème A, 6ème B, 5ème A en
+mathématiques), il faut créer \textbf{trois épreuves}. C'est voulu : chaque classe
+a sa propre liste d'élèves et donc ses propres notes.
+\end{boiteastuce}
+
+\subsection{Suivre l'avancement}
+
+Un menu déroulant sur la carte fait passer l'examen de \menu{Préparé} à
+\menu{En cours}, puis \menu{Terminé} : c'est un repère visuel pour l'équipe.
+Chaque ligne d'épreuve porte deux boutons : \bouton{plume} ouvre la saisie des
+notes de cette épreuve, \bouton{croix} retire l'épreuve. En bas de la carte, le
+total des coefficients est affiché.
+
+\newpage
+
+% =============================================================================
+\section{Saisir les notes}
+
+\textbf{Chemin :} \menu{Saisie des notes}.
+
+\subsection{Deux modes, un menu}
+
+En haut à gauche, \champ{Mode de saisie} propose deux choix :
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{} >{\raggedright}p{4.6cm} >{\raggedright}p{4.4cm} X@{}}
+\toprule
+\textbf{Mode} & \textbf{Ce qu'il demande} & \textbf{Pour quoi faire} \\
+\midrule
+Devoirs et composition & Classe, matière, période & Les notes du trimestre ou du semestre \\
+Examen blanc & une épreuve dans une liste & Les notes d'une épreuve blanche \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{La grille en mode période}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Élève} & \textbf{Devoir 1} & \textbf{Devoir 2} & \textbf{Composition} & \textbf{Moyenne} \\
+\midrule
+ADJOVI Ama & 12 & 14 & 9 & 10,33 \\
+KOUASSI Elom & 15 & 16 & 14 & 14,67 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+  \item Sous chaque colonne figure une petite case \menu{abs.} : elle marque une
+        absence \textbf{sans compter zéro}.
+  \item La colonne \textbf{Moyenne} se calcule en direct, ainsi que
+        l'appréciation proposée.
+  \item Une pastille en haut à droite indique la progression de la saisie.
+\end{itemize}
+
+\begin{boiteattention}[Absent n'est pas zéro]
+Si vous saisissez \texttt{0} pour un élève absent, sa moyenne s'effondre et son
+rang devient injuste. Cochez \menu{abs.} : la mention apparaît sur le bulletin,
+et la moyenne est calculée sur les notes réellement obtenues.
+\end{boiteattention}
+
+\subsection{Les raccourcis clavier}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{} >{\raggedright}p{3.4cm} X@{}}
+\toprule
+\textbf{Touche} & \textbf{Effet} \\
+\midrule
+Entrée & Passe à l'élève suivant, champ présélectionné : on tape la note suivante
+sans toucher la souris \\
+Ctrl + S & Enregistre toute la grille sans cliquer \\
+Maj + Tab & Revient au champ précédent \\
+Échap & Ferme la fenêtre ou le menu ouvert \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{boiteastuce}[Saisir quarante notes en deux minutes]
+Cliquez dans la première case, tapez la note, appuyez sur \textbf{Entrée}, tapez la
+suivante, et ainsi de suite. À la fin seulement, \textbf{Ctrl + S}. La main ne
+quitte jamais le clavier.
+\end{boiteastuce}
+
+\subsection{Période clôturée, et journal de saisie}
+
+\begin{itemize}
+  \item Une \textbf{période clôturée} grise la grille et la verrouille pour les
+        enseignants. Le chef d'établissement, lui, peut toujours corriger.
+  \item Le \textbf{Journal de saisie}, en bas de page et réservé au chef, liste
+        qui a enregistré ou modifié chaque note, et quand.
+\end{itemize}
+
+\newpage
+
+% =============================================================================
+\section{Lire les résultats}
+
+\subsection{Les bulletins d'une classe}
+
+\textbf{Chemin :} \menu{Bulletins}. Trois filtres commandent tout :
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{} >{\raggedright}p{3.2cm} X@{}}
+\toprule
+\textbf{Filtre} & \textbf{Valeurs} \\
+\midrule
+Classe & la division voulue \\
+Source & \emph{Bulletins de période} (T1, T2, T3…) ou \emph{Résultats d'examens blancs} \\
+Type de bulletin & \emph{Toutes les notes} (bulletin officiel) ou \emph{Composition seule} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Quatre indicateurs résument la classe : moyenne de classe, taux de réussite
+(notes supérieures ou égales à 10), meilleure moyenne, plus faible moyenne. Puis
+le tableau, trié par rang :
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}clcccccl@{}}
+\toprule
+\textbf{Rang} & \textbf{Élève} & \textbf{Moy.} & \textbf{Compo} & \textbf{Mention} & \textbf{Mat.} & \textbf{Publication} \\
+\midrule
+1 & KOUASSI Elom & 15,40 & 14 & Bien & 8/8 & Publié \\
+2 & ADJOVI Ama & 10,33 & 9 & Passable & 8/8 & Brouillon \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+  \item La colonne \textbf{Mat.} (par exemple \texttt{8/8}) indique combien de
+        matières sont évaluées : c'est votre indicateur de saisie terminée.
+  \item Si des élèves n'ont pas toutes leurs notes, un bandeau orange prévient :
+        \menu{X élève(s) n'ont pas encore de moyenne complète}.
+\end{itemize}
+
+\subsection{Les cinq actions}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{} >{\raggedright}p{3.5cm} >{\raggedright}p{4.2cm} X@{}}
+\toprule
+\textbf{Action} & \textbf{Comment} & \textbf{Effet} \\
+\midrule
+Appréciation & le crayon, sur la ligne de l'élève & Zone de texte préremplie d'une phrase
+cohérente avec la moyenne et le rang ; réécriture libre \\
+Publier & \bouton{Publier les bulletins} & Toute la classe devient visible par les élèves ;
+un second clic dépublie \\
+Imprimer la classe & \bouton{Imprimer la classe} & Tous les bulletins, un par page \\
+Un seul élève & l'imprimante, sur sa ligne & Utile pour un élève absent le jour de la
+distribution \\
+CSV & \bouton{CSV} & Moyennes et rangs, pour Excel ou le conseil de classe \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+En type \emph{Composition seule}, la moyenne de chaque matière est la note de
+composition : le bulletin ne s'appuie que sur celle-ci, et le bouton devient
+\bouton{Bulletins de composition}.
+
+\subsection{Les résultats d'un examen blanc}
+
+\textbf{Chemin :} \menu{Examens blancs} $\rightarrow$ icône graphique de l'examen
+$\rightarrow$ choisir la classe. Le site ouvre la même page \menu{Bulletins}, en
+mode simulation :
+
+\begin{itemize}
+  \item il n'y a \textbf{pas} de bouton Publier : rien n'est envoyé aux élèves,
+        c'est un document de travail pour la direction ;
+  \item le bouton d'impression devient \bouton{Relevé de la classe}.
+\end{itemize}
+
+\subsection{Puis les statistiques}
+
+\textbf{Chemin :} \menu{Statistiques}. Moyennes par matière, répartition par
+mention, comparaison filles / garçons, taux de réussite : tout se recalcule à
+partir des notes, rien n'est saisi à la main.
+
+\newpage
+
+% =============================================================================
+\section{La séquence de fin de trimestre}
+
+À afficher au mur du secrétariat. L'ordre compte.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{@{}c >{\raggedright}p{6.2cm} X@{}}
+\toprule
+\textbf{Ordre} & \textbf{Action} & \textbf{Où} \\
+\midrule
+1 & Vérifier que tous les professeurs ont saisi (colonne Mat. complète) & Bulletins \\
+2 & Contrôler le journal de saisie & Saisie des notes \\
+3 & Écrire les appréciations & Bulletins, crayon \\
+4 & Imprimer \textbf{un} bulletin de contrôle et le relire & Bulletins, imprimante d'une ligne \\
+5 & Imprimer la classe, ou l'enregistrer en PDF & Bulletins \\
+6 & Publier les bulletins & Bulletins, bouton Publier \\
+7 & Clôturer la période & Paramètres, Périodes et verrouillage, puis Enregistrer \\
+8 & Sauvegarder la base & serveur : \texttt{npm run backup} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{boiteattention}[Ne clôturez jamais avant d'avoir imprimé]
+Une période clôturée bloque les enseignants — pas vous — mais autant ne pas
+travailler sous contrainte pendant la saisie. Imprimez, distribuez, \emph{puis}
+clôturez.
+\end{boiteattention}
+
+\section{Annexe — Fiche à cocher}
+
+\subsection*{Création d'une classe}
+\begin{itemize}[label=$\square$]
+  \item Nom exact de la classe (orthographe retenue une fois pour toutes)
+  \item Cycle vérifié : Collège ou Lycée
+  \item Professeur titulaire désigné (compte existant ou nom affiché)
+  \item Toutes les matières enseignées cochées
+  \item Coefficient saisi pour chaque matière, conforme au règlement
+\end{itemize}
+
+\subsection*{Rentrée des élèves}
+\begin{itemize}[label=$\square$]
+  \item Classes créées avant l'import
+  \item Liste au format : NOM ; PRÉNOM ; SEXE ; NAISSANCE ; CLASSE ; TUTEUR ; TÉLÉPHONE
+  \item Noms de classes identiques à ceux du site
+  \item Bilan d'import lu (créés et refusés)
+  \item Export CSV téléchargé et conservé
+\end{itemize}
+
+\subsection*{Comptes des enseignants}
+\begin{itemize}[label=$\square$]
+  \item Email de connexion noté (non modifiable ensuite)
+  \item Mot de passe dicté et noté
+  \item Au moins une case cochée dans la grille d'affectations
+  \item Signature importée si le professeur signe les bulletins
+\end{itemize}
+
+\subsection*{Examen blanc}
+\begin{itemize}[label=$\square$]
+  \item Examen créé avec un nom explicite et des dates
+  \item Une épreuve par classe et par matière
+  \item Durée et coefficient conformes au modèle de l'examen officiel
+  \item Notes saisies par épreuve, absences cochées
+  \item Relevé de la classe consulté et commenté en conseil
+\end{itemize}
+
+\subsection*{Fin de trimestre}
+\begin{itemize}[label=$\square$]
+  \item Toutes les notes saisies (colonne Mat. complète pour tous)
+  \item Journal de saisie consulté
+  \item Appréciations écrites
+  \item Un bulletin relu à l'écran
+  \item Classe imprimée ou enregistrée en PDF
+  \item Bulletins publiés
+  \item Période clôturée
+  \item Base sauvegardée
+\end{itemize}
+
+\vfill
+\begin{center}
+\small\color{gris}
+Terminish École — Manuel du chef d'établissement · version 1.1 · octobre 2026\\
+CEG BOROME — HIHEATRO (Togo) · https://kodjone.alwaysdata.net
+\end{center}
+
+\end{document}
