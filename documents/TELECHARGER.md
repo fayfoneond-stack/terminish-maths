@@ -1,10 +1,42 @@
 # Téléchargements — Terminish École
 
+## 📘 Le guide d'utilisation (à lire, à imprimer, à garder)
+
+### `GUIDE-TERMINISH-ECOLE.pdf` — 161 Ko · 29 pages (25/10/2026)
+
+sha256 : `dabe7c443d6ea79bdd57d30c82456c407634559363747d939187dfc8f36d9e5f`
+
+Le mode d'emploi complet, en français simple, pour maîtriser le site :
+
+- **les 8 étapes d'une année scolaire**, et qui fait quoi (chef, enseignant, élève) ;
+- se connecter, gérer les comptes, réinitialiser un mot de passe ;
+- les **réglages de départ** : identité, en-tête officiel, périodes, formule de
+  moyenne (avec un exemple chiffré), noms de matières par cycle (PCT / lycée) ;
+- classes, matières, **coefficients** (calcul détaillé), rang et mentions ;
+- élèves : inscription et **import de toute une liste** depuis Excel ;
+- **saisie des notes** au clavier, absences, saisie à distance depuis un téléphone ;
+- **bulletins** : calcul, appréciations, publication, impression, et ce qui figure
+  sur le document (dont la colonne « Signature / du professeur ») ;
+- examens blancs, statistiques ;
+- **sauvegardes, stockage et capacité** : combien de bulletins tiennent (mesures réelles) ;
+- **hébergement, abonnement, coûts** : tarifs alwaysdata par an, quand payer ;
+- téléphone, tablette, Chromebook ;
+- **dépannage** : 20 situations réelles avec cause et solution ;
+- mémo des 10 gestes, calendrier type, glossaire, raccourcis, **fiche à imprimer
+  de fin de trimestre**.
+
+⬇️ `https://github.com/fayfoneond-stack/terminish-maths/raw/arena/c4eb5c08-terminish-maths/documents/GUIDE-TERMINISH-ECOLE.pdf`
+
+*Le guide se régénère avec* `python3 ecole/guide/generer-guide.py documents/GUIDE-TERMINISH-ECOLE.pdf`
+*(nécessite `pip install reportlab` et les polices DejaVu).*
+
+---
+
 ## ⬇️ Le fichier à prendre pour déployer
 
-### `terminish-ecole-deploiement.zip` — 266 Ko (24/10/2026)
+### `terminish-ecole-deploiement.zip` — 266 Ko (25/10/2026)
 
-sha256 : `ce1187091d5686b48d9efaa14f3a05a0fe36b27ad4a7c81c56b98bdb24622f09`
+sha256 : `b47713e3ef139dac32f374f144caefbf0926b26b0aea437d548d1995e38d3999`
 
 Tout ce qu'il faut pour installer et mettre le site en ligne, et **rien de plus** :
 

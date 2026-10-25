@@ -69,7 +69,8 @@ mkdir -p "$ETAPE/$NOM"
   find . -mindepth 1 \
        \( -name node_modules -o -name data -o -name .git -o -name '.env' \
           -o -name '.env.local' -o -name '*.log' -o -name '*.db' \
-          -o -name '*.db-wal' -o -name '*.db-shm' -o -name '.DS_Store' \) -prune -o \
+          -o -name '*.db-wal' -o -name '*.db-shm' -o -name '.DS_Store' \
+          -o -name 'guide' -o -name '*.pdf' \) -prune -o \
        -type f -print ) | sed 's|^\./||' > "$ETAPE/liste.txt"
 
 while IFS= read -r f; do
