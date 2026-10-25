@@ -25,7 +25,20 @@ Le mode d'emploi complet, en français simple, pour maîtriser le site :
 - mémo des 10 gestes, calendrier type, glossaire, raccourcis, **fiche à imprimer
   de fin de trimestre**.
 
-⬇️ `https://github.com/fayfoneond-stack/terminish-maths/raw/arena/c4eb5c08-terminish-maths/documents/GUIDE-TERMINISH-ECOLE.pdf`
+**⬇️ Télécharger d'un clic :**
+
+`https://github.com/fayfoneond-stack/terminish-maths/raw/arena/c4eb5c08-terminish-maths/documents/GUIDE-TERMINISH-ECOLE.pdf`
+
+**Si le lien ci-dessus n'ouvre rien** (certains réseaux bloquent le domaine des
+fichiers bruts), utilisez la page GitHub du fichier, puis le bouton
+**« Download raw file »** (icône ⤓ en haut à droite de l'aperçu) :
+
+`https://github.com/fayfoneond-stack/terminish-maths/blob/arena/c4eb5c08-terminish-maths/documents/GUIDE-TERMINISH-ECOLE.pdf`
+
+**Vérifier le fichier reçu** : 164 325 octets, sha256
+`dabe7c443d6ea79bdd57d30c82456c407634559363747d939187dfc8f36d9e5f`.
+Sur le Chromebook : Fichiers → clic droit sur le PDF → « Informations »
+(taille en octets), ou `sha256sum GUIDE-TERMINISH-ECOLE.pdf` dans le terminal.
 
 *Le guide se régénère avec* `python3 ecole/guide/generer-guide.py documents/GUIDE-TERMINISH-ECOLE.pdf`
 *(nécessite `pip install reportlab` et les polices DejaVu).*
