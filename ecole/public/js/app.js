@@ -32,7 +32,8 @@
     directeur: [
       { group: 'Pilotage', items: [
         { r: 'dashboard', i: '🏠', l: 'Tableau de bord' },
-        { r: 'statistiques', i: '📊', l: 'Statistiques' }
+        { r: 'statistiques', i: '📊', l: 'Statistiques' },
+        { r: 'fusion', i: '🔗', l: 'Fusion de classes' }
       ]},
       { group: 'Scolarité', items: [
         { r: 'eleves', i: '👨‍🎓', l: 'Élèves' },
@@ -53,7 +54,8 @@
     enseignant: [
       { group: 'Pilotage', items: [
         { r: 'dashboard', i: '🏠', l: 'Tableau de bord' },
-        { r: 'statistiques', i: '📊', l: 'Statistiques' }
+        { r: 'statistiques', i: '📊', l: 'Statistiques' },
+        { r: 'fusion', i: '🔗', l: 'Fusion de classes' }
       ]},
       { group: 'Mes classes', items: [
         { r: 'saisie', i: '✍️', l: 'Saisie des notes' },
@@ -86,6 +88,7 @@
     saisie: ['Saisie des notes', 'Devoirs, compositions et épreuves blanches'],
     bulletins: ['Bulletins', 'Résultats, appréciations et publication'],
     statistiques: ['Statistiques', 'Analyses automatiques des résultats'],
+    fusion: ['Fusion de classes', 'Plusieurs divisions réunies : un seul classement'],
     examens: ['Examens blancs', 'Planification des épreuves et simulations'],
     parametres: ['Paramètres', 'Identité de l’établissement et calcul des moyennes'],
     abonnement: ['Abonnement', 'Formule, échéance et facturation'],
@@ -395,8 +398,8 @@
   }
 
   const ACCESS = {
-    directeur: ['dashboard', 'eleves', 'classes', 'matieres', 'enseignants', 'saisie', 'bulletins', 'statistiques', 'examens', 'parametres', 'abonnement'],
-    enseignant: ['dashboard', 'eleves', 'saisie', 'bulletins', 'statistiques', 'examens'],
+    directeur: ['dashboard', 'eleves', 'classes', 'matieres', 'enseignants', 'saisie', 'bulletins', 'statistiques', 'fusion', 'examens', 'parametres', 'abonnement'],
+    enseignant: ['dashboard', 'eleves', 'saisie', 'bulletins', 'statistiques', 'fusion', 'examens'],
     eleve: ['espace'],
     super_admin: ['admin', 'admin-ecoles', 'admin-demandes', 'admin-paiements']
   };
@@ -2184,6 +2187,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         <div class="toolbar" style="margin-bottom:6px">
           <button class="btn ${vue === 'classe' ? 'btn-primary' : 'btn-ghost'} btn-sm" onclick="App.go('statistiques')">📚 Par classe</button>
           <button class="btn ${vue === 'etab' ? 'btn-primary' : 'btn-ghost'} btn-sm" onclick="App.go('statistiques',{vue:'etab'})">🏫 Établissement</button>
+          <button class="btn btn-ghost btn-sm" onclick="App.go('fusion')">🔗 Fusionner des classes</button>
         </div>`;
 
       if (vue === 'etab') {
@@ -2358,6 +2362,290 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         periode_id: e.target.value
       });
     }
+  };
+
+  /* ---------------------- FUSION DE CLASSES ------------------------ */
+  /** Regroupe les classes par cycle puis par niveau (« 6ème », « Terminale »…). */
+  function groupesNiveaux(classes) {
+    const out = [];
+    classes.forEach(c => {
+      const niveau = c.niveau || c.nom;
+      let g = out.find(x => x.cycle === c.cycle && x.niveau === niveau);
+      if (!g) { g = { cycle: c.cycle, niveau, classes: [] }; out.push(g); }
+      g.classes.push(c);
+    });
+    return out;
+  }
+  const nomComplet = (e) => `${e.nom} ${e.prenom || ''}`.trim();
+
+  /** Histogramme « combien ont 1, combien ont 2… » (0 à 20). */
+  function histoNotes(rep, vide) {
+    const r = rep || [];
+    const total = r.reduce((a, b) => a + b.n, 0);
+    if (!total) return `<div class="muted small" style="padding:10px 0">${esc(vide || 'Aucune note saisie.')}</div>`;
+    const max = Math.max(1, ...r.map(b => b.n));
+    return `<div class="hist">${r.map(b => `
+      <div class="col" title="${b.n} élève(s) avec ${b.note}/20">
+        <div class="n">${b.n || ''}</div>
+        <div class="bar" style="height:${Math.max(3, (b.n / max) * 100)}%"></div>
+        <div class="lb">${b.note}</div>
+      </div>`).join('')}</div>`;
+  }
+
+  /** Tableau note par note : une ligne = « note », une ligne = effectif. */
+  function tableNotes(rep) {
+    const r = rep || [];
+    return `<div class="table-wrap" style="margin-top:10px"><table class="data">
+      <thead><tr><th>Note sur 20</th>${r.map(b => `<th class="center">${b.note}</th>`).join('')}</tr></thead>
+      <tbody><tr><td class="strong">Nombre d'élèves</td>${r.map(b => `<td class="center ${b.n ? 'strong' : 'muted'}">${b.n || '·'}</td>`).join('')}</tr></tbody>
+    </table></div>`;
+  }
+
+  V.fusion = {
+    async render() {
+      await loadRefs();
+      const q = S.query;
+      const classes = S.classes;
+      if (!classes.length) {
+        return `<div class="panel"><div class="panel-head"><h2>Fusion de classes</h2></div>
+          ${emptyState('🏫', 'Aucune classe enregistrée. Créez vos classes avant de fusionner les résultats.')}</div>`;
+      }
+      let examens = [];
+      try { examens = await api('/api/examens'); } catch (_) { examens = []; }
+
+      const groupes = groupesNiveaux(classes);
+      let sel = String(q.classes || '').split(',').map(v => Number(v)).filter(n => classes.some(c => c.id === n));
+      if (!sel.length) {
+        const g = groupes.find(x => x.classes.length > 1) || groupes[0];
+        sel = g.classes.map(c => c.id);
+      }
+      const selClasses = classes.filter(c => sel.includes(c.id));
+      const cycle = (selClasses[0] || classes[0]).cycle;
+      const periodes = S.periodes.filter(p => p.cycle === cycle);
+      const periodeDefaut = (periodes.find(p => p.statut === 'ouverte') || periodes[0] || {}).id;
+      const choixScope = q.examen_id ? `examen:${q.examen_id}` : `periode:${q.periode_id || periodeDefaut}`;
+      const modeComposition = q.mode === 'composition';
+      const [scopeType, scopeVal] = choixScope.split(':');
+
+      const params = new URLSearchParams({ classe_ids: sel.join(',') });
+      if (scopeType === 'examen') params.set('examen_id', scopeVal); else params.set('periode_id', scopeVal);
+      if (modeComposition) params.set('mode', 'composition');
+      let d = null, erreur = null;
+      try { d = await api('/api/fusion?' + params.toString()); } catch (e) { erreur = e; }
+
+      const selecteur = `
+        <div class="panel" style="box-shadow:none">
+          <div class="panel-head">
+            <div><h2>Classes à réunir</h2><div class="sub">Cochez les divisions d'un même niveau — par exemple 6ème A, B et C</div></div>
+            <div class="right"><button class="btn btn-primary btn-sm" id="fu-lancer">🔗 Fusionner</button></div>
+          </div>
+          ${groupes.map(g => `
+            <div style="margin-bottom:10px">
+              <div class="small muted" style="margin-bottom:4px">
+                <span class="tag ${g.cycle === 'lycee' ? 'bleu' : 'gris'}">${g.cycle === 'lycee' ? 'Lycée' : 'Collège'}</span>
+                <b>${esc(g.niveau)}</b> · ${g.classes.length} classe(s)
+                ${g.classes.length > 1 ? `<button class="btn btn-ghost btn-sm fu-groupe" data-ids="${g.classes.map(c => c.id).join(',')}">Tout cocher</button>` : ''}
+              </div>
+              <div class="chips">
+                ${g.classes.map(c => `<label class="chip" style="cursor:pointer">
+                  <input type="checkbox" class="fu-classe" value="${c.id}" ${sel.includes(c.id) ? 'checked' : ''}>
+                  ${esc(c.nom)} <b>${c.effectif ?? 0}</b></label>`).join('')}
+              </div>
+            </div>`).join('')}
+          <div class="toolbar" style="margin-top:10px;gap:10px;flex-wrap:wrap">
+            <select id="fu-scope" style="min-width:250px">
+              ${periodes.map(p => `<option value="periode:${p.id}" ${choixScope === 'periode:' + p.id ? 'selected' : ''}>📄 ${esc(p.libelle)}${p.statut === 'fermee' ? ' (clôturé)' : ''}</option>`).join('')}
+              ${examens.map(ex => `<option value="examen:${ex.id}" ${choixScope === 'examen:' + ex.id ? 'selected' : ''}>🎯 Examen blanc — ${esc(ex.nom)}</option>`).join('')}
+            </select>
+            <label class="chip" style="cursor:pointer"><input type="checkbox" id="fu-mode" ${modeComposition ? 'checked' : ''}> Composition seule</label>
+          </div>
+        </div>`;
+
+      if (erreur) {
+        return `<div class="panel"><div class="panel-head"><div><h2>Fusion de classes</h2>
+          <div class="sub">Résultats de plusieurs divisions réunis</div></div></div>
+          ${selecteur}
+          <div class="notice err" style="margin-top:12px"><b>Impossible de fusionner :</b> ${esc(erreur.message || 'erreur inconnue')}</div>
+        </div>`;
+      }
+      if (!d) {
+        return `<div class="panel"><div class="panel-head"><h2>Fusion de classes</h2></div>
+          ${selecteur}${emptyState('🔗', 'Choisissez au moins deux classes pour fusionner leurs résultats.')}</div>`;
+      }
+
+      S.fusionCourante = d;
+      const st = d.stats;
+      const premier = d.classement[0] || null;
+      const libelle = d.examen ? d.examen.nom : (d.periode ? d.periode.libelle : '');
+      const maths = d.matieres.find(m => /math/i.test(m.nom)) || d.matieres[0];
+      const nomNiveau = selClasses.length === 1 ? selClasses[0].nom : [...new Set(selClasses.map(c => c.niveau || c.nom))].join(' + ');
+      const totalNotes = d.classement.length;
+
+      return `
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Résultats réunis — ${esc(nomNiveau)}</h2>
+              <div class="sub">${esc(libelle)} · ${d.classes.length} classe${d.classes.length > 1 ? 's' : ''} · ${st.effectif_total} élève${st.effectif_total > 1 ? 's' : ''}${modeComposition ? ' · composition seule' : ''}</div></div>
+            <div class="right"><button class="btn btn-ghost btn-sm" onclick="App.exporterFusion()">⬇️ Exporter le classement</button></div>
+          </div>
+          ${selecteur}
+
+          <div class="cards" style="margin-top:12px">
+            <div class="kpi accent"><div class="lbl">Élèves réunis</div><div class="val">${st.effectif_total}</div><div class="sub">${d.classes.length} classe${d.classes.length > 1 ? 's' : ''}</div></div>
+            <div class="kpi"><div class="lbl">Moyenne du niveau</div><div class="val">${fmt(st.moyenne)}</div><div class="sub">médiane ${fmt(st.mediane)}</div></div>
+            <div class="kpi"><div class="lbl">Taux de réussite</div><div class="val">${st.taux_reussite == null ? '—' : st.taux_reussite + '%'}</div><div class="sub">moyennes ≥ 10/20</div></div>
+            <div class="kpi vert"><div class="lbl">Premier du niveau</div><div class="val" style="font-size:16px;line-height:1.25">${premier ? esc(nomComplet(premier.eleve)) : '—'}</div><div class="sub">${premier ? esc(premier.classe_nom) + ' · ' + fmt(premier.moyenne) + '/20' : 'aucune moyenne'}</div></div>
+          </div>
+
+          ${premier ? `<div class="notice ok" style="margin-top:12px">
+            🏆 <b>${d.classes.length > 1 ? `Premier de tous les élèves de ${esc(nomNiveau)} réunis` : `Premier de ${esc(nomNiveau)}`} :</b> ${esc(nomComplet(premier.eleve))}
+            (${esc(premier.classe_nom)}) avec <b>${fmt(premier.moyenne)}/20</b> — rang 1 sur ${totalNotes} élèves.
+          </div>` : ''}
+          ${maths && maths.plus_faible ? `<div class="notice warn">
+            ⚠️ <b>Plus faible note en ${esc(maths.nom.toLowerCase())} :</b> ${esc(nomComplet(maths.plus_faible))}
+            (${esc(maths.plus_faible.classe_nom)}) avec <b>${fmt(maths.plus_faible.valeur, 1)}/20</b>.
+            Meilleure note : ${esc(nomComplet(maths.meilleur))} (${esc(maths.meilleur.classe_nom)}) — ${fmt(maths.meilleur.valeur, 1)}/20.
+          </div>` : ''}
+
+          <div class="panel" style="box-shadow:none">
+            <div class="panel-head"><div><h2>Meilleure et plus faible note par matière</h2>
+              <div class="sub">Toutes classes réunies, pour ${esc(libelle)}</div></div></div>
+            <div class="table-wrap"><table class="data">
+              <thead><tr><th>Matière</th><th class="center">Coef.</th><th class="center">Moyenne</th><th>Meilleure note</th><th>Plus faible note</th><th class="center">Ont ≥ 10</th><th class="center">Non notés</th></tr></thead>
+              <tbody>${d.matieres.map(m => `
+                <tr>
+                  <td class="strong">${esc(m.nom)}</td>
+                  <td class="center small">${m.coefficients.join(' / ')}</td>
+                  <td class="center">${badgeMoy(m.stats.moyenne)}</td>
+                  <td class="small">${m.meilleur ? `<b>${fmt(m.meilleur.valeur, 1)}</b> — ${esc(nomComplet(m.meilleur))} <span class="muted">(${esc(m.meilleur.classe_nom)})</span>` : '<span class="muted">—</span>'}</td>
+                  <td class="small">${m.plus_faible ? `<b>${fmt(m.plus_faible.valeur, 1)}</b> — ${esc(nomComplet(m.plus_faible))} <span class="muted">(${esc(m.plus_faible.classe_nom)})</span>` : '<span class="muted">—</span>'}</td>
+                  <td class="center small">${m.notees ? `${m.participants.filter(p => p.valeur >= 10).length} / ${m.notees}` : '—'}</td>
+                  <td class="center small">${m.non_notes}</td>
+                </tr>`).join('') || `<tr><td colspan="7">${emptyState('📚', 'Aucune matière évaluée pour cette période.')}</td></tr>`}
+              </tbody>
+            </table></div>
+          </div>
+
+          <div class="panel" style="box-shadow:none">
+            <div class="panel-head">
+              <div><h2>Répartition note par note, matière par matière</h2>
+                <div class="sub">Combien d'élèves ont 1, puis 2, puis 3… sur 20</div></div>
+              <div class="right"><select id="fu-matiere" style="min-width:190px">
+                ${d.matieres.map(m => `<option value="${m.id}">${esc(m.nom)}</option>`).join('')}
+              </select></div>
+            </div>
+            ${d.matieres.map(m => `
+              <div class="fu-hist" data-matiere="${m.id}" style="display:none">
+                ${histoNotes(m.repartition, 'Aucune note saisie pour cette matière.')}
+                ${tableNotes(m.repartition)}
+                <div class="chips" style="margin-top:8px">
+                  ${m.repartition.filter(b => b.n).map(b => `<span class="chip">${b.note}/20 <b>${b.n}</b></span>`).join('') || '<span class="muted small">Aucune note.</span>'}
+                </div>
+                <div class="small muted" style="margin-top:8px">Notes arrondies à l'entier le plus proche · ${m.notees} élève(s) noté(s)${m.non_notes ? ` · ${m.non_notes} non noté(s)` : ''}.</div>
+              </div>`).join('')}
+          </div>
+
+          <div class="two-col">
+            <div class="panel" style="box-shadow:none;margin:0">
+              <div class="panel-head"><div><h2>Répartition des moyennes</h2>
+                <div class="sub">Combien d'élèves ont 10, 11, 12… de moyenne</div></div></div>
+              ${histoNotes(st.repartition, 'Aucune moyenne disponible.')}
+              ${tableNotes(st.repartition)}
+            </div>
+            <div class="panel" style="box-shadow:none;margin:0">
+              <div class="panel-head"><h2>Par tranche de moyenne</h2><div class="right muted small">nombre d'élèves</div></div>
+              ${histo(st.buckets)}
+              <div class="chips" style="margin-top:10px">
+                ${Object.entries(st.mentions || {}).map(([m, n]) => `<span class="chip">${esc(m)} <b>${n}</b></span>`).join('') || '<span class="muted small">Aucune mention calculée</span>'}
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" style="box-shadow:none">
+            <div class="panel-head"><div><h2>Classement fusionné — ${esc(nomNiveau)}</h2>
+              <div class="sub">Les rangs sont recalculés sur l'ensemble des classes</div></div>
+              <div class="right"><button class="btn btn-ghost btn-sm" onclick="App.exporterFusion()">⬇️ CSV</button></div></div>
+            <div class="table-wrap"><table class="data">
+              <thead><tr><th class="center">Rang</th><th>Élève</th><th>Classe</th><th class="center">Moyenne</th><th>Mention</th><th class="center">Matières évaluées</th></tr></thead>
+              <tbody>${d.classement.map(r => `
+                <tr>
+                  <td class="center strong">${r.rang}</td>
+                  <td><b>${esc(r.eleve.nom)}</b> ${esc(r.eleve.prenom)}<div class="muted small">${esc(r.eleve.matricule || '')}</div></td>
+                  <td><span class="tag gris">${esc(r.classe_nom)}</span></td>
+                  <td class="center">${badgeMoy(r.moyenne)}</td>
+                  <td class="small">${esc(r.mention)}</td>
+                  <td class="center small">${r.matieres_evaluees}/${r.matieres_total}</td>
+                </tr>`).join('') || `<tr><td colspan="6">${emptyState('📊', 'Aucune moyenne disponible pour cette période.')}</td></tr>`}
+              </tbody>
+            </table></div>
+          </div>
+
+          <div class="panel" style="box-shadow:none;margin-bottom:0">
+            <div class="panel-head"><h2>Chaque classe dans le niveau</h2><div class="right muted small">repères</div></div>
+            <div class="table-wrap"><table class="data">
+              <thead><tr><th>Classe</th><th class="center">Effectif</th><th class="center">Moyenne</th><th class="center">Réussite</th><th>Premier de la classe</th><th class="center">Rang dans le niveau</th></tr></thead>
+              <tbody>${d.par_classe.map(c => `
+                <tr>
+                  <td class="strong">${esc(c.nom)}</td>
+                  <td class="center">${c.effectif}</td>
+                  <td class="center">${badgeMoy(c.stats.moyenne)}</td>
+                  <td class="center small">${c.stats.taux_reussite == null ? '—' : c.stats.taux_reussite + '%'}</td>
+                  <td class="small">${c.premier ? `${esc(c.premier.nom)} — ${fmt(c.premier.moyenne)}/20` : '<span class="muted">—</span>'}</td>
+                  <td class="center strong">${c.premier ? c.premier.rang + ' / ' + totalNotes : '—'}</td>
+                </tr>`).join('')}</tbody>
+            </table></div>
+            <div class="small muted" style="margin-top:10px">La fusion ne modifie aucune note : elle recalcule seulement un classement et des statistiques communs.</div>
+          </div>
+        </div>`;
+    },
+
+    async mount() {
+      const lireSelection = () => $$('.fu-classe:checked').map(i => Number(i.value));
+      const lancer = () => {
+        const liste = lireSelection();
+        if (!liste.length) return toast('Cochez au moins une classe', 'err');
+        const [type, valeur] = ($('#fu-scope') ? $('#fu-scope').value : 'periode:').split(':');
+        const q = { classes: liste.join(',') };
+        if (type === 'examen') q.examen_id = valeur; else q.periode_id = valeur;
+        if ($('#fu-mode') && $('#fu-mode').checked) q.mode = 'composition';
+        App.go('fusion', q);
+      };
+      $$('.fu-groupe').forEach(b => b.onclick = () => {
+        const set = new Set(b.dataset.ids.split(',').map(Number));
+        $$('.fu-classe').forEach(i => { if (set.has(Number(i.value))) i.checked = true; });
+      });
+      if ($('#fu-lancer')) $('#fu-lancer').onclick = lancer;
+      if ($('#fu-scope')) $('#fu-scope').onchange = lancer;
+      if ($('#fu-mode')) $('#fu-mode').onchange = lancer;
+      const selMat = $('#fu-matiere');
+      if (selMat) {
+        const basculer = () => $$('.fu-hist').forEach(el => {
+          el.style.display = el.dataset.matiere === selMat.value ? '' : 'none';
+        });
+        selMat.onchange = basculer;
+        basculer();
+      }
+    }
+  };
+
+  window.App.exporterFusion = () => {
+    const d = S.fusionCourante;
+    if (!d) return;
+    const nom = d.classes.map(c => c.nom).join('-').replace(/\W+/g, '-');
+    const libelle = d.examen ? d.examen.nom : (d.periode ? d.periode.libelle : '');
+    const head = 'Rang;Matricule;Nom;Prenom;Classe;Periode;Moyenne;Mention\n';
+    const body = d.classement.map(r => [r.rang, r.eleve.matricule, r.eleve.nom, r.eleve.prenom,
+      r.classe_nom, libelle, r.moyenne, r.mention]
+      .map(v => String(v ?? '').replace(/;/g, ',')).join(';')).join('\n');
+    const lignes = d.matieres.map(m => [m.nom, m.stats.moyenne, m.notees, m.non_notes,
+      m.meilleur ? `${nomComplet(m.meilleur)} (${m.meilleur.classe_nom}) ${fmt(m.meilleur.valeur, 1)}` : '',
+      m.plus_faible ? `${nomComplet(m.plus_faible)} (${m.plus_faible.classe_nom}) ${fmt(m.plus_faible.valeur, 1)}` : '']
+      .map(v => String(v ?? '').replace(/;/g, ',')).join(';'));
+    const headM = '\n\nMatiere;Moyenne;Notes saisies;Non notes;Meilleure note;Plus faible note\n';
+    const rep = '\n\nRepartition des moyennes generales\nNote;Nombre d eleves\n'
+      + d.stats.repartition.map(b => `${b.note};${b.n}`).join('\n');
+    download(`fusion-${nom}.csv`, '\ufeff' + head + body + headM + lignes.join('\n') + rep, 'text/csv;charset=utf-8');
+    toast('Classement fusionné exporté');
   };
 
   /* --------------------------- EXAMENS ----------------------------- */

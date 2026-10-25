@@ -61,6 +61,11 @@ démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimest
   taux de réussite, histogramme, classements) + **volet composition** : nombre d'élèves ayant la moyenne
   (≥ 10), n'ayant pas la moyenne (< 10), non notés, **répartition « qui a 1, qui a 2, qui a 3… »** et
   tableau composition par matière.
+- **Fusion de classes** : réunissez plusieurs divisions d'un même niveau (6ème A + B + C) pour obtenir
+  **un seul classement** (rangs recalculés sur l'ensemble), la **meilleure et la plus faible note de chaque
+  matière** (nom de l'élève + sa classe), la **répartition note par note** par matière (« combien ont 1,
+  puis 2, puis 3… en maths ») et la **répartition des moyennes** (« combien ont 10, 11, 12… »).
+  Fonctionne aussi sur un examen blanc et en mode « composition seule » ; export CSV.
 - Examens blancs : planification des épreuves (date, heure, durée, salle, coefficient), saisie des notes,
   résultats comparables aux bulletins de période.
 - Paramètres : identité, **logo importé**, titre du chef, année scolaire, devise, formule de calcul des
@@ -298,6 +303,22 @@ que l'adresse existe ou non (pas de fuite d'information).
 - Les bulletins complets restent disponibles : l'option **remplace l'affichage à l'écran**, elle ne
   supprime rien.
 
+### Fusion de classes (« tous les 6ème réunis »)
+
+- Interface : menu **🔗 Fusion de classes** (direction et enseignants), ou bouton
+  *🔗 Fusionner des classes* depuis *Statistiques*.
+- Cochez les divisions à réunir (bouton **Tout cocher** par niveau), choisissez la période **ou** un
+  examen blanc, puis **🔗 Fusionner**. La page s'ouvre directement sur tout le niveau de la première classe.
+- Résultats : 4 indicateurs (effectif réuni, moyenne du niveau, taux de réussite, premier du niveau),
+  bandeau **premier du niveau**, bandeau **plus faible note de la matière principale**,
+  tableau **meilleure / plus faible note par matière** (note, élève, classe, effectif ≥ 10),
+  **répartition note par note par matière** (histogramme 0→20 et tableau), **répartition des moyennes
+  générales**, **classement fusionné** et repères par classe (premier de chaque division et son rang
+  dans le niveau).
+- URL directe : `/app#/fusion?classes=1,2,3&periode_id=4` (ou `&examen_id=2`, `&mode=composition`).
+- API : `GET /api/fusion?classe_ids=1,2,3&periode_id=4` — un enseignant ne peut réunir que **ses**
+  classes (403 sinon). La fusion ne modifie **aucune** note : elle recalcule un classement commun.
+
 ### Stockage externe
 
 `server/storage.js` centralise l'envoi des fichiers : Cloudinary (jusqu'à plusieurs comptes en
@@ -365,6 +386,7 @@ et le contrôle du tunnel (`502` si le tunnel ne pointe pas sur le même port).
 | GET | `/api/bulletins/classe` | personnel |
 | PUT/POST | `/api/bulletins/...` | direction |
 | GET | `/api/stats/classe`, `/api/stats/etablissement` (`?mode=composition`) | personnel |
+| GET | `/api/fusion` (`?classe_ids=1,2,3&periode_id=…` ou `&examen_id=…`, `&mode=composition`) | personnel (ses classes pour un enseignant) |
 | CRUD | `/api/examens`, `/api/examens/:id/epreuves` | direction |
 | GET | `/api/eleve/espace` | élève |
 | POST | `/api/auth/oubli` | public (demande de nouveau mot de passe) |

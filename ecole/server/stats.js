@@ -348,4 +348,191 @@ function bulletinData(db, ecoleId, eleveId, periodeId, options = {}) {
   return { promo, ligne, bulletin, eleve, professeurs, principal: principal || null, chef };
 }
 
-module.exports = { computeClasse, bulletinData, mention, appreciation, mentionColor, statsOf, round2 };
+
+/* ------------------------------------------------------------------ */
+/* Fusion de classes (« promotion »)                                   */
+/* ------------------------------------------------------------------ */
+/**
+ * Réunit plusieurs classes pour un même scope (période ou examen blanc) :
+ *   - un classement unique, tous élèves confondus ;
+ *   - par matière : la meilleure note, la plus faible, et la répartition
+ *     (« combien ont 1, 2, 3… en mathématiques ») ;
+ *   - la répartition des moyennes générales (« combien ont 10, 11, 12… »).
+ *
+ * scope = { classe_ids: [1,2,3], periode_id | examen_id, mode? }
+ */
+function repartitionEntiere(valeurs) {
+  const compte = new Array(21).fill(0);
+  let non_notes = 0;
+  valeurs.forEach(v => {
+    if (v == null) { non_notes++; return; }
+    const n = Math.min(20, Math.max(0, Math.round(v)));
+    compte[n]++;
+  });
+  const notees = valeurs.filter(v => v != null).length;
+  return {
+    lignes: compte.map((n, note) => ({
+      note, n,
+      pourcentage: notees ? round2((n / notees) * 100) : 0
+    })),
+    notees, non_notes
+  };
+}
+
+function computeFusion(db, ecoleId, scope) {
+  const ids = [...new Set((scope.classe_ids || []).map(Number).filter(Boolean))];
+  if (!ids.length) return null;
+  const modeComposition = scope.mode === 'composition';
+
+  const promos = [];
+  for (const id of ids) {
+    const p = computeClasse(db, ecoleId, {
+      classe_id: id,
+      ...(modeComposition ? { mode: 'composition' } : {}),
+      ...(scope.examen_id ? { examen_id: scope.examen_id } : { periode_id: scope.periode_id })
+    });
+    if (p) promos.push(p);
+  }
+  if (!promos.length) return null;
+
+  /* ---- tous les élèves, avec leur classe d'origine -------------------- */
+  const resultats = [];
+  promos.forEach(p => {
+    p.resultats.forEach(r => {
+      resultats.push({
+        eleve: r.eleve,
+        classe_id: p.classe.id,
+        classe_nom: p.classe.nom,
+        cycle: p.classe.cycle,
+        niveau: p.classe.niveau || p.classe.nom,
+        moyenne: r.moyenne,
+        moyenne_composition: r.moyenne_composition,
+        matieres_evaluees: r.matieres_evaluees,
+        matieres_total: r.matieres_total,
+        mention: r.mention,
+        appreciation: r.appreciation,
+        rang_classe: r.rang,
+        lignes: r.lignes.map(l => ({
+          matiere_id: l.matiere_id, nom: l.nom,
+          coefficient: l.coefficient, moyenne: l.moyenne, composition: l.composition
+        }))
+      });
+    });
+  });
+
+  /* ---- matières : fusion par identifiant ----------------------------- */
+  const parMatiere = new Map();
+  promos.forEach(p => {
+    p.matieres.forEach(m => {
+      if (!parMatiere.has(m.id)) {
+        parMatiere.set(m.id, { id: m.id, nom: m.nom, noms: new Set([m.nom]), groupe: m.groupe, participants: [], coefficients: new Set() });
+      }
+      const e = parMatiere.get(m.id);
+      e.noms.add(m.nom);
+      e.coefficients.add(Number(m.coefficient) || 1);
+    });
+  });
+
+  resultats.forEach(r => {
+    r.lignes.forEach(l => {
+      const e = parMatiere.get(l.matiere_id);
+      if (!e) return;
+      e.coefficients.add(Number(l.coefficient) || 1);
+      if (l.moyenne == null) return;
+      e.participants.push({
+        eleve_id: r.eleve.id,
+        nom: r.eleve.nom, prenom: r.eleve.prenom, matricule: r.eleve.matricule,
+        sexe: r.eleve.sexe,
+        classe_id: r.classe_id, classe_nom: r.classe_nom,
+        coefficient: Number(l.coefficient) || 1,
+        valeur: round2(l.moyenne)
+      });
+    });
+  });
+
+  const matieres = [...parMatiere.values()].map(e => {
+    const valeurs = e.participants.map(p => p.valeur);
+    const rk = ranks(valeurs);
+    e.participants.forEach((p, i) => { p.rang = rk.get(i); });
+    const tries = [...e.participants].sort((a, b) => b.valeur - a.valeur || a.nom.localeCompare(b.nom));
+    const compte = repartitionEntiere(valeurs);
+    return {
+      id: e.id,
+      nom: [...e.noms].join(' / '),
+      groupe: e.groupe,
+      coefficients: [...e.coefficients].sort((a, b) => a - b),
+      stats: statsOf(valeurs),
+      notees: compte.notees,
+      non_notes: compte.non_notes,
+      repartition: compte.lignes,
+      meilleur: tries[0] || null,
+      plus_faible: tries.length ? tries[tries.length - 1] : null,
+      participants: tries
+    };
+  }).sort((a, b) => String(a.groupe || '').localeCompare(String(b.groupe || '')) || a.nom.localeCompare(b.nom));
+
+  /* ---- classement général, toutes classes réunies --------------------- */
+  const rangsGen = ranks(resultats.map(r => r.moyenne));
+  resultats.forEach((r, i) => { r.rang = rangsGen.get(i); });
+  const classement = resultats
+    .filter(r => r.moyenne != null)
+    .sort((a, b) => b.moyenne - a.moyenne || a.eleve.nom.localeCompare(b.eleve.nom));
+
+  const moyennes = resultats.map(r => r.moyenne);
+  const stats = statsOf(moyennes);
+  const compteMoyennes = repartitionEntiere(moyennes);
+
+  const buckets = [
+    { label: '0 – 5', min: 0, max: 5, n: 0 },
+    { label: '5 – 8', min: 5, max: 8, n: 0 },
+    { label: '8 – 10', min: 8, max: 10, n: 0 },
+    { label: '10 – 12', min: 10, max: 12, n: 0 },
+    { label: '12 – 14', min: 12, max: 14, n: 0 },
+    { label: '14 – 16', min: 14, max: 16, n: 0 },
+    { label: '16 – 20', min: 16, max: 20.01, n: 0 }
+  ];
+  moyennes.forEach(v => {
+    if (v == null) return;
+    const b = buckets.find(b => v >= b.min && v < b.max);
+    if (b) b.n++;
+  });
+
+  const mentions = {};
+  resultats.forEach(r => { mentions[r.mention] = (mentions[r.mention] || 0) + 1; });
+
+  /* ---- bilan par classe, pour comparer les divisions ------------------ */
+  const parClasse = promos.map(p => {
+    const liste = classement.filter(r => r.classe_id === p.classe.id);
+    return {
+      id: p.classe.id,
+      nom: p.classe.nom,
+      cycle: p.classe.cycle,
+      effectif: p.resultats.length,
+      stats: p.stats,
+      premier: liste[0] ? { nom: `${liste[0].eleve.nom} ${liste[0].eleve.prenom}`, moyenne: liste[0].moyenne, rang: liste[0].rang } : null,
+      dernier: liste.length ? { nom: `${liste[liste.length - 1].eleve.nom} ${liste[liste.length - 1].eleve.prenom}`, moyenne: liste[liste.length - 1].moyenne, rang: liste[liste.length - 1].rang } : null
+    };
+  });
+
+  return {
+    classes: promos.map(p => ({ id: p.classe.id, nom: p.classe.nom, cycle: p.classe.cycle, niveau: p.classe.niveau })),
+    periode: scope.periode_id ? db.prepare('SELECT * FROM periodes WHERE id = ?').get(scope.periode_id) : null,
+    examen: scope.examen_id ? db.prepare('SELECT * FROM examens WHERE id = ?').get(scope.examen_id) : null,
+    etablissement: promos[0].etablissement,
+    resultats,
+    classement,
+    matieres,
+    par_classe: parClasse,
+    stats: {
+      ...stats,
+      effectif_total: resultats.length,
+      classes: promos.length,
+      mentions,
+      buckets,
+      repartition: compteMoyennes.lignes,
+      mode: modeComposition ? 'composition' : 'complete'
+    }
+  };
+}
+
+module.exports = { computeClasse, computeFusion, bulletinData, mention, appreciation, mentionColor, statsOf, round2 };

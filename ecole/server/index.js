@@ -8,7 +8,7 @@ const crypto = require('node:crypto');
 const path = require('node:path');
 
 const { db, hashPassword, verifyPassword, createEtablissement, createUser, now, today, addDays } = require('./db');
-const { computeClasse, bulletinData } = require('./stats');
+const { computeClasse, computeFusion, bulletinData } = require('./stats');
 const stockage = require('./storage');
 const P = require('./paiements');
 const { genererRecuPDF } = require('./recu');
@@ -822,6 +822,38 @@ app.get('/api/bulletins/classe', auth, staffOnly, (req, res) => {
   }
   res.json(promo);
 });
+/* ------------------------------------------------------------------ */
+/* Fusion de classes : classement et répartitions sur plusieurs        */
+/* divisions (tous les 6e A, B et C réunis, par exemple)               */
+/* ------------------------------------------------------------------ */
+app.get('/api/fusion', auth, staffOnly, (req, res) => {
+  const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
+  const ids = String(req.query.classe_ids || req.query.classes || '')
+    .split(',').map(v => Number(v)).filter(v => Number.isInteger(v) && v > 0);
+  const periodeId = req.query.periode_id ? Number(req.query.periode_id) : null;
+  const examenId = req.query.examen_id ? Number(req.query.examen_id) : null;
+  if (!ids.length) return res.status(400).json({ error: 'Choisissez au moins une classe' });
+  if (!periodeId && !examenId) return res.status(400).json({ error: 'Période ou examen blanc requis' });
+  for (const id of ids) {
+    if (!canAccessClasse(req, id)) return res.status(403).json({ error: 'Cette classe ne vous est pas affectée' });
+  }
+  const fusion = computeFusion(db, ecoleId, {
+    classe_ids: ids,
+    ...(req.query.mode === 'composition' ? { mode: 'composition' } : {}),
+    ...(examenId ? { examen_id: examenId } : { periode_id: periodeId })
+  });
+  if (!fusion) return res.status(404).json({ error: 'Aucune classe trouvée' });
+  // une appréciation écrite par la direction prime sur celle calculée
+  if (periodeId) {
+    const lire = db.prepare('SELECT appreciation FROM bulletins WHERE eleve_id = ? AND periode_id = ?');
+    fusion.resultats.forEach(r => {
+      const b = lire.get(r.eleve.id, periodeId);
+      if (b && b.appreciation) r.appreciation = b.appreciation;
+    });
+  }
+  res.json(fusion);
+});
+
 app.put('/api/bulletins/:eleveId/:periodeId', auth, directionOnly, (req, res) => {
   const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
   const el = db.prepare('SELECT * FROM eleves WHERE id = ? AND ecole_id = ?').get(req.params.eleveId, ecoleId);
