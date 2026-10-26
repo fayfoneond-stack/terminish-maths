@@ -12,6 +12,7 @@ const { computeClasse, computeFusion, bulletinData } = require('./stats');
 const stockage = require('./storage');
 const P = require('./paiements');
 const { genererRecuPDF } = require('./recu');
+const { genererFusionPDF } = require('./fusion-pdf');
 const cloudinary = require('./cloudinary');
 const { renderBulletin, renderBulletinBatch, renderExamen } = require('./print');
 
@@ -826,32 +827,105 @@ app.get('/api/bulletins/classe', auth, staffOnly, (req, res) => {
 /* Fusion de classes : classement et répartitions sur plusieurs        */
 /* divisions (tous les 6e A, B et C réunis, par exemple)               */
 /* ------------------------------------------------------------------ */
-app.get('/api/fusion', auth, staffOnly, (req, res) => {
-  const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
-  const ids = String(req.query.classe_ids || req.query.classes || '')
-    .split(',').map(v => Number(v)).filter(v => Number.isInteger(v) && v > 0);
-  const periodeId = req.query.periode_id ? Number(req.query.periode_id) : null;
-  const examenId = req.query.examen_id ? Number(req.query.examen_id) : null;
-  if (!ids.length) return res.status(400).json({ error: 'Choisissez au moins une classe' });
-  if (!periodeId && !examenId) return res.status(400).json({ error: 'Période ou examen blanc requis' });
-  for (const id of ids) {
-    if (!canAccessClasse(req, id)) return res.status(403).json({ error: 'Cette classe ne vous est pas affectée' });
+/** Mêmes validations pour l'écran et le PDF : école, affectations, source et cycle. */
+function lireScopeFusion(req, res) {
+  const ecoleId = ecoleOf(req, res); if (!ecoleId) return null;
+  const valeurs = String(req.query.classe_ids || req.query.classes || '').split(',');
+  if (!valeurs[0] || valeurs.length > 100 || valeurs.some(v => !/^[1-9]\d*$/.test(v.trim()))) {
+    res.status(400).json({ error: 'Choisissez une ou plusieurs classes valides (100 maximum)' });
+    return null;
   }
-  const fusion = computeFusion(db, ecoleId, {
-    classe_ids: ids,
-    ...(req.query.mode === 'composition' ? { mode: 'composition' } : {}),
-    ...(examenId ? { examen_id: examenId } : { periode_id: periodeId })
-  });
+  const ids = [...new Set(valeurs.map(Number))];
+  if (ids.some(id => !Number.isSafeInteger(id))) {
+    res.status(400).json({ error: 'Identifiant de classe invalide' });
+    return null;
+  }
+  const periodeBrute = req.query.periode_id;
+  const examenBrut = req.query.examen_id;
+  if ((!periodeBrute && !examenBrut) || (periodeBrute && examenBrut)) {
+    res.status(400).json({ error: 'Choisissez une période OU un examen blanc' });
+    return null;
+  }
+  const sourceId = Number(examenBrut || periodeBrute);
+  if (!Number.isSafeInteger(sourceId) || sourceId < 1) {
+    res.status(400).json({ error: 'Période ou examen blanc invalide' });
+    return null;
+  }
+  const classes = [];
+  for (const id of ids) {
+    if (!canAccessClasse(req, id)) {
+      res.status(403).json({ error: 'Cette classe ne vous est pas affectée' });
+      return null;
+    }
+    // canAccessClasse valide les droits du rôle ; on impose aussi la même école
+    // aux super-administrateurs choisissant un établissement via ecole_id.
+    const c = db.prepare('SELECT id, ecole_id, cycle FROM classes WHERE id = ? AND ecole_id = ?').get(id, ecoleId);
+    if (!c) { res.status(403).json({ error: 'Classe hors de cet établissement' }); return null; }
+    classes.push(c);
+  }
+  if (examenBrut) {
+    const examen = db.prepare('SELECT id FROM examens WHERE id = ? AND ecole_id = ?').get(sourceId, ecoleId);
+    if (!examen) { res.status(404).json({ error: 'Examen blanc introuvable' }); return null; }
+    return { ecoleId, scope: { classe_ids: ids, examen_id: sourceId } };
+  }
+  const periode = db.prepare('SELECT id, cycle FROM periodes WHERE id = ? AND ecole_id = ?').get(sourceId, ecoleId);
+  if (!periode) { res.status(404).json({ error: 'Période introuvable' }); return null; }
+  if (classes.some(c => c.cycle !== periode.cycle)) {
+    res.status(400).json({ error: 'Choisissez des classes du même cycle que la période' });
+    return null;
+  }
+  return { ecoleId, scope: {
+    classe_ids: ids, periode_id: sourceId,
+    ...(req.query.mode === 'composition' ? { mode: 'composition' } : {})
+  } };
+}
+
+app.get('/api/fusion', auth, staffOnly, (req, res) => {
+  const selection = lireScopeFusion(req, res); if (!selection) return;
+  const { ecoleId, scope } = selection;
+  const fusion = computeFusion(db, ecoleId, scope);
   if (!fusion) return res.status(404).json({ error: 'Aucune classe trouvée' });
-  // une appréciation écrite par la direction prime sur celle calculée
-  if (periodeId) {
+  // Une appréciation écrite par la direction prime sur celle calculée.
+  if (scope.periode_id) {
     const lire = db.prepare('SELECT appreciation FROM bulletins WHERE eleve_id = ? AND periode_id = ?');
     fusion.resultats.forEach(r => {
-      const b = lire.get(r.eleve.id, periodeId);
+      const b = lire.get(r.eleve.id, scope.periode_id);
       if (b && b.appreciation) r.appreciation = b.appreciation;
     });
   }
   res.json(fusion);
+});
+
+/** Résultats fusionnés et proclamation au format PDF : aucune note n'est modifiée. */
+app.get('/api/fusion/pdf', auth, staffOnly, async (req, res) => {
+  const selection = lireScopeFusion(req, res); if (!selection) return;
+  const presentation = req.query.presentation || '';
+  if (presentation && presentation !== 'examen-blanc') {
+    return res.status(400).json({ error: 'Présentation inconnue' });
+  }
+  if (presentation === 'examen-blanc' && !(selection.scope.periode_id && selection.scope.mode === 'composition')) {
+    return res.status(400).json({ error: 'La proclamation depuis les compositions nécessite le mode composition seule' });
+  }
+  if (presentation === 'examen-blanc' && !['directeur', 'super_admin'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Proclamation réservée à la direction' });
+  }
+  const fusion = computeFusion(db, selection.ecoleId, selection.scope);
+  if (!fusion) return res.status(404).json({ error: 'Aucune classe trouvée' });
+  if (!fusion.classement.length) return res.status(400).json({ error: 'Aucune moyenne à imprimer pour ces classes et cette source' });
+  try {
+    const buffer = await genererFusionPDF(fusion, { proclamation: presentation === 'examen-blanc' });
+    const niveau = (fusion.classes[0].niveau || fusion.classes[0].nom || 'classes')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 40);
+    const nom = `${presentation === 'examen-blanc' ? 'proclamation-examen-blanc' : 'resultats-fusionnes'}-${niveau}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${nom}"`);
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.setHeader('Content-Length', buffer.length);
+    res.end(buffer);
+  } catch (err) {
+    console.error('PDF fusion :', err);
+    if (!res.headersSent) res.status(500).json({ error: 'Impossible de créer le PDF des résultats' });
+  }
 });
 
 app.put('/api/bulletins/:eleveId/:periodeId', auth, directionOnly, (req, res) => {

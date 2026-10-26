@@ -318,8 +318,22 @@ que l'adresse existe ou non (pas de fuite d'information).
   **répartition note par note par matière** (histogramme 0→20 et tableau), **répartition des moyennes
   générales**, **classement fusionné** et repères par classe (premier de chaque division et son rang
   dans le niveau).
+- **Deux sources indépendantes** : sélectionnez une période puis cochez **Compositions seules (sans devoirs)**
+  pour utiliser uniquement les notes de composition, ou choisissez dans **Source des résultats** un
+  **examen blanc programmé** (ses épreuves et notes sont distinctes). La direction peut passer par
+  **🎯 Programmer un examen blanc** pour créer une épreuve séparée.
+- **PDF de proclamation** : après fusion, bouton **⬇️ Télécharger le PDF** (personnel), ou, si la
+  direction utilise les **compositions seules**, bouton **🏆 PDF de proclamation (examen blanc)**.
+  Ce dernier titre le document « Examen blanc » mais précise explicitement que les résultats viennent
+  des compositions de la période ; il ne crée pas d'épreuve, ne publie rien aux familles et ne modifie
+  aucune note. Le PDF de proclamation A4 contient le classement commun, les non-classés, le bilan par
+  matière, la répartition des moyennes et celle des mathématiques ; le PDF ordinaire détaille toutes
+  les matières note par note. Le fichier téléchargé s’ouvre dans Chrome pour être imprimé.
 - URL directe : `/app#/resultats?classes=1,2,3&periode_id=4` (ou `&examen_id=2`, `&mode=composition`).
   L’ancien lien `/app#/fusion` continue de fonctionner.
+- PDF : `GET /api/fusion/pdf?classe_ids=1,2,3&periode_id=4&mode=composition` ; ajouter
+  `&presentation=examen-blanc` pour un PDF de proclamation (direction uniquement). La même route
+  accepte `examen_id` à la place de `periode_id` pour un examen blanc réellement programmé.
 - API : `GET /api/fusion?classe_ids=1,2,3&periode_id=4` — un enseignant ne peut réunir que **ses**
   classes (403 sinon). La fusion ne modifie **aucune** note : elle recalcule un classement commun.
 

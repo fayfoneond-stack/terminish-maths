@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
+    "test": "node --test test/*.test.js",
     "backup": "node server/sauvegarde.js",
     "seed:demo": "TERMINISH_SEED=demo node server/index.js",
     "partage": "node deploy/gratuit/demarrer.js",

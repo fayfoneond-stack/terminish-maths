@@ -2409,6 +2409,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       await loadRefs();
       const q = S.query;
       const classes = S.classes;
+      S.fusionCourante = null;
       if (!classes.length) {
         return `<div class="panel"><div class="panel-head"><h2>Résultats · fusion de classes</h2></div>
           ${emptyState('🏫', 'Aucune classe disponible pour fusionner les résultats.')}</div>`;
@@ -2427,7 +2428,8 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       const periodes = S.periodes.filter(p => p.cycle === cycle);
       const periodeDefaut = (periodes.find(p => p.statut === 'ouverte') || periodes[0] || {}).id;
       const choixScope = q.examen_id ? `examen:${q.examen_id}` : `periode:${q.periode_id || periodeDefaut}`;
-      const modeComposition = q.mode === 'composition';
+      // Un examen programmé utilise ses propres épreuves : jamais les compositions du trimestre.
+      const modeComposition = !q.examen_id && q.mode === 'composition';
       const [scopeType, scopeVal] = choixScope.split(':');
 
       const params = new URLSearchParams({ classe_ids: sel.join(',') });
@@ -2450,7 +2452,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
               <div class="small muted" style="margin-bottom:4px">
                 <span class="tag ${g.cycle === 'lycee' ? 'bleu' : 'gris'}">${g.cycle === 'lycee' ? 'Lycée' : 'Collège'}</span>
                 <b>${esc(g.niveau)}</b> · ${g.classes.length} classe(s)
-                ${g.classes.length > 1 ? `<button class="btn btn-ghost btn-sm fu-groupe" data-ids="${g.classes.map(c => c.id).join(',')}">Tout cocher</button>` : ''}
+                ${g.classes.length > 1 ? `<button class="btn btn-ghost btn-sm fu-groupe" data-ids="${g.classes.map(c => c.id).join(',')}">Tout cocher ce niveau</button>` : ''}
               </div>
               <div class="chips">
                 ${g.classes.map(c => `<label class="chip" style="cursor:pointer">
@@ -2458,13 +2460,24 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                   ${esc(c.nom)} <b>${c.effectif ?? 0}</b></label>`).join('')}
               </div>
             </div>`).join('')}
-          <div class="toolbar" style="margin-top:10px;gap:10px;flex-wrap:wrap">
-            <select id="fu-scope" style="min-width:250px">
-              ${periodes.map(p => `<option value="periode:${p.id}" ${choixScope === 'periode:' + p.id ? 'selected' : ''}>📄 ${esc(p.libelle)}${p.statut === 'fermee' ? ' (clôturé)' : ''}</option>`).join('')}
-              ${examens.map(ex => `<option value="examen:${ex.id}" ${choixScope === 'examen:' + ex.id ? 'selected' : ''}>🎯 Examen blanc — ${esc(ex.nom)}</option>`).join('')}
-            </select>
-            <label class="chip" style="cursor:pointer"><input type="checkbox" id="fu-mode" ${modeComposition ? 'checked' : ''}> Composition seule</label>
+          <div class="toolbar" style="margin-top:10px;gap:10px;flex-wrap:wrap;align-items:center">
+            <div class="field" style="min-width:250px;margin:0">
+              <label for="fu-scope">Source des résultats</label>
+              <select id="fu-scope" style="min-width:250px">
+                <optgroup label="Périodes (compositions ou toutes les notes)">
+                  ${periodes.map(p => `<option value="periode:${p.id}" ${choixScope === 'periode:' + p.id ? 'selected' : ''}>📄 ${esc(p.libelle)}${p.statut === 'fermee' ? ' (clôturé)' : ''}</option>`).join('')}
+                </optgroup>
+                ${examens.length ? `<optgroup label="Examens blancs programmés">
+                  ${examens.map(ex => `<option value="examen:${ex.id}" ${choixScope === 'examen:' + ex.id ? 'selected' : ''}>🎯 ${esc(ex.nom)}</option>`).join('')}
+                </optgroup>` : ''}
+              </select>
+            </div>
+            ${scopeType !== 'examen' ? `<label class="chip" style="cursor:pointer"><input type="checkbox" id="fu-mode" ${modeComposition ? 'checked' : ''}> Compositions seules (sans devoirs)</label>` : ''}
+            ${S.me.role === 'directeur' ? `<button class="btn btn-ghost btn-sm" onclick="App.go('examens')">🎯 Programmer un examen blanc</button>` : ''}
           </div>
+          <div class="small muted">${scopeType === 'examen'
+            ? 'Source : épreuves de l’examen programmé (et non compositions du trimestre).'
+            : 'Pour proclamer un examen blanc avec les notes du trimestre, cochez « Compositions seules » puis téléchargez le PDF de proclamation. Aucune note n’est modifiée.'}</div>
         </div>`;
 
       if (erreur) {
@@ -2492,9 +2505,17 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
           <div class="panel-head">
             <div><h2>Résultats réunis — ${esc(nomNiveau)}</h2>
               <div class="sub">${esc(libelle)} · ${d.classes.length} classe${d.classes.length > 1 ? 's' : ''} · ${st.effectif_total} élève${st.effectif_total > 1 ? 's' : ''}${modeComposition ? ' · composition seule' : ''}</div></div>
-            <div class="right"><button class="btn btn-ghost btn-sm" onclick="App.exporterFusion()">⬇️ Exporter le classement</button></div>
+            <div class="right">
+              <button class="btn btn-ghost btn-sm" onclick="App.exporterFusion()">⬇️ CSV</button>
+              <button class="btn btn-primary btn-sm" onclick="App.exporterFusionPDF()" ${!totalNotes ? 'disabled' : ''}>⬇️ Télécharger le PDF</button>
+              ${S.me.role === 'directeur' && modeComposition && totalNotes
+                ? `<button class="btn btn-ghost btn-sm" onclick="App.exporterFusionPDF('examen-blanc')">🏆 PDF de proclamation (examen blanc)</button>` : ''}
+            </div>
           </div>
           ${selecteur}
+          ${!totalNotes ? `<div class="notice warn">Aucune moyenne disponible pour cette source : le PDF sera disponible après la saisie des notes.</div>` : ''}
+          ${d.examen ? `<div class="notice info">Résultats de l’examen blanc programmé « ${esc(d.examen.nom)} » : seules les épreuves de cet examen sont utilisées.</div>`
+            : modeComposition ? `<div class="notice info">Composition seule : les devoirs sont exclus. La direction peut télécharger le PDF de proclamation pour présenter ces résultats comme examen blanc. Cela ne crée pas d’épreuve et ne publie rien aux familles.</div>` : ''}
 
           <div class="cards" style="margin-top:12px">
             <div class="kpi accent"><div class="lbl">Élèves réunis</div><div class="val">${st.effectif_total}</div><div class="sub">${d.classes.length} classe${d.classes.length > 1 ? 's' : ''}</div></div>
@@ -2613,12 +2634,14 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         const [type, valeur] = ($('#fu-scope') ? $('#fu-scope').value : 'periode:').split(':');
         const q = { classes: liste.join(',') };
         if (type === 'examen') q.examen_id = valeur; else q.periode_id = valeur;
-        if ($('#fu-mode') && $('#fu-mode').checked) q.mode = 'composition';
+        if (type !== 'examen' && $('#fu-mode') && $('#fu-mode').checked) q.mode = 'composition';
         App.go('resultats', q);
       };
+      // Changer de niveau remplace la sélection précédente (sinon 6e + 5e se mélangent).
       $$('.fu-groupe').forEach(b => b.onclick = () => {
-        const set = new Set(b.dataset.ids.split(',').map(Number));
-        $$('.fu-classe').forEach(i => { if (set.has(Number(i.value))) i.checked = true; });
+        const q = { classes: b.dataset.ids };
+        if (!S.query.examen_id && $('#fu-mode')?.checked) q.mode = 'composition';
+        App.go('resultats', q); // la période se réajuste au cycle du nouveau niveau
       });
       if ($('#fu-lancer')) $('#fu-lancer').onclick = lancer;
       if ($('#fu-scope')) $('#fu-scope').onchange = lancer;
@@ -2636,6 +2659,21 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
 
   // Nouvelle adresse visible #/resultats ; conserver #/fusion pour les anciens favoris.
   V.resultats = V.fusion;
+
+  // Un PDF serveur (téléchargement direct), avec le classement exactement affiché.
+  window.App.exporterFusionPDF = (presentation) => {
+    const d = S.fusionCourante;
+    if (!d || !d.classement.length) return toast('Aucune moyenne à imprimer', 'err');
+    if (presentation === 'examen-blanc' && !(S.me.role === 'directeur' && d.periode && d.stats.mode === 'composition')) {
+      return toast('La proclamation nécessite les compositions seules et un compte de direction', 'err');
+    }
+    const p = new URLSearchParams({ classe_ids: d.classes.map(c => c.id).join(',') });
+    if (d.examen) p.set('examen_id', d.examen.id);
+    else if (d.periode) p.set('periode_id', d.periode.id);
+    if (d.periode && d.stats.mode === 'composition') p.set('mode', 'composition');
+    if (presentation === 'examen-blanc') p.set('presentation', 'examen-blanc');
+    window.open(lienServeur('/api/fusion/pdf?' + p.toString()), '_blank');
+  };
 
   window.App.exporterFusion = () => {
     const d = S.fusionCourante;
