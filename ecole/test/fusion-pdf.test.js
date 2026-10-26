@@ -59,8 +59,11 @@ test('compositions seules : rangs recalculés sans les devoirs, non notés disti
     assert.equal(d.matieres[0].plus_faible.nom, 'ADJOVI');
     assert.equal(d.matieres[0].repartition[1].n, 1);
     assert.equal(d.stats.repartition[10].n, 1);
+    assert.equal(d.matieres[0].code, 'MATH');
+    assert.equal(d.classement[0].total_coef, 4);
+    assert.equal(d.classement[0].total_points, 72);
     assert.equal(d.resultats.filter(r => r.moyenne == null).length, 1);
-    // Chaque bloc du classement donne une note /20 pour chaque matière de l'élève.
+    // Chaque cellule du classement correspond à l'identifiant de sa matière.
     assert.deepEqual(notesEleveParMatiere(d.classement[0], d.matieres), [18]);
     assert.deepEqual(notesEleveParMatiere(d.classement[2], d.matieres), [1]);
     assert.deepEqual(notesEleveParMatiere(d.resultats.find(r => r.moyenne == null), d.matieres), [null]);
@@ -97,7 +100,7 @@ function textePDF(pdf) {
   return resultat;
 }
 
-test('PDF fusionné : les notes Mathématiques et SVT sont sous chaque nom dans le classement', async () => {
+test('PDF fusionné : MATH, SVT, moyenne et rang sur la même ligne, comme le relevé d’examen', async () => {
   const db = jeuEssai();
   try {
     const comp = computeFusion(db, 1, { classe_ids: [1, 2, 3], periode_id: 1, mode: 'composition' });
@@ -106,23 +109,22 @@ test('PDF fusionné : les notes Mathématiques et SVT sont sous chaque nom dans 
     assert.ok(pdf.length > 5000);
     const nbPages = buffer => (buffer.toString('latin1').match(/\/Type\s*\/Page\b/g) || []).length;
     const nbPaysages = buffer => (buffer.toString('latin1').match(/\/MediaBox \[0 0 841\.89 595\.28\]/g) || []).length;
-    assert.equal(nbPaysages(pdf), 0, 'Les notes doivent être sous le nom, pas dans une annexe paysage');
+    const nbPortraits = buffer => (buffer.toString('latin1').match(/\/MediaBox \[0 0 595\.28 841\.89\]/g) || []).length;
+    assert.ok(nbPaysages(pdf) >= 1, 'Le classement doit être un tableau A4 paysage');
+    assert.ok(nbPortraits(pdf) >= 1, 'Le bilan et les statistiques doivent être conservés');
     const texteComp = textePDF(pdf);
-    const classement = texteComp.slice(texteComp.indexOf('Classement général'));
-    const kouassi = classement.slice(classement.indexOf('KOUASSI Elom'), classement.indexOf('DOSSEH Kofi'));
-    assert.match(kouassi, /Mathématiques\n18,00/); // composition uniquement, pas le devoir
-    assert.match(classement, /Élèves non classés[\s\S]*KODJO Non noté[\s\S]*Mathématiques/);
+    assert.match(texteComp, /MATH : Mathématiques/);
+    assert.match(texteComp, /Rang\nMatricule\nNom et prénom\(s\)\nClasse\nMATH/);
+    assert.match(texteComp, /1\nA01\nKOUASSI Elom\n6ème A\n18,00\n4,00\n72,00\n18,00/);
+    assert.match(texteComp, /ÉLÈVES NON CLASSÉS[\s\S]*KODJO Non noté/);
 
     const examen = computeFusion(db, 1, { classe_ids: [1, 2, 3], examen_id: 1 });
     const pdfExamen = await genererFusionPDF(examen);
-    assert.match(pdfExamen.subarray(0, 8).toString(), /^%PDF-1\./);
-    assert.equal(nbPaysages(pdfExamen), 0);
+    assert.ok(nbPaysages(pdfExamen) >= 1, 'L’examen programmé utilise le même tableau');
     const texteExamen = textePDF(pdfExamen);
-    const classeExamen = texteExamen.slice(texteExamen.indexOf('Classement général'));
-    const dosseh = classeExamen.slice(classeExamen.indexOf('DOSSEH Kofi'), classeExamen.indexOf('KOUASSI Elom'));
-    assert.match(dosseh, /Mathématiques\n17,00/); // épreuve programmée, pas composition
+    assert.match(texteExamen, /1\nC01\nDOSSEH Kofi\n6ème C\n17,00\n1,00\n17,00\n17,00/);
 
-    // Deux matières, dont SVT absente pour un élève et complètement absente pour le non-classé.
+    // SVT suit les compositions choisies, dans une colonne à côté de Mathématiques.
     db.prepare("INSERT INTO matieres VALUES (2, 'Sciences de la Vie et de la Terre', NULL, 'SVT', 'Scientifique')").run();
     for (let c = 1; c <= 3; c++) {
       db.prepare('INSERT INTO classe_matieres VALUES (?, 2, 2)').run(c);
@@ -132,13 +134,12 @@ test('PDF fusionné : les notes Mathématiques et SVT sont sous chaque nom dans 
     db.prepare('INSERT INTO notes VALUES (21, 1, 13, 0), (23, 3, 8, 0)').run();
     const avecSvt = computeFusion(db, 1, { classe_ids: [1, 2, 3], periode_id: 1, mode: 'composition' });
     const texteSvt = textePDF(await genererFusionPDF(avecSvt, { proclamation: true }));
-    const classeSvt = texteSvt.slice(texteSvt.indexOf('Classement général'));
-    const blocKouassi = classeSvt.slice(classeSvt.indexOf('KOUASSI Elom'), classeSvt.indexOf('DOSSEH Kofi'));
-    assert.match(blocKouassi, /Mathématiques\n18,00/);
-    assert.match(blocKouassi, /SVT.*Sciences de la Vie et de la Terre\n13,00/);
-    assert.match(classeSvt, /Élèves non classés[\s\S]*KODJO Non noté[\s\S]*SVT/);
+    assert.match(texteSvt, /MATH : Mathématiques/);
+    assert.match(texteSvt, /SVT : Sciences de la Vie et de la Terre/);
+    assert.match(texteSvt, /1\nA01\nKOUASSI Elom\n6ème A\n18,00\n13,00\n6,00\n98,00\n16,33/);
+    assert.match(texteSvt, /ÉLÈVES NON CLASSÉS[\s\S]*KODJO Non noté/);
 
-    // Plus de huit matières : chacun garde la liste complète sous SON nom.
+    // Onze matières : deux groupes de colonnes répètent les élèves et leurs rangs.
     for (let id = 3; id <= 11; id++) {
       db.prepare('INSERT INTO matieres VALUES (?, ?, NULL, ?, ?)').run(id, `Matière ${id}`, `MAT${id}`, 'Autres');
       for (let classeId = 1; classeId <= 3; classeId++) {
@@ -152,13 +153,17 @@ test('PDF fusionné : les notes Mathématiques et SVT sont sous chaque nom dans 
     const plusieurs = computeFusion(db, 1, { classe_ids: [1, 2, 3], periode_id: 1, mode: 'composition' });
     assert.equal(plusieurs.matieres.length, 11);
     const pdfPlusieurs = await genererFusionPDF(plusieurs, { proclamation: true });
-    assert.equal(nbPaysages(pdfPlusieurs), 0);
+    assert.ok(nbPaysages(pdfPlusieurs) >= 2);
     const textePlusieurs = textePDF(pdfPlusieurs);
-    const premierBloc = textePlusieurs.slice(textePlusieurs.indexOf('KOUASSI Elom', textePlusieurs.indexOf('Classement général')));
-    assert.match(premierBloc, /Mathématiques\n18,00/);
-    assert.match(premierBloc, /Matière 11\n11,00/);
+    assert.match(textePlusieurs, /groupe 1\/2/);
+    assert.match(textePlusieurs, /groupe 2\/2/);
+    assert.match(textePlusieurs, /MAT11 : Matière 11/);
+    assert.match(textePlusieurs, /MAT9\n×1\nMATH\n×4\nSVT\n×2/);
+    const secondGroupe = textePlusieurs.slice(textePlusieurs.indexOf('groupe 2/2'));
+    assert.match(secondGroupe, /1\nA01\nKOUASSI Elom\n6ème A\n9,00\n18,00\n13,00/);
+    assert.ok((textePlusieurs.match(/KOUASSI Elom/g) || []).length >= 2);
 
-    // Une liste de 150 élèves reste lisible sur plusieurs pages toutes numérotées.
+    // 150 élèves : en-têtes répétés sur des pages paysage toutes numérotées.
     const source = comp.classement[0];
     comp.classement = Array.from({ length: 150 }, (_, i) => ({ ...source, rang: i + 1,
       eleve: { ...source.eleve, id: i + 10, nom: `TEST${i + 1}` } }));
@@ -166,6 +171,6 @@ test('PDF fusionné : les notes Mathématiques et SVT sont sous chaque nom dans 
     comp.stats.effectif_total = 150;
     const grandPDF = await genererFusionPDF(comp, { proclamation: true });
     assert.ok(nbPages(grandPDF) >= 5, `Seulement ${nbPages(grandPDF)} page(s) pour 150 élèves`);
-    assert.equal(nbPaysages(grandPDF), 0);
+    assert.ok(nbPaysages(grandPDF) >= 4);
   } finally { db.close(); }
 });

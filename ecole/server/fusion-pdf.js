@@ -155,117 +155,157 @@ function genererFusionPDF(fusion, { proclamation = false } = {}) {
       }
 
       /**
-       * Le classement imprimé contient désormais les matières DIRECTEMENT
-       * sous l'identité de chaque élève. Le même bloc conserve rang, classe,
-       * matricule, moyenne et mention ; les non-classés y figurent également.
+       * Tableau principal comme le relevé d'examen : une ligne par élève,
+       * matières en COLONNES, rang commun et moyenne dans la même ligne.
+       * Chaque groupe de 8 matières répète les élèves si le niveau en a plus.
        */
-      function classementAvecMatieres(liste, titreSection) {
-        if (!liste.length) return;
-        // Réserver le titre, la légende et le premier élève pour éviter un
-        // titre de classement isolé en bas de page.
-        place(Math.min(600, 115 + Math.ceil(fusion.matieres.length / 2) * 23));
-        section(titreSection);
-        paragraphe('Sous chaque nom : note ou moyenne par matière (/20) selon la source choisie. — : non notée ou non enseignée.',
-          { taille: 8.5, couleur: GRIS, espace: 6 });
-
-        const entetes = ['Rang', 'Élève', 'Classe', 'Matricule', 'Moyenne', 'Mention'];
-        const largeurs = [32, 170, 73, 72, 63, 97];
-        const margeNotes = 8, separation = 14;
-        const largeurNote = (W - 2 * margeNotes - separation) / 2;
-        const largeurNomMatiere = largeurNote - 56;
-        const grades = v => v == null ? '—' : Number(v).toFixed(2).replace('.', ',');
-
-        function entete() {
-          doc.rect(L, y, W, 23).fill(CLAIR);
-          let x = L;
-          entetes.forEach((val, i) => {
-            doc.font('Helvetica-Bold').fontSize(8).fillColor(FONCE)
-              .text(val, x + 5, y + 6, { width: largeurs[i] - 10, height: 13 });
-            x += largeurs[i];
-          });
-          y += 23;
-        }
-        entete();
-
-        liste.forEach((r, index) => {
-          const infos = [r.rang ?? '—', nom(r.eleve), texte(r.classe_nom),
-            texte(r.eleve.matricule) || '—', note(r.moyenne), texte(r.mention) || '—'];
-          // Conserver les noms utilisés dans la classe de l'élève (PCT au collège,
-          // Physique-Chimie au lycée), même si une matière a deux noms dans la fusion.
-          const nomsEleve = new Map((r.lignes || []).map(l => [l.matiere_id, l.nom]));
-          const moyennes = notesEleveParMatiere(r, fusion.matieres);
-          const matieres = fusion.matieres.map((m, i) => {
-            const libelle = texte(nomsEleve.get(m.id) || m.nom);
-            return { nom: /sciences de la vie et de la terre/i.test(libelle) && !/\bSVT\b/i.test(libelle)
-              ? `SVT — ${libelle}` : libelle, valeur: grades(moyennes[i]) };
-          });
-          if (!matieres.length) matieres.push({ nom: 'Aucune matière configurée', valeur: '—' });
-          const lignes = [];
-          for (let i = 0; i < matieres.length; i += 2) lignes.push(matieres.slice(i, i + 2));
-          const hauteurResume = Math.min(65, Math.max(28, ...infos.map((val, i) => {
-            doc.font(i < 2 ? 'Helvetica-Bold' : 'Helvetica').fontSize(8.3);
-            return Math.ceil(doc.heightOfString(val, { width: largeurs[i] - 10, lineGap: 1 }) + 8);
-          })));
-          const hauteurs = lignes.map(ligne => {
-            doc.font('Helvetica').fontSize(8.2);
-            return Math.min(48, Math.max(17, ...ligne.map(m =>
-              Math.ceil(doc.heightOfString(m.nom, { width: largeurNomMatiere, lineGap: 1 }) + 4))));
-          });
-          let position = 0;
-          while (position < lignes.length) {
-            const totalRestant = hauteurResume + 10 + hauteurs.slice(position).reduce((a, v) => a + v, 0);
-            // Si le bloc entier tient sur une nouvelle page, ne pas séparer
-            // le nom de ses notes par une coupure de page.
-            if (y + totalRestant > BAS && totalRestant <= BAS - 102) {
-              nouvellePage();
-              entete();
-            }
-            let disponibles = BAS - y - hauteurResume - 10;
-            if (disponibles < hauteurs[position]) {
-              nouvellePage();
-              entete();
-              disponibles = BAS - y - hauteurResume - 10;
-            }
-            let fin = position, hauteurNotes = 0;
-            while (fin < lignes.length && hauteurNotes + hauteurs[fin] <= disponibles) {
-              hauteurNotes += hauteurs[fin];
-              fin++;
-            }
-            if (fin === position) throw new Error('Les notes d’un élève ne tiennent pas sur une page A4');
-            const hauteur = hauteurResume + hauteurNotes + 10;
-            if (index % 2 === 0) doc.rect(L, y, W, hauteur).fill('#f9fbfa');
-            doc.rect(L, y, W, hauteurResume).fill(CLAIR);
-            let x = L;
-            infos.forEach((val, i) => {
-              doc.font(i < 2 || i === 4 ? 'Helvetica-Bold' : 'Helvetica')
-                .fontSize(8.3).fillColor(ENCRE)
-                .text(val, x + 5, y + 5, { width: largeurs[i] - 10,
-                  height: hauteurResume - 9, lineGap: 1, ellipsis: true });
-              x += largeurs[i];
-            });
-            let yNote = y + hauteurResume + 4;
-            for (let i = position; i < fin; i++) {
-              lignes[i].forEach((m, j) => {
-                const xNote = L + margeNotes + j * (largeurNote + separation);
-                doc.font('Helvetica').fontSize(8.2).fillColor(ENCRE)
-                  .text(m.nom, xNote, yNote + 2, { width: largeurNomMatiere,
-                    height: hauteurs[i] - 4, lineGap: 1, ellipsis: true });
-                doc.font('Helvetica-Bold').fontSize(8.2).fillColor(FONCE)
-                  .text(m.valeur, xNote + largeurNomMatiere + 4, yNote + 2,
-                    { width: largeurNote - largeurNomMatiere - 4,
-                      height: hauteurs[i] - 4, align: 'right' });
-              });
-              yNote += hauteurs[i];
-            }
-            y += hauteur;
-            doc.moveTo(L, y).lineTo(R, y).lineWidth(0.4).strokeColor(BORD).stroke();
-            position = fin;
-            if (position < lignes.length) { nouvellePage(); entete(); }
+      function tableauClassementPaysage() {
+        const matieres = fusion.matieres;
+        const idsClasses = new Set(fusion.classement.map(r => r.eleve.id));
+        const nonClasses = fusion.resultats.filter(r => !idsClasses.has(r.eleve.id))
+          .sort((a, b) => nom(a.eleve).localeCompare(nom(b.eleve), 'fr'));
+        const eleves = [...fusion.classement, ...nonClasses];
+        const codesUtilises = new Set();
+        const codes = matieres.map((m, i) => {
+          let code = texte(m.code).toUpperCase().slice(0, 7) || `M${i + 1}`;
+          if (codesUtilises.has(code)) {
+            const base = `M${i + 1}`;
+            code = base;
+            let suffixe = 2;
+            while (codesUtilises.has(code)) code = `${base}-${suffixe++}`;
           }
+          codesUtilises.add(code);
+          return code;
         });
-        y += 9;
+        const format = v => v == null ? '—' : Number(v).toFixed(2).replace('.', ',');
+        const marge = 28, parGroupe = 8;
+        const totalGroupes = Math.max(1, Math.ceil(matieres.length / parGroupe));
+
+        for (let groupe = 0; groupe < totalGroupes; groupe++) {
+          const debut = groupe * parGroupe;
+          const selection = matieres.slice(debut, debut + parGroupe);
+          let position = 0;
+          do {
+            nouvellePage('landscape');
+            const largeur = doc.page.width - 2 * marge;
+            const bas = doc.page.height - 54;
+            const largeurFixe = 28 + 61 + 138 + 58 + 44 + 52 + 54 + 73;
+            const largeurMatiere = selection.length
+              ? Math.min(50, (largeur - largeurFixe) / selection.length) : 0;
+            const largeurNom = 138 + largeur - largeurFixe - selection.length * largeurMatiere;
+            const colonnes = [28, 61, largeurNom, 58, ...selection.map(() => largeurMatiere), 44, 52, 54, 73];
+            let basDeLigne = 78;
+
+            doc.font('Helvetica-Bold').fontSize(14).fillColor(FONCE)
+              .text(`${titre} — CLASSEMENT PAR MATIÈRE`, marge, basDeLigne,
+                { width: largeur, height: 19, ellipsis: true });
+            basDeLigne += 23;
+            doc.font('Helvetica').fontSize(8.5).fillColor(GRIS);
+            const sourceH = doc.heightOfString(source, { width: largeur, lineGap: 1 });
+            doc.text(source, marge, basDeLigne, { width: largeur, lineGap: 1 });
+            basDeLigne += sourceH + 5;
+            const classes = `Classes réunies : ${fusion.classes.map(c => c.nom).join(' · ')}  ·  ${fusion.stats.effectif_total} élève(s)  ·  ${fusion.classement.length} classé(s)`;
+            doc.font('Helvetica').fontSize(8.5).fillColor(ENCRE);
+            const classesH = doc.heightOfString(classes, { width: largeur });
+            doc.text(classes, marge, basDeLigne, { width: largeur });
+            basDeLigne += classesH + 8;
+            doc.font('Helvetica-Bold').fontSize(8.5).fillColor(VERT)
+              .text(`Notes /20 · ${matieres.length
+                ? `matières ${debut + 1} à ${debut + selection.length} sur ${matieres.length}`
+                : 'aucune matière configurée'}`
+                + (totalGroupes > 1 ? ` · groupe ${groupe + 1}/${totalGroupes} (élèves répétés)` : '')
+                + ' · rang commun aux classes réunies', marge, basDeLigne, { width: largeur });
+            basDeLigne += 17;
+
+            // Codes en en-tête, noms complets ici : Math, SVT, etc. ne peuvent
+            // jamais être confondus avec une autre matière lors de l'impression.
+            const legendeW = (largeur - 16) / 2;
+            for (let i = 0; i < selection.length; i += 2) {
+              const noms = [0, 1].map(j => selection[i + j]
+                ? `${codes[debut + i + j]} : ${selection[i + j].nom}`
+                  + (selection[i + j].coefficients?.length
+                    ? ` (coef. ${selection[i + j].coefficients.join('/')})` : '') : '');
+              doc.font('Helvetica').fontSize(7.8).fillColor(ENCRE);
+              const hauteur = Math.max(11, ...noms.map(v => v
+                ? doc.heightOfString(v, { width: legendeW, lineGap: 1 }) : 0));
+              noms.forEach((label, j) => {
+                if (label) doc.text(label, marge + j * (legendeW + 16), basDeLigne,
+                  { width: legendeW, height: hauteur, lineGap: 1 });
+              });
+              basDeLigne += hauteur + 3;
+            }
+            basDeLigne += 7;
+
+            const hauteurEntete = 30;
+            doc.rect(marge, basDeLigne, largeur, hauteurEntete).fill(FONCE);
+            const entetes = ['Rang', 'Matricule', 'Nom et prénom(s)', 'Classe',
+              ...selection.map((_, i) => codes[debut + i]), 'Total coef.', 'Points', 'Moyenne', 'Mention'];
+            let x = marge;
+            entetes.forEach((libelle, i) => {
+              doc.font('Helvetica-Bold').fontSize(7.3).fillColor('#ffffff')
+                .text(libelle, x + 2, basDeLigne + 6, { width: colonnes[i] - 4, height: 19,
+                  align: i === 2 || i === 3 ? 'left' : 'center', ellipsis: true });
+              if (i >= 4 && i < 4 + selection.length) {
+                const coefficients = selection[i - 4].coefficients || [];
+                if (coefficients.length) doc.font('Helvetica').fontSize(6.3).fillColor('#cfe5da')
+                  .text(`×${coefficients.join('/')}`, x + 2, basDeLigne + 18,
+                    { width: colonnes[i] - 4, height: 10, align: 'center', ellipsis: true });
+              }
+              x += colonnes[i];
+            });
+            basDeLigne += hauteurEntete;
+            const premier = position;
+            while (position < eleves.length) {
+              const r = eleves[position];
+              doc.font('Helvetica').fontSize(8);
+              const hauteur = Math.min(45, Math.max(21,
+                doc.heightOfString(nom(r.eleve), { width: largeurNom - 6, lineGap: 1 }) + 6,
+                doc.heightOfString(texte(r.classe_nom), { width: 52, lineGap: 1 }) + 6));
+              const separationNonClasses = position === fusion.classement.length && nonClasses.length ? 19 : 0;
+              if (basDeLigne + separationNonClasses + hauteur > bas) break;
+              if (separationNonClasses) {
+                doc.rect(marge, basDeLigne, largeur, separationNonClasses).fill(CLAIR);
+                doc.font('Helvetica-Bold').fontSize(8).fillColor(FONCE)
+                  .text('ÉLÈVES NON CLASSÉS — AUCUNE MOYENNE DISPONIBLE', marge + 6,
+                    basDeLigne + 5, { width: largeur - 12 });
+                basDeLigne += separationNonClasses;
+              }
+              if (position % 2 === 0) doc.rect(marge, basDeLigne, largeur, hauteur).fill('#f9fbfa');
+              doc.moveTo(marge, basDeLigne + hauteur).lineTo(marge + largeur, basDeLigne + hauteur)
+                .lineWidth(0.4).strokeColor(BORD).stroke();
+              const chiffres = notesEleveParMatiere(r, selection);
+              const cellules = [r.rang ?? '—', r.eleve.matricule || '—', nom(r.eleve),
+                texte(r.classe_nom), ...chiffres.map(format),
+                r.moyenne == null ? '—' : format(r.total_coef),
+                r.moyenne == null ? '—' : format(r.total_points),
+                format(r.moyenne), r.mention || '—'];
+              x = marge;
+              cellules.forEach((val, i) => {
+                const noteMatiere = i >= 4 && i < 4 + selection.length;
+                const color = noteMatiere && chiffres[i - 4] != null
+                  ? (chiffres[i - 4] < 10 ? '#b42318' : VERT) : ENCRE;
+                doc.font(i === 0 || i === 2 || i >= 4 + selection.length ? 'Helvetica-Bold' : 'Helvetica')
+                  .fontSize(7.8).fillColor(color)
+                  .text(texte(val), x + 3, basDeLigne + 4,
+                    { width: colonnes[i] - 6, height: hauteur - 7,
+                      align: i === 2 || i === 3 ? 'left' : 'center', lineGap: 1, ellipsis: true });
+                x += colonnes[i];
+              });
+              basDeLigne += hauteur;
+              position++;
+            }
+            if (eleves.length && position === premier) throw new Error('Aucune ligne élève ne tient sur la page A4 paysage');
+            if (!eleves.length) doc.font('Helvetica').fontSize(9).fillColor(GRIS)
+              .text('Aucun élève inscrit dans les classes choisies.', marge, basDeLigne + 12,
+                { width: largeur, align: 'center' });
+            if (basDeLigne + 14 < bas) doc.font('Helvetica').fontSize(7.5).fillColor(GRIS)
+              .text('— : note absente ou matière non enseignée. Les moyennes et rangs ne sont pas modifiés.',
+                marge, basDeLigne + 5, { width: largeur, height: 11 });
+          } while (position < eleves.length);
+        }
       }
 
+      tableauClassementPaysage();
       nouvellePage();
       doc.font('Helvetica-Bold').fontSize(15).fillColor(FONCE).text(titre, L, y, { width: W });
       y = doc.y + 8;
@@ -273,7 +313,7 @@ function genererFusionPDF(fusion, { proclamation = false } = {}) {
       paragraphe(`Classes réunies : ${fusion.classes.map(c => c.nom).join(' · ')}`);
       paragraphe(`Établi le ${dateFr()} · ${fusion.classes.length} classe(s), ${fusion.stats.effectif_total} élève(s).`,
         { taille: 8.5, couleur: GRIS });
-      paragraphe('Chaque élève a ses notes par matière directement sous son nom dans le classement ci-dessous.',
+      paragraphe('Le classement et les notes de chaque élève figurent en colonnes sur les premières pages A4 paysage.',
         { taille: 8.5, couleur: GRIS, espace: 6 });
 
       // Cartes récapitulatives : les dénominateurs des moyennes excluent les non-notés.
@@ -313,8 +353,6 @@ function genererFusionPDF(fusion, { proclamation = false } = {}) {
       if (proclamation) paragraphe('Présentation comme examen blanc : ces résultats proviennent des compositions ; ce PDF ne crée pas un examen programmé et ne change aucune note.',
         { taille: 8.5, couleur: GRIS });
 
-      classementAvecMatieres(fusion.classement, 'Classement général — rang commun aux classes réunies');
-      classementAvecMatieres(sansMoyenne, 'Élèves non classés — aucune moyenne disponible');
       if (fusion.par_classe.length > 1) {
         section('Repères par classe');
         tableau(['Classe', 'Effectif', 'Moyenne', 'Premier de la classe', 'Rang global'],

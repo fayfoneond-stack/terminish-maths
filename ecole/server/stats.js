@@ -407,6 +407,8 @@ function computeFusion(db, ecoleId, scope) {
         niveau: p.classe.niveau || p.classe.nom,
         moyenne: r.moyenne,
         moyenne_composition: r.moyenne_composition,
+        total_coef: r.total_coef,
+        total_points: r.total_points,
         matieres_evaluees: r.matieres_evaluees,
         matieres_total: r.matieres_total,
         mention: r.mention,
@@ -425,7 +427,7 @@ function computeFusion(db, ecoleId, scope) {
   promos.forEach(p => {
     p.matieres.forEach(m => {
       if (!parMatiere.has(m.id)) {
-        parMatiere.set(m.id, { id: m.id, nom: m.nom, noms: new Set([m.nom]), groupe: m.groupe, participants: [], coefficients: new Set() });
+        parMatiere.set(m.id, { id: m.id, nom: m.nom, code: m.code, noms: new Set([m.nom]), groupe: m.groupe, participants: [], coefficients: new Set() });
       }
       const e = parMatiere.get(m.id);
       e.noms.add(m.nom);
@@ -459,6 +461,7 @@ function computeFusion(db, ecoleId, scope) {
     return {
       id: e.id,
       nom: [...e.noms].join(' / '),
+      code: e.code,
       groupe: e.groupe,
       coefficients: [...e.coefficients].sort((a, b) => a - b),
       stats: statsOf(valeurs),

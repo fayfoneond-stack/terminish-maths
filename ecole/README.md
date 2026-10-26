@@ -322,18 +322,18 @@ que l'adresse existe ou non (pas de fuite d'information).
   pour utiliser uniquement les notes de composition, ou choisissez dans **Source des résultats** un
   **examen blanc programmé** (ses épreuves et notes sont distinctes). La direction peut passer par
   **🎯 Programmer un examen blanc** pour créer une épreuve séparée.
-- **PDF de proclamation** : après fusion, bouton **⬇️ PDF : notes sous chaque nom** (personnel), ou, si la
-  direction utilise les **compositions seules**, bouton **🏆 PDF de proclamation (examen blanc)**.
+- **PDF de proclamation** : après fusion, bouton **⬇️ PDF : tableau des matières** (personnel), ou,
+  si la direction utilise les **compositions seules**, bouton **🏆 PDF de proclamation (examen blanc)**.
   Ce dernier titre le document « Examen blanc » mais précise explicitement que les résultats viennent
   des compositions de la période ; il ne crée pas d'épreuve, ne publie rien aux familles et ne modifie
   aucune note. Le PDF de proclamation A4 contient le classement commun, les non-classés, le bilan par
   matière, la répartition des moyennes et celle des mathématiques ; le PDF ordinaire détaille toutes
-  les matières note par note. **Dans le classement de chacun des deux PDF, chaque élève a directement
-  sous son nom ses notes ou moyennes de matières (/20), y compris mathématiques et SVT**, avec son rang
-  commun, sa classe, son matricule, sa moyenne générale et sa mention. Les noms de matières sont écrits
-  en toutes lettres, en deux colonnes ; « — » indique une matière non notée ou non enseignée. Les élèves
-  sans aucune note restent visibles dans « Élèves non classés », avec leurs matières. Les statistiques
-  et la signature suivent le classement ; le fichier A4 se télécharge dans Chrome pour être imprimé.
+  les matières note par note. **Les premières pages sont un tableau A4 paysage : une ligne par élève,
+  une colonne par matière (MATH, SVT, etc.), rang commun, matricule, nom, classe, total des coefficients,
+  total des points, moyenne et mention.** Les codes sont accompagnés d'une légende avec les noms complets
+  des matières et les coefficients. Au-delà de huit matières, le tableau répète les élèves sur plusieurs
+  groupes de pages. « — » indique une matière non notée ou non enseignée ; les élèves sans moyenne restent
+  visibles en fin de classement. Le bilan, les statistiques et la signature suivent en A4 portrait.
 - URL directe : `/app#/resultats?classes=1,2,3&periode_id=4` (ou `&examen_id=2`, `&mode=composition`).
   L’ancien lien `/app#/fusion` continue de fonctionner.
 - PDF : `GET /api/fusion/pdf?classe_ids=1,2,3&periode_id=4&mode=composition` ; ajouter
