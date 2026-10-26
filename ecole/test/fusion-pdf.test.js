@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { DatabaseSync } = require('node:sqlite');
 const { computeFusion } = require('../server/stats');
-const { genererFusionPDF } = require('../server/fusion-pdf');
+const { genererFusionPDF, notesEleveParMatiere } = require('../server/fusion-pdf');
 
 function jeuEssai() {
   const db = new DatabaseSync(':memory:');
@@ -59,6 +59,13 @@ test('compositions seules : rangs recalculés sans les devoirs, non notés disti
     assert.equal(d.matieres[0].repartition[1].n, 1);
     assert.equal(d.stats.repartition[10].n, 1);
     assert.equal(d.resultats.filter(r => r.moyenne == null).length, 1);
+    // L'annexe donne une note /20 pour chaque matière de chaque élève.
+    assert.deepEqual(notesEleveParMatiere(d.classement[0], d.matieres), [18]);
+    assert.deepEqual(notesEleveParMatiere(d.classement[2], d.matieres), [1]);
+    assert.deepEqual(notesEleveParMatiere(d.resultats.find(r => r.moyenne == null), d.matieres), [null]);
+    assert.deepEqual(notesEleveParMatiere({ lignes: [
+      { matiere_id: 9, moyenne: 16 }, { matiere_id: 1, moyenne: 5 }
+    ] }, [{ id: 1 }, { id: 2 }, { id: 9 }]), [5, null, 16]);
     const toutes = computeFusion(db, 1, { classe_ids: [1, 2, 3], periode_id: 1 });
     assert.equal(toutes.classement[0].eleve.nom, 'DOSSEH'); // les devoirs changent le rang
   } finally { db.close(); }
@@ -74,17 +81,35 @@ test('examen programmé : seules les épreuves séparées entrent dans le classe
   } finally { db.close(); }
 });
 
-test('PDF de proclamation et PDF d’examen programmé : fichiers A4 multipages valides', async () => {
+test('PDF de proclamation et d’examen programmé : bilan portrait, notes par élève A4 paysage', async () => {
   const db = jeuEssai();
   try {
     const comp = computeFusion(db, 1, { classe_ids: [1, 2, 3], periode_id: 1, mode: 'composition' });
     const pdf = await genererFusionPDF(comp, { proclamation: true });
     assert.match(pdf.subarray(0, 8).toString(), /^%PDF-1\./);
     assert.ok(pdf.length > 5000);
+    const nbAnnexes = buffer => (buffer.toString('latin1').match(/\/MediaBox \[0 0 841\.89 595\.28\]/g) || []).length;
+    assert.ok(nbAnnexes(pdf) >= 1, 'Il manque le tableau de notes A4 paysage');
     const examen = computeFusion(db, 1, { classe_ids: [1, 2, 3], examen_id: 1 });
     const pdfExamen = await genererFusionPDF(examen);
     assert.match(pdfExamen.subarray(0, 8).toString(), /^%PDF-1\./);
     assert.ok(pdfExamen.length > 5000);
+    assert.ok(nbAnnexes(pdfExamen) >= 1, 'Les notes d’examen doivent aussi figurer par élève');
+    // Plus de huit matières : répéter élèves, moyenne et rang avec une légende M9+.
+    for (let id = 2; id <= 11; id++) {
+      db.prepare('INSERT INTO matieres VALUES (?, ?, NULL, ?, ?)').run(id, `Matière ${id}`, `MAT${id}`, 'Autres');
+      for (let classeId = 1; classeId <= 3; classeId++) {
+        db.prepare('INSERT INTO classe_matieres VALUES (?, ?, 1)').run(classeId, id);
+        const evId = 100 + id * 10 + classeId;
+        db.prepare("INSERT INTO evaluations VALUES (?, 1, ?, ?, 1, NULL, 'composition', 20)")
+          .run(evId, classeId, id);
+        db.prepare('INSERT INTO notes VALUES (?, ?, ?, 0)').run(evId, classeId, id);
+      }
+    }
+    const plusieurs = computeFusion(db, 1, { classe_ids: [1, 2, 3], periode_id: 1, mode: 'composition' });
+    assert.equal(plusieurs.matieres.length, 11);
+    const pdfPlusieurs = await genererFusionPDF(plusieurs, { proclamation: true });
+    assert.ok(nbAnnexes(pdfPlusieurs) >= 2, 'Les onze matières doivent tenir en plusieurs groupes');
     // Une liste plus longue se prolonge sur plusieurs pages, chacune numérotée.
     const source = comp.classement[0];
     comp.classement = Array.from({ length: 150 }, (_, i) => ({ ...source, rang: i + 1,

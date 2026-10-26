@@ -322,13 +322,17 @@ que l'adresse existe ou non (pas de fuite d'information).
   pour utiliser uniquement les notes de composition, ou choisissez dans **Source des résultats** un
   **examen blanc programmé** (ses épreuves et notes sont distinctes). La direction peut passer par
   **🎯 Programmer un examen blanc** pour créer une épreuve séparée.
-- **PDF de proclamation** : après fusion, bouton **⬇️ Télécharger le PDF** (personnel), ou, si la
+- **PDF de proclamation** : après fusion, bouton **⬇️ PDF avec notes et rangs** (personnel), ou, si la
   direction utilise les **compositions seules**, bouton **🏆 PDF de proclamation (examen blanc)**.
   Ce dernier titre le document « Examen blanc » mais précise explicitement que les résultats viennent
   des compositions de la période ; il ne crée pas d'épreuve, ne publie rien aux familles et ne modifie
   aucune note. Le PDF de proclamation A4 contient le classement commun, les non-classés, le bilan par
   matière, la répartition des moyennes et celle des mathématiques ; le PDF ordinaire détaille toutes
-  les matières note par note. Le fichier téléchargé s’ouvre dans Chrome pour être imprimé.
+  les matières note par note. **Les deux PDF se terminent par une annexe A4 paysage : pour chaque élève,
+  nom et matricule, classe, note ou moyenne de chaque matière (/20), moyenne générale et rang dans la
+  fusion.** Les matières sont numérotées M1, M2… avec une légende donnant leur nom complet. Au-delà de
+  8 matières, les élèves sont répétés dans une autre tranche de matières ; « — » signifie absence de
+  note ou matière non enseignée. Le PDF téléchargé s’ouvre dans Chrome pour être imprimé.
 - URL directe : `/app#/resultats?classes=1,2,3&periode_id=4` (ou `&examen_id=2`, `&mode=composition`).
   L’ancien lien `/app#/fusion` continue de fonctionner.
 - PDF : `GET /api/fusion/pdf?classe_ids=1,2,3&periode_id=4&mode=composition` ; ajouter

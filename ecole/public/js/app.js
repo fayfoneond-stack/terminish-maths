@@ -2507,7 +2507,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
               <div class="sub">${esc(libelle)} · ${d.classes.length} classe${d.classes.length > 1 ? 's' : ''} · ${st.effectif_total} élève${st.effectif_total > 1 ? 's' : ''}${modeComposition ? ' · composition seule' : ''}</div></div>
             <div class="right">
               <button class="btn btn-ghost btn-sm" onclick="App.exporterFusion()">⬇️ CSV</button>
-              <button class="btn btn-primary btn-sm" onclick="App.exporterFusionPDF()" ${!totalNotes ? 'disabled' : ''}>⬇️ Télécharger le PDF</button>
+              <button class="btn btn-primary btn-sm" onclick="App.exporterFusionPDF()" ${!totalNotes ? 'disabled' : ''}>⬇️ PDF avec notes et rangs</button>
               ${S.me.role === 'directeur' && modeComposition && totalNotes
                 ? `<button class="btn btn-ghost btn-sm" onclick="App.exporterFusionPDF('examen-blanc')">🏆 PDF de proclamation (examen blanc)</button>` : ''}
             </div>
