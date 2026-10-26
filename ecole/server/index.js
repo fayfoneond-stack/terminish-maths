@@ -13,6 +13,8 @@ const stockage = require('./storage');
 const P = require('./paiements');
 const { genererRecuPDF } = require('./recu');
 const { genererFusionPDF } = require('./fusion-pdf');
+const { analyserListePDF, MAX_OCTETS } = require('./liste-pdf');
+const { verifierListe, importerListe } = require('./import-eleves-pdf');
 const cloudinary = require('./cloudinary');
 const { renderBulletin, renderBulletinBatch, renderExamen } = require('./print');
 
@@ -511,7 +513,7 @@ app.get('/api/eleves', auth, staffOnly, (req, res) => {
 app.post('/api/eleves', auth, directionOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
   const { nom, prenom, sexe, date_naissance, lieu_naissance, classe_id, tuteur_nom, tuteur_tel, matricule } = req.body || {};
-  if (!nom || !prenom) return res.status(400).json({ error: 'Nom et prénom sont requis' });
+  if (!String(nom || '').trim()) return res.status(400).json({ error: 'Le nom est requis' });
   if (classe_id && !db.prepare('SELECT 1 FROM classes WHERE id = ? AND ecole_id = ?').get(classe_id, id)) {
     return res.status(400).json({ error: 'Classe invalide' });
   }
@@ -525,7 +527,8 @@ app.post('/api/eleves', auth, directionOnly, (req, res) => {
   try {
     const info = db.prepare(`INSERT INTO eleves (ecole_id, matricule, nom, prenom, sexe, date_naissance, lieu_naissance,
       classe_id, tuteur_nom, tuteur_tel, statut, cree_le) VALUES (?,?,?,?,?,?,?,?,?,?, 'actif', ?)`)
-      .run(id, mat, String(nom).toUpperCase(), prenom, sexe || 'M', date_naissance || '', lieu_naissance || '',
+      .run(id, mat, String(nom).trim().toUpperCase(), String(prenom || '').trim(), ['M', 'F'].includes(sexe) ? sexe : '',
+        date_naissance || '', lieu_naissance || '',
         classe_id ? Number(classe_id) : null, tuteur_nom || '', tuteur_tel || '', now());
     res.json({ ok: true, id: Number(info.lastInsertRowid), matricule: mat });
   } catch (e) {
@@ -564,26 +567,59 @@ app.post('/api/eleves/import', auth, directionOnly, (req, res) => {
   lignes.forEach((l, i) => {
     const nom = String(l.nom || '').trim().toUpperCase();
     const prenom = String(l.prenom || '').trim();
-    if (!nom || !prenom) { erreurs.push(`Ligne ${i + 1} : nom ou prénom manquant`); return; }
+    if (!nom) { erreurs.push(`Ligne ${i + 1} : nom manquant`); return; }
     try {
       let classeCible = l.classe_id || classe_id || null;
       if (!classeCible && l.classe) {
         const c = db.prepare('SELECT id FROM classes WHERE ecole_id = ? AND lower(nom) = lower(?)').get(ecoleId, String(l.classe).trim());
         classeCible = c ? c.id : null;
       }
+      if (classeCible && !db.prepare('SELECT 1 FROM classes WHERE id = ? AND ecole_id = ?').get(classeCible, ecoleId)) {
+        erreurs.push(`Ligne ${i + 1} : classe inconnue dans cet établissement`); return;
+      }
       num++;
       const matricule = `${annee}${String(num).padStart(4, '0')}`;
       db.prepare(`INSERT INTO eleves (ecole_id, matricule, nom, prenom, sexe, date_naissance, lieu_naissance,
         classe_id, tuteur_nom, tuteur_tel, statut, cree_le) VALUES (?,?,?,?,?,?,?,?,?,?, 'actif', ?)`)
-        .run(ecoleId, matricule, nom, prenom, /^f/i.test(l.sexe || '') ? 'F' : 'M', l.date_naissance || '',
-          l.lieu_naissance || '', classeCible ? Number(classeCible) : null,
-          l.tuteur_nom || `${prenom.toUpperCase()} ${nom}`, l.tuteur_tel || '', now());
+        .run(ecoleId, matricule, nom, prenom, /^f/i.test(l.sexe || '') ? 'F' : /^m/i.test(l.sexe || '') ? 'M' : '',
+          l.date_naissance || '', l.lieu_naissance || '', classeCible ? Number(classeCible) : null,
+          l.tuteur_nom || '', l.tuteur_tel || '', now());
       crees.push({ nom, prenom, matricule });
     } catch (e) {
       erreurs.push(`Ligne ${i + 1} : ${e.message}`);
     }
   });
   res.json({ ok: true, crees: crees.length, erreurs, eleves: crees });
+});
+
+/* Import PDF : analyse seule, aperçu modifiable, puis confirmation par la direction.
+ * Les octets du PDF et les images OCR ne sont jamais conservés en base. */
+const lireFichierPDF = express.raw({ type: 'application/pdf', limit: MAX_OCTETS });
+app.post('/api/eleves/import-pdf/analyser', auth, directionOnly, (req, res, next) => {
+  lireFichierPDF(req, res, err => err
+    ? res.status(err.status === 413 ? 413 : 400).json({ error: 'PDF trop volumineux (8 Mo maximum) ou illisible.' })
+    : next());
+}, async (req, res) => {
+  if (!ecoleOf(req, res)) return;
+  if (!Buffer.isBuffer(req.body)) return res.status(415).json({ error: 'Choisissez un fichier au format PDF.' });
+  try {
+    res.json(await analyserListePDF(req.body));
+  } catch (e) {
+    const busy = e.message.startsWith('Une reconnaissance');
+    res.status(busy ? 429 : 422).json({ error: e.message });
+  }
+});
+app.post('/api/eleves/import-pdf/verifier', auth, directionOnly, (req, res) => {
+  const id = ecoleOf(req, res); if (!id) return;
+  try {
+    const { statuts } = verifierListe(db, id, req.body?.lignes);
+    res.json({ statuts });
+  } catch (e) { res.status(e.status || 400).json({ error: e.message }); }
+});
+app.post('/api/eleves/import-pdf/confirmer', auth, directionOnly, (req, res) => {
+  const id = ecoleOf(req, res); if (!id) return;
+  try { res.json(importerListe(db, id, req.body?.lignes, now)); }
+  catch (e) { res.status(e.status || 400).json({ error: e.message }); }
 });
 
 app.get('/api/eleves/:id', auth, staffOnly, (req, res) => {

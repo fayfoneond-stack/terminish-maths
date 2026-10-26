@@ -45,8 +45,8 @@ démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimest
 
 ### Direction (chef d'établissement)
 - Tableau de bord : effectifs, progression de la saisie, moyennes par classe, meilleurs élèves, activité récente.
-- Élèves : inscription unitaire ou **import CSV/Excel (copier-coller)**, dossier individuel, historique,
-  export CSV, archivage.
+- Élèves : inscription unitaire, **import direct des listes PDF** (ou CSV/Excel par copier-coller),
+  dossier individuel, historique, export CSV, archivage.
 - Classes : cycles collège (trimestres) / lycée (semestres), séries, titulaire, matières et coefficients.
 - Matières : bibliothèque de l'établissement, groupes disciplinaires.
 - Enseignants : comptes et **affectations classe × matière** (matrice de cases à cocher).
@@ -67,7 +67,8 @@ démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimest
   puis 2, puis 3… en maths ») et la **répartition des moyennes** (« combien ont 10, 11, 12… »).
   Fonctionne aussi sur un examen blanc et en mode « composition seule » ; export CSV.
 - Examens blancs : planification des épreuves (date, heure, durée, salle, coefficient), saisie des notes,
-  résultats comparables aux bulletins de période.
+  résultats comparables aux bulletins de période. Un accès direct à l'import PDF permet d'inscrire les élèves
+  dans leurs classes avant de saisir les épreuves.
 - Paramètres : identité, **logo importé**, titre du chef, année scolaire, devise, formule de calcul des
   moyennes, ouverture/clôture des périodes, changement de mot de passe.
 - Abonnement : formule, échéance, **paiement par Mixx by Yas ou Moov Money**, paiement en ligne
@@ -93,6 +94,35 @@ démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimest
   prolongation automatique de l'abonnement à la validation, **reçus PDF**.
 - Configuration des **numéros marchands**, des tarifs et de CinetPay.
 - Enregistrement des paiements hors ligne, création d'établissements, suivi des demandes.
+
+---
+
+### Importer une liste de classe en PDF
+
+1. La direction ouvre **Scolarité → Élèves → « Importer une liste PDF »** (ou
+   **Évaluations → Examens blancs → « Importer une liste PDF »**).
+2. Elle choisit une **classe déjà créée** et sélectionne son PDF. Le site lit les tableaux textuels ; pour une
+   page scannée sans texte, il essaie un **OCR français local**, sans service externe. La reconnaissance d'une
+   écriture manuscrite ou d'une mise en page inhabituelle n'est pas garantie.
+3. Dans l'**aperçu**, elle corrige les noms, prénoms, matricules, classes ou dates mal reconnus et décoche
+   les lignes à écarter ; les doublons et les classes inconnues sont signalés. Rien n'est enregistré avant
+   « Confirmer l'inscription ».
+
+**Nom + classe uniquement obligatoires** dans ce parcours. Prénom(s), sexe, date de naissance et matricule
+peuvent rester vides. Un matricule manquant est généré ; un sexe inconnu n'est jamais deviné et aucun tuteur
+n'est inventé. Chaque nouvel élève est immédiatement disponible dans les épreuves de sa classe. Les
+**notes, moyennes et classements déjà présents ne sont pas modifiés** par l'import.
+
+**Limites :** PDF de 8 Mo et 15 pages maximum ; jusqu'à 6 pages scannées avec OCR par fichier, 300 élèves
+par confirmation. Pour un document plus grand, séparer les classes en plusieurs PDF. Relire soigneusement
+les pages OCR et les lignes « Nom / prénom à vérifier ». Les doublons sont contrôlés à nouveau côté serveur au
+moment de la confirmation (matricule ou même nom et prénom déjà présents dans l'établissement) ; importer
+le même fichier une seconde fois ne réinscrit pas ses élèves. Les octets du PDF et les images OCR ne sont pas
+conservés par l'application.
+
+L'OCR fonctionne avec les dépendances locales installées par `npm ci` dans `ecole/` ; si le site est mis à
+jour sur un hébergement existant, relancer `npm ci` **dans le dossier `~/app` après la sauvegarde de la base**,
+puis redémarrer le site pour activer cette version.
 
 ---
 

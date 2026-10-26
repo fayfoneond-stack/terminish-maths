@@ -483,6 +483,21 @@ table.data .strong { font-weight: 700; }
 }
 .modal.large { max-width: 880px; }
 .modal.small { max-width: 440px; }
+/* Aperçu des listes PDF : cellules éditables, défilement horizontal sur Chromebook/téléphone. */
+.pdf-import .table-wrap { max-height: 52vh; overflow: auto; border: 1px solid var(--bord); }
+.pdf-import table.data { min-width: 1010px; }
+.pdf-import table.data th { position: sticky; top: 0; z-index: 1; }
+.pdf-import .pdf-input { font: inherit; border: 1px solid #d7e2dc; border-radius: 6px; padding: 6px;
+  background: #fff; color: var(--texte); }
+.pdf-import .pdf-input:focus { outline: 2px solid var(--vert-clair); }
+.pdf-import .pdf-nom { width: 130px; }
+.pdf-import .pdf-mat { width: 90px; }
+.pdf-import .pdf-classe { width: 116px; }
+.pdf-import .pdf-sexe { width: 50px; }
+.pdf-import .pdf-date { width: 125px; }
+.pdf-import .pdf-attention { color: #9c5900; }
+.pdf-import [data-etat] { min-width: 110px; max-width: 160px; }
+.pdf-import tr[data-etat="doublon"], .pdf-import tr[data-etat="erreur"] { background: #fff7ea; }
 @keyframes pop { from { transform: translateY(8px) scale(.99); opacity: .6; } to { transform: none; opacity: 1; } }
 .modal header { display: flex; align-items: center; gap: 10px; padding: 16px 20px; border-bottom: 1px solid var(--bord); }
 .modal header h3 { margin: 0; font-size: 16px; }

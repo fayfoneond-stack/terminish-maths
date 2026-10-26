@@ -144,7 +144,7 @@ function renderBulletin({ promo, ligne, bulletin, eleve, professeurs = {}, princ
     <div><span class="k">Nom &amp; prénom(s) :</span> <span class="v">${esc(eleve.nom)} ${esc(eleve.prenom)}</span></div>
     <div><span class="k">Matricule :</span> <span class="v">${esc(eleve.matricule)}</span></div>
     <div><span class="k">Classe :</span> <span class="v">${esc(classe.nom)}</span></div>
-    <div><span class="k">Sexe :</span> <span class="v">${eleve.sexe === 'F' ? 'Féminin' : 'Masculin'}</span></div>
+    <div><span class="k">Sexe :</span> <span class="v">${eleve.sexe === 'F' ? 'Féminin' : eleve.sexe === 'M' ? 'Masculin' : '—'}</span></div>
     <div><span class="k">Né(e) le :</span> <span class="v">${esc(dateFr(eleve.date_naissance))}</span></div>
     <div><span class="k">À :</span> <span class="v">${esc(eleve.lieu_naissance || '—')}</span></div>
     <div><span class="k">Effectif de la classe :</span> <span class="v">${stat.effectif_classe}</span></div>

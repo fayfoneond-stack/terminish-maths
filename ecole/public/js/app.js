@@ -679,7 +679,8 @@
   /* ---------------------------- ÉLÈVES ----------------------------- */
   S.filtresEleves = { q: '', classe_id: '', statut: 'actif' };
 
-  const sexeTag = (s) => s === 'F' ? '<span class="tag or">F</span>' : '<span class="tag bleu">M</span>';
+  const sexeTag = (s) => s === 'F' ? '<span class="tag or">F</span>'
+    : s === 'M' ? '<span class="tag bleu">M</span>' : '<span class="tag gris">—</span>';
 
   async function chargerEleves() {
     const f = S.filtresEleves;
@@ -730,7 +731,8 @@
           <div class="panel-head">
             <div><h2>Répertoire des élèves</h2><div class="sub">Recherche, dossiers et inscriptions</div></div>
             <div class="right">
-              ${direction ? `<button class="btn btn-ghost btn-sm" onclick="App.importerEleves()">⬆️ Importer</button>
+              ${direction ? `<button class="btn btn-ghost btn-sm" onclick="App.importerListePDF()">📑 Importer une liste PDF</button>
+              <button class="btn btn-ghost btn-sm" onclick="App.importerEleves()">⬆️ Coller une liste</button>
               <button class="btn btn-ghost btn-sm" onclick="App.exporterEleves()">⬇️ Export CSV</button>
               <button class="btn btn-primary btn-sm" onclick="App.nouvelEleve()">➕ Nouvel élève</button>` : ''}
             </div>
@@ -766,11 +768,12 @@
     return `
       <div class="grid2">
         <div class="field"><label>Nom *</label><input name="nom" required value="${esc(e.nom || '')}" placeholder="ADJOVI"></div>
-        <div class="field"><label>Prénom(s) *</label><input name="prenom" required value="${esc(e.prenom || '')}" placeholder="Ama"></div>
+        <div class="field"><label>Prénom(s) (facultatif)</label><input name="prenom" value="${esc(e.prenom || '')}" placeholder="Ama"></div>
       </div>
       <div class="grid2">
-        <div class="field"><label>Sexe</label><select name="sexe">
-          <option value="M" ${e.sexe === 'M' || !e.sexe ? 'selected' : ''}>Masculin</option>
+        <div class="field"><label>Sexe (facultatif)</label><select name="sexe">
+          <option value="" ${!e.sexe ? 'selected' : ''}>Non renseigné</option>
+          <option value="M" ${e.sexe === 'M' ? 'selected' : ''}>Masculin</option>
           <option value="F" ${e.sexe === 'F' ? 'selected' : ''}>Féminin</option></select></div>
         <div class="field"><label>Classe</label><select name="classe_id">${optionClasses(e.classe_id, { vide: 'Non affecté' })}</select></div>
       </div>
@@ -856,7 +859,7 @@
             <div class="avatar" style="width:52px;height:52px;font-size:18px">${esc(initiales(e.nom + ' ' + e.prenom))}</div>
             <div style="flex:1">
               <div style="font-size:17px;font-weight:800">${esc(e.nom)} ${esc(e.prenom)}</div>
-              <div class="muted small">Matricule ${esc(e.matricule)} · ${e.classe_nom ? esc(e.classe_nom) : 'Sans classe'} · ${e.sexe === 'F' ? 'Féminin' : 'Masculin'}</div>
+              <div class="muted small">Matricule ${esc(e.matricule)} · ${e.classe_nom ? esc(e.classe_nom) : 'Sans classe'} · ${e.sexe === 'F' ? 'Féminin' : e.sexe === 'M' ? 'Masculin' : 'Non renseigné'}</div>
             </div>
             ${badgeStatut(e.statut)}
           </div>
@@ -885,13 +888,182 @@
       return m;
     },
 
+    importerListePDF() {
+      if (S.me.role !== 'directeur') return;
+      if (!S.classes.length) return toast('Créez d’abord une classe dans Scolarité → Classes.', 'err');
+      const m = modal({
+        title: 'Importer une liste de classe en PDF', size: 'large',
+        body: `<div class="pdf-import">
+          <div class="notice info">Choisissez la classe et un PDF : les noms seront affichés <b>avant</b> l’inscription.
+            Corrigez chaque ligne si nécessaire. Seul le <b>nom et la classe</b> sont obligatoires ;
+            prénom, date de naissance, sexe et matricule sont facultatifs. Aucune note n’est modifiée.</div>
+          <div class="grid2">
+            <div class="field"><label for="pdf-classe">Classe par défaut *</label>
+              <select id="pdf-classe">${optionClasses(S.query.classe_id || S.filtresEleves.classe_id || '', { vide: 'Choisir une classe…' })}</select></div>
+            <div class="field"><label for="pdf-fichier">Liste PDF (8 Mo maximum)</label>
+              <input id="pdf-fichier" type="file" accept=".pdf,application/pdf"></div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="pdf-lire">📑 Lire le PDF</button>
+          <div id="pdf-message" role="status" aria-live="polite" style="margin-top:12px"></div>
+          <div id="pdf-apercu"></div>
+        </div>`,
+        footer: `<span class="muted small" id="pdf-compte" style="margin-right:auto;align-self:center">Aucun élève vérifié</span>
+          <button class="btn btn-ghost btn-sm" data-close>Fermer</button>
+          <button class="btn btn-primary btn-sm" id="pdf-confirmer" disabled>Confirmer l’inscription</button>`
+      });
+      const root = m.root;
+      const message = root.querySelector('#pdf-message');
+      const apercu = root.querySelector('#pdf-apercu');
+      const bouton = root.querySelector('#pdf-confirmer');
+      const classeDefaut = root.querySelector('#pdf-classe');
+      const fichier = root.querySelector('#pdf-fichier');
+      let eleves = [], verification = 0, lecture = false, confirmationEnCours = false, minuterie;
+      const normaliserClasse = (s) => String(s || '').normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const classeReconnue = (nom) => S.classes.find(c => normaliserClasse(c.nom) === normaliserClasse(nom));
+      const lignesTableau = () => $$('tr[data-index]', apercu);
+      const ligneCorrigee = (tr) => Object.fromEntries(['nom', 'prenom', 'matricule', 'date_naissance', 'sexe', 'classe_id']
+        .map(k => [k, tr.querySelector(`[data-field="${k}"]`).value.trim()]));
+      const afficherMessage = (texte, type = 'info') => {
+        message.innerHTML = `<div class="notice ${type}">${esc(texte)}</div>`;
+      };
+      const compter = () => {
+        const n = lignesTableau().filter(tr => tr.querySelector('[data-field="inclure"]').checked).length;
+        root.querySelector('#pdf-compte').textContent = `${n} élève(s) sélectionné(s) sur ${eleves.length}`;
+        bouton.disabled = lecture || confirmationEnCours || !n;
+        bouton.textContent = `Confirmer l’inscription (${n})`;
+      };
+      const verifier = async () => {
+        const lignes = lignesTableau();
+        if (!lignes.length) return;
+        const no = ++verification;
+        const d = await api('/api/eleves/import-pdf/verifier', {
+          method: 'POST', body: { lignes: lignes.map(ligneCorrigee) }
+        });
+        if (no !== verification || !root.isConnected) return;
+        d.statuts.forEach((v, i) => {
+          const tr = lignes[i];
+          const cocher = tr.querySelector('[data-field="inclure"]');
+          if (v.etat !== 'pret') cocher.checked = false;
+          tr.dataset.etat = v.etat;
+          const etat = tr.querySelector('[data-etat]');
+          etat.textContent = v.etat === 'pret'
+            ? (eleves[i]?.incertain ? 'Nom / prénom à vérifier' : 'Prêt') : v.message;
+          etat.className = v.etat === 'pret' && !eleves[i]?.incertain ? 'small muted' : 'small pdf-attention';
+        });
+        compter();
+      };
+      const demanderVerification = () => {
+        clearTimeout(minuterie);
+        minuterie = setTimeout(() => verifier().catch(e => afficherMessage(e.message, 'err')), 400);
+      };
+      const lire = async () => {
+        if (lecture || confirmationEnCours) return;
+        if (!classeDefaut.value) return afficherMessage('Choisissez d’abord une classe par défaut.', 'warn');
+        if (!fichier.files.length) return afficherMessage('Choisissez un fichier PDF.', 'warn');
+        const f = fichier.files[0];
+        if (f.size > 8 * 1024 * 1024) return afficherMessage('PDF trop volumineux : 8 Mo maximum.', 'err');
+        lecture = true; verification++;
+        eleves = []; apercu.innerHTML = ''; compter();
+        fichier.disabled = true; root.querySelector('#pdf-lire').disabled = true;
+        afficherMessage('Lecture du PDF en cours… Les pages scannées peuvent prendre quelques instants.');
+        try {
+          const res = await fetch(lienServeur('/api/eleves/import-pdf/analyser'), {
+            method: 'POST', credentials: apiBase() ? 'include' : 'same-origin',
+            headers: { 'Content-Type': 'application/pdf' }, body: f
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.error || `Erreur ${res.status} pendant la lecture du PDF.`);
+          eleves = data.eleves;
+          const options = (sel) => optionClasses(sel, { vide: 'Choisir une classe…' });
+          apercu.innerHTML = `<p class="small" style="margin:14px 0 8px"><b>${eleves.length} nom(s) extrait(s) de ${data.pages} page(s).</b>
+            ${data.ocr ? 'Pages scannées lues localement par OCR : vérifiez attentivement les noms.' : 'PDF textuel.'}
+            Corrigez, décochez ou choisissez la classe de chaque élève avant de confirmer.</p>
+            ${data.avertissements.length ? `<div class="notice warn">${data.avertissements.slice(0, 8).map(esc).join('<br>')}</div>` : ''}
+            <div class="table-wrap" aria-label="Aperçu des élèves du PDF"><table class="data">
+              <thead><tr><th>Inscrire</th><th>Page</th><th>Nom *</th><th>Prénom(s)</th><th>Matricule</th><th>Classe *</th>
+                <th>Sexe</th><th>Naissance</th><th>Vérification</th></tr></thead>
+              <tbody>${eleves.map((e, i) => {
+                const correspondance = classeReconnue(e.classe);
+                return `<tr data-index="${i}" data-classe-detectee="${correspondance ? 'oui' : ''}">
+                  <td><input type="checkbox" data-field="inclure" checked aria-label="Inscrire la ligne ${i + 1}"></td>
+                  <td class="small muted">${esc(e.page)}</td>
+                  <td><input class="pdf-input pdf-nom" data-field="nom" maxlength="110" aria-label="Nom ligne ${i + 1}" value="${esc(e.nom)}"></td>
+                  <td><input class="pdf-input pdf-nom" data-field="prenom" maxlength="110" aria-label="Prénom ligne ${i + 1}" value="${esc(e.prenom)}"></td>
+                  <td><input class="pdf-input pdf-mat" data-field="matricule" maxlength="24" aria-label="Matricule ligne ${i + 1}" value="${esc(e.matricule)}" placeholder="Auto"></td>
+                  <td><select class="pdf-input pdf-classe" data-field="classe_id" aria-label="Classe ligne ${i + 1}">
+                    ${options(correspondance?.id || classeDefaut.value)}</select>
+                    ${e.classe && !correspondance ? `<span class="small pdf-attention">PDF : ${esc(e.classe)} (non trouvée)</span>` : ''}</td>
+                  <td><select class="pdf-input pdf-sexe" data-field="sexe" aria-label="Sexe ligne ${i + 1}">
+                    <option value="" ${!e.sexe ? 'selected' : ''}>—</option>
+                    <option value="F" ${e.sexe === 'F' ? 'selected' : ''}>F</option>
+                    <option value="M" ${e.sexe === 'M' ? 'selected' : ''}>M</option></select></td>
+                  <td><input class="pdf-input pdf-date" type="date" data-field="date_naissance" aria-label="Naissance ligne ${i + 1}" value="${esc(e.date_naissance)}"></td>
+                  <td data-etat class="small muted">À vérifier</td>
+                </tr>`;
+              }).join('')}</tbody></table></div>`;
+          afficherMessage('Aperçu prêt. Aucune inscription n’a encore été créée.');
+          await verifier();
+        } catch (e) {
+          eleves = []; apercu.innerHTML = ''; afficherMessage(e.message, 'err');
+        } finally {
+          lecture = false; fichier.disabled = false; root.querySelector('#pdf-lire').disabled = false;
+          compter();
+        }
+      };
+      root.querySelector('#pdf-lire').onclick = lire;
+      fichier.onchange = () => { if (classeDefaut.value && fichier.files.length) lire(); };
+      classeDefaut.onchange = () => {
+        for (const tr of lignesTableau()) {
+          if (!tr.dataset.classeDetectee) tr.querySelector('[data-field="classe_id"]').value = classeDefaut.value;
+        }
+        demanderVerification();
+      };
+      apercu.addEventListener('input', e => {
+        if (e.target.closest('tr[data-index]')) demanderVerification();
+      });
+      apercu.addEventListener('change', e => {
+        if (!e.target.closest('tr[data-index]')) return;
+        if (e.target.matches('[data-field="inclure"]')) compter();
+        else demanderVerification();
+      });
+      bouton.onclick = async () => {
+        const avant = lignesTableau().filter(tr => tr.querySelector('[data-field="inclure"]').checked).length;
+        if (!avant || lecture || confirmationEnCours) return;
+        clearTimeout(minuterie);
+        confirmationEnCours = true;
+        bouton.disabled = true;
+        try {
+          await verifier();
+          const trChoisis = lignesTableau().filter(tr => tr.querySelector('[data-field="inclure"]').checked);
+          if (trChoisis.length !== avant || trChoisis.some(tr => tr.dataset.etat !== 'pret')) {
+            return afficherMessage('Des doublons ou erreurs viennent d’être détectés. Corrigez puis cochez les lignes souhaitées.', 'warn');
+          }
+          const res = await api('/api/eleves/import-pdf/confirmer', {
+            method: 'POST', body: { lignes: trChoisis.map(ligneCorrigee) }
+          });
+          afficherMessage(`${res.crees} élève(s) inscrit(s). ${res.ignores.length} ligne(s) ignorée(s) (doublon ou erreur).`
+            + (res.ignores.length ? ' ' + res.ignores.slice(0, 5).map(x => x.message).join(' ; ') : '')
+            + ' Vous pouvez corriger et cocher les lignes restantes.',
+          res.ignores.length || !res.crees ? 'warn' : 'ok');
+          if (res.crees) {
+            toast(`${res.crees} élève(s) inscrit(s)`);
+            await loadRefs();
+            if (S.route === 'eleves') await chargerEleves();
+          }
+          await verifier(); // les élèves créés apparaissent désormais comme doublons, et sont décochés
+        } catch (e) { afficherMessage(e.message, 'err'); }
+        finally { confirmationEnCours = false; compter(); }
+      };
+    },
+
     importerEleves() {
       if (S.me.role !== 'directeur') return;
       const m = modal({
         title: 'Importer des élèves', size: 'large',
         body: `
           <div class="notice info">Collez vos lignes au format <b>NOM ; PRÉNOM ; SEXE ; DATE DE NAISSANCE ; CLASSE ; TUTEUR ; TÉLÉPHONE</b>.<br>
-          Une ligne par élève. Le séparateur peut être <code>;</code>, <code>,</code> ou une tabulation (copier-coller depuis Excel). Les matricules sont générés automatiquement.</div>
+          Seul le nom est obligatoire ; laissez les autres cases vides avec <code>;</code>. Une ligne par élève. Les matricules sont générés automatiquement.</div>
           <div class="field"><label>Classe par défaut (si la colonne classe est vide)</label>
             <select id="imp-classe">${optionClasses('', { vide: 'Aucune — utiliser la colonne CLASSE' })}</select></div>
           <div class="field"><label>Élèves à importer</label>
@@ -2706,7 +2878,8 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         <div class="panel">
           <div class="panel-head">
             <div><h2>Examens blancs</h2><div class="sub">Simulez les conditions du BEPC et du BAC</div></div>
-            <div class="right">${direction ? `<button class="btn btn-primary btn-sm" onclick="App.creerExamen()">➕ Nouvel examen blanc</button>` : ''}</div>
+            <div class="right">${direction ? `<button class="btn btn-ghost btn-sm" onclick="App.importerListePDF()">📑 Importer une liste PDF</button>
+            <button class="btn btn-primary btn-sm" onclick="App.creerExamen()">➕ Nouvel examen blanc</button>` : ''}</div>
           </div>
           <div class="notice info">Planifiez les épreuves (matière, coefficient, durée, salle), faites saisir les notes par les enseignants, puis comparez les résultats aux bulletins de période.</div>
 
