@@ -305,17 +305,21 @@ que l'adresse existe ou non (pas de fuite d'information).
 
 ### Fusion de classes (« tous les 6ème réunis »)
 
-- Interface : menu **🔗 Fusion de classes** (direction et enseignants), ou bouton
-  *🔗 Fusionner des classes* depuis *Statistiques*.
+- Interface : menu **Évaluations → 🏆 Résultats** (direction), ou **Mes classes → 🏆 Résultats**
+  (enseignants). La page affiche directement **🔗 Fusionner les classes** avec les classes à cocher ;
+  bouton **📄 Résultats d’une classe** pour revenir aux bulletins par classe. Sur téléphone, ouvrez
+  d’abord le menu ☰ ; depuis le tableau de bord, un raccourci **🏆 Résultats** est aussi disponible.
 - Cochez les divisions à réunir (bouton **Tout cocher** par niveau), choisissez la période **ou** un
-  examen blanc, puis **🔗 Fusionner**. La page s'ouvre directement sur tout le niveau de la première classe.
+  examen blanc, puis **🔗 Fusionner**. Si plusieurs divisions ont le même niveau, elles sont
+  pré-cochées à l'ouverture de la page.
 - Résultats : 4 indicateurs (effectif réuni, moyenne du niveau, taux de réussite, premier du niveau),
   bandeau **premier du niveau**, bandeau **plus faible note de la matière principale**,
   tableau **meilleure / plus faible note par matière** (note, élève, classe, effectif ≥ 10),
   **répartition note par note par matière** (histogramme 0→20 et tableau), **répartition des moyennes
   générales**, **classement fusionné** et repères par classe (premier de chaque division et son rang
   dans le niveau).
-- URL directe : `/app#/fusion?classes=1,2,3&periode_id=4` (ou `&examen_id=2`, `&mode=composition`).
+- URL directe : `/app#/resultats?classes=1,2,3&periode_id=4` (ou `&examen_id=2`, `&mode=composition`).
+  L’ancien lien `/app#/fusion` continue de fonctionner.
 - API : `GET /api/fusion?classe_ids=1,2,3&periode_id=4` — un enseignant ne peut réunir que **ses**
   classes (403 sinon). La fusion ne modifie **aucune** note : elle recalcule un classement commun.
 

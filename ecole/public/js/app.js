@@ -32,8 +32,7 @@
     directeur: [
       { group: 'Pilotage', items: [
         { r: 'dashboard', i: '🏠', l: 'Tableau de bord' },
-        { r: 'statistiques', i: '📊', l: 'Statistiques' },
-        { r: 'fusion', i: '🔗', l: 'Fusion de classes' }
+        { r: 'statistiques', i: '📊', l: 'Statistiques' }
       ]},
       { group: 'Scolarité', items: [
         { r: 'eleves', i: '👨‍🎓', l: 'Élèves' },
@@ -43,6 +42,7 @@
       ]},
       { group: 'Évaluations', items: [
         { r: 'saisie', i: '✍️', l: 'Saisie des notes' },
+        { r: 'resultats', i: '🏆', l: 'Résultats' },
         { r: 'bulletins', i: '📄', l: 'Bulletins' },
         { r: 'examens', i: '🎯', l: 'Examens blancs' }
       ]},
@@ -54,11 +54,11 @@
     enseignant: [
       { group: 'Pilotage', items: [
         { r: 'dashboard', i: '🏠', l: 'Tableau de bord' },
-        { r: 'statistiques', i: '📊', l: 'Statistiques' },
-        { r: 'fusion', i: '🔗', l: 'Fusion de classes' }
+        { r: 'statistiques', i: '📊', l: 'Statistiques' }
       ]},
       { group: 'Mes classes', items: [
         { r: 'saisie', i: '✍️', l: 'Saisie des notes' },
+        { r: 'resultats', i: '🏆', l: 'Résultats' },
         { r: 'eleves', i: '👨‍🎓', l: 'Mes élèves' },
         { r: 'bulletins', i: '📄', l: 'Bulletins' },
         { r: 'examens', i: '🎯', l: 'Examens blancs' }
@@ -88,7 +88,8 @@
     saisie: ['Saisie des notes', 'Devoirs, compositions et épreuves blanches'],
     bulletins: ['Bulletins', 'Résultats, appréciations et publication'],
     statistiques: ['Statistiques', 'Analyses automatiques des résultats'],
-    fusion: ['Fusion de classes', 'Plusieurs divisions réunies : un seul classement'],
+    resultats: ['Résultats', 'Fusion de classes et classement de tous les élèves'],
+    fusion: ['Résultats', 'Fusion de classes et classement de tous les élèves'],
     examens: ['Examens blancs', 'Planification des épreuves et simulations'],
     parametres: ['Paramètres', 'Identité de l’établissement et calcul des moyennes'],
     abonnement: ['Abonnement', 'Formule, échéance et facturation'],
@@ -398,8 +399,8 @@
   }
 
   const ACCESS = {
-    directeur: ['dashboard', 'eleves', 'classes', 'matieres', 'enseignants', 'saisie', 'bulletins', 'statistiques', 'fusion', 'examens', 'parametres', 'abonnement'],
-    enseignant: ['dashboard', 'eleves', 'saisie', 'bulletins', 'statistiques', 'fusion', 'examens'],
+    directeur: ['dashboard', 'eleves', 'classes', 'matieres', 'enseignants', 'saisie', 'bulletins', 'statistiques', 'resultats', 'fusion', 'examens', 'parametres', 'abonnement'],
+    enseignant: ['dashboard', 'eleves', 'saisie', 'bulletins', 'statistiques', 'resultats', 'fusion', 'examens'],
     eleve: ['espace'],
     super_admin: ['admin', 'admin-ecoles', 'admin-demandes', 'admin-paiements']
   };
@@ -417,7 +418,8 @@
     if (sb) sb.classList.remove('open');
     const vl = document.querySelector('.sb-voile');
     if (vl) vl.classList.remove('show');
-    $$('.sb-item').forEach(a => a.classList.toggle('active', a.dataset.route === route));
+    // Les anciens liens #/fusion restent utilisables ; l'onglet visible est « Résultats ».
+    $$('.sb-item').forEach(a => a.classList.toggle('active', a.dataset.route === (route === 'fusion' ? 'resultats' : route)));
     const [titre, sub] = TITRES[route] || ['Terminish École', ''];
     if ($('#page-title')) { $('#page-title').textContent = titre; $('#page-sub').textContent = sub; }
 
@@ -562,6 +564,7 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn btn-ghost btn-sm" onclick="App.go('saisie')">✍️ Saisir des notes</button>
             <button class="btn btn-ghost btn-sm" onclick="App.go('bulletins')">📄 Bulletins</button>
+            <button class="btn btn-ghost btn-sm" onclick="App.go('resultats')">🏆 Résultats</button>
             ${role === 'directeur' ? `<button class="btn btn-primary btn-sm" onclick="App.nouvelEleve()">➕ Élève</button>` : ''}
           </div>
         </div>
@@ -2187,7 +2190,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         <div class="toolbar" style="margin-bottom:6px">
           <button class="btn ${vue === 'classe' ? 'btn-primary' : 'btn-ghost'} btn-sm" onclick="App.go('statistiques')">📚 Par classe</button>
           <button class="btn ${vue === 'etab' ? 'btn-primary' : 'btn-ghost'} btn-sm" onclick="App.go('statistiques',{vue:'etab'})">🏫 Établissement</button>
-          <button class="btn btn-ghost btn-sm" onclick="App.go('fusion')">🔗 Fusionner des classes</button>
+          <button class="btn btn-ghost btn-sm" onclick="App.go('resultats')">🏆 Résultats · fusionner les classes</button>
         </div>`;
 
       if (vue === 'etab') {
@@ -2407,8 +2410,8 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       const q = S.query;
       const classes = S.classes;
       if (!classes.length) {
-        return `<div class="panel"><div class="panel-head"><h2>Fusion de classes</h2></div>
-          ${emptyState('🏫', 'Aucune classe enregistrée. Créez vos classes avant de fusionner les résultats.')}</div>`;
+        return `<div class="panel"><div class="panel-head"><h2>Résultats · fusion de classes</h2></div>
+          ${emptyState('🏫', 'Aucune classe disponible pour fusionner les résultats.')}</div>`;
       }
       let examens = [];
       try { examens = await api('/api/examens'); } catch (_) { examens = []; }
@@ -2436,8 +2439,11 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       const selecteur = `
         <div class="panel" style="box-shadow:none">
           <div class="panel-head">
-            <div><h2>Classes à réunir</h2><div class="sub">Cochez les divisions d'un même niveau — par exemple 6ème A, B et C</div></div>
-            <div class="right"><button class="btn btn-primary btn-sm" id="fu-lancer">🔗 Fusionner</button></div>
+            <div><h2>🔗 Fusionner les classes</h2><div class="sub">Cochez les classes d'un même niveau (6ème A, B et C), choisissez la période, puis cliquez sur Fusionner.</div></div>
+            <div class="right">
+              <button class="btn btn-ghost btn-sm" onclick="App.go('bulletins')">📄 Résultats d'une classe</button>
+              <button class="btn btn-primary btn-sm" id="fu-lancer">🔗 Fusionner</button>
+            </div>
           </div>
           ${groupes.map(g => `
             <div style="margin-bottom:10px">
@@ -2608,7 +2614,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         const q = { classes: liste.join(',') };
         if (type === 'examen') q.examen_id = valeur; else q.periode_id = valeur;
         if ($('#fu-mode') && $('#fu-mode').checked) q.mode = 'composition';
-        App.go('fusion', q);
+        App.go('resultats', q);
       };
       $$('.fu-groupe').forEach(b => b.onclick = () => {
         const set = new Set(b.dataset.ids.split(',').map(Number));
@@ -2627,6 +2633,9 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       }
     }
   };
+
+  // Nouvelle adresse visible #/resultats ; conserver #/fusion pour les anciens favoris.
+  V.resultats = V.fusion;
 
   window.App.exporterFusion = () => {
     const d = S.fusionCourante;
