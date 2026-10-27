@@ -178,30 +178,114 @@
       const emailSaisi = $('#login-email').value || '';
       const m = modal({
         title: 'Mot de passe oublié',
-        body: `<div class="notice info">Votre demande sera transmise au <b>chef d'établissement</b>.
-            C'est lui qui délivre les identifiants : il vous en donnera un nouveau
-            (par téléphone ou en main propre).</div>
+        body: `<div class="notice info">Indiquez l'<b>adresse de connexion</b> :
+            les chefs d'établissement et le super-administrateur peuvent recevoir un lien par e-mail
+            (valable 30 minutes, si Gmail est configuré). Pour un enseignant, la demande est transmise
+            au chef, qui lui communique un nouveau mot de passe. Aucun e-mail n'est envoyé aux enseignants.</div>
           <form id="oubli-form">
-            <div class="field"><label>Votre adresse email *</label>
-              <input type="email" name="email" id="oubli-email" required value="${esc(emailSaisi)}" placeholder="vous@ecole.tg"></div>
-            <div class="field"><label>Précisez (facultatif)</label>
-              <input name="message" placeholder="Ex. : je suis le professeur de SVT en 4ème B"></div>
+            <div class="field"><label>Adresse e-mail de connexion *</label>
+              <input type="email" name="email" id="oubli-email" required autocomplete="username" value="${esc(emailSaisi)}" placeholder="vous@ecole.tg"></div>
+            <div class="field"><label>Précisez si besoin (enseignants seulement)</label>
+              <input name="message" maxlength="400" placeholder="Ex. : professeur de SVT en 4ème B"></div>
           </form>`,
         footer: `<button class="btn btn-ghost btn-sm" data-close>Annuler</button>
-                 <button class="btn btn-primary btn-sm" id="oubli-envoyer">Envoyer la demande</button>`
+                 <button class="btn btn-primary btn-sm" id="oubli-envoyer">Continuer</button>`
       });
       m.root.querySelector('#oubli-envoyer').onclick = async () => {
         const form = m.root.querySelector('#oubli-form');
         if (!form.reportValidity()) return;
         const data = Object.fromEntries(new FormData(form).entries());
+        const btn = m.root.querySelector('#oubli-envoyer');
+        btn.disabled = true; btn.textContent = 'Traitement…';
         try {
           const res = await api('/api/auth/oubli', { method: 'POST', body: data });
-          m.close();
-          toast(res.message || 'Demande envoyée au chef d\'établissement');
-        } catch (e) { toast(e.message, 'err'); }
+          m.root.querySelector('.body').innerHTML = `<div class="notice info" role="status">${esc(res.message)}</div>`;
+          m.root.querySelector('footer').innerHTML = '<button class="btn btn-primary btn-sm" data-close>Fermer</button>';
+        } catch (e) {
+          toast(e.message, 'err'); btn.disabled = false; btn.textContent = 'Continuer';
+        }
       };
     };
     setTimeout(() => $('#login-email') && $('#login-email').focus(), 60);
+  }
+
+  /** Le jeton reste dans le fragment (#), jamais dans une URL envoyée au serveur. */
+  async function renderReinitialisation() {
+    const jeton = location.hash.match(/^#\/reinitialiser\/([a-f0-9]{64})$/)?.[1];
+    document.getElementById('app').innerHTML = `
+      <div class="login-wrap">
+        <div class="login-side">
+          <a class="brand login-logo" href="/" style="color:#fff"><span class="brand-mark">🎓</span>
+            <span class="brand-text"><b style="color:#fff">Terminish École</b><span>Gestion scolaire</span></span></a>
+          <div><h1>Votre accès, en toute sécurité.</h1>
+            <p>Choisissez un nouveau mot de passe pour reprendre le travail dans votre établissement.</p></div>
+          <div style="font-size:12px;color:#7ba291">© 2026 Terminish École · Lomé, Togo</div>
+        </div>
+        <div class="login-form-wrap">
+          <form class="login-form" id="reinit-form">
+            <div class="brand"><span class="brand-mark">🎓</span>
+              <span class="brand-text"><b>Terminish École</b><span>Récupération du compte</span></span></div>
+            <h2>Nouveau mot de passe</h2>
+            <p class="sub">Lien réservé aux chefs d'établissement et au super-administrateur.</p>
+            <div id="reinit-etat" role="status" aria-live="polite" class="notice info">Vérification du lien…</div>
+            <div class="field"><label for="reinit-nouveau">Nouveau mot de passe *</label>
+              <input id="reinit-nouveau" type="password" required minlength="12" maxlength="128" autocomplete="new-password" placeholder="12 caractères minimum"></div>
+            <div class="field"><label for="reinit-confirmation">Confirmer le mot de passe *</label>
+              <input id="reinit-confirmation" type="password" required minlength="12" maxlength="128" autocomplete="new-password"></div>
+            <button type="submit" class="btn btn-primary btn-block" id="reinit-envoyer" disabled>Enregistrer et fermer les anciennes sessions</button>
+            <p class="small" style="text-align:center;margin-top:16px"><a href="/app" id="reinit-retour">Retour à la connexion</a></p>
+          </form>
+        </div>
+      </div>`;
+    const formulaire = $('#reinit-form');
+    const etat = $('#reinit-etat');
+    const bouton = $('#reinit-envoyer');
+    // Empêche l'envoi natif du formulaire pendant la vérification du jeton.
+    formulaire.addEventListener('submit', ev => ev.preventDefault());
+    const invalider = texte => {
+      etat.className = 'notice err'; etat.textContent = texte;
+      formulaire.querySelectorAll('.field, button[type=submit]').forEach(el => { el.hidden = true; });
+    };
+    if (!jeton) {
+      invalider('Lien invalide. Demandez un nouveau lien depuis la connexion.');
+      return;
+    }
+    try {
+      const resultat = await api('/api/auth/recuperation/verifier', { method: 'POST', body: { jeton } });
+      if (!formulaire.isConnected) return;
+      if (!resultat.valide) {
+        invalider('Ce lien a expiré ou a déjà été utilisé. Demandez-en un nouveau depuis la connexion.');
+        return;
+      }
+      etat.textContent = 'Lien valide pendant 30 minutes après son envoi. Votre ancien mot de passe cessera de fonctionner.';
+      bouton.disabled = false;
+    } catch (_) {
+      if (formulaire.isConnected) invalider('Impossible de vérifier ce lien. Rechargez la page ou réessayez plus tard.');
+      return;
+    }
+    formulaire.onsubmit = async ev => {
+      ev.preventDefault();
+      const nouveau = $('#reinit-nouveau').value;
+      if (nouveau !== $('#reinit-confirmation').value) {
+        etat.className = 'notice err'; etat.textContent = 'Les deux mots de passe sont différents.';
+        return;
+      }
+      bouton.disabled = true; bouton.textContent = 'Enregistrement…';
+      try {
+        const resultat = await api('/api/auth/recuperation/terminer', {
+          method: 'POST', body: { jeton, nouveau }
+        });
+        history.replaceState(null, '', location.pathname + location.search); // ôter le jeton de l'adresse
+        S.me = null; S.etab = null;
+        formulaire.innerHTML = `<div class="brand"><span class="brand-mark">🎓</span>
+          <span class="brand-text"><b>Terminish École</b><span>Accès sécurisé</span></span></div>
+          <h2>Mot de passe modifié</h2><div class="notice info" role="status">${esc(resultat.message)}</div>
+          <a class="btn btn-primary btn-block" href="/app">Se connecter</a>`;
+      } catch (e) {
+        etat.className = 'notice err'; etat.textContent = e.message;
+        bouton.disabled = false; bouton.textContent = 'Enregistrer et fermer les anciennes sessions';
+      }
+    };
   }
 
   function renderInscription() {
@@ -443,6 +527,7 @@
   }
 
   window.addEventListener('hashchange', () => {
+    if (location.hash.startsWith('#/reinitialiser/')) { renderReinitialisation(); return; }
     if (!S.me) {
       if (location.hash.replace(/^#\/?/, '').startsWith('inscription')) renderInscription();
       else renderLogin();
@@ -554,7 +639,12 @@
         <div class="kpi accent"><div class="lbl">👨‍🎓 Élèves inscrits</div><div class="val">${d.compteurs.eleves}</div><div class="sub">${d.compteurs.classes} classes</div></div>
         <div class="kpi"><div class="lbl">🏫 Classes</div><div class="val">${d.compteurs.classes}</div><div class="sub">${d.compteurs.matieres} matières</div></div>
         <div class="kpi"><div class="lbl">👩‍🏫 Enseignants</div><div class="val">${d.compteurs.enseignants}</div><div class="sub">comptes actifs</div></div>
-        <div class="kpi"><div class="lbl">✍️ Saisie des notes</div><div class="val">${d.progression}%</div><div class="sub">${esc(d.periode_active ? d.periode_active.libelle : 'aucune période')}</div></div>`;
+        <div class="kpi"><div class="lbl">✍️ Saisie des notes</div><div class="val">${d.progression}%</div><div class="sub">${esc(d.periode_active ? d.periode_active.libelle : 'aucune période')}</div></div>
+        ${d.compteurs.dossiers_a_completer ? `<div class="kpi vert">
+          <div class="lbl">📝 Dossiers à compléter</div><div class="val">${d.compteurs.dossiers_a_completer}</div>
+          <div class="sub">Renseignements facultatifs, à ajouter plus tard</div>
+          <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="App.ouvrirDossiersIncomplets()">Ouvrir la liste →</button>
+        </div>` : ''}`;
 
       return `
         ${alerte}
@@ -581,7 +671,7 @@
               <div class="step" style="padding:16px"><h4>2. Classes</h4><p>${d.compteurs.classes ? d.compteurs.classes + ' classe(s) créée(s).' : 'Créez vos classes et leurs coefficients.'}</p>
                 <button class="btn btn-ghost btn-sm" onclick="App.go('classes')">Gérer les classes</button></div>
               <div class="step" style="padding:16px"><h4>3. Élèves</h4><p>${d.compteurs.eleves ? d.compteurs.eleves + ' élève(s) inscrit(s).' : 'Inscrivez ou importez vos élèves.'}</p>
-                <button class="btn btn-ghost btn-sm" onclick="App.importerEleves()">Importer des élèves</button></div>
+                <button class="btn btn-ghost btn-sm" onclick="App.importerListePDF()">Importer une liste PDF</button></div>
               <div class="step" style="padding:16px"><h4>4. Enseignants</h4><p>${d.compteurs.enseignants ? d.compteurs.enseignants + ' enseignant(s).' : 'Donnez-leur accès à la saisie à distance.'}</p>
                 <button class="btn btn-ghost btn-sm" onclick="App.go('enseignants')">Ajouter un enseignant</button></div>
             </div>
@@ -649,6 +739,8 @@
               <div class="panel-head"><h2>Raccourcis</h2></div>
               <div style="display:grid;gap:8px">
                 ${role === 'directeur' ? `
+                  <button class="btn btn-ghost" style="justify-content:flex-start" onclick="App.importerListePDF()">📑 Importer une liste de classe PDF</button>
+                  <button class="btn btn-ghost" style="justify-content:flex-start" onclick="App.ouvrirDossiersIncomplets()">📝 Compléter les dossiers des élèves</button>
                   <button class="btn btn-ghost" style="justify-content:flex-start" onclick="App.nouvelEleve()">👨‍🎓 Inscrire un élève</button>
                   <button class="btn btn-ghost" style="justify-content:flex-start" onclick="App.nouvelleClasse()">🏫 Créer une classe</button>
                   <button class="btn btn-ghost" style="justify-content:flex-start" onclick="App.nouvelEnseignant()">👩‍🏫 Ajouter un enseignant</button>
@@ -679,10 +771,19 @@
   /* ---------------------------------------------------------------- */
 
   /* ---------------------------- ÉLÈVES ----------------------------- */
-  S.filtresEleves = { q: '', classe_id: '', statut: 'actif' };
+  S.filtresEleves = { q: '', classe_id: '', statut: 'actif', incomplets: false };
 
   const sexeTag = (s) => s === 'F' ? '<span class="tag or">F</span>'
     : s === 'M' ? '<span class="tag bleu">M</span>' : '<span class="tag gris">—</span>';
+
+  // Les renseignements sont facultatifs à l'inscription. Ce repère n'empêche
+  // jamais un élève de figurer dans les classes, examens ou bulletins.
+  function infosACompleter(e) {
+    return [['prenom', 'Prénom(s)'], ['sexe', 'Sexe'], ['date_naissance', 'Date de naissance'],
+      ['lieu_naissance', 'Lieu de naissance'], ['tuteur_nom', 'Nom du tuteur'],
+      ['tuteur_tel', 'Téléphone du tuteur']]
+      .filter(([champ]) => !String(e[champ] || '').trim()).map(([, libelle]) => libelle);
+  }
 
   async function chargerEleves() {
     const f = S.filtresEleves;
@@ -690,20 +791,34 @@
     if (f.classe_id) params.set('classe_id', f.classe_id);
     if (f.q) params.set('q', f.q);
     const rows = await api('/api/eleves?' + params.toString());
-    const liste = f.statut ? rows.filter(r => r.statut === f.statut) : rows;
+    const avecStatut = f.statut ? rows.filter(r => r.statut === f.statut) : rows;
+    const aCompleter = avecStatut.filter(r => r.statut === 'actif' && infosACompleter(r).length);
+    const liste = f.incomplets ? aCompleter : avecStatut;
     S.elevesCourants = liste;
     const zone = $('#eleves-list');
     if (!zone) return;
+    const compteur = $('#effectif-total');
+    if (compteur) compteur.textContent = `${avecStatut.length} élève(s) · ${aCompleter.length} dossier(s) à compléter`;
+    const filtre = $('#f-incomplets');
+    if (filtre) {
+      filtre.textContent = f.incomplets ? 'Voir tous les dossiers' : `À compléter (${aCompleter.length})`;
+      filtre.setAttribute('aria-pressed', String(f.incomplets));
+      filtre.classList.toggle('btn-primary', f.incomplets);
+      filtre.classList.toggle('btn-ghost', !f.incomplets);
+    }
     if (!liste.length) {
-      zone.innerHTML = emptyState('👨‍🎓', 'Aucun élève ne correspond à votre recherche.',
-        S.me.role === 'directeur' ? '<button class="btn btn-primary btn-sm" onclick="App.nouvelEleve()">➕ Inscrire un élève</button>' : '');
+      zone.innerHTML = f.incomplets
+        ? emptyState('✅', 'Aucun dossier à compléter dans cette sélection. Les champs restent facultatifs.',
+          '<button class="btn btn-ghost btn-sm" onclick="App.voirTousLesEleves()">Voir tous les élèves</button>')
+        : emptyState('👨‍🎓', 'Aucun élève ne correspond à votre recherche.',
+          S.me.role === 'directeur' ? '<button class="btn btn-primary btn-sm" onclick="App.nouvelEleve()">➕ Inscrire un élève</button>' : '');
       return;
     }
     zone.innerHTML = `
       <div class="table-wrap"><table class="data">
         <thead><tr>
           <th>Matricule</th><th>Nom &amp; prénom(s)</th><th class="center">Sexe</th><th>Classe</th>
-          <th>Tuteur</th><th class="center">Statut</th><th></th>
+          <th>Tuteur</th><th class="center">Statut</th>${S.me.role === 'directeur' ? '<th>Dossier</th>' : ''}<th></th>
         </tr></thead>
         <tbody>${liste.map(e => `
           <tr>
@@ -713,10 +828,14 @@
             <td>${e.classe_nom ? `<span class="tag ${e.cycle === 'lycee' ? 'bleu' : 'gris'}">${esc(e.classe_nom)}</span>` : '<span class="muted">Non affecté</span>'}</td>
             <td class="small">${esc(e.tuteur_nom || '—')}${e.tuteur_tel ? `<div class="muted">${esc(e.tuteur_tel)}</div>` : ''}</td>
             <td class="center">${badgeStatut(e.statut)}</td>
+            ${S.me.role === 'directeur' ? `<td>${e.statut !== 'actif' ? '<span class="muted">—</span>'
+              : infosACompleter(e).length
+                ? `<span class="tag or" title="${esc(infosACompleter(e).join(', '))}">À compléter · ${infosACompleter(e).length}</span>`
+                : '<span class="tag vert">Renseigné</span>'}</td>` : ''}
             <td class="right"><div class="row-actions">
-              <button class="icon-btn" title="Dossier" onclick="App.dossierEleve(${e.id})">📂</button>
+              <button class="icon-btn" title="Ouvrir le dossier" onclick="App.dossierEleve(${e.id})">📂</button>
               ${S.me.role === 'directeur' ? `
-                <button class="icon-btn" title="Modifier" onclick="App.editerEleve(${e.id})">✏️</button>
+                <button class="btn btn-ghost btn-sm" title="Compléter ou modifier le dossier" onclick="App.editerEleve(${e.id})">${e.statut === 'actif' && infosACompleter(e).length ? 'Compléter' : 'Modifier'}</button>
                 <button class="icon-btn danger" title="Désactiver" onclick="App.supprimerEleve(${e.id})">🗑️</button>` : ''}
             </div></td>
           </tr>`).join('')}
@@ -739,6 +858,9 @@
               <button class="btn btn-primary btn-sm" onclick="App.nouvelEleve()">➕ Nouvel élève</button>` : ''}
             </div>
           </div>
+          ${direction ? `<div class="notice info">Vous pouvez inscrire ou importer une liste PDF avec <b>nom et classe uniquement</b>.
+            La naissance, le tuteur et les autres renseignements se complètent plus tard :
+            utilisez <b>À compléter</b>, puis <b>Compléter</b> sur la ligne de l'élève.</div>` : ''}
           <div class="toolbar">
             <div class="field"><label>Recherche</label><input id="f-q" placeholder="Nom, prénom ou matricule" value="${esc(S.filtresEleves.q)}"></div>
             <div class="field"><label>Classe</label><select id="f-classe">${optionClasses(S.query.classe_id || S.filtresEleves.classe_id, { vide: 'Toutes les classes' })}</select></div>
@@ -747,6 +869,9 @@
               <option value="inactif" ${S.filtresEleves.statut === 'inactif' ? 'selected' : ''}>Inactifs</option>
               <option value="" ${S.filtresEleves.statut === '' ? 'selected' : ''}>Tous</option>
             </select></div>
+            ${direction ? `<div class="field"><label>Suivi des dossiers</label>
+              <button type="button" class="btn ${S.filtresEleves.incomplets ? 'btn-primary' : 'btn-ghost'} btn-sm" id="f-incomplets"
+                aria-pressed="${S.filtresEleves.incomplets}">À compléter</button></div>` : ''}
             <div class="spacer"></div>
             <div class="muted small" id="effectif-total"></div>
           </div>
@@ -761,7 +886,20 @@
         timer = setTimeout(() => { S.filtresEleves.q = e.target.value.trim(); chargerEleves(); }, 260);
       };
       $('#f-classe').onchange = (e) => { S.filtresEleves.classe_id = e.target.value; chargerEleves(); };
-      $('#f-statut').onchange = (e) => { S.filtresEleves.statut = e.target.value; chargerEleves(); };
+      $('#f-statut').onchange = (e) => {
+        S.filtresEleves.statut = e.target.value;
+        if (e.target.value !== 'actif') S.filtresEleves.incomplets = false;
+        chargerEleves();
+      };
+      const incomplets = $('#f-incomplets');
+      if (incomplets) incomplets.onclick = () => {
+        S.filtresEleves.incomplets = !S.filtresEleves.incomplets;
+        if (S.filtresEleves.incomplets) {
+          S.filtresEleves.statut = 'actif';
+          $('#f-statut').value = 'actif';
+        }
+        chargerEleves();
+      };
       await chargerEleves();
     }
   };
@@ -795,6 +933,16 @@
   }
 
   Object.assign(window.App, {
+    ouvrirDossiersIncomplets() {
+      S.filtresEleves = { q: '', classe_id: '', statut: 'actif', incomplets: true };
+      App.go('eleves');
+    },
+
+    voirTousLesEleves() {
+      S.filtresEleves.incomplets = false;
+      chargerEleves();
+    },
+
     async nouvelEleve() {
       if (S.me.role !== 'directeur') return;
       const m = modal({
@@ -820,8 +968,10 @@
       const e = rows.find(x => x.id === id);
       if (!e) return toast('Élève introuvable', 'err');
       const m = modal({
-        title: `Modifier ${e.nom} ${e.prenom}`,
-        body: `<form id="eleve-form">${eleveFormHtml(e)}</form>`,
+        title: `Compléter le dossier de ${e.nom} ${e.prenom}`,
+        body: `<div class="notice info">Renseignez les informations disponibles aujourd'hui ;
+          vous pourrez revenir plus tard. Aucun champ facultatif n'efface les notes existantes.</div>
+          <form id="eleve-form">${eleveFormHtml(e)}</form>`,
         footer: `<button class="btn btn-ghost btn-sm" data-close>Annuler</button><button class="btn btn-primary btn-sm" id="save-eleve">Enregistrer</button>`
       });
       m.root.querySelector('#save-eleve').onclick = async () => {
@@ -899,7 +1049,8 @@
         body: `<div class="pdf-import">
           <div class="notice info">Choisissez la classe et un PDF : les noms seront affichés <b>avant</b> l’inscription.
             Corrigez chaque ligne si nécessaire. Seul le <b>nom et la classe</b> sont obligatoires ;
-            prénom, date de naissance, sexe et matricule sont facultatifs. Aucune note n’est modifiée.</div>
+            prénom, date de naissance, sexe et matricule sont facultatifs. Aucune note n’est modifiée.
+            Après l’import, retrouvez les élèves dans <b>À compléter</b> pour renseigner naissance et tuteur plus tard.</div>
           <div class="grid2">
             <div class="field"><label for="pdf-classe">Classe par défaut *</label>
               <select id="pdf-classe">${optionClasses(S.query.classe_id || S.filtresEleves.classe_id || '', { vide: 'Choisir une classe…' })}</select></div>
@@ -908,6 +1059,7 @@
           </div>
           <button class="btn btn-ghost btn-sm" id="pdf-lire">📑 Lire le PDF</button>
           <div id="pdf-message" role="status" aria-live="polite" style="margin-top:12px"></div>
+          <div id="pdf-suite"></div>
           <div id="pdf-apercu"></div>
         </div>`,
         footer: `<span class="muted small" id="pdf-compte" style="margin-right:auto;align-self:center">Aucun élève vérifié</span>
@@ -1047,10 +1199,16 @@
           });
           afficherMessage(`${res.crees} élève(s) inscrit(s). ${res.ignores.length} ligne(s) ignorée(s) (doublon ou erreur).`
             + (res.ignores.length ? ' ' + res.ignores.slice(0, 5).map(x => x.message).join(' ; ') : '')
-            + ' Vous pouvez corriger et cocher les lignes restantes.',
+            + ' Vous pouvez corriger les lignes restantes ; les informations facultatives se complètent plus tard.',
           res.ignores.length || !res.crees ? 'warn' : 'ok');
           if (res.crees) {
             toast(`${res.crees} élève(s) inscrit(s)`);
+            const suite = root.querySelector('#pdf-suite');
+            suite.innerHTML = `<button type="button" class="btn btn-primary btn-sm" id="pdf-completer"
+              style="margin-top:10px">➡️ Voir les dossiers à compléter</button>`;
+            suite.querySelector('#pdf-completer').onclick = () => {
+              m.close(); App.ouvrirDossiersIncomplets();
+            };
             await loadRefs();
             if (S.route === 'eleves') await chargerEleves();
           }
@@ -4340,6 +4498,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
   /* ---------------------------------------------------------------- */
   (async function start() {
     const h = location.hash.replace(/^#\/?/, '');
+    if (h.startsWith('reinitialiser/')) { await renderReinitialisation(); return; }
     if (h.startsWith('inscription')) { renderInscription(); return; }
     try {
       await boot();

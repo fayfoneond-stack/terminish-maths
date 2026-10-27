@@ -62,6 +62,8 @@ if (!admin) {
 const motDePasse = process.env.ADMIN_PASSWORD || generer();
 base.prepare('UPDATE utilisateurs SET mot_de_passe = ?, actif = 1 WHERE id = ?')
   .run(hashPassword(motDePasse), admin.id);
+// Si la base a déjà été migrée, révoquer les anciens liens Gmail également.
+try { base.prepare('DELETE FROM reinitialisations_mdp WHERE user_id = ?').run(admin.id); } catch (_) {}
 const sessions = base.prepare('DELETE FROM sessions WHERE user_id = ?').run(admin.id);
 base.close();
 

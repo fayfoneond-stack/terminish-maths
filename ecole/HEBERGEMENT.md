@@ -160,6 +160,23 @@ doit répondre `{"ok":true,...}`. Ensuite, ouvrez `https://COMPTE.alwaysdata.net
 Dans le menu, en bas : **🗄️ Base de données** doit afficher
 `/home/COMPTE/app/data/terminish-ecole.db`. C'est la preuve que tout est au bon endroit.
 
+### 4.7 Courriels « Mot de passe oublié » (Gmail)
+
+Réservés au **chef d'établissement et au super-administrateur** ; l'enseignant continue de passer par
+son chef. Sur alwaysdata, ajoutez au fichier privé `~/app/.env` les variables `APP_PUBLIC_URL`
+(`https://COMPTE.alwaysdata.net`, sans `/app`), `GMAIL_USER` (adresse Gmail expéditrice) et
+`GMAIL_APP_PASSWORD` (mot de passe **d'application** généré après validation en deux étapes chez Google).
+Ne collez **aucun secret dans Git, dans un chat ou dans une capture d'écran** ; limitez l'accès au fichier
+avec `chmod 600 ~/app/.env`. Le mot de passe habituel du compte Gmail ne convient pas. Le script
+`deploy/alwaysdata/installer.sh` conserve ces réglages si vous le relancez.
+
+Après avoir copié la nouvelle version : `cd ~/app && npm ci --omit=dev --no-audit --no-fund`, puis
+**Web → Sites → Redémarrer**. Testez depuis la page de connexion avec un chef dont l'adresse est bien
+renseignée ; vérifiez sa boîte de réception et les indésirables. Si rien n'arrive, consultez **Web → Sites
+→ Journaux** : le serveur peut indiquer un échec SMTP sans afficher le secret ni le lien. L'envoi réel
+ne peut pas être garanti avant ce test sur l'hébergement. Tant que Gmail n'est pas prêt, le formulaire
+l'indique et les demandes des enseignants sont toujours transmises au chef.
+
 ---
 
 ## 5. Reprendre les données déjà saisies

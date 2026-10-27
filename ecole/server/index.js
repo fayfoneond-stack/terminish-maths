@@ -13,8 +13,10 @@ const stockage = require('./storage');
 const P = require('./paiements');
 const { genererRecuPDF } = require('./recu');
 const { genererFusionPDF } = require('./fusion-pdf');
-const { analyserListePDF, MAX_OCTETS } = require('./liste-pdf');
+const { analyserListePDF, dateISO, MAX_OCTETS } = require('./liste-pdf');
 const { verifierListe, importerListe } = require('./import-eleves-pdf');
+const recuperation = require('./recuperation');
+const courriel = require('./courriel');
 const { optionsPassage, preparerPassage, validerPassage, annulerPassage,
   ouvrirAnneeSuivante, anneeSuivante, memoriserInscription } = require('./passage');
 const cloudinary = require('./cloudinary');
@@ -674,6 +676,13 @@ app.put('/api/eleves/:id', auth, directionOnly, (req, res) => {
   const el = db.prepare('SELECT * FROM eleves WHERE id = ? AND ecole_id = ?').get(req.params.id, id);
   if (!el) return res.status(404).json({ error: 'Élève introuvable' });
   const b = req.body || {};
+  if (!String(b.nom ?? el.nom).trim()) return res.status(400).json({ error: 'Le nom de l’élève est requis.' });
+  if (b.date_naissance !== undefined) {
+    const date = String(b.date_naissance || '').trim();
+    if (date && (dateISO(date) !== date || date > today())) {
+      return res.status(400).json({ error: 'Date de naissance invalide (format AAAA-MM-JJ, non future).' });
+    }
+  }
   const classeCible = b.classe_id === '' || b.classe_id === undefined ? (b.classe_id === '' ? null : el.classe_id) : Number(b.classe_id) || null;
   if (classeCible && !db.prepare('SELECT 1 FROM classes WHERE id = ? AND ecole_id = ?').get(classeCible, id))
     return res.status(400).json({ error: 'Classe invalide dans cet établissement.' });
@@ -1392,6 +1401,13 @@ app.get('/api/dashboard', auth, staffOnly, (req, res) => {
   let nbEleves = db.prepare("SELECT COUNT(*) AS n FROM eleves WHERE ecole_id = ? AND statut = 'actif'").get(ecoleId).n;
   let nbClasses = db.prepare('SELECT COUNT(*) AS n FROM classes WHERE ecole_id = ?').get(ecoleId).n;
   const nbProfs = db.prepare("SELECT COUNT(*) AS n FROM utilisateurs WHERE ecole_id = ? AND role = 'enseignant' AND actif = 1").get(ecoleId).n;
+  // Repère de travail pour la direction ; tous ces champs restent facultatifs.
+  const dossiersACompleter = isProf ? null : db.prepare(`SELECT COUNT(*) AS n FROM eleves
+    WHERE ecole_id = ? AND statut = 'actif' AND (
+      trim(coalesce(prenom, '')) = '' OR trim(coalesce(sexe, '')) = ''
+      OR trim(coalesce(date_naissance, '')) = '' OR trim(coalesce(lieu_naissance, '')) = ''
+      OR trim(coalesce(tuteur_nom, '')) = '' OR trim(coalesce(tuteur_tel, '')) = ''
+    )`).get(ecoleId).n;
   let nbMatieres = db.prepare('SELECT COUNT(*) AS n FROM matieres WHERE ecole_id = ?').get(ecoleId).n;
   if (isProf) {
     const ids = [...mesClasses];
@@ -1443,7 +1459,8 @@ app.get('/api/dashboard', auth, staffOnly, (req, res) => {
 
   res.json({
     etablissement: etab,
-    compteurs: { eleves: nbEleves, classes: nbClasses, enseignants: nbProfs, matieres: nbMatieres },
+    compteurs: { eleves: nbEleves, classes: nbClasses, enseignants: nbProfs,
+      matieres: nbMatieres, dossiers_a_completer: dossiersACompleter },
     periode_active: periodeActive,
     periodes,
     progression,
@@ -1583,6 +1600,7 @@ app.post('/api/auth/password', auth, (req, res) => {
   const user = db.prepare('SELECT * FROM utilisateurs WHERE id = ?').get(req.user.id);
   if (!verifyPassword(ancien, user.mot_de_passe)) return res.status(400).json({ error: 'Mot de passe actuel incorrect' });
   db.prepare('UPDATE utilisateurs SET mot_de_passe = ? WHERE id = ?').run(hashPassword(nouveau), user.id);
+  db.prepare('DELETE FROM reinitialisations_mdp WHERE user_id = ?').run(user.id);
   res.json({ ok: true });
 });
 
@@ -1602,27 +1620,54 @@ function motDePasseLisible() {
 }
 
 /**
- * MOT DE PASSE OUBLIÉ (public).
- * Sans e-mail sortant, la demande est déposée pour le chef d'établissement :
- * il la voit dans sa console et régénère les identifiants en un clic.
- * La réponse est toujours la même (on ne révèle pas si l'adresse existe).
+ * Mot de passe oublié : direction et super-admin → lien Gmail à usage unique ;
+ * enseignants → demande manuelle visible par le chef. Jamais de compte divulgué
+ * (même réponse pour une adresse inconnue, un enseignant ou un directeur).
  */
 app.post('/api/auth/oubli', (req, res) => {
-  const email = String((req.body || {}).email || '').trim().toLowerCase();
-  if (!email) return res.status(400).json({ error: 'Adresse email requise' });
-  const u = db.prepare('SELECT id, ecole_id, role FROM utilisateurs WHERE email = ?').get(email);
-  const message = String((req.body || {}).message || '').slice(0, 400);
-  if (u) {
-    const deja = db.prepare("SELECT id FROM demandes_mdp WHERE email = ? AND statut = 'nouvelle'").get(email);
-    if (!deja) {
-      db.prepare('INSERT INTO demandes_mdp (ecole_id, email, role, message, statut, cree_le) VALUES (?,?,?,?,?,?)')
-        .run(u.ecole_id || null, email, u.role, message, 'nouvelle', now());
-    }
-  }
+  const email = recuperation.normaliserEmail(req.body?.email);
+  if (!email) return res.status(400).json({ error: 'Entrez une adresse e-mail valide.' });
+  const message = typeof req.body?.message === 'string' ? req.body.message.slice(0, 400) : '';
+  const config = courriel.configuration();
+  res.set('Cache-Control', 'no-store');
   res.json({
     ok: true,
-    message: "Demande enregistrée. Le chef d'établissement la verra dans sa console et vous donnera un nouveau mot de passe."
+    message: config.actif
+      ? 'Si cette adresse est celle d’un chef ou de l’administrateur, vous recevrez un lien par e-mail (vérifiez aussi les indésirables). Pour un enseignant, la demande est transmise au chef.'
+      : 'L’envoi des e-mails n’est pas encore configuré. Si vous êtes enseignant, votre demande est transmise au chef ; si vous êtes chef ou administrateur, contactez le responsable du site.'
   });
+  // Traitement APRÈS la réponse : la latence SMTP ne révèle pas les comptes.
+  setImmediate(() => {
+    try {
+      const u = db.prepare('SELECT id, ecole_id, role, actif FROM utilisateurs WHERE lower(email) = ?').get(email);
+      if (!u || !u.actif) return;
+      if (u.role === 'enseignant' && u.ecole_id) {
+        const deja = db.prepare("SELECT id FROM demandes_mdp WHERE email = ? AND statut = 'nouvelle'").get(email);
+        if (!deja) db.prepare(`INSERT INTO demandes_mdp (ecole_id, email, role, message, statut, cree_le)
+          VALUES (?,?,'enseignant',?,'nouvelle',?)`).run(u.ecole_id, email, message, now());
+      } else if (config.actif && ['directeur', 'super_admin'].includes(u.role)) {
+        recuperation.demanderLien(db, email, {
+          publicUrl: config.publicUrl,
+          envoyer: details => courriel.envoyerLien(details, config)
+        }).catch(() => console.error('Envoi du lien de récupération refusé par Gmail ; vérifiez la configuration SMTP.'));
+      }
+    } catch (_) {
+      console.error('Demande de récupération non traitée ; vérifiez la base de données.');
+    }
+  });
+});
+
+app.post('/api/auth/recuperation/verifier', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ valide: !!recuperation.lienValide(db, req.body?.jeton) });
+});
+
+app.post('/api/auth/recuperation/terminer', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const resultat = recuperation.terminerLien(db, req.body?.jeton, req.body?.nouveau, hashPassword);
+  if (!resultat.ok) return res.status(400).json({ error: resultat.erreur });
+  clearSessionCookie(res);
+  res.json({ ok: true, message: 'Mot de passe modifié. Reconnectez-vous avec votre nouveau mot de passe.' });
 });
 
 /** Demandes en attente (chef d'établissement). */

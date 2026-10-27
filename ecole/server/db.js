@@ -245,9 +245,7 @@ CREATE TABLE IF NOT EXISTS demandes (
   cree_le TEXT NOT NULL
 );
 
--- Demandes de réinitialisation de mot de passe (« mot de passe oublié »).
--- Sans service d'e-mail, la demande est déposée ici : le chef d'établissement
--- la voit dans sa console et régénère les identifiants en un clic.
+-- Demandes manuelles des enseignants : seul le chef régénère leurs identifiants.
 CREATE TABLE IF NOT EXISTS demandes_mdp (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   ecole_id INTEGER,
@@ -260,8 +258,19 @@ CREATE TABLE IF NOT EXISTS demandes_mdp (
   traite_par INTEGER
 );
 
+-- Liens de récupération des chefs et du super-administrateur : seul le SHA-256
+-- du jeton est conservé. Aucun mot de passe, lien ou secret Gmail en base.
+CREATE TABLE IF NOT EXISTS reinitialisations_mdp (
+  jeton_hash TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+  cree_le TEXT NOT NULL,
+  expire_le TEXT NOT NULL,
+  utilise_le TEXT
+);
+
 CREATE INDEX IF NOT EXISTS idx_eleves_ecole ON eleves(ecole_id, classe_id);
 CREATE INDEX IF NOT EXISTS idx_demandes_mdp ON demandes_mdp(ecole_id, statut);
+CREATE INDEX IF NOT EXISTS idx_reinitialisations_mdp_user ON reinitialisations_mdp(user_id, cree_le);
 CREATE INDEX IF NOT EXISTS idx_paiements_ecole ON paiements(ecole_id, cree_le);
 CREATE INDEX IF NOT EXISTS idx_notes_eval ON notes(evaluation_id);
 CREATE INDEX IF NOT EXISTS idx_inscriptions_historiques_classe ON inscriptions_historiques(ecole_id, annee_scolaire, classe_id);

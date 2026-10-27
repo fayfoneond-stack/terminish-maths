@@ -44,7 +44,7 @@ démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimest
 ## 2. Fonctionnalités
 
 ### Direction (chef d'établissement)
-- Tableau de bord : effectifs, progression de la saisie, moyennes par classe, meilleurs élèves, activité récente.
+- Tableau de bord : effectifs, dossiers à compléter, progression de la saisie, moyennes par classe, meilleurs élèves, activité récente.
 - Élèves : inscription unitaire, **import direct des listes PDF** (ou CSV/Excel par copier-coller),
   dossier individuel, historique, export CSV, archivage.
 - Classes : cycles collège (trimestres) / lycée (semestres), séries, titulaire, matières et coefficients.
@@ -116,6 +116,12 @@ démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimest
 peuvent rester vides. Un matricule manquant est généré ; un sexe inconnu n'est jamais deviné et aucun tuteur
 n'est inventé. Chaque nouvel élève est immédiatement disponible dans les épreuves de sa classe. Les
 **notes, moyennes et classements déjà présents ne sont pas modifiés** par l'import.
+
+**Compléter plus tard :** après confirmation, cliquez sur **« Voir les dossiers à compléter »** ; ou ouvrez
+**Scolarité → Élèves → « À compléter »**, puis **« Compléter »** à côté de l'élève. La liste montre les
+renseignements encore absents (naissance, sexe, prénom, tuteur et téléphone). Ils restent **facultatifs** :
+leur absence n'empêche ni l'inscription ni la saisie des notes. La date et les autres informations peuvent
+être ajoutées ou corrigées ultérieurement, sans perdre les notes ni les bulletins.
 
 **Limites :** PDF de 8 Mo et 15 pages maximum ; jusqu'à 6 pages scannées avec OCR par fichier, 300 élèves
 par confirmation. Pour un document plus grand, séparer les classes en plusieurs PDF. Relire soigneusement
@@ -360,9 +366,34 @@ le chef d'établissement, seul habilité :
 | Il veut rétablir | ✅ | `actif = 1`, l'enseignant se reconnecte et les affectations peuvent être réattribuées |
 
 L'enseignant, lui, ne peut **jamais** se redonner un accès : l'endpoint est réservé à la direction
-(`directionOnly`). Depuis l'écran de connexion, « Mot de passe oublié ? » dépose une **demande**
-(`demandes_mdp`) qui apparaît en haut de la page *Enseignants* ; la réponse est toujours la même,
-que l'adresse existe ou non (pas de fuite d'information).
+(`directionOnly`). Depuis l'écran de connexion, « Mot de passe oublié ? » dépose pour l'enseignant
+une **demande** (`demandes_mdp`) qui apparaît en haut de la page *Enseignants* ; seul le chef lui
+communique ses nouveaux identifiants. **Aucun e-mail de réinitialisation n'est envoyé à un enseignant.**
+
+Pour les **chefs et le super-administrateur seulement**, ce même formulaire envoie un **lien Gmail** vers
+l'adresse e-mail de connexion, *si le serveur Gmail est configuré*. Ouvrir le lien, choisir un mot de
+passe d'au moins 12 caractères, puis se reconnecter. Le lien expire au bout de **30 minutes**, n'est
+utilisable **qu'une fois** et ferme les anciennes sessions. La base ne conserve que l'empreinte du
+jeton ; un nouveau lien n'est envoyé au même compte qu'après **10 minutes**. Une réponse identique est
+donnée pour les comptes inconnus et les différents rôles (aucune adresse existante divulguée).
+
+**Activer Gmail sur l'hébergement :** dans le fichier privé `~/app/.env` (ne jamais le publier dans Git,
+ni communiquer son contenu dans un chat), ajouter :
+
+```dotenv
+APP_PUBLIC_URL=https://votre-compte.alwaysdata.net
+GMAIL_USER=votre-adresse@gmail.com
+GMAIL_APP_PASSWORD=
+```
+
+Activer la validation en deux étapes dans son propre compte Google et créer un **mot de passe
+d'application** Gmail ; le placer soi-même, uniquement dans la dernière ligne du `.env` sur le serveur,
+puis protéger le fichier (`chmod 600 ~/app/.env`), installer les nouvelles dépendances (`npm ci --omit=dev`)
+et redémarrer le site dans **alwaysdata → Web → Sites → Redémarrer**. `APP_PUBLIC_URL` est l'origine
+**publique en HTTPS** du site, sans `/app` ni slash final. Sans ces **trois** valeurs valides, le
+formulaire indique honnêtement que l'e-mail n'est pas disponible ; les demandes enseignants restent
+fonctionnelles. **Aucun envoi réel Gmail n'est garanti sans un test depuis l'hébergement** (boîte de
+réception et indésirables ; si besoin, consulter les journaux du site).
 
 ### Bulletins de composition seule
 
@@ -483,8 +514,9 @@ et le contrôle du tunnel (`502` si le tunnel ne pointe pas sur le même port).
 | GET | `/api/fusion` (`?classe_ids=1,2,3&periode_id=…` ou `&examen_id=…`, `&mode=composition`) | personnel (ses classes pour un enseignant) |
 | CRUD | `/api/examens`, `/api/examens/:id/epreuves` | direction |
 | GET | `/api/eleve/espace` | élève |
-| POST | `/api/auth/oubli` | public (demande de nouveau mot de passe) |
-| GET | `/api/demandes-mdp` | direction (demandes à traiter) |
+| POST | `/api/auth/oubli` | public (e-mail sécurisé pour chef/admin si Gmail prêt ; demande au chef pour enseignant) |
+| POST | `/api/auth/recuperation/verifier`, `/api/auth/recuperation/terminer` | public (lien à usage unique ; mot de passe ≥ 12 caractères) |
+| GET | `/api/demandes-mdp` | direction (demandes des enseignants à traiter) |
 | POST | `/api/demandes-mdp/:id/traiter` | direction |
 | POST | `/api/enseignants/:id/identifiants` | direction (nouveau mot de passe, affiché une fois) |
 | POST | `/api/enseignants/:id/acces` | direction (`actif` 0/1, révoque les sessions) |
@@ -563,6 +595,8 @@ derrière Nginx (`deploy/nginx.conf`) ou Caddy.
 | `TERMINISH_SEED` | `demo` (défaut) = école + comptes de démonstration ; `prod` = uniquement le compte admin |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NOM` | compte super-admin créé au premier démarrage (mot de passe aléatoire affiché si absent). En mode `TERMINISH_SEED=demo`, le compte est `admin@terminish.tg` / `admin1234` — pour imposer un autre mot de passe : `npm run motdepasse` |
 | `COOKIE_SECURE` | `1` pour marquer le cookie de session `Secure` (obligatoire derrière HTTPS) |
+| `APP_PUBLIC_URL` | origine HTTPS du site, ex. `https://votre-compte.alwaysdata.net`, sans chemin |
+| `GMAIL_USER`, `GMAIL_APP_PASSWORD` | compte Gmail expéditeur et mot de passe **d'application** privé (jamais celui du compte Google) ; requis avec `APP_PUBLIC_URL` pour la récupération chef/admin |
 | `CINETPAY_APIKEY`, `CINETPAY_SITE_ID`, `CINETPAY_MODE` | paiement automatique CinetPay |
 | `PAYDUNYA_MASTER_KEY`, `PAYDUNYA_PRIVATE_KEY`, `PAYDUNYA_TOKEN`, `PAYDUNYA_MODE` | paiement automatique PayDunya |
 | `CLOUDINARY_URL` **ou** `CLOUDINARY_CLOUD_NAME` + `CLOUDINARY_API_KEY` + `CLOUDINARY_API_SECRET` | copie optionnelle des logos sur le CDN Cloudinary |

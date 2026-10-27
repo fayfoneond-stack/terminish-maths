@@ -288,7 +288,8 @@ test('Migration d’une ancienne base : année ajoutée aux périodes/examens sa
     note:db.prepare('SELECT valeur FROM notes WHERE id=8').get().valeur,
     photos:db.prepare('SELECT COUNT(*) AS n FROM inscriptions_historiques').get().n,
     classes:db.prepare('SELECT COUNT(*) AS n FROM classes_historiques').get().n,
-    matieres:db.prepare('SELECT COUNT(*) AS n FROM matieres_historiques').get().n
+    matieres:db.prepare('SELECT COUNT(*) AS n FROM matieres_historiques').get().n,
+    recuperation:db.prepare('SELECT COUNT(*) AS n FROM reinitialisations_mdp').get().n
   })); db.close();`;
   for (let i = 0; i < 2; i++) {
     const r = spawnSync(process.execPath, ['-e', script], {
@@ -299,7 +300,8 @@ test('Migration d’une ancienne base : année ajoutée aux périodes/examens sa
     const ligne = r.stdout.split('\n').find(l => l.startsWith('MIGRE:'));
     assert.ok(ligne, r.stdout);
     assert.deepEqual(JSON.parse(ligne.slice(6)), {
-      periode: '2024-2025', examen: '2024-2025', note: 17.25, photos: 0, classes: 0, matieres: 0
+      periode: '2024-2025', examen: '2024-2025', note: 17.25, photos: 0, classes: 0, matieres: 0,
+      recuperation: 0
     });
   }
 });
