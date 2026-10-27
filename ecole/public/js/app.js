@@ -468,6 +468,7 @@
     const btnBase = $('#btn-base');
     if (btnBase) btnBase.onclick = (e) => { e.preventDefault(); App.voirBase(); };
     $('#btn-logout').onclick = async () => {
+      if (!autoriserQuitterSaisie()) return;
       await api('/api/auth/logout', { method: 'POST' }).catch(() => {});
       S.me = null; location.hash = '';
       renderLogin();
@@ -526,7 +527,31 @@
     }
   }
 
+  // Un changement de classe, de rubrique, le bouton Retour ou un rechargement
+  // ne doivent pas effacer discrètement des notes encore non enregistrées.
+  function autoriserQuitterSaisie() {
+    const grid = $('#grille-notes');
+    if (!grid || grid.dataset.dirty !== '1') return true;
+    if (!window.confirm('Des notes ne sont pas encore enregistrées. Quitter cette saisie sans les enregistrer ?')) return false;
+    grid.dataset.dirty = '0';
+    return true;
+  }
+
+  window.addEventListener('beforeunload', e => {
+    if ($('#grille-notes')?.dataset.dirty === '1') {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
   window.addEventListener('hashchange', () => {
+    // Les liens du menu et l'historique du navigateur changent directement
+    // l'ancre sans passer par App.go : revenir à l'écran en cours si refus.
+    if (!autoriserQuitterSaisie()) {
+      const ancienne = $('#grille-notes')?.dataset.hash || '#/saisie';
+      history.replaceState(null, '', `${location.pathname}${location.search}${ancienne}`);
+      return;
+    }
     if (location.hash.startsWith('#/reinitialiser/')) { renderReinitialisation(); return; }
     if (!S.me) {
       if (location.hash.replace(/^#\/?/, '').startsWith('inscription')) renderInscription();
@@ -751,7 +776,7 @@
               </div>
               <div class="notice info" style="margin:14px 0 0">
                 <b>Astuce :</b> ${role === 'enseignant'
-                  ? 'vos notes sont enregistrées au fur et à mesure. Vous pouvez quitter et revenir sans rien perdre.'
+                  ? 'après avoir saisi vos notes, appuyez sur « Enregistrer les notes » avant de quitter la page. Le total se met à jour en direct.'
                   : 'publiez les bulletins une fois la saisie terminée : chaque élève verra ses résultats dans son espace.'}
               </div>
             </div>
@@ -761,6 +786,7 @@
   };
 
   window.App = { go: (r, q) => {
+    if (!autoriserQuitterSaisie()) return;
     const qs = q && Object.keys(q).length ? '?' + new URLSearchParams(q).toString() : '';
     if (location.hash === `#/${r}${qs}`) renderRoute();
     else location.hash = `#/${r}${qs}`;
@@ -1937,26 +1963,26 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       const verrou = periode && periode.statut === 'fermee' && S.me.role !== 'directeur' && S.me.role !== 'super_admin';
 
       const barre = `
-        <div class="toolbar">
-          <div class="field" style="min-width:190px"><label>Mode de saisie</label>
+        <div class="toolbar saisie-filtres">
+          <div class="field" style="min-width:190px"><label for="s-mode">Mode de saisie</label>
             <select id="s-mode">
               <option value="periode" ${mode === 'periode' ? 'selected' : ''}>Devoirs &amp; composition</option>
               <option value="epreuve" ${mode === 'epreuve' ? 'selected' : ''}>Examen blanc</option>
             </select>
           </div>
           ${mode === 'epreuve' ? `
-            <div class="field" style="min-width:330px"><label>Épreuve blanche</label>
+            <div class="field" style="min-width:330px"><label for="s-epreuve">Épreuve blanche</label>
               <select id="s-epreuve">
                 <option value="">Choisir une épreuve…</option>
                 ${epreuves.map(ep => `<option value="${ep.id}" ${ep.id === Number(q.epreuve_id) ? 'selected' : ''}>${esc(ep.examen_nom)} — ${esc(ep.classe_nom)} · ${esc(ep.matiere_nom)}</option>`).join('')}
               </select>
             </div>` : `
-            <div class="field" style="min-width:170px"><label>Classe</label><select id="s-classe">${optionClasses(classeId, { vide: 'Choisir…' })}</select></div>
-            <div class="field" style="min-width:200px"><label>Matière</label><select id="s-matiere">
+            <div class="field" style="min-width:170px"><label for="s-classe">Classe</label><select id="s-classe">${optionClasses(classeId, { vide: 'Choisir…' })}</select></div>
+            <div class="field" style="min-width:200px"><label for="s-matiere">Matière</label><select id="s-matiere">
               <option value="">Choisir…</option>
               ${matieresClasse.map(m => `<option value="${m.id}" ${m.id === Number(matiereId) ? 'selected' : ''}>${esc(m.nom)} (coef. ${m.coefficient})</option>`).join('')}
             </select></div>
-            <div class="field" style="min-width:160px"><label>Période</label><select id="s-periode">
+            <div class="field" style="min-width:160px"><label for="s-periode">Période</label><select id="s-periode">
               ${periodesDispo.map(p => `<option value="${p.id}" ${p.id === Number(periodeId) ? 'selected' : ''}>${esc(p.libelle)}${p.statut === 'fermee' ? ' (clôturé)' : ''}</option>`).join('')}
             </select></div>`}
           <div class="spacer"></div>
@@ -1987,7 +2013,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       return `
         <div class="panel">
           <div class="panel-head">
-            <div><h2>Saisie des notes</h2><div class="sub">Les notes sont calculées et enregistrées automatiquement pour les bulletins.</div></div>
+            <div><h2>Saisie des notes</h2><div class="sub">La moyenne se calcule en direct. Appuyez sur « Enregistrer » pour conserver vos notes.</div></div>
             <div class="right">
               <span class="tag vert" id="saisie-progress">—</span>
               ${S.me.role === 'directeur' ? `<button class="btn btn-ghost btn-sm" onclick="App.go('parametres')">🔒 Périodes</button>` : ''}
@@ -2008,67 +2034,90 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         Object.entries(params).forEach(([k, v]) => { if (v) base[k] = v; else delete base[k]; });
         App.go('saisie', base);
       };
-      if ($('#s-mode')) $('#s-mode').onchange = (e) => {
-        if (e.target.value === 'epreuve') App.go('saisie', { mode: 'epreuve' });
-        else App.go('saisie', {});
+      const choix = (selecteur, agir) => {
+        const select = $(selecteur);
+        if (!select) return;
+        const ancienneValeur = select.value;
+        select.onchange = e => {
+          if (!autoriserQuitterSaisie()) { e.target.value = ancienneValeur; return; }
+          agir(e.target.value);
+        };
       };
-      if ($('#s-epreuve')) $('#s-epreuve').onchange = (e) => navigate({ epreuve_id: e.target.value });
-      if ($('#s-classe')) $('#s-classe').onchange = (e) => navigate({ classe_id: e.target.value });
-      if ($('#s-matiere')) $('#s-matiere').onchange = (e) => navigate({ classe_id: $('#s-classe').value, matiere_id: e.target.value, periode_id: $('#s-periode').value });
-      if ($('#s-periode')) $('#s-periode').onchange = (e) => navigate({ classe_id: $('#s-classe').value, matiere_id: $('#s-matiere') ? $('#s-matiere').value : '', periode_id: e.target.value });
+      choix('#s-mode', v => App.go('saisie', v === 'epreuve' ? { mode: 'epreuve' } : {}));
+      choix('#s-epreuve', v => navigate({ epreuve_id: v }));
+      choix('#s-classe', v => navigate({ classe_id: v }));
+      choix('#s-matiere', v => navigate({ classe_id: $('#s-classe').value, matiere_id: v, periode_id: $('#s-periode').value }));
+      choix('#s-periode', v => navigate({ classe_id: $('#s-classe').value, matiere_id: $('#s-matiere')?.value || '', periode_id: v }));
 
       const grid = $('#grille-notes');
       if (grid) {
-        const verrou = grid.dataset.verrou === '1';
-        if (verrou) $$('input.note', grid).forEach(i => i.disabled = true);
-        grid.addEventListener('input', (e) => {
-          if (!e.target.classList.contains('note')) return;
-          const row = e.target.closest('tr');
-          const v = e.target.value.replace(',', '.');
-          e.target.classList.toggle('error', v !== '' && (isNaN(Number(v)) || Number(v) < 0 || Number(v) > 20));
-          e.target.classList.toggle('filled', v !== '');
-          majLigne(row);
-          majProgression();
+        grid.dataset.hash = location.hash;
+        grid.dataset.dirty = '0';
+        grid.dataset.saving = '0';
+        $$('input.note', grid).forEach(inp => {
+          const abs = absenceDe(inp);
+          inp.dataset.initial = inp.value;
+          inp.dataset.absInitial = abs?.checked ? '1' : '0';
+          if (abs) abs.disabled = grid.dataset.verrou === '1';
+          rafraichirCase(inp);
+          inp.addEventListener('focus', () => inp.select());
         });
-        grid.addEventListener('keydown', (e) => {
+        grid.addEventListener('input', e => {
+          if (!e.target.classList.contains('note')) return;
+          rafraichirCase(e.target);
+          majLigne(e.target.closest('tr'));
+          majEtatSaisie(grid);
+        });
+        grid.addEventListener('change', e => {
+          if (!e.target.classList.contains('abs')) return;
+          const row = e.target.closest('tr');
+          const inp = e.target.closest('td').querySelector('input.note') || row.querySelector('input.note');
+          if (inp) rafraichirCase(inp);
+          majLigne(row);
+          majEtatSaisie(grid);
+        });
+        grid.addEventListener('keydown', e => {
           if (e.key !== 'Enter' || !e.target.classList.contains('note')) return;
           e.preventDefault();
-          const inputs = $$('input.note', grid);
+          const inputs = $$('input.note:not(:disabled)', grid);
           const i = inputs.indexOf(e.target);
           if (inputs[i + 1]) { inputs[i + 1].focus(); inputs[i + 1].select(); }
+          else e.target.blur();
         });
-        $$('input.note', grid).forEach(inp => inp.addEventListener('focus', () => inp.select()));
-        $$('tr', grid).forEach(majLigne);
-        majProgression();
-        const save = $('#btn-save-notes');
-        if (save) save.onclick = () => enregistrerNotes(grid, mode);
-        document.addEventListener('keydown', function onCtrlS(ev) {
-          if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 's') {
-            ev.preventDefault();
-            if (document.body.contains(grid)) enregistrerNotes(grid, mode);
-            else document.removeEventListener('keydown', onCtrlS);
-          }
-        });
+        $$('tr[data-eleve]', grid).forEach(majLigne);
+        majEtatSaisie(grid);
+        $('#btn-save-notes').onclick = () => enregistrerNotes(grid);
       }
     }
   };
 
   function grilleHtml(data, mode, verrou) {
-    const formule = (S.etab && S.etab.formule_moyenne) || 'co2';
+    const formule = data.classe?.formule_moyenne || S.etab?.formule_moyenne || 'co2';
+    const bareme = mode === 'epreuve' ? fmt(data.epreuve.bareme, 0) : '20';
     const header = mode === 'epreuve'
-      ? `<th>Élève</th><th>Note /${fmt(data.epreuve.bareme, 0)}</th><th>Absent</th><th>Appréciation</th>`
+      ? `<th>Élève</th><th>Note /${bareme}</th><th>Absent</th><th>Appréciation</th>`
       : `<th style="min-width:210px">Élève</th><th>Devoir 1</th><th>Devoir 2</th><th>Composition</th><th>Moyenne</th><th>Appréciation</th>`;
     const evalIds = {};
     if (mode === 'periode') data.evaluations.forEach(ev => evalIds[ev.type] = ev.id);
 
-    const rows = data.eleves.map(e => {
+    const rows = data.eleves.map((e, position) => {
+      const nom = [e.nom, e.prenom].filter(Boolean).join(' ');
+      const identite = `<td class="eleve-cell">
+        <div class="eleve-identite"><span class="eleve-ordre" aria-hidden="true">${String(position + 1).padStart(2, '0')}</span>
+          <div><span class="eleve-nom">${esc(nom)}</span>
+          ${e.matricule ? `<span class="eleve-matricule">${esc(e.matricule)}</span>` : ''}</div>
+        </div></td>`;
+      const note = (type, libelle, valeur, evId) => `<input type="text" class="note" data-eleve="${e.id}"
+        data-type="${type}" data-eval="${evId || ''}" inputmode="decimal" enterkeyhint="next"
+        autocomplete="off" aria-label="${esc(libelle)} de ${esc(nom)}, sur 20" value="${esc(valeur)}" placeholder="—">`;
       if (mode === 'epreuve') {
         const n = data.notes[e.id] || {};
         return `<tr data-eleve="${e.id}">
-          <td>${esc(e.nom)} ${esc(e.prenom)}<div class="muted small">${esc(e.matricule)}</div></td>
-          <td><input class="note" data-eleve="${e.id}" data-eval="${data.evaluation ? data.evaluation.id : ''}" inputmode="decimal" value="${n.valeur ?? ''}" placeholder="—"></td>
-          <td><input type="checkbox" class="abs" data-eleve="${e.id}" ${n.absent ? 'checked' : ''}></td>
-          <td class="appr-cell small muted">${n.valeur != null ? appreciationTexte(n.valeur) : '—'}</td>
+          ${identite}
+          <td class="note-cell" data-label="Note /${bareme}">${note('blanc', 'Note de l’épreuve', n.valeur ?? '', data.evaluation?.id)}</td>
+          <td class="absence-cell" data-label="Absence"><label class="switch"><input type="checkbox" class="abs"
+            aria-label="Absent à l’épreuve : ${esc(nom)}" ${n.absent ? 'checked' : ''}> Absent</label></td>
+          <td class="appr-cell small muted" data-label="Appréciation">—</td>
         </tr>`;
       }
       const get = (type) => {
@@ -2081,20 +2130,28 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         const n = evId ? (data.notes[evId] || {})[e.id] : null;
         return n && n.absent ? ' checked' : '';
       };
+      const caseNote = (type, libelle) => `<td class="note-cell" data-label="${libelle}">
+        ${note(type, libelle, get(type), evalIds[type])}
+        <label class="switch abs-toggle"><input type="checkbox" class="abs" data-type="${type}"
+          aria-label="Absent ${type === 'composition' ? 'à la composition' : 'au ' + libelle.toLowerCase()} : ${esc(nom)}"${absent(type)}> Absent</label>
+      </td>`;
       return `<tr data-eleve="${e.id}">
-        <td>${esc(e.nom)} ${esc(e.prenom)}<div class="muted small">${esc(e.matricule)}${absent('devoir1') || absent('devoir2') || absent('composition') ? ' · <span class="tag or">absent</span>' : ''}</div></td>
-        <td><input class="note" data-eleve="${e.id}" data-type="devoir1" data-eval="${evalIds.devoir1 || ''}" inputmode="decimal" value="${get('devoir1')}" placeholder="—"><div class="small"><label class="switch" style="font-size:10px"><input type="checkbox" class="abs" data-type="devoir1"${absent('devoir1')}> abs.</label></div></td>
-        <td><input class="note" data-eleve="${e.id}" data-type="devoir2" data-eval="${evalIds.devoir2 || ''}" inputmode="decimal" value="${get('devoir2')}" placeholder="—"><div class="small"><label class="switch" style="font-size:10px"><input type="checkbox" class="abs" data-type="devoir2"${absent('devoir2')}> abs.</label></div></td>
-        <td><input class="note" data-eleve="${e.id}" data-type="composition" data-eval="${evalIds.composition || ''}" inputmode="decimal" value="${get('composition')}" placeholder="—"><div class="small"><label class="switch" style="font-size:10px"><input type="checkbox" class="abs" data-type="composition"${absent('composition')}> abs.</label></div></td>
-        <td class="calc">—</td>
-        <td class="appr-cell small muted">—</td>
+        ${identite}
+        ${caseNote('devoir1', 'Devoir 1')}
+        ${caseNote('devoir2', 'Devoir 2')}
+        ${caseNote('composition', 'Composition')}
+        <td class="calc" data-label="Moyenne">—</td>
+        <td class="appr-cell small muted" data-label="Appréciation">—</td>
       </tr>`;
     }).join('');
 
     return `
       ${data.eleves.length ? '' : '<div class="notice warn">Aucun élève actif dans cette classe.</div>'}
-      <div class="table-wrap" style="max-height:66vh;overflow:auto">
-        <table class="grille" id="grille-notes" data-verrou="${verrou ? 1 : 0}" data-formule="${formule}" data-mode="${mode}"
+      ${data.eleves.length ? `<div class="mobile-saisie-intro">📱 <b>Une fiche par élève.</b> Entrez une note de 0 à 20 (virgule acceptée),
+        utilisez « Suivant » sur le clavier, puis touchez <b>Enregistrer les notes</b>.</div>` : ''}
+      <div class="table-wrap saisie-wrap">
+        <table class="grille grille-mode-${mode}" id="grille-notes" data-verrou="${verrou ? 1 : 0}"
+          data-formule="${esc(formule)}" data-mode="${mode}" data-epreuve="${data.epreuve?.id || ''}"
           data-classe="${data.classe ? data.classe.id : (data.epreuve ? data.epreuve.classe_id : '')}"
           data-matiere="${data.matiere ? data.matiere.id : (data.epreuve ? data.epreuve.matiere_id : '')}"
           data-periode="${data.periode ? data.periode.id : (data.epreuve ? data.epreuve.periode_id || '' : '')}">
@@ -2102,16 +2159,17 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
           <tbody>${rows}</tbody>
         </table>
       </div>
-      <div class="sticky-save">
-        <button class="btn btn-primary btn-sm" id="btn-save-notes" ${verrou || !data.eleves.length ? 'disabled' : ''}>💾 Enregistrer les notes</button>
-        <span class="muted small">Entrée = case suivante · Ctrl+S = enregistrer</span>
+      <div class="sticky-save saisie-save">
+        <button class="btn btn-primary btn-sm" id="btn-save-notes" disabled>💾 Enregistrer les notes</button>
+        <span class="saisie-aide muted small">Entrée = case suivante · Ctrl+S = enregistrer</span>
+        <span class="saisie-statut" id="saisie-statut" role="status" aria-live="polite">Aucune modification en attente</span>
         <span class="keystat" id="saisie-stat"></span>
       </div>
       <div class="notice info" style="margin-top:12px">
-        <b>Calcul :</b> ${formule === 'moy_co'
+        <b>Calcul :</b> ${formule === 'moy_co' || formule === 'tiers'
           ? 'moyenne de la matière = (moyenne des devoirs + composition) ÷ 2'
           : 'moyenne de la matière = (moyenne des devoirs + 2 × composition) ÷ 3'}.
-        Une absence est exclue du calcul. La note est facultative : seules les notes saisies comptent.
+        Une absence est exclue du calcul. Une note vide n’est pas enregistrée.
       </div>`;
   }
 
@@ -2127,22 +2185,43 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     return 'Très bien';
   }
 
+  /** La case « Absent » est dans la même colonne (période) ou la suivante (examen). */
+  function absenceDe(inp) {
+    return inp.closest('td')?.querySelector('.abs') || inp.closest('tr')?.querySelector('.abs');
+  }
+
+  function caseModifiee(inp) {
+    return inp.value.trim() !== inp.dataset.initial?.trim()
+      || (absenceDe(inp)?.checked ? '1' : '0') !== inp.dataset.absInitial;
+  }
+
+  function rafraichirCase(inp) {
+    const grid = inp.closest('#grille-notes');
+    const abs = absenceDe(inp)?.checked;
+    inp.disabled = grid.dataset.verrou === '1' || grid.dataset.saving === '1' || !!abs;
+    const erreur = !abs && !noteValide(inp.value);
+    inp.classList.toggle('error', erreur);
+    inp.classList.toggle('filled', !abs && inp.value.trim() !== '' && !erreur);
+    inp.setAttribute('aria-invalid', String(erreur));
+  }
+
   function majLigne(row) {
     if (!row) return;
-    const mode = row.closest('#grille-notes')?.dataset.mode;
-    const notes = $$('input.note', row).map(i => {
-      const abs = i.parentElement.querySelector('.abs');
-      return abs && abs.checked ? null : i.value;
-    });
+    const grid = row.closest('#grille-notes');
+    const notes = $$('input.note', row).map(i => absenceDe(i)?.checked ? null : i.value);
     const calc = row.querySelector('.calc');
     const appr = row.querySelector('.appr-cell');
-    if (mode === 'epreuve') {
+    if (row.querySelector('input.note.error')) {
+      if (calc) calc.textContent = '—';
+      if (appr) appr.textContent = 'Note à corriger';
+      return;
+    }
+    if (grid.dataset.mode === 'epreuve') {
       const v = notes[0];
-      if (calc) calc.textContent = v === '' || v == null ? '—' : fmt(Number(String(v).replace(',', '.')));
       if (appr) appr.textContent = v === '' || v == null ? '—' : appreciationTexte(String(v).replace(',', '.'));
       return;
     }
-    const m = moyenneCalc(notes);
+    const m = moyenneCalc(notes, grid.dataset.formule);
     if (calc) {
       calc.textContent = m == null ? '—' : fmt(m);
       calc.style.color = m == null ? '' : m < 10 ? '#dc2626' : m < 12 ? '#d97706' : '#0b6b4a';
@@ -2150,56 +2229,86 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     if (appr) appr.textContent = m == null ? '—' : appreciationTexte(m);
   }
 
-  function majProgression() {
-    const grid = $('#grille-notes');
-    if (!grid) return;
-    const total = $$('input.note', grid).length;
-    const faites = $$('input.note', grid).filter(i => i.value.trim() !== '').length;
-    const pct = total ? Math.round((faites / total) * 100) : 0;
+  function majEtatSaisie(grid) {
+    const cases = $$('input.note', grid);
+    const faites = cases.filter(i => absenceDe(i)?.checked || (i.value.trim() !== '' && noteValide(i.value))).length;
+    const pct = cases.length ? Math.round((faites / cases.length) * 100) : 0;
     const badge = $('#saisie-progress');
-    if (badge) badge.textContent = `${faites}/${total} notes · ${pct}%`;
+    if (badge) badge.textContent = `${faites}/${cases.length} évaluations · ${pct}%`;
     const stat = $('#saisie-stat');
-    if (stat) stat.textContent = `${faites} note(s) sur ${total} · ${pct}% complété`;
+    if (stat) stat.textContent = `${faites}/${cases.length} renseignées`;
+
+    const dirty = cases.some(caseModifiee);
+    grid.dataset.dirty = dirty ? '1' : '0';
+    const save = $('#btn-save-notes');
+    if (save) save.disabled = !dirty || grid.dataset.verrou === '1' || grid.dataset.saving === '1';
+    const etat = $('#saisie-statut');
+    if (etat) {
+      const texte = grid.dataset.saving === '1' ? 'Enregistrement en cours…'
+        : dirty ? '● Modifications non enregistrées' : '✓ Aucune modification en attente';
+      if (etat.textContent !== texte) etat.textContent = texte;
+      etat.classList.toggle('en-attente', dirty);
+    }
   }
 
-  async function enregistrerNotes(grid, mode) {
+  // Un seul raccourci, même si l'on change de matière plusieurs fois.
+  document.addEventListener('keydown', e => {
+    if (!((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's')) return;
+    const grid = $('#grille-notes');
+    if (!grid) return;
+    e.preventDefault();
+    enregistrerNotes(grid);
+  });
+
+  async function enregistrerNotes(grid) {
+    if (grid.dataset.verrou === '1' || grid.dataset.saving === '1' || grid.dataset.dirty !== '1') return;
+    // Le serveur ignore silencieusement les notes invalides : on les bloque
+    // avant tout envoi pour ne jamais annoncer une sauvegarde incomplète.
+    const erreur = $$('input.note', grid).find(i => !absenceDe(i)?.checked && !noteValide(i.value));
+    if (erreur) {
+      rafraichirCase(erreur);
+      erreur.focus();
+      toast('Corrigez cette note : entrez un nombre de 0 à 20.', 'err');
+      return;
+    }
     const btn = $('#btn-save-notes');
+    grid.dataset.saving = '1';
     if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
+    $$('input.abs', grid).forEach(i => { i.disabled = true; });
+    $$('input.note', grid).forEach(rafraichirCase);
+    majEtatSaisie(grid);
     try {
-      if (mode === 'epreuve') {
-        const q = S.query;
-        const notes = $$('tr[data-eleve]', grid).map(tr => {
-          const inp = tr.querySelector('input.note');
-          const abs = tr.querySelector('.abs');
-          return { eleve_id: Number(tr.dataset.eleve), valeur: abs.checked ? null : inp.value.trim(), absent: abs.checked };
-        });
-        const res = await api('/api/notes/saisie', { method: 'POST', body: { epreuve_id: Number(q.epreuve_id), notes } });
-        toast(`${res.saved} note(s) enregistrée(s)`);
+      if (grid.dataset.mode === 'epreuve') {
+        const notes = $$('input.note', grid).filter(caseModifiee).map(inp => ({
+          eleve_id: Number(inp.closest('tr').dataset.eleve),
+          valeur: absenceDe(inp).checked ? null : inp.value.trim(), absent: absenceDe(inp).checked
+        }));
+        await api('/api/notes/saisie', { method: 'POST', body: {
+          epreuve_id: Number(grid.dataset.epreuve), notes
+        } });
       } else {
-        const types = ['devoir1', 'devoir2', 'composition'];
-        const existantes = new Set($$('input.note', grid).map(i => i.dataset.type ? (i.dataset.eval ? i.dataset.type : null) : null).filter(Boolean));
-        let total = 0;
-        for (const type of types) {
-          const inputs = $$(`input.note[data-type="${type}"]`, grid);
-          const notes = inputs.map(inp => {
-            const tr = inp.closest('tr');
-            const abs = tr.querySelector(`.abs[data-type="${type}"]`);
-            return { eleve_id: Number(tr.dataset.eleve), valeur: abs.checked ? null : inp.value.trim(), absent: abs.checked };
-          });
-          const rempli = notes.some(n => n.absent || (n.valeur !== '' && n.valeur !== null));
-          if (!rempli && !existantes.has(type)) continue;
-          const res = await api('/api/notes/saisie', {
-            method: 'POST',
-            body: { classe_id: Number(grid.dataset.classe), matiere_id: Number(grid.dataset.matiere), periode_id: Number(grid.dataset.periode), type, notes }
-          });
-          total += res.saved;
+        for (const type of ['devoir1', 'devoir2', 'composition']) {
+          const notes = $$(`input.note[data-type="${type}"]`, grid).filter(caseModifiee).map(inp => ({
+            eleve_id: Number(inp.closest('tr').dataset.eleve),
+            valeur: absenceDe(inp).checked ? null : inp.value.trim(), absent: absenceDe(inp).checked
+          }));
+          if (!notes.length) continue;
+          await api('/api/notes/saisie', { method: 'POST', body: {
+            classe_id: Number(grid.dataset.classe), matiere_id: Number(grid.dataset.matiere),
+            periode_id: Number(grid.dataset.periode), type, notes
+          } });
         }
-        toast(`${total} note(s) enregistrée(s)`);
       }
+      grid.dataset.dirty = '0';
+      toast('Notes enregistrées');
       await renderRoute();
     } catch (e) {
-      toast(e.message, 'err');
-      if (btn) { btn.disabled = false; btn.textContent = '💾 Enregistrer les notes'; }
+      grid.dataset.saving = '0';
+      $$('input.abs', grid).forEach(i => { i.disabled = grid.dataset.verrou === '1'; });
+      $$('input.note', grid).forEach(rafraichirCase);
+      majEtatSaisie(grid);
+      toast(`${e.message}. Vos saisies restent à l’écran : réessayez.`, 'err', 6000);
+      if (btn) btn.textContent = '💾 Enregistrer les notes';
     }
   }
 
@@ -3464,7 +3573,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
             <div class="panel">
               <div class="panel-head"><div><h2>Calcul des moyennes</h2><div class="sub">Formule appliquée aux bulletins de toutes les classes</div></div></div>
               <input type="hidden" name="formule_moyenne" id="formule-input" value="${esc(e.formule_moyenne || 'co2')}">
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="formules-choix">
                 <label class="plan" style="padding:14px;cursor:pointer;border-color:${(e.formule_moyenne || 'co2') === 'co2' ? 'var(--vert)' : 'var(--bord)'}" data-formule-card="co2">
                   <div style="display:flex;gap:8px;align-items:center"><input type="radio" name="fm" value="co2" ${(e.formule_moyenne || 'co2') === 'co2' ? 'checked' : ''}><b style="font-size:13.5px">Devoirs + 2 × Composition</b></div>
                   <div class="small muted" style="margin-top:6px;padding-left:22px">Moyenne = (moyenne des devoirs + 2 × composition) ÷ 3. Formule classique la plus répandue.</div>

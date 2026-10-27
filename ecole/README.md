@@ -82,8 +82,12 @@ démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimest
 - Connexion à distance depuis n'importe quel appareil.
 - Accès **limité à ses classes et matières** (contrôlé côté serveur).
 - Saisie des devoirs et compositions avec calcul de moyenne en direct, navigation clavier (`Entrée`),
-  enregistrement groupé, verrouillage si la période est clôturée.
-- Saisie des épreuves d'examen blanc.
+  enregistrement des seules cases modifiées, verrouillage si la période est clôturée.
+- Sur **Android**, l'écran « Saisie des notes » présente **une fiche par élève**, avec de grands champs
+  numériques et les absences à cocher ; sur **ordinateur**, il reste un tableau. Choisissez la classe,
+  la matière et la période, saisissez 0 à 20 (virgule ou point acceptés) et touchez **« Enregistrer les notes »**.
+  Un indicateur signale les modifications en attente et prévient avant de quitter sans enregistrer.
+- Saisie des épreuves d'examen blanc, avec la même présentation adaptée au téléphone.
 - Consultation des bulletins et statistiques de ses classes, impression.
 
 ### Élève / parent
@@ -130,9 +134,10 @@ moment de la confirmation (matricule ou même nom et prénom déjà présents da
 le même fichier une seconde fois ne réinscrit pas ses élèves. Les octets du PDF et les images OCR ne sont pas
 conservés par l'application.
 
-L'OCR fonctionne avec les dépendances locales installées par `npm ci` dans `ecole/` ; si le site est mis à
-jour sur un hébergement existant, relancer `npm ci` **dans le dossier `~/app` après la sauvegarde de la base**,
-puis redémarrer le site pour activer cette version.
+L'OCR fonctionne avec les dépendances locales installées depuis `package-lock.json`. Si une future version
+modifie ces dépendances, sauvegardez la base avant de les mettre à jour. Sur alwaysdata, **si `npm ci` affiche
+`Killed`, ne le relancez pas** : utilisez l'installateur léger décrit dans `HEBERGEMENT.md` pour restaurer
+`node_modules` avant tout redémarrage. La présente adaptation mobile ne change aucune dépendance.
 
 ### Décision finale et changement d'année
 

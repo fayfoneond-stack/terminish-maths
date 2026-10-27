@@ -143,23 +143,34 @@
     });
   }
 
+  // Les trois positions restent fixes : une composition seule ne doit pas
+  // devenir un « devoir » quand les cases précédentes sont vides ou absentes.
   function moyenneCalc(notes, formule = 'co2') {
     const num = (v) => {
-      if (v === null || v === undefined || v === '') return null;
-      const n = Number(String(v).replace(',', '.'));
-      return Number.isNaN(n) ? null : n;
+      if (v === null || v === undefined || String(v).trim() === '') return null;
+      const n = Number(String(v).trim().replace(',', '.'));
+      return Number.isFinite(n) && n >= 0 && n <= 20 ? n : null;
     };
-    const d = notes.map(num).filter(n => n !== null);
-    const devoirs = d.slice(0, 2);
-    const co = d[2] !== undefined ? d[2] : null;
+    const [d1, d2, co] = notes.map(num);
+    const devoirs = [d1, d2].filter(n => n !== null);
     const dev = devoirs.length ? devoirs.reduce((a, b) => a + b, 0) / devoirs.length : null;
-    if (dev === null && co === null) return null;
-    if (formule === 'moy_co') {
-      if (dev !== null && co !== null) return (dev + co) / 2;
+    if (dev === null && co == null) return null;
+    if (formule === 'moy_co' || formule === 'tiers') {
+      if (dev !== null && co != null) return (dev + co) / 2;
       return dev !== null ? dev : co;
     }
-    if (dev !== null && co !== null) return (dev + 2 * co) / 3;
+    if (dev !== null && co != null) return (dev + 2 * co) / 3;
     return dev !== null ? dev : co;
+  }
+
+  // Chrome Android propose un clavier numérique ; une virgule ou un point
+  // sont acceptés, mais « 20,5 », « NaN » ou « 1e1 » ne sont pas des notes.
+  function noteValide(valeur) {
+    const texte = String(valeur ?? '').trim();
+    if (texte === '') return true; // la note peut rester vide
+    if (!/^\d+(?:[.,]\d+)?$/.test(texte)) return false;
+    const n = Number(texte.replace(',', '.'));
+    return Number.isFinite(n) && n >= 0 && n <= 20;
   }
 
   window.api = api;
@@ -177,4 +188,5 @@
   window.download = download;
   window.readImage = readImage;
   window.moyenneCalc = moyenneCalc;
+  window.noteValide = noteValide;
 })();

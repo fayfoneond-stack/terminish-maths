@@ -181,8 +181,11 @@ Ne collez **aucun secret dans Git, dans un chat ou dans une capture d'écran** ;
 avec `chmod 600 ~/app/.env`. Le mot de passe habituel du compte Gmail ne convient pas. Le script
 `deploy/alwaysdata/installer.sh` conserve ces réglages si vous le relancez.
 
-Après avoir copié la nouvelle version : `cd ~/app && npm ci --omit=dev --no-audit --no-fund`, puis
-**Web → Sites → Redémarrer**. Testez depuis la page de connexion avec un chef dont l'adresse est bien
+Après avoir copié une version qui change les dépendances, vérifiez qu'elles sont présentes ; si
+alwaysdata interrompt npm, utilisez l'installateur léger décrit en **4.4** au lieu de relancer `npm ci`.
+La mise à jour de la seule interface mobile ne change aucune dépendance et ne nécessite pas ce traitement.
+Après configuration de Gmail dans `.env`, faites **Web → Sites → Redémarrer**. Testez depuis la page
+de connexion avec un chef dont l'adresse est bien
 renseignée ; vérifiez sa boîte de réception et les indésirables. Si rien n'arrive, consultez **Web → Sites
 → Journaux** : le serveur peut indiquer un échec SMTP sans afficher le secret ni le lien. L'envoi réel
 ne peut pas être garanti avant ce test sur l'hébergement. Tant que Gmail n'est pas prêt, le formulaire
