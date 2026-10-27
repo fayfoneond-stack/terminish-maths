@@ -69,8 +69,12 @@ démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimest
 - Examens blancs : planification des épreuves (date, heure, durée, salle, coefficient), saisie des notes,
   résultats comparables aux bulletins de période. Un accès direct à l'import PDF permet d'inscrire les élèves
   dans leurs classes avant de saisir les épreuves.
+- **Décision finale** : seuil réglable, moyenne annuelle sur les trois trimestres ou deux semestres,
+  aperçu élève par élève, confirmation des passages 6ème → 5ème, 5ème → 4ème, 4ème → 3ème et
+  2nde → 1ère (choix de la division/série), historique et ouverture de l'année suivante.
 - Paramètres : identité, **logo importé**, titre du chef, année scolaire, devise, formule de calcul des
-  moyennes, ouverture/clôture des périodes, changement de mot de passe.
+  moyennes, ouverture/clôture des périodes, changement de mot de passe. Une fois des résultats saisis,
+  l'année ne se change plus ici : utilisez « Décision finale » pour la suivante.
 - Abonnement : formule, échéance, **paiement par Mixx by Yas ou Moov Money**, paiement en ligne
   (CinetPay/PayDunya si activés), historique et **reçus PDF**.
 
@@ -123,6 +127,43 @@ conservés par l'application.
 L'OCR fonctionne avec les dépendances locales installées par `npm ci` dans `ecole/` ; si le site est mis à
 jour sur un hébergement existant, relancer `npm ci` **dans le dossier `~/app` après la sauvegarde de la base**,
 puis redémarrer le site pour activer cette version.
+
+### Décision finale et changement d'année
+
+**Chemin : Évaluations → Décision finale** (également accessible depuis **Résultats → Décision finale**).
+Ce parcours est réservé au chef d'établissement. Faites une **sauvegarde SQLite avant la mise à jour de
+l'application**, puis vérifiez que les listes et les notes sont complètes avant toute confirmation.
+
+1. Dans **Paramètres → Périodes & verrouillage**, clôturez les trois trimestres du collège et/ou les deux
+   semestres du lycée, puis enregistrez. L'aperçu reste possible avant cette clôture, pas la validation.
+2. Dans **Décision finale**, choisissez la classe (6ème, 5ème, 4ème ou 2nde), la **classe supérieure précise**
+   (division/série) et le **seuil de passage sur 20** (10 par défaut, modifiable). Cliquez sur **Voir l'aperçu** :
+   chaque élève apparaît avec ses moyennes de période, sa moyenne annuelle et la décision envisagée.
+   Si plusieurs divisions/séries existent, choisissez **la classe supérieure de chaque admis** dans le tableau
+   (par exemple 1ère A pour l'un et 1ère D pour un autre) : l'aperçu se recalcule.
+3. Cliquez sur **Confirmer le passage** et acceptez la confirmation. Seuls les admis sont déplacés ; les autres
+   restent dans leur classe. Recommencez pour chaque classe concernée, y compris les divisions parallèles.
+   Un élève sans moyenne pour **au moins une** période est « Période manquante » et ne passe pas. Si les notes
+   ou l'effectif changent entre aperçu et validation, il faut demander un nouvel aperçu. Une décision déjà
+   validée peut être annulée *avant l'ouverture de la nouvelle année* si la classe des élèves n'a pas changé
+   et qu'aucune nouvelle note n'a été enregistrée dans la classe supérieure.
+4. Une fois toutes les décisions validées et toutes les périodes clôturées, cliquez sur **Ouvrir l'année
+   suivante** : de nouvelles périodes sont créées, les notes de l'année terminée ne sont ni effacées ni
+   copiées. Les bulletins et classements antérieurs sont accessibles en sélectionnant leur **année dans
+   Bulletins ou Résultats** ; les décisions se retrouvent dans **Décision finale → Décisions enregistrées**.
+   Après l'ouverture, une ancienne décision ne peut plus être annulée et les anciennes notes sont protégées.
+
+**Calcul :** moyenne annuelle = moyenne arithmétique des **3 moyennes trimestrielles** (collège) ou des
+**2 moyennes semestrielles** (lycée), calculées à partir des notes ordinaires selon la formule de l'établissement.
+Le seuil est inclusif (`moyenne ≥ seuil`), avec deux décimales au plus. Il n'y a pas d'arrondi à l'entier,
+ni de passage automatique si une moyenne manque. Les examens blancs ne participent pas à ce calcul.
+
+À la première validation, l'application conserve l'effectif, la formule, les intitulés de classes et les
+matières/coefficient(s) de l'année : les bulletins anciens gardent leurs moyennes lorsque ces réglages
+changent **l'année suivante**. Tant qu'une décision est en cours pour l'année présente, la formule et la
+structure des classes/matières sont verrouillées. L'historique des décisions garde toujours la moyenne
+annuelle, le seuil et la destination effectivement validés. Ne supprimez pas une base SQLite ou un élève
+doté de résultats : privilégiez l'archivage.
 
 ---
 

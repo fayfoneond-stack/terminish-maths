@@ -15,6 +15,8 @@ const { genererRecuPDF } = require('./recu');
 const { genererFusionPDF } = require('./fusion-pdf');
 const { analyserListePDF, MAX_OCTETS } = require('./liste-pdf');
 const { verifierListe, importerListe } = require('./import-eleves-pdf');
+const { optionsPassage, preparerPassage, validerPassage, annulerPassage,
+  ouvrirAnneeSuivante, anneeSuivante, memoriserInscription } = require('./passage');
 const cloudinary = require('./cloudinary');
 const { renderBulletin, renderBulletinBatch, renderExamen } = require('./print');
 
@@ -308,20 +310,43 @@ app.get('/api/etablissement', auth, (req, res) => {
   res.json(etab);
 });
 
+function decisionEnCours(ecoleId) {
+  const annee = db.prepare('SELECT annee_scolaire FROM etablissements WHERE id = ?').get(ecoleId)?.annee_scolaire;
+  return !!db.prepare(`SELECT 1 FROM decisions_finales WHERE ecole_id = ?
+    AND annee_scolaire = ? LIMIT 1`).get(ecoleId, annee);
+}
 app.put('/api/etablissement', auth, directionOnly, async (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
+  const corps = req.body || {};
+  const identiteEcole = db.prepare('SELECT annee_scolaire, formule_moyenne FROM etablissements WHERE id = ?').get(id);
+  const anneeActuelle = identiteEcole?.annee_scolaire;
+  const anneeDemandee = corps.annee_scolaire;
+  if (corps.formule_moyenne !== undefined && corps.formule_moyenne !== identiteEcole.formule_moyenne && decisionEnCours(id)) {
+    return res.status(409).json({ error: 'La décision finale a commencé : ne modifiez plus la formule de cette année.' });
+  }
+  const changerAnnee = anneeDemandee !== undefined && anneeDemandee !== anneeActuelle;
+  if (changerAnnee) {
+    try { anneeSuivante(anneeDemandee); }
+    catch (e) { return res.status(400).json({ error: e.message }); }
+    const travail = db.prepare('SELECT 1 FROM evaluations WHERE ecole_id = ? LIMIT 1').get(id);
+    const bulletins = db.prepare('SELECT 1 FROM bulletins WHERE ecole_id = ? LIMIT 1').get(id);
+    const histoire = db.prepare('SELECT 1 FROM inscriptions_historiques WHERE ecole_id = ? LIMIT 1').get(id);
+    if (travail || bulletins || histoire) return res.status(409).json({
+      error: 'Des résultats existent déjà. Pour conserver les bulletins, ouvrez l’année suivante dans Résultats → Décision finale.'
+    });
+  }
   const allowed = ['nom', 'type', 'ville', 'adresse', 'bp', 'telephone', 'email', 'devise', 'logo',
     'chef_nom', 'chef_titre', 'annee_scolaire', 'formule_moyenne', 'tutelle'];
   const sets = [], vals = [];
   allowed.forEach(k => {
-    if (req.body[k] !== undefined) { sets.push(`${k} = ?`); vals.push(req.body[k]); }
+    if (corps[k] !== undefined) { sets.push(`${k} = ?`); vals.push(corps[k]); }
   });
 
   // Miroir Cloudinary (facultatif) : la data URL reste enregistrée en base,
   // l'URL du CDN n'est qu'un bonus pour l'affichage. Tout échec est silencieux.
   let avertissement = null;
-  if (req.body.logo !== undefined) {
-    const logo = String(req.body.logo || '');
+  if (corps.logo !== undefined) {
+    const logo = String(corps.logo || '');
     if (!logo) {
       sets.push('logo_url = ?', 'logo_public_id = ?'); vals.push(null, null);
     } else if (cloudinary.config().actif) {
@@ -339,7 +364,23 @@ app.put('/api/etablissement', auth, directionOnly, async (req, res) => {
   }
 
   if (!sets.length) return res.json({ ok: true });
-  db.prepare(`UPDATE etablissements SET ${sets.join(', ')} WHERE id = ?`).run(...vals, id);
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    db.prepare(`UPDATE etablissements SET ${sets.join(', ')} WHERE id = ?`).run(...vals, id);
+    // Avant les toutes premières notes, on peut corriger l'année affichée ;
+    // les périodes initiales doivent suivre ce changement.
+    if (changerAnnee) {
+      db.prepare('UPDATE periodes SET annee_scolaire = ? WHERE ecole_id = ? AND annee_scolaire = ?')
+        .run(anneeDemandee, id, anneeActuelle);
+      db.prepare('UPDATE examens SET annee_scolaire = ? WHERE ecole_id = ? AND annee_scolaire = ?')
+        .run(anneeDemandee, id, anneeActuelle);
+      db.prepare('UPDATE classes SET annee = ? WHERE ecole_id = ?').run(anneeDemandee, id);
+    }
+    db.exec('COMMIT');
+  } catch (e) {
+    db.exec('ROLLBACK');
+    return res.status(500).json({ error: 'Impossible d’enregistrer les paramètres de l’établissement.' });
+  }
   res.json({
     ok: true,
     avertissement,
@@ -353,12 +394,23 @@ app.put('/api/etablissement', auth, directionOnly, async (req, res) => {
 /* ------------------------------------------------------------------ */
 app.get('/api/periodes', auth, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
-  res.json(db.prepare('SELECT * FROM periodes WHERE ecole_id = ? ORDER BY cycle DESC, ordre').all(id));
+  // Les anciens trimestres/semestres restent consultables dans les Bulletins,
+  // mais n'apparaissent jamais dans les menus de saisie et de paramètres.
+  const archives = req.query.historique === '1' && ['directeur', 'enseignant', 'super_admin'].includes(req.user.role);
+  res.json(db.prepare(`SELECT p.* FROM periodes p JOIN etablissements e ON e.id = p.ecole_id
+    WHERE p.ecole_id = ? AND (? = 1 OR p.annee_scolaire = e.annee_scolaire)
+    ORDER BY p.annee_scolaire DESC, p.cycle DESC, p.ordre`).all(id, archives ? 1 : 0));
 });
 app.put('/api/periodes/:id', auth, directionOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
   const p = db.prepare('SELECT * FROM periodes WHERE id = ? AND ecole_id = ?').get(req.params.id, id);
   if (!p) return res.status(404).json({ error: 'Période introuvable' });
+  const annee = db.prepare('SELECT annee_scolaire FROM etablissements WHERE id = ?').get(id).annee_scolaire;
+  if (p.annee_scolaire !== annee) return res.status(409).json({ error: 'Une période archivée ne peut pas être modifiée.' });
+  if (db.prepare(`SELECT 1 FROM decisions_finales d JOIN classes c ON c.id = d.classe_origine_id
+    WHERE d.ecole_id = ? AND d.annee_scolaire = ? AND c.cycle = ? LIMIT 1`).get(id, annee, p.cycle)) {
+    return res.status(409).json({ error: 'Une décision finale a été validée pour ce cycle : ses périodes sont protégées.' });
+  }
   const { statut, date_debut, date_fin, libelle } = req.body || {};
   db.prepare('UPDATE periodes SET statut = ?, date_debut = ?, date_fin = ?, libelle = ? WHERE id = ?')
     .run(statut ?? p.statut, date_debut ?? p.date_debut, date_fin ?? p.date_fin, libelle ?? p.libelle, p.id);
@@ -404,6 +456,9 @@ app.put('/api/matieres/:id', auth, directionOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
   const m = db.prepare('SELECT * FROM matieres WHERE id = ? AND ecole_id = ?').get(req.params.id, id);
   if (!m) return res.status(404).json({ error: 'Matière introuvable' });
+  if (decisionEnCours(id)) return res.status(409).json({
+    error: 'Une décision finale a commencé : modifiez les matières après l’ouverture de la nouvelle année.'
+  });
   const { nom, code, groupe, nom_college } = req.body || {};
   // Une chaîne vide est une réponse volontaire : « même nom qu'au lycée ».
   const college = nom_college === undefined ? m.nom_college : String(nom_college).trim();
@@ -413,6 +468,11 @@ app.put('/api/matieres/:id', auth, directionOnly, (req, res) => {
 });
 app.delete('/api/matieres/:id', auth, directionOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
+  if (db.prepare('SELECT 1 FROM evaluations WHERE matiere_id = ? AND ecole_id = ? LIMIT 1')
+    .get(req.params.id, id) || db.prepare('SELECT 1 FROM matieres_historiques WHERE matiere_id = ? AND ecole_id = ? LIMIT 1')
+      .get(req.params.id, id)) return res.status(409).json({
+      error: 'Cette matière figure dans des résultats anciens : ne la supprimez pas, afin de conserver les bulletins.'
+    });
   db.prepare('DELETE FROM matieres WHERE id = ? AND ecole_id = ?').run(req.params.id, id);
   res.json({ ok: true });
 });
@@ -468,6 +528,9 @@ app.put('/api/classes/:id', auth, directionOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
   const c = db.prepare('SELECT * FROM classes WHERE id = ? AND ecole_id = ?').get(req.params.id, id);
   if (!c) return res.status(404).json({ error: 'Classe introuvable' });
+  if (decisionEnCours(id)) return res.status(409).json({
+    error: 'Une décision finale a commencé : terminez l’année avant de modifier les classes et coefficients.'
+  });
   const { nom, niveau, cycle, serie, titulaire, titulaire_id, matieres } = req.body || {};
   const profId = titulaire_id === undefined ? undefined : verifierTitulaire(id, titulaire_id);
   db.prepare('UPDATE classes SET nom = ?, niveau = ?, cycle = ?, serie = ?, titulaire = ?, titulaire_id = ? WHERE id = ?')
@@ -484,10 +547,75 @@ app.delete('/api/classes/:id', auth, directionOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
   const c = db.prepare('SELECT * FROM classes WHERE id = ? AND ecole_id = ?').get(req.params.id, id);
   if (!c) return res.status(404).json({ error: 'Classe introuvable' });
-  const eff = db.prepare('SELECT COUNT(*) AS n FROM eleves WHERE classe_id = ?').get(c.id).n;
+  const eff = db.prepare("SELECT COUNT(*) AS n FROM eleves WHERE classe_id = ?").get(c.id).n;
   if (eff > 0) return res.status(400).json({ error: `Impossible : ${eff} élève(s) inscrit(s) dans cette classe.` });
+  const souvenir = db.prepare(`SELECT 1 FROM inscriptions_historiques WHERE classe_id = ? LIMIT 1`).get(c.id);
+  const configuration = db.prepare('SELECT 1 FROM classes_historiques WHERE classe_id = ? LIMIT 1').get(c.id);
+  const evaluations = db.prepare('SELECT 1 FROM evaluations WHERE classe_id = ? LIMIT 1').get(c.id);
+  if (souvenir || configuration || evaluations) return res.status(409).json({
+    error: 'Cette classe possède des résultats conservés : ne la supprimez pas.'
+  });
   db.prepare('DELETE FROM classes WHERE id = ?').run(c.id);
   res.json({ ok: true });
+});
+
+/* ------------------------------------------------------------------ */
+/* Décision finale : passage des 6e, 5e, 4e et 2nde                    */
+/* ------------------------------------------------------------------ */
+function erreurPassage(res, e) {
+  if (!e.status) console.error('Décision finale :', e);
+  res.status(e.status || 500).json({ error: e.status ? e.message : 'La décision finale n’a pas pu être enregistrée.' });
+}
+app.get('/api/passages/options', auth, directionOnly, (req, res) => {
+  const id = ecoleOf(req, res); if (!id) return;
+  try { res.json(optionsPassage(db, id)); } catch (e) { erreurPassage(res, e); }
+});
+app.get('/api/passages/apercu', auth, directionOnly, (req, res) => {
+  const id = ecoleOf(req, res); if (!id) return;
+  try { res.json(preparerPassage(db, id, req.query)); } catch (e) { erreurPassage(res, e); }
+});
+app.post('/api/passages/apercu', auth, directionOnly, (req, res) => {
+  const id = ecoleOf(req, res); if (!id) return;
+  try { res.json(preparerPassage(db, id, req.body || {})); } catch (e) { erreurPassage(res, e); }
+});
+app.get('/api/passages/historique', auth, directionOnly, (req, res) => {
+  const id = ecoleOf(req, res); if (!id) return;
+  const annee = req.query.annee_scolaire ||
+    db.prepare('SELECT annee_scolaire FROM etablissements WHERE id = ?').get(id)?.annee_scolaire;
+  if (!/^\d{4}-\d{4}$/.test(annee)) return res.status(400).json({ error: 'Année scolaire invalide.' });
+  const classeId = req.query.classe_id ? Number(req.query.classe_id) : null;
+  if (classeId !== null && (!Number.isSafeInteger(classeId) ||
+      !db.prepare('SELECT 1 FROM classes WHERE id = ? AND ecole_id = ?').get(classeId, id))) {
+    return res.status(400).json({ error: 'Classe invalide.' });
+  }
+  res.json(db.prepare(`SELECT d.*, e.nom, e.prenom, e.matricule,
+      COALESCE(ho.nom, origine.nom) AS classe_origine_nom,
+      COALESCE(hc.nom, cible.nom) AS classe_cible_nom
+    FROM decisions_finales d JOIN eleves e ON e.id = d.eleve_id
+    JOIN classes origine ON origine.id = d.classe_origine_id
+    LEFT JOIN classes cible ON cible.id = d.classe_cible_id
+    LEFT JOIN classes_historiques ho ON ho.ecole_id = d.ecole_id
+      AND ho.annee_scolaire = d.annee_scolaire AND ho.classe_id = d.classe_origine_id
+    LEFT JOIN classes_historiques hc ON hc.ecole_id = d.ecole_id
+      AND hc.annee_scolaire = d.annee_scolaire AND hc.classe_id = d.classe_cible_id
+    WHERE d.ecole_id = ? AND d.annee_scolaire = ?
+      AND (? IS NULL OR d.classe_origine_id = ?)
+    ORDER BY classe_origine_nom, e.nom, e.prenom`).all(id, annee, classeId, classeId));
+});
+app.post('/api/passages/valider', auth, directionOnly, (req, res) => {
+  const id = ecoleOf(req, res); if (!id) return;
+  try { res.json(validerPassage(db, id, req.body || {}, req.user.id, now)); }
+  catch (e) { erreurPassage(res, e); }
+});
+app.post('/api/passages/annuler', auth, directionOnly, (req, res) => {
+  const id = ecoleOf(req, res); if (!id) return;
+  try { res.json(annulerPassage(db, id, req.body?.classe_id)); }
+  catch (e) { erreurPassage(res, e); }
+});
+app.post('/api/passages/annee-suivante', auth, directionOnly, (req, res) => {
+  const id = ecoleOf(req, res); if (!id) return;
+  try { res.json(ouvrirAnneeSuivante(db, id, req.body?.annee_scolaire)); }
+  catch (e) { erreurPassage(res, e); }
 });
 
 /* ------------------------------------------------------------------ */
@@ -524,15 +652,21 @@ app.post('/api/eleves', auth, directionOnly, (req, res) => {
     const num = last ? Number(last.matricule.slice(4)) + 1 : 1;
     mat = `${annee}${String(num).padStart(4, '0')}`;
   }
+  db.exec('BEGIN IMMEDIATE');
   try {
     const info = db.prepare(`INSERT INTO eleves (ecole_id, matricule, nom, prenom, sexe, date_naissance, lieu_naissance,
       classe_id, tuteur_nom, tuteur_tel, statut, cree_le) VALUES (?,?,?,?,?,?,?,?,?,?, 'actif', ?)`)
       .run(id, mat, String(nom).trim().toUpperCase(), String(prenom || '').trim(), ['M', 'F'].includes(sexe) ? sexe : '',
         date_naissance || '', lieu_naissance || '',
         classe_id ? Number(classe_id) : null, tuteur_nom || '', tuteur_tel || '', now());
-    res.json({ ok: true, id: Number(info.lastInsertRowid), matricule: mat });
+    const eleveId = Number(info.lastInsertRowid);
+    memoriserInscription(db, id, eleveId, classe_id ? Number(classe_id) : null);
+    db.exec('COMMIT');
+    res.json({ ok: true, id: eleveId, matricule: mat });
   } catch (e) {
-    res.status(400).json({ error: 'Matricule déjà utilisé dans cet établissement' });
+    db.exec('ROLLBACK');
+    res.status(400).json({ error: /UNIQUE constraint failed/.test(e.message)
+      ? 'Matricule déjà utilisé dans cet établissement' : 'Inscription impossible : vérifiez les données de l’élève.' });
   }
 });
 app.put('/api/eleves/:id', auth, directionOnly, (req, res) => {
@@ -541,19 +675,42 @@ app.put('/api/eleves/:id', auth, directionOnly, (req, res) => {
   if (!el) return res.status(404).json({ error: 'Élève introuvable' });
   const b = req.body || {};
   const classeCible = b.classe_id === '' || b.classe_id === undefined ? (b.classe_id === '' ? null : el.classe_id) : Number(b.classe_id) || null;
-  db.prepare(`UPDATE eleves SET nom = ?, prenom = ?, sexe = ?, date_naissance = ?, lieu_naissance = ?, classe_id = ?,
-    tuteur_nom = ?, tuteur_tel = ?, statut = ? WHERE id = ?`).run(
-    (b.nom ?? el.nom).toUpperCase(), b.prenom ?? el.prenom, b.sexe ?? el.sexe, b.date_naissance ?? el.date_naissance,
-    b.lieu_naissance ?? el.lieu_naissance, classeCible, b.tuteur_nom ?? el.tuteur_nom,
-    b.tuteur_tel ?? el.tuteur_tel, b.statut ?? el.statut, el.id);
-  res.json({ ok: true });
+  if (classeCible && !db.prepare('SELECT 1 FROM classes WHERE id = ? AND ecole_id = ?').get(classeCible, id))
+    return res.status(400).json({ error: 'Classe invalide dans cet établissement.' });
+  const annee = db.prepare('SELECT annee_scolaire FROM etablissements WHERE id = ?').get(id).annee_scolaire;
+  const inscription = db.prepare(`SELECT classe_id FROM inscriptions_historiques
+    WHERE ecole_id = ? AND annee_scolaire = ? AND eleve_id = ?`).get(id, annee, el.id);
+  if (inscription && classeCible !== el.classe_id) return res.status(409).json({
+    error: 'Une décision finale a déjà commencé cette année. Annulez les passages ou ouvrez l’année suivante avant de déplacer manuellement cet élève.'
+  });
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    db.prepare(`UPDATE eleves SET nom = ?, prenom = ?, sexe = ?, date_naissance = ?, lieu_naissance = ?, classe_id = ?,
+      tuteur_nom = ?, tuteur_tel = ?, statut = ? WHERE id = ?`).run(
+      (b.nom ?? el.nom).toUpperCase(), b.prenom ?? el.prenom, b.sexe ?? el.sexe, b.date_naissance ?? el.date_naissance,
+      b.lieu_naissance ?? el.lieu_naissance, classeCible, b.tuteur_nom ?? el.tuteur_nom,
+      b.tuteur_tel ?? el.tuteur_tel, b.statut ?? el.statut, el.id);
+    if ((b.statut ?? el.statut) === 'actif') memoriserInscription(db, id, el.id, classeCible);
+    db.exec('COMMIT');
+    res.json({ ok: true });
+  } catch (e) {
+    db.exec('ROLLBACK');
+    res.status(500).json({ error: 'Impossible d’enregistrer le dossier de cet élève.' });
+  }
 });
 app.delete('/api/eleves/:id', auth, directionOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
   const el = db.prepare('SELECT * FROM eleves WHERE id = ? AND ecole_id = ?').get(req.params.id, id);
   if (!el) return res.status(404).json({ error: 'Élève introuvable' });
-  if (req.query.definitif === '1') db.prepare('DELETE FROM eleves WHERE id = ?').run(el.id);
-  else db.prepare("UPDATE eleves SET statut = 'inactif' WHERE id = ?").run(el.id);
+  if (req.query.definitif === '1') {
+    const historique = db.prepare('SELECT 1 FROM inscriptions_historiques WHERE eleve_id = ? LIMIT 1').get(el.id);
+    const notes = db.prepare('SELECT 1 FROM notes WHERE eleve_id = ? LIMIT 1').get(el.id);
+    const decisions = db.prepare('SELECT 1 FROM decisions_finales WHERE eleve_id = ? LIMIT 1').get(el.id);
+    if (historique || notes || decisions) return res.status(409).json({
+      error: 'Ce dossier a des résultats ou une décision finale : archivez l’élève plutôt que de supprimer son historique.'
+    });
+    db.prepare('DELETE FROM eleves WHERE id = ?').run(el.id);
+  } else db.prepare("UPDATE eleves SET statut = 'inactif' WHERE id = ?").run(el.id);
   res.json({ ok: true });
 });
 app.post('/api/eleves/import', auth, directionOnly, (req, res) => {
@@ -579,12 +736,17 @@ app.post('/api/eleves/import', auth, directionOnly, (req, res) => {
       }
       num++;
       const matricule = `${annee}${String(num).padStart(4, '0')}`;
-      db.prepare(`INSERT INTO eleves (ecole_id, matricule, nom, prenom, sexe, date_naissance, lieu_naissance,
-        classe_id, tuteur_nom, tuteur_tel, statut, cree_le) VALUES (?,?,?,?,?,?,?,?,?,?, 'actif', ?)`)
-        .run(ecoleId, matricule, nom, prenom, /^f/i.test(l.sexe || '') ? 'F' : /^m/i.test(l.sexe || '') ? 'M' : '',
-          l.date_naissance || '', l.lieu_naissance || '', classeCible ? Number(classeCible) : null,
-          l.tuteur_nom || '', l.tuteur_tel || '', now());
-      crees.push({ nom, prenom, matricule });
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        const info = db.prepare(`INSERT INTO eleves (ecole_id, matricule, nom, prenom, sexe, date_naissance, lieu_naissance,
+          classe_id, tuteur_nom, tuteur_tel, statut, cree_le) VALUES (?,?,?,?,?,?,?,?,?,?, 'actif', ?)`)
+          .run(ecoleId, matricule, nom, prenom, /^f/i.test(l.sexe || '') ? 'F' : /^m/i.test(l.sexe || '') ? 'M' : '',
+            l.date_naissance || '', l.lieu_naissance || '', classeCible ? Number(classeCible) : null,
+            l.tuteur_nom || '', l.tuteur_tel || '', now());
+        memoriserInscription(db, ecoleId, Number(info.lastInsertRowid), classeCible ? Number(classeCible) : null);
+        db.exec('COMMIT');
+        crees.push({ nom, prenom, matricule });
+      } catch (e) { db.exec('ROLLBACK'); throw e; }
     } catch (e) {
       erreurs.push(`Ligne ${i + 1} : ${e.message}`);
     }
@@ -618,7 +780,8 @@ app.post('/api/eleves/import-pdf/verifier', auth, directionOnly, (req, res) => {
 });
 app.post('/api/eleves/import-pdf/confirmer', auth, directionOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
-  try { res.json(importerListe(db, id, req.body?.lignes, now)); }
+  try { res.json(importerListe(db, id, req.body?.lignes, now,
+    (eleveId, classeId) => memoriserInscription(db, id, eleveId, classeId))); }
   catch (e) { res.status(e.status || 400).json({ error: e.message }); }
 });
 
@@ -626,11 +789,13 @@ app.get('/api/eleves/:id', auth, staffOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
   const el = db.prepare('SELECT el.*, c.nom AS classe_nom FROM eleves el LEFT JOIN classes c ON c.id = el.classe_id WHERE el.id = ? AND el.ecole_id = ?').get(req.params.id, id);
   if (!el) return res.status(404).json({ error: 'Élève introuvable' });
-  const periodes = db.prepare('SELECT * FROM periodes WHERE ecole_id = ? ORDER BY cycle DESC, ordre').all(id);
+  const periodes = db.prepare(`SELECT * FROM periodes WHERE ecole_id = ?
+    ORDER BY annee_scolaire DESC, cycle DESC, ordre`).all(id);
   const historique = periodes.map(p => {
     const b = bulletinData(db, id, el.id, p.id);
     const ligne = b && b.ligne;
-    return { periode: p, moyenne: ligne ? ligne.moyenne : null, rang: ligne ? ligne.rang : null, mention: ligne ? ligne.mention : null };
+    return { periode: p, classe_nom: b?.promo.classe.nom || null,
+      moyenne: ligne ? ligne.moyenne : null, rang: ligne ? ligne.rang : null, mention: ligne ? ligne.mention : null };
   });
   res.json({ eleve: el, historique });
 });
@@ -715,6 +880,15 @@ app.delete('/api/enseignants/:id', auth, directionOnly, (req, res) => {
 /* ------------------------------------------------------------------ */
 /* Saisie des notes                                                    */
 /* ------------------------------------------------------------------ */
+function raisonNotesVerrouillees(ecoleId, classeId, annee) {
+  const actuelle = db.prepare('SELECT annee_scolaire FROM etablissements WHERE id = ?').get(ecoleId)?.annee_scolaire;
+  if (annee !== actuelle) return 'Cette année scolaire est archivée : ses notes sont protégées.';
+  if (db.prepare(`SELECT 1 FROM decisions_finales WHERE ecole_id = ? AND annee_scolaire = ?
+    AND classe_origine_id = ? LIMIT 1`).get(ecoleId, annee, classeId)) {
+    return 'La décision finale de cette classe est validée. Annulez-la avant de corriger des notes.';
+  }
+  return null;
+}
 function getOrCreateEvaluation(ecoleId, classeId, matiereId, periodeId, type, libelle) {
   let ev = db.prepare(`SELECT * FROM evaluations WHERE ecole_id = ? AND classe_id = ? AND matiere_id = ?
     AND periode_id = ? AND type = ? AND epreuve_id IS NULL`).get(ecoleId, classeId, matiereId, periodeId, type);
@@ -734,7 +908,8 @@ function grilleData(ecoleId, classeId, matiereId, periodeId) {
   const evals = db.prepare(`SELECT * FROM evaluations WHERE ecole_id = ? AND classe_id = ? AND matiere_id = ?
     AND periode_id = ? AND epreuve_id IS NULL ORDER BY CASE type WHEN 'devoir1' THEN 1 WHEN 'devoir2' THEN 2 ELSE 3 END`)
     .all(ecoleId, classeId, matiereId, periodeId);
-  const eleves = db.prepare("SELECT id, matricule, nom, prenom, sexe FROM eleves WHERE classe_id = ? AND statut = 'actif' ORDER BY nom, prenom").all(classeId);
+  const eleves = computeClasse(db, ecoleId, { classe_id: classeId, periode_id: periodeId })
+    .resultats.filter(r => r.eleve.statut === 'actif').map(r => r.eleve);
   const notes = {};
   evals.forEach(ev => {
     const rows = db.prepare('SELECT eleve_id, valeur, absent, modifie_le FROM notes WHERE evaluation_id = ?').all(ev.id);
@@ -771,6 +946,10 @@ app.post('/api/notes/saisie', auth, staffOnly, (req, res) => {
     if (!ep) return res.status(404).json({ error: 'Épreuve introuvable' });
     if (!canAccessClasse(req, ep.classe_id)) return res.status(403).json({ error: 'Classe non affectée' });
     if (!canSaisir(req, ep.classe_id, ep.matiere_id)) return res.status(403).json({ error: 'Matière non affectée' });
+    const examenNote = db.prepare('SELECT annee_scolaire FROM examens WHERE id = ? AND ecole_id = ?')
+      .get(ep.examen_id, ecoleId);
+    const verrou = raisonNotesVerrouillees(ecoleId, ep.classe_id, examenNote?.annee_scolaire);
+    if (verrou) return res.status(409).json({ error: verrou });
     evaluation = db.prepare('SELECT * FROM evaluations WHERE epreuve_id = ?').get(ep.id);
     if (!evaluation) return res.status(404).json({ error: 'Évaluation de l’épreuve introuvable' });
   } else {
@@ -779,6 +958,8 @@ app.post('/api/notes/saisie', auth, staffOnly, (req, res) => {
     if (!canSaisir(req, classe_id, matiere_id)) return res.status(403).json({ error: 'Cette matière ne vous est pas affectée' });
     const periode = db.prepare('SELECT * FROM periodes WHERE id = ? AND ecole_id = ?').get(periode_id, ecoleId);
     if (!periode) return res.status(404).json({ error: 'Période introuvable' });
+    const verrou = raisonNotesVerrouillees(ecoleId, Number(classe_id), periode.annee_scolaire);
+    if (verrou) return res.status(409).json({ error: verrou });
     if (periode.statut === 'fermee' && req.user.role !== 'directeur' && req.user.role !== 'super_admin') {
       return res.status(403).json({ error: 'Cette période est clôturée : la saisie est verrouillée' });
     }
@@ -798,12 +979,22 @@ app.post('/api/notes/saisie', auth, staffOnly, (req, res) => {
   // visant un élève d'une autre classe (erreur de saisie ou tentative de bricolage).
   const evalRow = db.prepare('SELECT classe_id FROM evaluations WHERE id = ?').get(evaluation.id);
   const classeCible = evalRow ? Number(evalRow.classe_id) : null;
+  const anneeNote = epreuve_id
+    ? db.prepare(`SELECT ex.annee_scolaire FROM examens ex JOIN epreuves ep ON ep.examen_id = ex.id
+        WHERE ep.id = ?`).get(epreuve_id)?.annee_scolaire
+    : db.prepare('SELECT annee_scolaire FROM periodes WHERE id = ?').get(periode_id)?.annee_scolaire;
+  const effectifFige = !!db.prepare(`SELECT 1 FROM inscriptions_historiques
+    WHERE ecole_id = ? AND annee_scolaire = ? LIMIT 1`).get(ecoleId, anneeNote);
 
   let saved = 0;
   notes.forEach(n => {
-    const eleve = db.prepare('SELECT id, classe_id FROM eleves WHERE id = ? AND ecole_id = ?').get(n.eleve_id, ecoleId);
-    if (!eleve) return;
-    if (classeCible && Number(eleve.classe_id) !== classeCible) return;
+    const eleve = db.prepare('SELECT id, classe_id, statut FROM eleves WHERE id = ? AND ecole_id = ?').get(n.eleve_id, ecoleId);
+    if (!eleve || eleve.statut !== 'actif') return;
+    const classeInscrite = effectifFige
+      ? db.prepare(`SELECT classe_id FROM inscriptions_historiques WHERE ecole_id = ?
+          AND annee_scolaire = ? AND eleve_id = ?`).get(ecoleId, anneeNote, eleve.id)?.classe_id
+      : eleve.classe_id;
+    if (classeCible && Number(classeInscrite) !== classeCible) return;
     const absent = n.absent ? 1 : 0;
     let valeur = n.valeur;
     if (valeur === '' || valeur === null || valeur === undefined) valeur = null;
@@ -830,7 +1021,8 @@ app.get('/api/examens/epreuve/:id', auth, staffOnly, (req, res) => {
   if (!ep) return res.status(404).json({ error: 'Épreuve introuvable' });
   if (!canAccessClasse(req, ep.classe_id)) return res.status(403).json({ error: 'Classe non affectée' });
   const ev = db.prepare('SELECT * FROM evaluations WHERE epreuve_id = ?').get(ep.id);
-  const eleves = db.prepare("SELECT id, matricule, nom, prenom, sexe FROM eleves WHERE classe_id = ? AND statut = 'actif' ORDER BY nom, prenom").all(ep.classe_id);
+  const eleves = computeClasse(db, ecoleId, { classe_id: ep.classe_id, examen_id: ep.examen_id })
+    .resultats.filter(r => r.eleve.statut === 'actif').map(r => r.eleve);
   const rows = ev ? db.prepare('SELECT eleve_id, valeur, absent FROM notes WHERE evaluation_id = ?').all(ev.id) : [];
   res.json({ epreuve: ep, evaluation: ev, eleves, notes: Object.fromEntries(rows.map(r => [r.eleve_id, r])) });
 });
@@ -846,6 +1038,12 @@ app.get('/api/bulletins/classe', auth, staffOnly, (req, res) => {
   if (!classeId) return res.status(400).json({ error: 'Classe requise' });
   if (!canAccessClasse(req, classeId)) return res.status(403).json({ error: 'Classe non affectée' });
   if (!periodeId && !examenId) return res.status(400).json({ error: 'Période ou examen requis' });
+  const source = periodeId
+    ? db.prepare('SELECT id, cycle FROM periodes WHERE id = ? AND ecole_id = ?').get(periodeId, ecoleId)
+    : db.prepare('SELECT id FROM examens WHERE id = ? AND ecole_id = ?').get(examenId, ecoleId);
+  if (!source) return res.status(404).json({ error: 'Période ou examen introuvable dans cet établissement.' });
+  if (periodeId && source.cycle !== db.prepare('SELECT cycle FROM classes WHERE id = ?').get(classeId)?.cycle)
+    return res.status(400).json({ error: 'Cette période ne correspond pas au cycle de la classe.' });
   const promo = computeClasse(db, ecoleId, {
     classe_id: classeId,
     ...(req.query.mode === 'composition' ? { mode: 'composition' } : {}),
@@ -968,6 +1166,8 @@ app.put('/api/bulletins/:eleveId/:periodeId', auth, directionOnly, (req, res) =>
   const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
   const el = db.prepare('SELECT * FROM eleves WHERE id = ? AND ecole_id = ?').get(req.params.eleveId, ecoleId);
   if (!el) return res.status(404).json({ error: 'Élève introuvable' });
+  if (!db.prepare('SELECT 1 FROM periodes WHERE id = ? AND ecole_id = ?').get(req.params.periodeId, ecoleId))
+    return res.status(404).json({ error: 'Période introuvable dans cet établissement.' });
   const { appreciation, decision } = req.body || {};
   db.prepare(`INSERT INTO bulletins (ecole_id, eleve_id, periode_id, appreciation, decision, publie, publie_le)
     VALUES (?,?,?,?,?,0,NULL)
@@ -986,7 +1186,8 @@ app.post('/api/bulletins/publier', auth, directionOnly, (req, res) => {
   const periodePub = db.prepare('SELECT * FROM periodes WHERE id = ? AND ecole_id = ?').get(periode_id, ecoleId);
   if (!periodePub) return res.status(400).json({ error: 'Période invalide' });
   if (periodePub.cycle !== classePub.cycle) return res.status(400).json({ error: 'La période ne correspond pas au cycle de la classe' });
-  const eleves = db.prepare("SELECT id FROM eleves WHERE classe_id = ? AND ecole_id = ? AND statut = 'actif'").all(classe_id, ecoleId);
+  const eleves = computeClasse(db, ecoleId, { classe_id: Number(classe_id), periode_id: Number(periode_id) })
+    .resultats.map(r => ({ id: r.eleve.id }));
   const upsert = db.prepare(`INSERT INTO bulletins (ecole_id, eleve_id, periode_id, publie, publie_le, appreciation, decision)
     VALUES (?,?,?,?,?, '', '') ON CONFLICT(eleve_id, periode_id) DO UPDATE SET publie = excluded.publie, publie_le = excluded.publie_le`);
   eleves.forEach(e => upsert.run(ecoleId, e.id, periode_id, publie ? 1 : 0, publie ? now() : null));
@@ -1000,10 +1201,17 @@ app.get('/api/stats/classe', auth, staffOnly, (req, res) => {
   const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
   const classeId = Number(req.query.classe_id);
   if (!canAccessClasse(req, classeId)) return res.status(403).json({ error: 'Classe non affectée' });
+  const examenId = Number(req.query.examen_id), periodeId = Number(req.query.periode_id);
+  const source = examenId
+    ? db.prepare('SELECT id FROM examens WHERE id = ? AND ecole_id = ?').get(examenId, ecoleId)
+    : db.prepare('SELECT id, cycle FROM periodes WHERE id = ? AND ecole_id = ?').get(periodeId, ecoleId);
+  if (!source) return res.status(404).json({ error: 'Période ou examen introuvable dans cet établissement.' });
+  if (!examenId && source.cycle !== db.prepare('SELECT cycle FROM classes WHERE id = ?').get(classeId)?.cycle)
+    return res.status(400).json({ error: 'Cette période ne correspond pas au cycle de la classe.' });
   const promo = computeClasse(db, ecoleId, {
     classe_id: classeId,
     ...(req.query.mode === 'composition' ? { mode: 'composition' } : {}),
-    ...(req.query.examen_id ? { examen_id: Number(req.query.examen_id) } : { periode_id: Number(req.query.periode_id) })
+    ...(examenId ? { examen_id: examenId } : { periode_id: periodeId })
   });
   if (!promo) return res.status(404).json({ error: 'Introuvable' });
   res.json(promo);
@@ -1053,9 +1261,17 @@ app.get('/api/stats/etablissement', auth, staffOnly, (req, res) => {
 /* ------------------------------------------------------------------ */
 /* Examens blancs                                                      */
 /* ------------------------------------------------------------------ */
+function examenArchive(ecoleId, examen) {
+  return examen.annee_scolaire !== db.prepare('SELECT annee_scolaire FROM etablissements WHERE id = ?')
+    .get(ecoleId)?.annee_scolaire;
+}
 app.get('/api/examens', auth, staffOnly, (req, res) => {
   const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
-  const rows = db.prepare('SELECT * FROM examens WHERE ecole_id = ? ORDER BY cree_le DESC').all(ecoleId);
+  const annee = db.prepare('SELECT annee_scolaire FROM etablissements WHERE id = ?').get(ecoleId).annee_scolaire;
+  const archives = req.query.historique === '1';
+  const rows = db.prepare(`SELECT * FROM examens WHERE ecole_id = ?
+    AND (? = 1 OR annee_scolaire = ?) ORDER BY annee_scolaire DESC, cree_le DESC`)
+    .all(ecoleId, archives ? 1 : 0, annee);
   const isProf = req.user.role === 'enseignant';
   const mesAff = isProf
     ? db.prepare('SELECT classe_id, matiere_id FROM affectations WHERE enseignant_id = ?').all(req.user.id)
@@ -1073,27 +1289,37 @@ app.post('/api/examens', auth, directionOnly, (req, res) => {
   const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
   const { nom, periode_id, date_debut, date_fin } = req.body || {};
   if (!nom) return res.status(400).json({ error: 'Le nom de l’examen est requis' });
-  const info = db.prepare('INSERT INTO examens (ecole_id, nom, periode_id, date_debut, date_fin, statut, cree_le) VALUES (?,?,?,?,?,?,?)')
-    .run(ecoleId, nom, periode_id || null, date_debut || today(), date_fin || today(), 'prepare', now());
+  const annee = db.prepare('SELECT annee_scolaire FROM etablissements WHERE id = ?').get(ecoleId).annee_scolaire;
+  if (periode_id && !db.prepare('SELECT 1 FROM periodes WHERE id = ? AND ecole_id = ? AND annee_scolaire = ?')
+    .get(periode_id, ecoleId, annee)) return res.status(400).json({ error: 'Choisissez une période de l’année en cours.' });
+  const info = db.prepare(`INSERT INTO examens
+    (ecole_id, nom, periode_id, date_debut, date_fin, statut, annee_scolaire, cree_le)
+    VALUES (?,?,?,?,?,?,?,?)`)
+    .run(ecoleId, nom, periode_id || null, date_debut || today(), date_fin || today(), 'prepare', annee, now());
   res.json({ ok: true, id: Number(info.lastInsertRowid) });
 });
 app.patch('/api/examens/:id', auth, directionOnly, (req, res) => {
   const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
   const ex = db.prepare('SELECT * FROM examens WHERE id = ? AND ecole_id = ?').get(req.params.id, ecoleId);
   if (!ex) return res.status(404).json({ error: 'Examen introuvable' });
+  if (examenArchive(ecoleId, ex)) return res.status(409).json({ error: 'Examen archivé : ses résultats sont protégés.' });
   const { statut, nom } = req.body || {};
   db.prepare('UPDATE examens SET statut = ?, nom = ? WHERE id = ?').run(statut ?? ex.statut, nom ?? ex.nom, ex.id);
   res.json({ ok: true });
 });
 app.delete('/api/examens/:id', auth, directionOnly, (req, res) => {
   const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
-  db.prepare('DELETE FROM examens WHERE id = ? AND ecole_id = ?').run(req.params.id, ecoleId);
+  const ex = db.prepare('SELECT * FROM examens WHERE id = ? AND ecole_id = ?').get(req.params.id, ecoleId);
+  if (!ex) return res.status(404).json({ error: 'Examen introuvable' });
+  if (examenArchive(ecoleId, ex)) return res.status(409).json({ error: 'Examen archivé : ses résultats sont protégés.' });
+  db.prepare('DELETE FROM examens WHERE id = ? AND ecole_id = ?').run(ex.id, ecoleId);
   res.json({ ok: true });
 });
 app.post('/api/examens/:id/epreuves', auth, directionOnly, (req, res) => {
   const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
   const ex = db.prepare('SELECT * FROM examens WHERE id = ? AND ecole_id = ?').get(req.params.id, ecoleId);
   if (!ex) return res.status(404).json({ error: 'Examen introuvable' });
+  if (examenArchive(ecoleId, ex)) return res.status(409).json({ error: 'Examen archivé : ses résultats sont protégés.' });
   const { classe_id, matiere_id, date_epreuve, heure, duree, coefficient, salle } = req.body || {};
   if (!classe_id || !matiere_id) return res.status(400).json({ error: 'Classe et matière requises' });
   if (!db.prepare('SELECT 1 FROM classes WHERE id = ? AND ecole_id = ?').get(classe_id, ecoleId)) return res.status(400).json({ error: 'Classe invalide' });
@@ -1108,7 +1334,10 @@ app.post('/api/examens/:id/epreuves', auth, directionOnly, (req, res) => {
 });
 app.delete('/api/examens/:id/epreuves/:epreuveId', auth, directionOnly, (req, res) => {
   const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
-  db.prepare('DELETE FROM epreuves WHERE id = ? AND examen_id = ? AND ecole_id = ?').run(req.params.epreuveId, req.params.id, ecoleId);
+  const ex = db.prepare('SELECT * FROM examens WHERE id = ? AND ecole_id = ?').get(req.params.id, ecoleId);
+  if (!ex) return res.status(404).json({ error: 'Examen introuvable' });
+  if (examenArchive(ecoleId, ex)) return res.status(409).json({ error: 'Examen archivé : ses résultats sont protégés.' });
+  db.prepare('DELETE FROM epreuves WHERE id = ? AND examen_id = ? AND ecole_id = ?').run(req.params.epreuveId, ex.id, ecoleId);
   res.json({ ok: true });
 });
 
@@ -1173,7 +1402,8 @@ app.get('/api/dashboard', auth, staffOnly, (req, res) => {
     nbMatieres = mesMatieres.size;
   }
 
-  const periodes = db.prepare('SELECT * FROM periodes WHERE ecole_id = ? ORDER BY cycle DESC, ordre').all(ecoleId);
+  const periodes = db.prepare(`SELECT * FROM periodes WHERE ecole_id = ? AND annee_scolaire = ?
+    ORDER BY cycle DESC, ordre`).all(ecoleId, etab.annee_scolaire);
   const periodeActive = periodes.find(p => p.statut === 'ouverte') || periodes[0];
   let progression = 0;
   let statsParClasse = [];
@@ -1231,13 +1461,14 @@ app.get('/api/eleve/espace', auth, roles('eleve'), (req, res) => {
   const el = db.prepare('SELECT el.*, c.nom AS classe_nom, c.cycle FROM eleves el LEFT JOIN classes c ON c.id = el.classe_id WHERE el.user_id = ?').get(req.user.id);
   if (!el) return res.status(404).json({ error: 'Aucun dossier élève associé à ce compte' });
   const etab = db.prepare('SELECT * FROM etablissements WHERE id = ?').get(el.ecole_id);
-  const periodes = db.prepare('SELECT * FROM periodes WHERE ecole_id = ? AND cycle = ? ORDER BY ordre').all(el.ecole_id, el.cycle);
+  const periodes = db.prepare(`SELECT * FROM periodes WHERE ecole_id = ? AND cycle = ?
+    ORDER BY annee_scolaire DESC, ordre`).all(el.ecole_id, el.cycle);
   const resultats = periodes.map(p => {
     const data = bulletinData(db, el.ecole_id, el.id, p.id);
     if (!data) return { periode: p, publie: false, ligne: null };
     const publie = !!(data.bulletin && data.bulletin.publie);
     return {
-      periode: p, publie,
+      periode: p, classe_nom: data.promo.classe.nom, publie,
       moyenne: publie && data.ligne ? data.ligne.moyenne : null,
       rang: publie && data.ligne ? data.ligne.rang : null,
       effectif: data.promo.resultats.length,
@@ -1787,10 +2018,12 @@ app.get('/print/bulletin/:eleveId', auth, (req, res) => {
   const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
   const periodeId = Number(req.query.periode_id);
   if (!periodeId) return res.status(400).send('Période manquante');
+  if (!db.prepare('SELECT 1 FROM periodes WHERE id = ? AND ecole_id = ?').get(periodeId, ecoleId))
+    return res.status(404).send('Période introuvable dans cet établissement');
   const mode = req.query.mode === 'composition' ? 'composition' : undefined;
   const data = bulletinData(db, ecoleId, Number(req.params.eleveId), periodeId, { mode });
   if (!data) return res.status(404).send('Élève introuvable');
-  if (req.user.role === 'enseignant' && !canAccessClasse(req, data.eleve.classe_id)) return res.status(403).send('Accès refusé');
+  if (req.user.role === 'enseignant' && !canAccessClasse(req, data.promo.classe.id)) return res.status(403).send('Accès refusé');
   if (req.user.role === 'eleve' && data.eleve.user_id !== req.user.id) return res.status(403).send('Accès refusé');
   if (req.user.role === 'eleve' && !(data.bulletin && data.bulletin.publie)) return res.status(403).send('Bulletin non encore publié');
   res.send(renderBulletin(data));
@@ -1804,8 +2037,7 @@ app.get('/print/classe/:classeId', auth, staffOnly, (req, res) => {
   if (!periode) return res.status(400).send('Période invalide');
   const mode = req.query.mode === 'composition' ? 'composition' : undefined;
   const promo = computeClasse(db, ecoleId, { classe_id: classeId, periode_id: periodeId, ...(mode ? { mode } : {}) });
-  const eleves = db.prepare("SELECT id FROM eleves WHERE classe_id = ? AND statut = 'actif' ORDER BY nom, prenom").all(classeId);
-  const bulletins = eleves.map(e => bulletinData(db, ecoleId, e.id, periodeId, { mode })).filter(Boolean);
+  const bulletins = promo.resultats.map(r => bulletinData(db, ecoleId, r.eleve.id, periodeId, { mode })).filter(Boolean);
   res.send(renderBulletinBatch(bulletins, periode));
 });
 

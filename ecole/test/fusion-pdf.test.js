@@ -124,6 +124,12 @@ test('PDF fusionné : MATH, SVT, moyenne et rang sur la même ligne, comme le re
     const texteExamen = textePDF(pdfExamen);
     assert.match(texteExamen, /1\nC01\nDOSSEH Kofi\n6ème C\n17,00\n1,00\n17,00\n17,00/);
 
+    // L'année imprimée doit provenir de la période archivée, pas de l'année
+    // courante de l'établissement, qui aura changé après le passage.
+    db.exec("ALTER TABLE periodes ADD COLUMN annee_scolaire TEXT; UPDATE periodes SET annee_scolaire='2025-2026'");
+    const ancien = computeFusion(db, 1, { classe_ids: [1, 2, 3], periode_id: 1 });
+    assert.match(textePDF(await genererFusionPDF(ancien)), /Année scolaire 2025-2026/);
+
     // SVT suit les compositions choisies, dans une colonne à côté de Mathématiques.
     db.prepare("INSERT INTO matieres VALUES (2, 'Sciences de la Vie et de la Terre', NULL, 'SVT', 'Scientifique')").run();
     for (let c = 1; c <= 3; c++) {

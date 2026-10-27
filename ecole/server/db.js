@@ -103,6 +103,7 @@ CREATE TABLE IF NOT EXISTS periodes (
   ordre INTEGER NOT NULL,
   statut TEXT DEFAULT 'ouverte',                 -- ouverte | fermee
   date_debut TEXT, date_fin TEXT,
+  annee_scolaire TEXT,                         -- l'identifiant de la période distingue chaque année
   UNIQUE(ecole_id, code)
 );
 
@@ -122,6 +123,7 @@ CREATE TABLE IF NOT EXISTS examens (
   periode_id INTEGER REFERENCES periodes(id) ON DELETE SET NULL,
   date_debut TEXT, date_fin TEXT,
   statut TEXT DEFAULT 'prepare',                 -- prepare | en_cours | termine
+  annee_scolaire TEXT,
   cree_le TEXT NOT NULL
 );
 
@@ -172,6 +174,55 @@ CREATE TABLE IF NOT EXISTS bulletins (
   UNIQUE(eleve_id, periode_id)
 );
 
+-- Photo de l'effectif AVANT le premier passage de fin d'année. Les anciennes
+-- périodes/bulletins continueront ainsi à utiliser la classe d'origine.
+CREATE TABLE IF NOT EXISTS inscriptions_historiques (
+  ecole_id INTEGER NOT NULL REFERENCES etablissements(id) ON DELETE CASCADE,
+  annee_scolaire TEXT NOT NULL,
+  eleve_id INTEGER NOT NULL REFERENCES eleves(id) ON DELETE CASCADE,
+  classe_id INTEGER NOT NULL REFERENCES classes(id),
+  PRIMARY KEY(ecole_id, annee_scolaire, eleve_id)
+);
+
+-- Décision du conseil en fin d'année ; seule la direction peut la confirmer.
+-- Les notes restent dans les évaluations de leur période et ne sont jamais copiées.
+CREATE TABLE IF NOT EXISTS decisions_finales (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ecole_id INTEGER NOT NULL REFERENCES etablissements(id) ON DELETE CASCADE,
+  annee_scolaire TEXT NOT NULL,
+  eleve_id INTEGER NOT NULL REFERENCES eleves(id) ON DELETE CASCADE,
+  classe_origine_id INTEGER NOT NULL REFERENCES classes(id),
+  classe_cible_id INTEGER REFERENCES classes(id),
+  moyenne_annuelle REAL,
+  seuil REAL NOT NULL,
+  detail_periodes TEXT NOT NULL,
+  decision TEXT NOT NULL,                       -- admis | maintenu | incomplet
+  valide_par INTEGER REFERENCES utilisateurs(id) ON DELETE SET NULL,
+  valide_le TEXT NOT NULL,
+  UNIQUE(ecole_id, annee_scolaire, eleve_id)
+);
+
+-- Programme et formule de chaque classe au moment de la décision. Ainsi,
+-- une modification pour l'année suivante ne recalcule pas les anciens bulletins.
+CREATE TABLE IF NOT EXISTS classes_historiques (
+  ecole_id INTEGER NOT NULL REFERENCES etablissements(id) ON DELETE CASCADE,
+  annee_scolaire TEXT NOT NULL,
+  classe_id INTEGER NOT NULL REFERENCES classes(id),
+  nom TEXT NOT NULL, niveau TEXT, cycle TEXT NOT NULL, serie TEXT,
+  titulaire TEXT, titulaire_id INTEGER,
+  formule_moyenne TEXT NOT NULL,
+  PRIMARY KEY(ecole_id, annee_scolaire, classe_id)
+);
+CREATE TABLE IF NOT EXISTS matieres_historiques (
+  ecole_id INTEGER NOT NULL REFERENCES etablissements(id) ON DELETE CASCADE,
+  annee_scolaire TEXT NOT NULL,
+  classe_id INTEGER NOT NULL REFERENCES classes(id),
+  matiere_id INTEGER NOT NULL REFERENCES matieres(id),
+  nom TEXT NOT NULL, nom_college TEXT, code TEXT, groupe TEXT,
+  coefficient REAL NOT NULL,
+  PRIMARY KEY(ecole_id, annee_scolaire, classe_id, matiere_id)
+);
+
 CREATE TABLE IF NOT EXISTS paiements (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   ecole_id INTEGER NOT NULL REFERENCES etablissements(id) ON DELETE CASCADE,
@@ -213,6 +264,8 @@ CREATE INDEX IF NOT EXISTS idx_eleves_ecole ON eleves(ecole_id, classe_id);
 CREATE INDEX IF NOT EXISTS idx_demandes_mdp ON demandes_mdp(ecole_id, statut);
 CREATE INDEX IF NOT EXISTS idx_paiements_ecole ON paiements(ecole_id, cree_le);
 CREATE INDEX IF NOT EXISTS idx_notes_eval ON notes(evaluation_id);
+CREATE INDEX IF NOT EXISTS idx_inscriptions_historiques_classe ON inscriptions_historiques(ecole_id, annee_scolaire, classe_id);
+CREATE INDEX IF NOT EXISTS idx_decisions_finales_classe ON decisions_finales(ecole_id, annee_scolaire, classe_origine_id);
 CREATE INDEX IF NOT EXISTS idx_evals_scope ON evaluations(ecole_id, classe_id, periode_id);
 CREATE INDEX IF NOT EXISTS idx_affect_ens ON affectations(enseignant_id);
 `);
@@ -259,6 +312,18 @@ if (!avaitNomCollege) {
 ensureColumn('utilisateurs', 'signature', 'TEXT');
 ensureColumn('utilisateurs', 'signature_provider', 'TEXT');
 ensureColumn('classes', 'titulaire_id', 'INTEGER');
+// Les bases déjà en service n'avaient qu'une seule année de périodes/examens.
+// On les rattache à l'année actuelle SANS effacer ni réécrire aucune note.
+ensureColumn('periodes', 'annee_scolaire', 'TEXT');
+ensureColumn('examens', 'annee_scolaire', 'TEXT');
+db.exec(`UPDATE periodes SET annee_scolaire =
+  (SELECT COALESCE(NULLIF(e.annee_scolaire, ''), '2025-2026') FROM etablissements e WHERE e.id = periodes.ecole_id)
+  WHERE annee_scolaire IS NULL OR annee_scolaire = '';
+  UPDATE examens SET annee_scolaire = COALESCE(
+    (SELECT p.annee_scolaire FROM periodes p WHERE p.id = examens.periode_id),
+    (SELECT COALESCE(NULLIF(e.annee_scolaire, ''), '2025-2026') FROM etablissements e WHERE e.id = examens.ecole_id))
+  WHERE annee_scolaire IS NULL OR annee_scolaire = '';
+  CREATE INDEX IF NOT EXISTS idx_periodes_annee ON periodes(ecole_id, annee_scolaire, cycle);`);
 
 db.prepare('CREATE INDEX IF NOT EXISTS idx_paiements_statut ON paiements(statut)').run();
 
@@ -324,19 +389,22 @@ function createEtablissement(data) {
 }
 
 function seedPeriodes(ecoleId, type) {
+  const annee = db.prepare('SELECT annee_scolaire FROM etablissements WHERE id = ?').get(ecoleId)?.annee_scolaire || '2025-2026';
+  const [debut, fin] = String(annee).split('-').map(Number);
   const insert = db.prepare(`INSERT OR IGNORE INTO periodes
-    (ecole_id, code, libelle, cycle, ordre, statut, date_debut, date_fin) VALUES (?,?,?,?,?,?,?,?)`);
+    (ecole_id, code, libelle, cycle, ordre, statut, date_debut, date_fin, annee_scolaire)
+    VALUES (?,?,?,?,?,?,?,?,?)`);
   if (type === 'college' || type === 'mixte') {
-    [['T1', '1er Trimestre', '2025-09-15', '2025-12-19'],
-     ['T2', '2ème Trimestre', '2026-01-05', '2026-03-27'],
-     ['T3', '3ème Trimestre', '2026-04-13', '2026-06-26']].forEach(([code, libelle, d, f], i) => {
-      insert.run(ecoleId, code, libelle, 'college', i + 1, 'ouverte', d, f);
+    [['T1', '1er Trimestre', `${debut}-09-15`, `${debut}-12-19`],
+     ['T2', '2ème Trimestre', `${fin}-01-05`, `${fin}-03-27`],
+     ['T3', '3ème Trimestre', `${fin}-04-13`, `${fin}-06-26`]].forEach(([code, libelle, d, f], i) => {
+      insert.run(ecoleId, code, libelle, 'college', i + 1, 'ouverte', d, f, annee);
     });
   }
   if (type === 'lycee' || type === 'mixte') {
-    [['S1', '1er Semestre', '2025-09-15', '2026-01-23'],
-     ['S2', '2ème Semestre', '2026-02-09', '2026-06-26']].forEach(([code, libelle, d, f], i) => {
-      insert.run(ecoleId, code, libelle, 'lycee', i + 1, 'ouverte', d, f);
+    [['S1', '1er Semestre', `${debut}-09-15`, `${fin}-01-23`],
+     ['S2', '2ème Semestre', `${fin}-02-09`, `${fin}-06-26`]].forEach(([code, libelle, d, f], i) => {
+      insert.run(ecoleId, code, libelle, 'lycee', i + 1, 'ouverte', d, f, annee);
     });
   }
 }
@@ -547,8 +615,10 @@ function seedDemo() {
 
   // Examen blanc de démonstration (Tle D)
   const tle = classes.find(c => c.nom === 'Tle D');
-  const exInfo = db.prepare(`INSERT INTO examens (ecole_id, nom, periode_id, date_debut, date_fin, statut, cree_le)
-    VALUES (?,?,?,?,?,?,?)`).run(ecoleId, 'Examen Blanc n°1 — Tle D', pS1.id, today(), today(), 'termine', now());
+  const exInfo = db.prepare(`INSERT INTO examens
+    (ecole_id, nom, periode_id, date_debut, date_fin, statut, annee_scolaire, cree_le)
+    VALUES (?,?,?,?,?,?,?,?)`).run(ecoleId, 'Examen Blanc n°1 — Tle D', pS1.id,
+      today(), today(), 'termine', '2025-2026', now());
   const examenId = Number(exInfo.lastInsertRowid);
   [0, 1, 2, 3].forEach(mi => {
     const m = matieres[mi];

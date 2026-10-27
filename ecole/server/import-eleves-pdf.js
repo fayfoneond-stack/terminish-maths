@@ -75,7 +75,7 @@ function verifierListe(db, ecoleId, lignes) {
   }
   return { statuts, prets };
 }
-function importerListe(db, ecoleId, lignes, maintenant) {
+function importerListe(db, ecoleId, lignes, maintenant, apresInsertion = () => {}) {
   const { statuts, prets } = verifierListe(db, ecoleId, lignes);
   const eleves = [];
   if (prets.length) {
@@ -88,6 +88,7 @@ function importerListe(db, ecoleId, lignes, maintenant) {
       for (const p of prets) {
         const info = stmt.run(ecoleId, p.matricule, p.nom, p.prenom, p.sexe,
           p.date_naissance, p.classe_id, creeLe);
+        apresInsertion(Number(info.lastInsertRowid), p.classe_id);
         eleves.push({ id: Number(info.lastInsertRowid), matricule: p.matricule,
           nom: p.nom, prenom: p.prenom, classe_id: p.classe_id });
       }

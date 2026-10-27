@@ -80,25 +80,57 @@ function statsOf(arr) {
   };
 }
 
+/** Après les passages, les anciennes périodes doivent garder leur effectif
+ * d'origine. Les petites bases de tests sans table d'historique restent valides. */
+function historiqueExiste(db) {
+  return !!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'inscriptions_historiques'").get();
+}
+function anneeDuScope(db, ecoleId, scope, anneeCourante) {
+  const source = scope.periode_id
+    ? db.prepare('SELECT * FROM periodes WHERE id = ?').get(scope.periode_id)
+    : scope.examen_id
+      ? db.prepare('SELECT * FROM examens WHERE id = ?').get(scope.examen_id)
+      : null;
+  return source?.annee_scolaire || anneeCourante;
+}
+function anciensInscrits(db, ecoleId, annee) {
+  return !!(annee && historiqueExiste(db) &&
+    db.prepare('SELECT 1 FROM inscriptions_historiques WHERE ecole_id = ? AND annee_scolaire = ? LIMIT 1')
+      .get(ecoleId, annee));
+}
+function ancienneConfiguration(db, ecoleId, annee, classeId) {
+  if (!annee || !db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'classes_historiques'").get())
+    return null;
+  return db.prepare(`SELECT nom, niveau, cycle, serie, titulaire, titulaire_id, formule_moyenne
+    FROM classes_historiques WHERE ecole_id = ? AND annee_scolaire = ? AND classe_id = ?`)
+    .get(ecoleId, annee, classeId) || null;
+}
+
 /**
  * Calcule une promotion complète pour une classe et un scope donné.
  * scope = { classe_id, periode_id }  ou  { classe_id, examen_id }
  */
 function computeClasse(db, ecoleId, scope) {
-  const classe = db.prepare('SELECT * FROM classes WHERE id = ? AND ecole_id = ?').get(scope.classe_id, ecoleId);
-  if (!classe) return null;
+  const classeActuelle = db.prepare('SELECT * FROM classes WHERE id = ? AND ecole_id = ?').get(scope.classe_id, ecoleId);
+  if (!classeActuelle) return null;
 
   const etab = db.prepare('SELECT * FROM etablissements WHERE id = ?').get(ecoleId);
-  const formule = etab.formule_moyenne || 'co2';
+  const annee = anneeDuScope(db, ecoleId, scope, etab.annee_scolaire);
+  const ancienne = ancienneConfiguration(db, ecoleId, annee, classeActuelle.id);
+  const classe = ancienne ? { ...classeActuelle, ...ancienne } : classeActuelle;
+  const formule = ancienne?.formule_moyenne || etab.formule_moyenne || 'co2';
   // mode « composition » : la moyenne de chaque matière ne retient QUE la
   // composition (les devoirs sont ignorés). Sert au bulletin de composition
   // et aux statistiques de fin de trimestre.
   const compositionSeule = scope.mode === 'composition';
 
-  const matieresBrutes = db.prepare(`
-    SELECT m.id, m.nom, m.nom_college, m.code, m.groupe, cm.coefficient
-    FROM classe_matieres cm JOIN matieres m ON m.id = cm.matiere_id
-    WHERE cm.classe_id = ? ORDER BY m.groupe, m.nom`).all(classe.id);
+  const matieresBrutes = ancienne
+    ? db.prepare(`SELECT matiere_id AS id, nom, nom_college, code, groupe, coefficient
+        FROM matieres_historiques WHERE ecole_id = ? AND annee_scolaire = ? AND classe_id = ?
+        ORDER BY groupe, nom`).all(ecoleId, annee, classe.id)
+    : db.prepare(`SELECT m.id, m.nom, m.nom_college, m.code, m.groupe, cm.coefficient
+        FROM classe_matieres cm JOIN matieres m ON m.id = cm.matiere_id
+        WHERE cm.classe_id = ? ORDER BY m.groupe, m.nom`).all(classe.id);
 
   // Au collège, certaines matières portent un nom différent (« Physique-Chimie
   // et Technologie (PCT) » au lieu de « Physique-Chimie » au lycée). Le nom
@@ -110,9 +142,14 @@ function computeClasse(db, ecoleId, scope) {
       : m.nom
   }));
 
-  const eleves = db.prepare(`
-    SELECT id, matricule, nom, prenom, sexe, date_naissance, lieu_naissance, tuteur_nom, tuteur_tel
-    FROM eleves WHERE classe_id = ? AND statut = 'actif' ORDER BY nom, prenom`).all(classe.id);
+  const champsEleve = 'el.id, el.matricule, el.nom, el.prenom, el.sexe, el.date_naissance, el.lieu_naissance, el.tuteur_nom, el.tuteur_tel, el.statut';
+  const eleves = anciensInscrits(db, ecoleId, annee)
+    ? db.prepare(`SELECT ${champsEleve} FROM inscriptions_historiques h
+        JOIN eleves el ON el.id = h.eleve_id AND el.ecole_id = h.ecole_id
+        WHERE h.ecole_id = ? AND h.annee_scolaire = ? AND h.classe_id = ?
+        ORDER BY el.nom, el.prenom`).all(ecoleId, annee, classe.id)
+    : db.prepare(`SELECT ${champsEleve} FROM eleves el
+        WHERE el.classe_id = ? AND el.statut = 'actif' ORDER BY el.nom, el.prenom`).all(classe.id);
 
   let evaluations, epreuveCoef = null;
   if (scope.examen_id) {
@@ -307,12 +344,23 @@ function computeClasse(db, ecoleId, scope) {
 
 function bulletinData(db, ecoleId, eleveId, periodeId, options = {}) {
   const eleve = db.prepare('SELECT * FROM eleves WHERE id = ? AND ecole_id = ?').get(eleveId, ecoleId);
-  if (!eleve || !eleve.classe_id) return null;
+  if (!eleve) return null;
+  const annee = anneeDuScope(db, ecoleId, { periode_id: periodeId }, null);
+  let classeId = eleve.classe_id;
+  if (anciensInscrits(db, ecoleId, annee)) {
+    const ancien = db.prepare(`SELECT classe_id FROM inscriptions_historiques
+      WHERE ecole_id = ? AND annee_scolaire = ? AND eleve_id = ?`).get(ecoleId, annee, eleveId);
+    if (!ancien) return null;
+    classeId = ancien.classe_id;
+  }
+  if (!classeId) return null;
   const promo = computeClasse(db, ecoleId, {
-    classe_id: eleve.classe_id, periode_id: periodeId,
+    classe_id: classeId, periode_id: periodeId,
     ...(options.mode ? { mode: options.mode } : {})
   });
+  if (!promo) return null;
   const ligne = promo.resultats.find(r => r.eleve.id === eleveId);
+  if (!ligne) return null;
   const bulletin = db.prepare('SELECT * FROM bulletins WHERE eleve_id = ? AND periode_id = ?').get(eleveId, periodeId) || null;
 
   /* --- Qui enseigne quoi : nom + signature de chaque professeur --------- */
@@ -320,14 +368,14 @@ function bulletinData(db, ecoleId, eleveId, periodeId, options = {}) {
     SELECT a.matiere_id, u.id, u.nom, u.signature
     FROM affectations a JOIN utilisateurs u ON u.id = a.enseignant_id
     WHERE a.classe_id = ? AND u.actif = 1
-    ORDER BY u.nom`).all(eleve.classe_id);
+    ORDER BY u.nom`).all(classeId);
   const professeurs = {};
   profs.forEach(p => {
     if (!professeurs[p.matiere_id]) professeurs[p.matiere_id] = { id: p.id, nom: p.nom, signature: p.signature || null };
   });
 
   /* --- Professeur titulaire : celui qui signe le bulletin --------------- */
-  const classe = db.prepare('SELECT * FROM classes WHERE id = ?').get(eleve.classe_id);
+  const classe = promo.classe; // intitulé / titulaire à l'époque de la période
   let principal = classe && classe.titulaire_id
     ? db.prepare("SELECT id, nom, signature FROM utilisateurs WHERE id = ? AND ecole_id = ?").get(classe.titulaire_id, ecoleId)
     : null;

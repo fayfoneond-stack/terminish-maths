@@ -132,7 +132,7 @@ function renderBulletin({ promo, ligne, bulletin, eleve, professeurs = {}, princ
         ${etab.telephone ? 'Tél. ' + esc(etab.telephone) : ''}${etab.email ? ' · ' + esc(etab.email) : ''}
       </div>
     </div>
-    <div class="badge-annee">Année scolaire<strong>${esc(etab.annee_scolaire)}</strong></div>
+    <div class="badge-annee">Année scolaire<strong>${esc(periode.annee_scolaire || etab.annee_scolaire)}</strong></div>
   </div>
 
   <div class="title">
@@ -304,7 +304,7 @@ function renderExamen(promo) {
     <div class="head">
       ${(etab.logo_url || etab.logo) ? `<img src="${etab.logo_url || etab.logo}" alt="logo">` : `<div class="ph">${esc((etab.nom || 'E').slice(0, 1))}</div>`}
       <div><h1>${esc(etab.nom)}</h1>
-        <div class="meta">${esc(etab.ville || '')}${etab.telephone ? ' · Tél. ' + esc(etab.telephone) : ''} · Année ${esc(etab.annee_scolaire)}</div></div>
+        <div class="meta">${esc(etab.ville || '')}${etab.telephone ? ' · Tél. ' + esc(etab.telephone) : ''} · Année ${esc(examen.annee_scolaire || etab.annee_scolaire)}</div></div>
       <div class="right">Classe : <b>${esc(classe.nom)}</b><br>Effectif : <b>${promo.resultats.length}</b><br>Moyenne de classe : <b>${fmt(promo.stats.moyenne)}</b></div>
     </div>
     <div class="title"><h2>Relevé de résultats — ${esc(examen.nom)}</h2>

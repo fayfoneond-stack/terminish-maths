@@ -75,7 +75,7 @@ function genererFusionPDF(fusion, { proclamation = false } = {}) {
         doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(14)
           .text(texte(etab.nom) || 'Établissement', depart, 13, { width: largeur - L - depart, height: 21, ellipsis: true });
         doc.fillColor('#cfe5da').font('Helvetica').fontSize(9)
-          .text(`Année scolaire ${texte(etab.annee_scolaire) || '—'}  ·  ${texte(etab.ville)}`, depart, 39,
+          .text(`Année scolaire ${texte((fusion.periode || fusion.examen)?.annee_scolaire || etab.annee_scolaire) || '—'}  ·  ${texte(etab.ville)}`, depart, 39,
             { width: largeur - L - depart, height: 14, ellipsis: true });
         y = 78;
       }

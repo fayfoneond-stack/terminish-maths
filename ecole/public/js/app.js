@@ -43,6 +43,7 @@
       { group: 'Évaluations', items: [
         { r: 'saisie', i: '✍️', l: 'Saisie des notes' },
         { r: 'resultats', i: '🏆', l: 'Résultats' },
+        { r: 'passage', i: '🎓', l: 'Décision finale' },
         { r: 'bulletins', i: '📄', l: 'Bulletins' },
         { r: 'examens', i: '🎯', l: 'Examens blancs' }
       ]},
@@ -90,6 +91,7 @@
     statistiques: ['Statistiques', 'Analyses automatiques des résultats'],
     resultats: ['Résultats', 'Fusion de classes et classement de tous les élèves'],
     fusion: ['Résultats', 'Fusion de classes et classement de tous les élèves'],
+    passage: ['Décision finale', 'Moyenne annuelle et passage dans la classe supérieure'],
     examens: ['Examens blancs', 'Planification des épreuves et simulations'],
     parametres: ['Paramètres', 'Identité de l’établissement et calcul des moyennes'],
     abonnement: ['Abonnement', 'Formule, échéance et facturation'],
@@ -399,7 +401,7 @@
   }
 
   const ACCESS = {
-    directeur: ['dashboard', 'eleves', 'classes', 'matieres', 'enseignants', 'saisie', 'bulletins', 'statistiques', 'resultats', 'fusion', 'examens', 'parametres', 'abonnement'],
+    directeur: ['dashboard', 'eleves', 'classes', 'matieres', 'enseignants', 'saisie', 'bulletins', 'statistiques', 'resultats', 'fusion', 'passage', 'examens', 'parametres', 'abonnement'],
     enseignant: ['dashboard', 'eleves', 'saisie', 'bulletins', 'statistiques', 'resultats', 'fusion', 'examens'],
     eleve: ['espace'],
     super_admin: ['admin', 'admin-ecoles', 'admin-demandes', 'admin-paiements']
@@ -836,7 +838,7 @@
     },
 
     async supprimerEleve(id) {
-      const ok = await confirmer('Cet élève sera <b>archivé</b> : il n’apparaîtra plus dans les listes ni dans les bulletins, mais ses notes sont conservées.', {
+      const ok = await confirmer('Cet élève sera <b>archivé</b> : il quittera les listes actuelles ; ses anciens bulletins et décisions resteront consultables.', {
         titre: 'Archiver l’élève ?', danger: true, ok: 'Archiver'
       });
       if (!ok) return;
@@ -871,10 +873,11 @@
           </div>
           <h4 style="margin:0 0 8px">Parcours et moyennes</h4>
           ${lignes.length ? `<div class="table-wrap"><table class="data">
-            <thead><tr><th>Période</th><th class="center">Moyenne</th><th class="center">Rang</th><th class="center">Mention</th><th class="right">Bulletin</th></tr></thead>
+            <thead><tr><th>Période</th><th>Classe d’alors</th><th class="center">Moyenne</th><th class="center">Rang</th><th class="center">Mention</th><th class="right">Bulletin</th></tr></thead>
             <tbody>${d.historique.map(h => `
               <tr>
-                <td class="strong">${esc(h.periode.libelle)} <span class="tag gris">${h.periode.cycle === 'lycee' ? 'Semestre' : 'Trimestre'}</span></td>
+                <td class="strong">${esc(h.periode.libelle)} · ${esc(h.periode.annee_scolaire || '')}</td>
+                <td>${esc(h.classe_nom || '—')}</td>
                 <td class="center">${badgeMoy(h.moyenne)}</td>
                 <td class="center">${h.rang ?? '—'}</td>
                 <td class="center small">${esc(h.mention || '—')}</td>
@@ -1381,7 +1384,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       };
     },
     async supprimerMatiere(id) {
-      const ok = await confirmer('Supprimer cette matière ? Les notes associées seront également supprimées.', { titre: 'Supprimer la matière', ok: 'Supprimer' });
+      const ok = await confirmer('Supprimer cette matière ? Une matière avec des notes ne peut pas être supprimée : ses anciens résultats sont protégés.', { titre: 'Supprimer la matière', ok: 'Supprimer' });
       if (!ok) return;
       try {
         await api('/api/matieres/' + id, { method: 'DELETE' });
@@ -2048,14 +2051,17 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       await loadRefs();
       const q = S.query;
       const examenMode = !!q.examen_id;
-      const examens = examenMode ? await api('/api/examens') : [];
+      const toutesPeriodes = await api('/api/periodes?historique=1');
+      const examens = await api('/api/examens?historique=1');
       const examen = examens.find(e => e.id === Number(q.examen_id));
 
       let classeId = Number(q.classe_id) || (S.classes[0] && S.classes[0].id);
       const classe = S.classes.find(c => c.id === classeId);
-      const periodes = S.periodes.filter(p => !classe || p.cycle === classe.cycle);
-      let periodeId = Number(q.periode_id) || (periodes.find(p => p.statut === 'ouverte') || periodes[0] || {}).id;
-      const periode = S.periodes.find(p => p.id === periodeId);
+      const periodes = toutesPeriodes.filter(p => !classe || p.cycle === classe.cycle);
+      let periodeId = Number(q.periode_id) || (
+        periodes.find(p => p.annee_scolaire === S.etab.annee_scolaire && p.statut === 'ouverte') ||
+        periodes.find(p => p.annee_scolaire === S.etab.annee_scolaire) || periodes[0] || {}).id;
+      const periode = toutesPeriodes.find(p => p.id === periodeId);
 
       const direction = S.me.role === 'directeur';
       const compoSeule = q.mode === 'composition' && !examenMode;
@@ -2077,11 +2083,11 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
               <optgroup label="Bulletins de période">
                 ${periodes.map(p => {
                   const cible = !examenMode && p.id === periodeId;
-                  return `<option value="p:${p.id}" ${cible ? 'selected' : ''}>${esc(p.libelle)}</option>`;
+                  return `<option value="p:${p.id}" ${cible ? 'selected' : ''}>${esc(p.libelle)} · ${esc(p.annee_scolaire)}</option>`;
                 }).join('')}
               </optgroup>
               ${examens.length ? `<optgroup label="Résultats d'examens blancs">
-                ${examens.map(e => `<option value="e:${e.id}" ${examenMode && e.id === Number(q.examen_id) ? 'selected' : ''}>${esc(e.nom)}</option>`).join('')}
+                ${examens.map(e => `<option value="e:${e.id}" ${examenMode && e.id === Number(q.examen_id) ? 'selected' : ''}>${esc(e.nom)} · ${esc(e.annee_scolaire)}</option>`).join('')}
               </optgroup>` : ''}
             </select>
           </div>
@@ -2111,7 +2117,8 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       const publies = promo.resultats.filter(r => r.bulletin && r.bulletin.publie).length;
       const nonNotes = promo.resultats.filter(r => r.moyenne == null).length;
       const evalMode = examenMode;
-      const libelleSource = examenMode ? examen.nom : periode.libelle;
+      const libelleSource = examenMode
+        ? `${examen.nom} · ${examen.annee_scolaire}` : `${periode.libelle} · ${periode.annee_scolaire}`;
 
       return `
         <div class="panel">
@@ -2157,7 +2164,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
           </table></div>
           <div class="small muted" style="margin-top:10px">
             ${compoSeule ? 'Moyenne de chaque matière = note de composition. La moyenne générale est la moyenne des compositions pondérée par les coefficients.'
-              : `Formule appliquée : ${S.etab.formule_moyenne === 'moy_co' ? 'moyenne des devoirs et composition à parts égales' : '(moyenne des devoirs + 2 × composition) ÷ 3'}.`}
+              : `Formule appliquée : ${(promo.classe.formule_moyenne || S.etab.formule_moyenne) === 'moy_co' ? 'moyenne des devoirs et composition à parts égales' : '(moyenne des devoirs + 2 × composition) ÷ 3'}.`}
             Moyenne générale = Σ (moyenne × coefficient) ÷ Σ coefficients.
           </div>
         </div>`;
@@ -2586,8 +2593,12 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         return `<div class="panel"><div class="panel-head"><h2>Résultats · fusion de classes</h2></div>
           ${emptyState('🏫', 'Aucune classe disponible pour fusionner les résultats.')}</div>`;
       }
-      let examens = [];
-      try { examens = await api('/api/examens'); } catch (_) { examens = []; }
+      let examens = [], toutesPeriodes = S.periodes;
+      try {
+        [examens, toutesPeriodes] = await Promise.all([
+          api('/api/examens?historique=1'), api('/api/periodes?historique=1')
+        ]);
+      } catch (_) { examens = []; }
 
       const groupes = groupesNiveaux(classes);
       let sel = String(q.classes || '').split(',').map(v => Number(v)).filter(n => classes.some(c => c.id === n));
@@ -2597,8 +2608,9 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       }
       const selClasses = classes.filter(c => sel.includes(c.id));
       const cycle = (selClasses[0] || classes[0]).cycle;
-      const periodes = S.periodes.filter(p => p.cycle === cycle);
-      const periodeDefaut = (periodes.find(p => p.statut === 'ouverte') || periodes[0] || {}).id;
+      const periodes = toutesPeriodes.filter(p => p.cycle === cycle);
+      const periodeDefaut = (periodes.find(p => p.annee_scolaire === S.etab.annee_scolaire && p.statut === 'ouverte') ||
+        periodes.find(p => p.annee_scolaire === S.etab.annee_scolaire) || periodes[0] || {}).id;
       const choixScope = q.examen_id ? `examen:${q.examen_id}` : `periode:${q.periode_id || periodeDefaut}`;
       // Un examen programmé utilise ses propres épreuves : jamais les compositions du trimestre.
       const modeComposition = !q.examen_id && q.mode === 'composition';
@@ -2616,6 +2628,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
             <div><h2>🔗 Fusionner les classes</h2><div class="sub">Cochez les classes d'un même niveau (6ème A, B et C), choisissez la période, puis cliquez sur Fusionner.</div></div>
             <div class="right">
               <button class="btn btn-ghost btn-sm" onclick="App.go('bulletins')">📄 Résultats d'une classe</button>
+              ${S.me.role === 'directeur' ? `<button class="btn btn-ghost btn-sm" onclick="App.go('passage')">🎓 Décision finale</button>` : ''}
               <button class="btn btn-primary btn-sm" id="fu-lancer">🔗 Fusionner</button>
             </div>
           </div>
@@ -2637,10 +2650,10 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
               <label for="fu-scope">Source des résultats</label>
               <select id="fu-scope" style="min-width:250px">
                 <optgroup label="Périodes (compositions ou toutes les notes)">
-                  ${periodes.map(p => `<option value="periode:${p.id}" ${choixScope === 'periode:' + p.id ? 'selected' : ''}>📄 ${esc(p.libelle)}${p.statut === 'fermee' ? ' (clôturé)' : ''}</option>`).join('')}
+                  ${periodes.map(p => `<option value="periode:${p.id}" ${choixScope === 'periode:' + p.id ? 'selected' : ''}>📄 ${esc(p.libelle)} · ${esc(p.annee_scolaire)}${p.statut === 'fermee' ? ' (clôturé)' : ''}</option>`).join('')}
                 </optgroup>
                 ${examens.length ? `<optgroup label="Examens blancs programmés">
-                  ${examens.map(ex => `<option value="examen:${ex.id}" ${choixScope === 'examen:' + ex.id ? 'selected' : ''}>🎯 ${esc(ex.nom)}</option>`).join('')}
+                  ${examens.map(ex => `<option value="examen:${ex.id}" ${choixScope === 'examen:' + ex.id ? 'selected' : ''}>🎯 ${esc(ex.nom)} · ${esc(ex.annee_scolaire)}</option>`).join('')}
                 </optgroup>` : ''}
               </select>
             </div>
@@ -2866,6 +2879,212 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     download(`fusion-${nom}.csv`, '\ufeff' + head + body + headM + lignes.join('\n') + rep, 'text/csv;charset=utf-8');
     toast('Classement fusionné exporté');
   };
+
+  /* ---------------------- DÉCISION FINALE -------------------------- */
+  V.passage = {
+    async render() {
+      const options = await api('/api/passages/options');
+      S.optionsPassage = options;
+      S.passageApercu = null;
+      S.passageDestinations = {};
+      S.passageSeq = (S.passageSeq || 0) + 1;
+      const source = options.sources.find(c => c.id === Number(S.query.classe_id)) ||
+        options.sources.find(c => c.effectif && !c.valides) || options.sources[0];
+      const histoireAnnee = S.query.histoire || '';
+      const histoire = histoireAnnee
+        ? await api('/api/passages/historique?annee_scolaire=' + encodeURIComponent(histoireAnnee)) : null;
+      const pret = !options.periodes_ouvertes.length &&
+        options.sources.every(c => !c.effectif || c.valides === c.effectif);
+      const libelle = { admis: 'Admis(e)', maintenu: 'Maintenu(e)', incomplet: 'Période manquante' };
+      return `
+        <div class="panel">
+          <div class="panel-head"><div><h2>🎓 Décision finale · ${esc(options.annee_scolaire)}</h2>
+            <div class="sub">6ème → 5ème · 5ème → 4ème · 4ème → 3ème · 2nde → 1ère</div></div>
+            <button class="btn btn-ghost btn-sm" onclick="App.go('resultats')">← Résultats</button></div>
+          <div class="notice info">La moyenne annuelle est la <b>moyenne des 3 trimestres au collège</b> ou des
+            <b>2 semestres au lycée</b> (devoirs et compositions). Si une période n’a pas de moyenne,
+            l’élève reste dans sa classe. Fixez le seuil et la division par défaut, puis vérifiez l’aperçu.
+            Vous pouvez choisir une autre division ou série pour chaque admis.</div>
+          ${options.periodes_ouvertes.length ? `<div class="notice warn">Vous pouvez consulter l’aperçu, mais pour confirmer,
+            fermez d’abord les périodes : ${options.periodes_ouvertes.map(esc).join(', ')} dans
+            <a href="#/parametres">Paramètres → Périodes &amp; verrouillage</a>.</div>` : ''}
+          ${options.sources.length ? `
+            <div class="toolbar" style="gap:12px;flex-wrap:wrap;align-items:end;margin:16px 0">
+              <div class="field" style="margin:0;min-width:180px;flex:1"><label for="pa-source">Classe à traiter</label>
+                <select id="pa-source" onchange="App.choisirPassageClasse(this.value)">
+                  ${options.sources.map(c => `<option value="${c.id}" ${c.id === source.id ? 'selected' : ''}>${esc(c.nom)} (${c.effectif} élèves)${c.valides ? ' — validé' : ''}</option>`).join('')}
+                </select></div>
+              ${source.valides ? `<div class="notice ok" style="margin:0;flex:2">Décision enregistrée le ${dateFr(source.valide_le)} :
+                <b>${source.admis} admis sur ${source.valides}</b> · seuil ${fmt(source.seuil_valide)}/20.
+                <button class="btn btn-ghost btn-sm" onclick="App.annulerPassage(${source.id})">Annuler cette décision</button></div>` : `
+                <div class="field" style="margin:0;min-width:180px;flex:1"><label for="pa-cible">Classe supérieure</label>
+                  <select id="pa-cible" onchange="App.effacerApercuPassage()">
+                    ${source.cibles.map(c => `<option value="${c.id}">${esc(c.nom)}</option>`).join('')}
+                  </select></div>
+                <div class="field" style="margin:0;min-width:140px;flex:1"><label for="pa-seuil">Seuil de passage /20</label>
+                  <input id="pa-seuil" type="number" min="0" max="20" step="0.01"
+                    value="${esc(S.seuilPassage ?? '10')}" oninput="App.effacerApercuPassage()"></div>
+                <button class="btn btn-primary" onclick="App.apercuPassage()" ${!source.cibles.length || !source.effectif ? 'disabled' : ''}>👁 Voir l’aperçu</button>`}
+            </div>
+            ${!source.cibles.length ? `<div class="notice warn">Créez une classe supérieure pour ${esc(source.nom)} dans <b>Classes</b>, puis revenez ici.</div>` : ''}
+            <div id="pa-apercu-resultat" aria-live="polite"></div>
+            <div class="table-wrap" style="margin-top:18px"><table class="data">
+              <thead><tr><th>Classe</th><th>Destination(s)</th><th class="center">Effectif</th><th>État</th></tr></thead>
+              <tbody>${options.sources.map(c => `<tr><td class="strong">${esc(c.nom)}</td>
+                <td>${c.cibles.map(x => esc(x.nom)).join(', ') || 'À créer'}</td><td class="center">${c.effectif}</td>
+                <td>${c.valides ? `<span class="tag vert">${c.admis} admis · validé</span>` : c.effectif
+                  ? '<span class="tag or">À décider</span>' : '<span class="tag gris">Classe vide</span>'}</td></tr>`).join('')}</tbody></table></div>`
+            : `<div class="notice warn">Aucune 6ème, 5ème, 4ème ou 2nde ici. Créez vos classes dans le menu <b>Classes</b>.</div>`}
+        </div>
+        <div class="panel"><div class="panel-head"><div><h2>Nouvelle année scolaire</h2>
+          <div class="sub">${esc(options.annee_scolaire)} → ${esc(options.prochaine_annee)}</div></div></div>
+          <div class="small muted">Après les décisions et la clôture des périodes, ouvrez la nouvelle année.
+            De nouveaux trimestres/semestres sont créés ; anciens résultats et décisions restent consultables.</div>
+          ${!pret ? `<div class="notice warn" style="margin-top:10px">À terminer :
+            ${options.sources.filter(c => c.effectif && c.valides !== c.effectif).map(c => esc(c.nom)).join(', ') || 'clôturer les périodes'}.</div>` : ''}
+          <button class="btn btn-primary" style="margin-top:12px" onclick="App.ouvrirAnneePassage()" ${!pret ? 'disabled' : ''}>
+            📅 Ouvrir ${esc(options.prochaine_annee)}</button></div>
+        <div class="panel"><div class="panel-head"><div><h2>Décisions enregistrées</h2>
+          <div class="sub">Consultez les moyennes et décisions conservées après le passage.</div></div></div>
+          ${options.annees_archivees.length ? `<div class="field" style="max-width:240px"><label for="pa-histoire">Année à consulter</label>
+            <select id="pa-histoire" onchange="App.consulterPassages(this.value)">
+              <option value="">Choisir une année</option>
+              ${options.annees_archivees.map(a => `<option value="${esc(a)}" ${a === histoireAnnee ? 'selected' : ''}>${esc(a)}</option>`).join('')}
+            </select></div>
+            ${histoire ? `<div class="table-wrap"><table class="data"><thead><tr>
+              <th>Élève</th><th>Classe d’origine</th><th>Moyennes des périodes</th><th class="center">Annuelle</th>
+              <th class="center">Seuil</th><th>Décision</th>
+            </tr></thead><tbody>${histoire.map(l => {
+              let valeurs = [];
+              try { valeurs = JSON.parse(l.detail_periodes || '[]'); } catch (_) { /* Ancienne donnée */ }
+              return `<tr><td><b>${esc(l.nom)} ${esc(l.prenom)}</b><div class="muted small">${esc(l.matricule || '')}</div></td>
+                <td>${esc(l.classe_origine_nom)}</td><td>${Array.isArray(valeurs) ? valeurs.map(n => fmt(n)).join(' · ') : '—'}</td>
+                <td class="center">${fmt(l.moyenne_annuelle)}</td><td class="center">${fmt(l.seuil)}</td>
+                <td><span class="tag ${l.decision === 'admis' ? 'vert' : l.decision === 'incomplet' ? 'or' : 'gris'}">
+                  ${esc(libelle[l.decision] || l.decision)}</span>${l.classe_cible_nom ? ' → ' + esc(l.classe_cible_nom) : ''}</td></tr>`;
+            }).join('') || '<tr><td colspan="6">Aucune décision cette année.</td></tr>'}</tbody></table></div>` : ''}`
+            : '<div class="small muted">Aucune décision enregistrée pour le moment.</div>'}</div>`;
+    }
+  };
+
+  App.choisirPassageClasse = id => {
+    S.seuilPassage = $('#pa-seuil')?.value ?? S.seuilPassage;
+    App.go('passage', { classe_id: id });
+  };
+  App.effacerApercuPassage = () => {
+    S.passageApercu = null;
+    S.passageDestinations = {};
+    S.passageSeq = (S.passageSeq || 0) + 1;
+    const zone = $('#pa-apercu-resultat');
+    if (zone) zone.innerHTML = '';
+  };
+  App.apercuPassage = async (conserverDestinations = false) => {
+    const classe = Number($('#pa-source')?.value), cible = Number($('#pa-cible')?.value);
+    const champ = $('#pa-seuil');
+    if (!classe || !cible || !champ?.reportValidity()) return toast('Choisissez une classe supérieure et un seuil entre 0 et 20.', 'err');
+    const seuil = champ.value;
+    const affectations = conserverDestinations ? { ...S.passageDestinations } : {};
+    S.seuilPassage = seuil;
+    const zone = $('#pa-apercu-resultat');
+    if (!conserverDestinations) App.effacerApercuPassage();
+    else { S.passageApercu = null; S.passageSeq = (S.passageSeq || 0) + 1; }
+    const sequence = S.passageSeq;
+    zone.innerHTML = '<div class="notice info">Calcul des moyennes annuelles…</div>';
+    try {
+      const d = await api('/api/passages/apercu', { method: 'POST', body: {
+        classe_id: classe, cible_id: cible, seuil, affectations
+      } });
+      // Une sélection changée pendant le calcul invalide l'aperçu.
+      if (sequence !== S.passageSeq || classe !== Number($('#pa-source')?.value) ||
+          cible !== Number($('#pa-cible')?.value) || seuil !== $('#pa-seuil')?.value) return;
+      S.passageDestinations = d.affectations;
+      S.passageApercu = d;
+      const fermees = d.periodes.every(p => p.statut === 'fermee');
+      const libelle = { admis: 'Admis(e)', maintenu: 'Maintenu(e)', incomplet: 'Période manquante' };
+      zone.innerHTML = `<div class="panel" style="border:1px solid var(--bord);box-shadow:none">
+        <div class="panel-head"><div><h3 style="margin:0">Aperçu · ${esc(d.classe.nom)} → ${esc(d.cible.nom)}</h3>
+          <div class="sub">Seuil : ${fmt(d.seuil)}/20 · ${d.lignes.length} élève(s) ·
+            ${d.stats.admis} admis · ${d.stats.maintenus} maintenu(s) · ${d.stats.incomplets} incomplet(s)</div></div>
+          <button class="btn btn-primary" onclick="App.validerPassage()" ${!fermees || !d.lignes.length ? 'disabled' : ''}>✅ Confirmer le passage</button></div>
+        ${!fermees ? '<div class="notice warn">Clôturez toutes les périodes avant de confirmer.</div>' : ''}
+        <div class="small muted" style="margin-bottom:8px">Choisissez une autre division ou série pour un admis si nécessaire ;
+          la confirmation utilisera exactement ces destinations.</div>
+        <div class="table-wrap"><table class="data"><thead><tr><th>Élève</th>
+          ${d.periodes.map(p => `<th class="center">${esc(p.libelle)}</th>`).join('')}
+          <th class="center">Annuelle</th><th>Décision</th><th>Classe supérieure</th></tr></thead><tbody>
+          ${d.lignes.map(l => `<tr><td><b>${esc(l.nom)} ${esc(l.prenom)}</b><div class="small muted">${esc(l.matricule || '')}</div></td>
+            ${l.moyennes.map(n => `<td class="center">${fmt(n)}</td>`).join('')}
+            <td class="center strong">${fmt(l.moyenne_annuelle)}</td>
+            <td><span class="tag ${l.decision === 'admis' ? 'vert' : l.decision === 'incomplet' ? 'or' : 'gris'}">
+              ${esc(libelle[l.decision])}</span></td>
+            <td>${l.decision === 'admis' ? `<select class="pa-affectation" data-eleve="${l.eleve_id}"
+              aria-label="Classe supérieure de ${esc(l.nom)} ${esc(l.prenom)}" onchange="App.choisirDestinationPassage()">
+              ${d.cibles.map(c => `<option value="${c.id}" ${c.id === l.cible_id ? 'selected' : ''}>${esc(c.nom)}</option>`).join('')}
+            </select>` : '—'}</td></tr>`).join('')}
+        </tbody></table></div></div>`;
+      if (!conserverDestinations) zone.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) {
+      if (sequence === S.passageSeq) {
+        S.passageDestinations = {};
+        zone.innerHTML = `<div class="notice err">${esc(e.message)}</div>`;
+      }
+    }
+  };
+  App.choisirDestinationPassage = () => {
+    S.passageDestinations = Object.fromEntries($$('.pa-affectation').map(i => [i.dataset.eleve, Number(i.value)]));
+    App.apercuPassage(true);
+  };
+  App.validerPassage = async () => {
+    const d = S.passageApercu;
+    if (!d || S.passageEnCours) return;
+    const destinations = d.cibles.map(c => {
+      const n = d.lignes.filter(l => l.cible_id === c.id).length;
+      return n ? `${n} en ${c.nom}` : null;
+    }).filter(Boolean).join(', ');
+    const oui = await confirmer(`Confirmer les décisions pour <b>${esc(d.classe.nom)}</b> ?<br>
+      ${esc(destinations || 'Aucun admis')} ; ${d.stats.incomplets} élève(s) avec une période manquante resteront dans leur classe.<br>
+      Les anciennes notes et décisions seront conservées.`,
+    { titre: 'Décision finale', danger: false, ok: 'Confirmer le passage' });
+    if (!oui) return;
+    S.passageEnCours = true;
+    try {
+      await api('/api/passages/valider', { method: 'POST', body: {
+        classe_id: d.classe.id, cible_id: d.cible.id, seuil: d.seuil,
+        affectations: d.affectations, empreinte: d.empreinte
+      }});
+      S.passageApercu = null;
+      await renderRoute();
+      toast('Décision validée. Les admis ont rejoint la classe supérieure.');
+    } catch (e) { toast(e.message, 'err', 8000); }
+    finally { S.passageEnCours = false; }
+  };
+  App.annulerPassage = async id => {
+    const oui = await confirmer('Annuler la décision et remettre les élèves dans leur classe d’origine ?',
+      { titre: 'Annuler la décision finale', ok: 'Annuler la décision' });
+    if (!oui) return;
+    try {
+      await api('/api/passages/annuler', { method: 'POST', body: { classe_id: id } });
+      await renderRoute();
+      toast('Décision annulée ; les élèves ont retrouvé leur classe d’origine.');
+    } catch (e) { toast(e.message, 'err', 8000); }
+  };
+  App.ouvrirAnneePassage = async () => {
+    const annee = S.optionsPassage?.prochaine_annee;
+    if (!annee) return;
+    const oui = await confirmer(`Ouvrir l’année scolaire <b>${esc(annee)}</b> ?<br>
+      Les anciens trimestres/semestres, bulletins et décisions restent archivés.`,
+    { titre: 'Nouvelle année', danger: false, ok: 'Ouvrir la nouvelle année' });
+    if (!oui) return;
+    try {
+      await api('/api/passages/annee-suivante', { method: 'POST', body: { annee_scolaire: annee } });
+      await boot();
+      toast(`Année ${annee} ouverte : nouvelles périodes créées.`);
+    } catch (e) { toast(e.message, 'err', 8000); }
+  };
+  App.consulterPassages = annee => App.go('passage', {
+    ...(S.query.classe_id ? { classe_id: S.query.classe_id } : {}),
+    ...(annee ? { histoire: annee } : {})
+  });
 
   /* --------------------------- EXAMENS ----------------------------- */
   V.examens = {
@@ -3595,7 +3814,8 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
           ${d.periodes.map(p => `
             <div class="panel" style="margin:0;${p.publie ? '' : 'opacity:.85'}">
               <div class="panel-head" style="margin-bottom:10px">
-                <div><h2 style="font-size:15px">${esc(p.periode.libelle)}</h2><div class="sub">${p.periode.cycle === 'lycee' ? 'Semestre' : 'Trimestre'} · ${p.periodes || ''}${esc(p.periode.date_fin ? 'Clôturé le ' + dateFr(p.periode.date_fin) : '')}</div></div>
+                <div><h2 style="font-size:15px">${esc(p.periode.libelle)} · ${esc(p.periode.annee_scolaire || etab.annee_scolaire)}</h2>
+                  <div class="sub">${esc(p.classe_nom || e.classe_nom || '—')} · ${p.periode.cycle === 'lycee' ? 'Semestre' : 'Trimestre'}${p.periode.date_fin ? ' · Clôturé le ' + dateFr(p.periode.date_fin) : ''}</div></div>
                 <div class="right">${p.publie ? '<span class="tag vert">Publié</span>' : '<span class="tag gris">En attente</span>'}</div>
               </div>
               ${p.publie ? `
