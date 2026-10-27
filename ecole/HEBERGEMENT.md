@@ -135,6 +135,17 @@ Le script :
 4. génère un **mot de passe** et le note dans `data/compte-administrateur.txt` (lisible par vous seul) ;
 5. affiche la commande exacte à coller dans l'interface.
 
+**Si alwaysdata arrête npm avec `Killed` :** ne redémarrez pas : `npm ci` a peut-être vidé
+`node_modules` avant d'être interrompu. Sur un serveur **Linux x64**, lancez depuis `~/app` :
+
+```bash
+NODE_OPTIONS=--max-old-space-size=64 node deploy/alwaysdata/installer-dependances-leger.js
+```
+
+Ce dépanneur sans npm lit le `package-lock.json`, télécharge les paquets de production un par un
+depuis le registre officiel, vérifie leur SHA-512 et peut reprendre après une interruption. Il ne
+touche ni `data/` ni `.env` ; attendez le message **« DÉPENDANCES PRÊTES »** avant de redémarrer.
+
 ### 4.5 Déclarer le site (interface web)
 
 **Web → Sites → Ajouter un site**
