@@ -135,6 +135,15 @@ Le script :
 4. génère un **mot de passe** et le note dans `data/compte-administrateur.txt` (lisible par vous seul) ;
 5. affiche la commande exacte à coller dans l'interface.
 
+**Mise à jour « annuler une activation » (28 octobre 2026) :** elle ajoute
+`server/abonnements.js`, modifie `server/db.js`, `server/index.js`, `public/js/app.js` et
+`public/app.html`. Sauvegardez la base SQLite **avant** de remplacer ces cinq fichiers dans
+`~/app`, sans toucher à `~/app/data`, à `.env` ni à `node_modules` ; aucune dépendance nouvelle
+n'est nécessaire. Dans **alwaysdata → Web → Sites → Redémarrer**, redémarrez le site pour que
+la nouvelle table `operations_abonnement` soit créée automatiquement. Vérifiez ensuite la page
+**Console → Paiements** et le journal dans **Console → Établissements**. Ne lancez pas `npm ci`
+juste pour cette mise à jour.
+
 **Si alwaysdata arrête npm avec `Killed` :** ne redémarrez pas : `npm ci` a peut-être vidé
 `node_modules` avant d'être interrompu. Sur un serveur **Linux x64**, lancez depuis `~/app` :
 

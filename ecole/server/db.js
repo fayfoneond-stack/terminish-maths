@@ -232,6 +232,22 @@ CREATE TABLE IF NOT EXISTS paiements (
   cree_le TEXT NOT NULL
 );
 
+-- Journal des changements d'abonnement à partir de cette version. Le paiement
+-- reste dans paiements, même si son activation est annulée par l'administrateur.
+-- Les activations antérieures à cette table n'ont pas d'état initial fiable.
+CREATE TABLE IF NOT EXISTS operations_abonnement (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ecole_id INTEGER NOT NULL REFERENCES etablissements(id) ON DELETE CASCADE,
+  paiement_id INTEGER UNIQUE REFERENCES paiements(id) ON DELETE SET NULL,
+  type TEXT NOT NULL,                             -- paiement | modification | suspension
+  ancien_statut TEXT NOT NULL, ancien_plan TEXT NOT NULL, ancienne_date_fin TEXT,
+  nouveau_statut TEXT NOT NULL, nouveau_plan TEXT NOT NULL, nouvelle_date_fin TEXT,
+  motif TEXT, cree_le TEXT NOT NULL,
+  cree_par INTEGER REFERENCES utilisateurs(id) ON DELETE SET NULL,
+  annule_le TEXT, annule_par INTEGER REFERENCES utilisateurs(id) ON DELETE SET NULL,
+  motif_annulation TEXT
+);
+
 CREATE TABLE IF NOT EXISTS reglages (
   cle TEXT PRIMARY KEY,
   valeur TEXT
@@ -272,6 +288,7 @@ CREATE INDEX IF NOT EXISTS idx_eleves_ecole ON eleves(ecole_id, classe_id);
 CREATE INDEX IF NOT EXISTS idx_demandes_mdp ON demandes_mdp(ecole_id, statut);
 CREATE INDEX IF NOT EXISTS idx_reinitialisations_mdp_user ON reinitialisations_mdp(user_id, cree_le);
 CREATE INDEX IF NOT EXISTS idx_paiements_ecole ON paiements(ecole_id, cree_le);
+CREATE INDEX IF NOT EXISTS idx_operations_abonnement_ecole ON operations_abonnement(ecole_id, id);
 CREATE INDEX IF NOT EXISTS idx_notes_eval ON notes(evaluation_id);
 CREATE INDEX IF NOT EXISTS idx_inscriptions_historiques_classe ON inscriptions_historiques(ecole_id, annee_scolaire, classe_id);
 CREATE INDEX IF NOT EXISTS idx_decisions_finales_classe ON decisions_finales(ecole_id, annee_scolaire, classe_origine_id);

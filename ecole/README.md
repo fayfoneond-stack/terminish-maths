@@ -102,6 +102,9 @@ démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimest
   prolongation automatique de l'abonnement à la validation, **reçus PDF**.
 - Configuration des **numéros marchands**, des tarifs et de CinetPay.
 - Enregistrement des paiements hors ligne, création d'établissements, suivi des demandes.
+- **Correction des activations erronées** : annulation tracée de la dernière activation manuelle,
+  restauration du statut, de la formule et de l'échéance précédents ; suspension prudente pour les
+  anciennes activations ou les paiements en ligne, sans suppression des transactions.
 
 ---
 
@@ -218,6 +221,33 @@ Trois moyens sont proposés aux établissements depuis **Abonnement** :
 
 Durées : 1 mois, 3 mois, ou 12 mois **facturés 10 mois** (2 mois offerts). Les prix sont modifiables
 dans la console ; par défaut Essentiel 15 000 F et Standard 25 000 F par mois.
+
+### Corriger une activation faite par erreur (super-administrateur)
+
+- **Console → Paiements** : sur la **dernière activation manuelle** de l'école, cliquez sur
+  **« Annuler l'activation »**, indiquez le motif puis **« Confirmer »**. Le statut, la formule et
+  l'échéance *d'avant cette activation* sont restaurés. La transaction reste en base avec le statut
+  « Activation annulée », son montant, sa référence, la date, l'administrateur et le motif. Le total
+  « Validé » n'inclut plus cette validation ; le montant apparaît séparément « Activations annulées ».
+- **Console → Établissements** : le même bouton annule la dernière modification traçable (y compris
+  une activation directe via la liste). **« Suspendre »** est proposé si l'activation précède cette
+  mise à jour ou si un paiement en ligne doit être vérifié auprès du prestataire. La suspension
+  conserve l'échéance et les transactions ; elle peut être annulée pour rétablir le statut précédent.
+  L'onglet **« Historique des modifications et annulations »** montre les motifs et les auteurs.
+
+**Sécurité :** seul le super-administrateur agit ; un motif de 5 à 300 caractères est obligatoire ;
+le serveur refuse d'annuler un paiement si une autre activation/modification est intervenue depuis.
+Pour corriger plusieurs erreurs successives, commencer par **la plus récente**. Les opérations sont
+atomiques en SQLite ; une annulation ne supprime ni une école ni un élève. Une activation faite avant
+cette version n'a pas d'état antérieur enregistré : ne pas deviner cet état, choisir la suspension.
+Les paiements en ligne ne sont **jamais annulés par la console** : voir le prestataire si nécessaire.
+Un webhook tardif ne réactive pas une validation annulée ou rejetée.
+
+**Important :** annuler une activation ou suspendre un établissement **ne rembourse pas** le paiement
+réel (Mobile Money, espèces, virement). Vérifiez le relevé et régularisez/remboursez séparément ; un
+reçu déjà téléchargé ne peut pas être effacé chez son destinataire. Le statut « suspendu » est dans
+cette version un **statut administratif** : il ne coupe pas à lui seul la connexion des utilisateurs
+à l'application. Le blocage technique des accès liés à un abonnement reste à définir séparément.
 
 ### Reçus PDF
 Chaque paiement validé génère un **reçu PDF A4** téléchargeable (bouton 📄 dans l'historique de l'école ou
@@ -493,7 +523,9 @@ et le contrôle du tunnel (`502` si le tunnel ne pointe pas sur le même port).
 
 `etablissements`, `utilisateurs`, `sessions`, `classes`, `matieres`, `classe_matieres`, `eleves`,
 `periodes`, `affectations`, `examens`, `epreuves`, `evaluations`, `notes`, `bulletins`, `paiements`,
-`demandes`, `reglages` (numéros marchands, tarifs, clés CinetPay).
+`operations_abonnement` (états avant/après, auteur, motif d'annulation), `demandes`, `reglages`
+(numéros marchands, tarifs, clés CinetPay). La nouvelle table est créée automatiquement au démarrage,
+sans retirer de données aux paiements déjà enregistrés.
 
 ### API (aperçu)
 
@@ -533,7 +565,11 @@ et le contrôle du tunnel (`502` si le tunnel ne pointe pas sur le même port).
 | POST | `/api/webhooks/paydunya` | PayDunya (public, empreinte + confirmation API) |
 | GET | `/api/paiements/:id/recu.pdf` | direction (reçu PDF de son école) |
 | GET | `/api/admin/paiements/:id/recu.pdf` | super administrateur |
-| GET/PATCH | `/api/admin/paiements`, `/api/admin/reglages` | super administrateur |
+| GET/POST | `/api/admin/paiements` | super administrateur (liste / encaissement manuel) |
+| PATCH | `/api/admin/paiements/:id` (`valider`, `rejeter`, `annuler` + `motif`) | super administrateur (paiements manuels) |
+| PATCH | `/api/admin/etablissements/:id/abonnement` (`annuler` + `operation_id` ou `suspendre`, `motif`) | super administrateur |
+| GET | `/api/admin/abonnements/historique` | super administrateur (50 derniers changements) |
+| GET/PUT | `/api/admin/reglages` | super administrateur |
 | GET | `/api/admin/*` | super administrateur |
 | GET | `/print/bulletin/:id`, `/print/classe/:id`, `/print/examen/:id` (`?mode=composition`) | personnel / élève concerné |
 

@@ -11,6 +11,7 @@ const { db, hashPassword, verifyPassword, createEtablissement, createUser, now, 
 const { computeClasse, computeFusion, bulletinData } = require('./stats');
 const stockage = require('./storage');
 const P = require('./paiements');
+const Abonnement = require('./abonnements');
 const { genererRecuPDF } = require('./recu');
 const { genererFusionPDF } = require('./fusion-pdf');
 const { analyserListePDF, dateISO, MAX_OCTETS } = require('./liste-pdf');
@@ -1501,7 +1502,14 @@ app.get('/api/eleve/espace', auth, roles('eleve'), (req, res) => {
 /* Console super-administrateur (SaaS)                                 */
 /* ------------------------------------------------------------------ */
 app.get('/api/admin/etablissements', auth, roles('super_admin'), (req, res) => {
-  const rows = db.prepare('SELECT * FROM etablissements ORDER BY created_at DESC').all();
+  const rows = db.prepare(`SELECT e.*, o.id AS operation_id, o.type AS operation_type,
+    o.nouveau_statut AS operation_statut, o.nouveau_plan AS operation_plan,
+    o.nouvelle_date_fin AS operation_date_fin, p.canal AS operation_canal
+    FROM etablissements e
+    LEFT JOIN operations_abonnement o ON o.id = (
+      SELECT MAX(id) FROM operations_abonnement WHERE ecole_id = e.id AND annule_le IS NULL)
+    LEFT JOIN paiements p ON p.id = o.paiement_id
+    ORDER BY e.created_at DESC`).all();
   const out = rows.map(e => {
     const eleves = db.prepare("SELECT COUNT(*) AS n FROM eleves WHERE ecole_id = ? AND statut = 'actif'").get(e.id).n;
     const classes = db.prepare('SELECT COUNT(*) AS n FROM classes WHERE ecole_id = ?').get(e.id).n;
@@ -1527,25 +1535,61 @@ app.post('/api/admin/etablissements', auth, roles('super_admin'), (req, res) => 
   res.json({ ok: true, id: ecoleId });
 });
 app.patch('/api/admin/etablissements/:id', auth, roles('super_admin'), (req, res) => {
-  const e = db.prepare('SELECT * FROM etablissements WHERE id = ?').get(req.params.id);
-  if (!e) return res.status(404).json({ error: 'Introuvable' });
   const { statut, plan, date_fin_abonnement, nom } = req.body || {};
-  db.prepare('UPDATE etablissements SET statut = ?, plan = ?, date_fin_abonnement = ?, nom = ? WHERE id = ?')
-    .run(statut ?? e.statut, plan ?? e.plan, date_fin_abonnement ?? e.date_fin_abonnement, nom ?? e.nom, e.id);
-  res.json({ ok: true });
+  if (statut !== undefined && !['actif', 'essai', 'suspendu'].includes(statut))
+    return res.status(400).json({ error: 'Statut invalide' });
+  if (plan !== undefined && !['essai', 'essentiel', 'standard', 'reseau'].includes(plan))
+    return res.status(400).json({ error: 'Formule invalide' });
+  if (date_fin_abonnement !== undefined &&
+      (typeof date_fin_abonnement !== 'string' || !/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)?$/.test(date_fin_abonnement) ||
+        !Number.isFinite(Date.parse(date_fin_abonnement)))) {
+    return res.status(400).json({ error: 'Date d’échéance invalide' });
+  }
+  try {
+    Abonnement.modifierEcole(db, req.params.id, { statut, plan, date_fin_abonnement, nom }, req.user.id);
+    res.json({ ok: true });
+  } catch (e) { res.status(e.status || 500).json({ error: e.message }); }
 });
+
+// Annulation de la dernière modification traçable, ou suspension prudente
+// d'un ancien abonnement / d'un paiement en ligne. Motif obligatoire.
+app.patch('/api/admin/etablissements/:id/abonnement', auth, roles('super_admin'), (req, res) => {
+  const { action, operation_id, motif } = req.body || {};
+  if (!['annuler', 'suspendre'].includes(action)) return res.status(400).json({ error: 'Action inconnue' });
+  try {
+    const resultat = action === 'annuler'
+      ? Abonnement.annulerDerniereOperation(db, req.params.id, operation_id, req.user.id, motif)
+      : Abonnement.suspendreAbonnement(db, req.params.id, req.user.id, motif);
+    res.json({ ok: true, ...resultat });
+  } catch (e) { res.status(e.status || 500).json({ error: e.message }); }
+});
+
+app.get('/api/admin/abonnements/historique', auth, roles('super_admin'), (req, res) => {
+  res.json(db.prepare(`SELECT o.*, e.nom AS ecole_nom, u.nom AS auteur, v.nom AS annuleur,
+    p.reference AS paiement_reference FROM operations_abonnement o
+    JOIN etablissements e ON e.id = o.ecole_id
+    LEFT JOIN utilisateurs u ON u.id = o.cree_par
+    LEFT JOIN utilisateurs v ON v.id = o.annule_par
+    LEFT JOIN paiements p ON p.id = o.paiement_id
+    ORDER BY o.id DESC LIMIT 50`).all());
+});
+
 app.post('/api/admin/paiements', auth, roles('super_admin'), (req, res) => {
-  const { ecole_id, montant, plan, reference, duree_jours } = req.body || {};
-  const e = db.prepare('SELECT * FROM etablissements WHERE id = ?').get(ecole_id);
-  if (!e) return res.status(404).json({ error: 'Établissement introuvable' });
-  const fin = addDays(Number(duree_jours) || 365);
-  db.prepare(`INSERT INTO paiements (ecole_id, montant, devise, plan, reference, statut, periode_debut, periode_fin,
-    operateur, canal, mois, valide_par, valide_le, cree_le)
-    VALUES (?,?,?,?,?, 'paye', ?,?,?,?,?,?,?,?)`).run(ecole_id, montant || 0, 'FCFA', plan || e.plan,
-    reference || `PAY-${Date.now()}`, today(), fin.slice(0, 10), req.body.operateur || 'manuel', 'manuel',
-    Math.max(1, Math.round((Number(duree_jours) || 365) / 30)), req.user.id, now(), now());
-  db.prepare("UPDATE etablissements SET statut = 'actif', plan = ?, date_fin_abonnement = ? WHERE id = ?").run(plan || e.plan, fin, e.id);
-  res.json({ ok: true });
+  const { ecole_id, montant, plan, reference, duree_jours, operateur } = req.body || {};
+  const id = Number(ecole_id), somme = Number(montant), jours = Number(duree_jours);
+  if (!Number.isSafeInteger(id) || id < 1) return res.status(400).json({ error: 'Établissement invalide' });
+  if (!['essentiel', 'standard', 'reseau'].includes(plan)) return res.status(400).json({ error: 'Formule invalide' });
+  if (!Number.isFinite(somme) || somme < 0) return res.status(400).json({ error: 'Montant invalide' });
+  if (!Number.isSafeInteger(jours) || jours < 1 || jours > 3650)
+    return res.status(400).json({ error: 'Durée invalide (1 à 3 650 jours)' });
+  try {
+    const resultat = Abonnement.enregistrerPaiementManuel(db, {
+      ecoleId: id, montant: somme, plan, dureeJours: jours,
+      reference: String(reference || '').trim().slice(0, 100) || `PAY-${Date.now()}`,
+      operateur: String(operateur || 'manuel').slice(0, 30)
+    }, req.user.id);
+    res.json({ ok: true, ...resultat });
+  } catch (e) { res.status(e.status || 500).json({ error: e.message }); }
 });
 app.get('/api/admin/demandes', auth, roles('super_admin'), (req, res) => {
   res.json(db.prepare('SELECT * FROM demandes ORDER BY cree_le DESC').all());
@@ -1561,7 +1605,9 @@ app.get('/api/admin/statistiques', auth, roles('super_admin'), (req, res) => {
   const eleves = db.prepare("SELECT COUNT(*) AS n FROM eleves WHERE statut = 'actif'").get().n;
   const revenus = db.prepare("SELECT COALESCE(SUM(montant),0) AS s FROM paiements WHERE statut = 'paye'").get().s;
   const leads = db.prepare("SELECT COUNT(*) AS n FROM demandes WHERE statut = 'nouveau'").get().n;
-  const paiements = db.prepare(`SELECT p.*, e.nom AS ecole_nom FROM paiements p JOIN etablissements e ON e.id = p.ecole_id ORDER BY p.cree_le DESC LIMIT 20`).all();
+  const paiements = db.prepare(`SELECT p.*, e.nom AS ecole_nom FROM paiements p
+    JOIN etablissements e ON e.id = p.ecole_id WHERE p.statut = 'paye'
+    ORDER BY p.cree_le DESC LIMIT 20`).all();
   const paiementsEnAttente = db.prepare("SELECT COUNT(*) AS n FROM paiements WHERE statut = 'en_attente'").get().n;
   res.json({ nbEcoles, actives, essais, eleves, revenus, leads, paiements, paiementsEnAttente });
 });
@@ -1570,24 +1616,6 @@ app.get('/api/admin/statistiques', auth, roles('super_admin'), (req, res) => {
 /* ------------------------------------------------------------------ */
 /* Paiements Mobile Money (Mixx by Yas, Moov Money) & CinetPay         */
 /* ------------------------------------------------------------------ */
-function prolonger(ecoleId, mois, plan) {
-  const e = db.prepare('SELECT * FROM etablissements WHERE id = ?').get(ecoleId);
-  if (!e) return null;
-  const actuel = e.date_fin_abonnement ? new Date(e.date_fin_abonnement) : null;
-  const base = actuel && actuel.getTime() > Date.now() ? actuel : new Date();
-  const fin = new Date(base.getTime() + Math.max(1, Number(mois) || 1) * 30 * 864e5);
-  db.prepare("UPDATE etablissements SET statut = 'actif', plan = ?, date_fin_abonnement = ? WHERE id = ?")
-    .run(plan || e.plan, fin.toISOString(), e.id);
-  return fin.toISOString();
-}
-
-function validerPaiement(paiement, validePar) {
-  db.prepare(`UPDATE paiements SET statut = 'paye', valide_par = ?, valide_le = ? WHERE id = ?`)
-    .run(validePar, now(), paiement.id);
-  const fin = prolonger(paiement.ecole_id, paiement.mois, paiement.plan);
-  return fin;
-}
-
 app.get('/api/paiements', auth, directionOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
   res.json(db.prepare('SELECT * FROM paiements WHERE ecole_id = ? ORDER BY cree_le DESC').all(id));
@@ -1830,26 +1858,27 @@ app.post('/api/paiement/cinetpay/initier', auth, directionOnly, async (req, res)
 app.post('/api/webhooks/cinetpay', async (req, res) => {
   const transactionId = (req.body && (req.body.cpm_trans_id || req.body.transaction_id)) || req.query.transaction_id;
   if (!transactionId) return res.status(400).json({ error: 'transaction_id manquant' });
-  const paiement = db.prepare('SELECT * FROM paiements WHERE reference = ?').get(transactionId);
+  const paiement = db.prepare("SELECT * FROM paiements WHERE canal = 'cinetpay' AND reference = ?").get(transactionId);
   if (!paiement) return res.status(404).json({ error: 'Paiement inconnu' });
-  if (paiement.statut === 'paye') return res.json({ ok: true, deja: true });
+  if (paiement.statut !== 'en_attente') return res.json({ ok: true, ignore: true, statut: paiement.statut });
   const cfg = P.cinetpayConfig(P.lireReglages(db));
   if (!cfg.actif) return res.status(400).json({ error: 'CinetPay non configuré' });
   try {
     const etat = await P.verifierCinetPay(cfg, transactionId);
     if (etat.statut === 'ACCEPTED') {
       if (etat.montant != null && Math.round(etat.montant) < Math.round(paiement.montant)) {
-        db.prepare("UPDATE paiements SET statut = 'rejete', note = ? WHERE id = ?")
+        db.prepare("UPDATE paiements SET statut = 'rejete', note = ? WHERE id = ? AND statut = 'en_attente'")
           .run(`Montant reçu (${etat.montant}) inférieur au montant attendu (${paiement.montant})`, paiement.id);
         return res.status(400).json({ error: 'Montant insuffisant' });
       }
-      db.prepare("UPDATE paiements SET operateur = ?, transaction_ref = ? WHERE id = ?")
+      db.prepare("UPDATE paiements SET operateur = ?, transaction_ref = ? WHERE id = ? AND statut = 'en_attente'")
         .run(etat.operateur ? String(etat.operateur).toLowerCase() : null, etat.moyen || '', paiement.id);
-      validerPaiement(paiement, null);
-      return res.json({ ok: true });
+      return res.json({ ok: true, ...Abonnement.validerPaiement(db, paiement.id, null) });
     }
-    db.prepare("UPDATE paiements SET statut = 'rejete', note = ? WHERE id = ?")
-      .run(`CinetPay : ${etat.statut}`, paiement.id);
+    if (['REFUSED', 'CANCELLED', 'CANCELED'].includes(etat.statut)) {
+      db.prepare("UPDATE paiements SET statut = 'rejete', note = ? WHERE id = ? AND statut = 'en_attente'")
+        .run(`CinetPay : ${etat.statut}`, paiement.id);
+    }
     res.json({ ok: true, statut: etat.statut });
   } catch (e) {
     res.status(502).json({ error: e.message });
@@ -1898,7 +1927,7 @@ app.post('/api/webhooks/paydunya', async (req, res) => {
   if (!token) return res.status(400).json({ error: 'token manquant' });
   const paiement = db.prepare("SELECT * FROM paiements WHERE canal = 'paydunya' AND transaction_ref = ?").get(String(token));
   if (!paiement) return res.status(404).json({ error: 'Paiement inconnu' });
-  if (paiement.statut === 'paye') return res.json({ ok: true, deja: true });
+  if (paiement.statut !== 'en_attente') return res.json({ ok: true, ignore: true, statut: paiement.statut });
   const cfg = P.paydunyaConfig(P.lireReglages(db));
   if (!cfg.actif) return res.status(400).json({ error: 'PayDunya non configuré' });
   // Contrôle facultatif de l'empreinte fournie par PayDunya (SHA-512 de la master key)
@@ -1910,17 +1939,16 @@ app.post('/api/webhooks/paydunya', async (req, res) => {
     const etat = await P.verifierPaydunya(cfg, token);
     if (etat.statut === 'completed') {
       if (etat.montant != null && Math.round(etat.montant) < Math.round(paiement.montant)) {
-        db.prepare("UPDATE paiements SET statut = 'rejete', note = ? WHERE id = ?")
+        db.prepare("UPDATE paiements SET statut = 'rejete', note = ? WHERE id = ? AND statut = 'en_attente'")
           .run(`Montant reçu (${etat.montant}) inférieur au montant attendu (${paiement.montant})`, paiement.id);
         return res.status(400).json({ error: 'Montant insuffisant' });
       }
-      db.prepare('UPDATE paiements SET operateur = ? WHERE id = ?')
+      db.prepare("UPDATE paiements SET operateur = ? WHERE id = ? AND statut = 'en_attente'")
         .run(etat.operateur || null, paiement.id);
-      validerPaiement(paiement, null);
-      return res.json({ ok: true });
+      return res.json({ ok: true, ...Abonnement.validerPaiement(db, paiement.id, null) });
     }
     if (etat.statut === 'canceled' || etat.statut === 'cancelled' || etat.statut === 'fail') {
-      db.prepare("UPDATE paiements SET statut = 'rejete', note = ? WHERE id = ?")
+      db.prepare("UPDATE paiements SET statut = 'rejete', note = ? WHERE id = ? AND statut = 'en_attente'")
         .run(`PayDunya : ${etat.statut}`, paiement.id);
     }
     res.json({ ok: true, statut: etat.statut });
@@ -2028,10 +2056,15 @@ app.put('/api/admin/reglages', auth, roles('super_admin'), (req, res) => {
 app.get('/api/admin/paiements', auth, roles('super_admin'), (req, res) => {
   const statut = req.query.statut;
   let rows = db.prepare(`SELECT p.*, e.nom AS ecole_nom, e.ville AS ecole_ville, e.statut AS ecole_statut,
-      u.nom AS demandeur, v.nom AS valideur
+      u.nom AS demandeur, v.nom AS valideur,
+      o.id AS operation_id, o.annule_le, o.motif_annulation, a.nom AS annuleur,
+      (SELECT MAX(id) FROM operations_abonnement WHERE ecole_id = p.ecole_id AND annule_le IS NULL)
+        AS derniere_operation_id
     FROM paiements p JOIN etablissements e ON e.id = p.ecole_id
     LEFT JOIN utilisateurs u ON u.id = p.demande_par
     LEFT JOIN utilisateurs v ON v.id = p.valide_par
+    LEFT JOIN operations_abonnement o ON o.paiement_id = p.id
+    LEFT JOIN utilisateurs a ON a.id = o.annule_par
     ORDER BY CASE p.statut WHEN 'en_attente' THEN 0 ELSE 1 END, p.cree_le DESC`).all();
   if (statut) rows = rows.filter(r => r.statut === statut);
   const enAttente = db.prepare("SELECT COUNT(*) AS n FROM paiements WHERE statut = 'en_attente'").get().n;
@@ -2042,18 +2075,27 @@ app.get('/api/admin/paiements', auth, roles('super_admin'), (req, res) => {
 app.patch('/api/admin/paiements/:id', auth, roles('super_admin'), (req, res) => {
   const p = db.prepare('SELECT * FROM paiements WHERE id = ?').get(req.params.id);
   if (!p) return res.status(404).json({ error: 'Paiement introuvable' });
-  const action = (req.body && req.body.action) || '';
+  const { action, motif } = req.body || {};
+  if (action === 'annuler') {
+    if (p.statut !== 'paye') return res.status(409).json({ error: 'Seul un paiement validé peut être annulé.' });
+    const operation = db.prepare('SELECT id FROM operations_abonnement WHERE paiement_id = ?').get(p.id);
+    if (!operation) return res.status(409).json({ error: 'Ancien paiement sans historique : utilisez « Suspendre » dans Établissements.' });
+    try {
+      return res.json({ ok: true, ...Abonnement.annulerDerniereOperation(db, p.ecole_id, operation.id, req.user.id, motif) });
+    } catch (e) { return res.status(e.status || 500).json({ error: e.message }); }
+  }
+  if (!['valider', 'rejeter'].includes(action)) return res.status(400).json({ error: 'Action inconnue' });
   if (p.statut === 'paye' && action === 'valider') return res.json({ ok: true, deja: true });
+  if (p.statut !== 'en_attente') return res.status(409).json({ error: 'Ce paiement n’est plus en attente.' });
+  if (p.canal !== 'manuel') return res.status(409).json({ error: 'Paiement en ligne : seule la vérification du prestataire peut le valider ou le rejeter.' });
   if (action === 'valider') {
-    const fin = validerPaiement(p, req.user.id);
-    return res.json({ ok: true, statut: 'paye', date_fin_abonnement: fin });
+    try {
+      return res.json({ ok: true, ...Abonnement.validerPaiement(db, p.id, req.user.id) });
+    } catch (e) { return res.status(e.status || 500).json({ error: e.message }); }
   }
-  if (action === 'rejeter') {
-    db.prepare("UPDATE paiements SET statut = 'rejete', note = ?, valide_par = ?, valide_le = ? WHERE id = ?")
-      .run(String((req.body && req.body.note) || 'Transaction non retrouvée').slice(0, 300), req.user.id, now(), p.id);
-    return res.json({ ok: true, statut: 'rejete' });
-  }
-  res.status(400).json({ error: 'Action inconnue (valider ou rejeter)' });
+  db.prepare("UPDATE paiements SET statut = 'rejete', note = ?, valide_par = ?, valide_le = ? WHERE id = ? AND statut = 'en_attente'")
+    .run(String((req.body && req.body.note) || 'Transaction non retrouvée').slice(0, 300), req.user.id, now(), p.id);
+  res.json({ ok: true, statut: 'rejete' });
 });
 
 /* ------------------------------------------------------------------ */

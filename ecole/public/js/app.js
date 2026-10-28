@@ -3768,7 +3768,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
   function badgePaiementStatut(statut) {
     const map = {
       paye: ['vert', 'Payé'], en_attente: ['or', 'À vérifier'],
-      rejete: ['rouge', 'Rejeté'], annule: ['gris', 'Annulé'], echoue: ['rouge', 'Échoué']
+      rejete: ['rouge', 'Rejeté'], annule: ['gris', 'Activation annulée'], echoue: ['rouge', 'Échoué']
     };
     const [c, l] = map[statut] || ['gris', statut || '—'];
     return `<span class="tag ${c}">${esc(l)}</span>`;
@@ -4187,16 +4187,27 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
 
   V['admin-ecoles'] = {
     async render() {
-      const ecoles = await api('/api/admin/etablissements');
+      const [ecoles, historique] = await Promise.all([
+        api('/api/admin/etablissements'), api('/api/admin/abonnements/historique')
+      ]);
+      S.adminEcoles = ecoles;
       return `
         <div class="panel">
           <div class="panel-head">
             <div><h2>Établissements clients</h2><div class="sub">${ecoles.length} établissement(s) sur la plateforme</div></div>
             <div class="right"><button class="btn btn-primary btn-sm" onclick="App.creerEcoleAdmin()">➕ Nouvel établissement</button></div>
           </div>
+          <div class="notice info" style="margin-bottom:14px">Une erreur d’activation ? <b>Annuler</b> rétablit l’abonnement précédent. Pour une ancienne activation sans historique ou un paiement en ligne, utilisez <b>Suspendre</b> : aucun remboursement n’est fait par le site.</div>
           <div class="table-wrap"><table class="data">
             <thead><tr><th>Établissement</th><th>Contact</th><th class="center">Effectifs</th><th>Formule</th><th>Statut</th><th>Échéance</th><th class="right">Revenus</th><th></th></tr></thead>
-            <tbody>${ecoles.map(e => `
+            <tbody>${ecoles.map(e => {
+              const coherent = e.operation_id && e.statut === e.operation_statut &&
+                e.plan === e.operation_plan && e.date_fin_abonnement === e.operation_date_fin;
+              const reversible = coherent && (e.operation_type !== 'paiement' || e.operation_canal === 'manuel');
+              const action = reversible ? 'annuler' : 'suspendre';
+              const etiquette = reversible
+                ? (e.statut === 'suspendu' ? 'Rétablir' : 'Annuler l’activation') : 'Suspendre';
+              return `
               <tr>
                 <td><div class="strong">${esc(e.nom)}</div><div class="muted small">${esc(e.ville || '—')} · ${esc(e.type)}</div></td>
                 <td class="small">${esc(e.chef_nom || '—')}<div class="muted">${esc(e.email || e.telephone || '')}</div></td>
@@ -4209,9 +4220,25 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                 </select></td>
                 <td class="small ${e.expire ? '' : 'muted'}" style="${e.expire ? 'color:#b91c1c;font-weight:700' : ''}">${dateFr(e.date_fin_abonnement)}</td>
                 <td class="right small">${money(e.revenus)}</td>
-                <td class="right"><button class="icon-btn" title="Enregistrer un paiement" onclick="App.paiementEcole(${e.id})">💳</button></td>
-              </tr>`).join('') || `<tr><td colspan="8">${emptyState('🏫', 'Aucun établissement.')}</td></tr>`}</tbody>
+                <td class="right"><div class="row-actions">
+                  <button class="icon-btn" title="Enregistrer un paiement" onclick="App.paiementEcole(${e.id})">💳</button>
+                  ${reversible || e.statut !== 'suspendu' ? `<button class="btn btn-danger btn-sm" title="${etiquette} : ${esc(e.nom)}" onclick="App.actionAbonnement(${e.id},'${action}',${e.operation_id || 'null'})">${etiquette}</button>` : ''}
+                </div></td>
+              </tr>`;
+            }).join('') || `<tr><td colspan="8">${emptyState('🏫', 'Aucun établissement.')}</td></tr>`}</tbody>
           </table></div>
+          <details style="margin-top:16px"><summary class="strong" style="cursor:pointer">Historique des modifications et annulations</summary>
+            ${historique.length ? `<div class="table-wrap" style="margin-top:12px"><table class="data">
+              <thead><tr><th>Date</th><th>Établissement</th><th>Action</th><th>Administrateur</th><th>Motif / annulation</th></tr></thead>
+              <tbody>${historique.map(o => `<tr>
+                <td class="small nowrap">${dateFr(o.cree_le)}</td>
+                <td class="small">${esc(o.ecole_nom)}</td>
+                <td class="small">${o.type === 'paiement' ? `Paiement ${esc(o.paiement_reference || '')}` : o.type === 'suspension' ? 'Suspension' : 'Modification'}<br>${badgeStatut(o.ancien_statut)} → ${badgeStatut(o.nouveau_statut)}</td>
+                <td class="small">${esc(o.auteur || 'Automatique')}</td>
+                <td class="small">${o.motif ? `<div>${esc(o.motif)}</div>` : ''}${o.annule_le ? `<div><span class="tag gris">Annulé le ${dateFr(o.annule_le)}</span> par ${esc(o.annuleur || 'administrateur')}</div><div>${esc(o.motif_annulation || '')}</div>` : ''}</td>
+              </tr>`).join('')}</tbody>
+            </table></div>` : '<p class="muted small">Aucun changement enregistré depuis cette mise à jour.</p>'}
+          </details>
         </div>`;
     }
   };
@@ -4251,7 +4278,9 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       // (version antérieure du serveur), la page continue de s'afficher.
       const stock = await api('/api/stockage/etat').catch(() => null);
       const rows = d.paiements;
-      const attente = rows.filter(p => p.statut === 'en_attente');
+      S.adminPaiements = rows;
+      const attente = rows.filter(p => p.statut === 'en_attente' && p.canal === 'manuel');
+      const aRapprocher = rows.filter(p => p.statut === 'annule').reduce((a, p) => a + Number(p.montant || 0), 0);
       const parOperateur = rows.filter(p => p.statut === 'paye').reduce((a, p) => {
         const k = p.operateur || (p.canal === 'cinetpay' ? 'cinetpay' : 'manuel');
         a[k] = (a[k] || 0) + Number(p.montant || 0);
@@ -4259,11 +4288,12 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       }, {});
       return `
         <div class="cards">
-          <div class="kpi accent"><div class="lbl">Encaissé</div><div class="val" style="font-size:22px">${money(d.encaisse)}</div><div class="sub">paiements validés</div></div>
+          <div class="kpi accent"><div class="lbl">Validé</div><div class="val" style="font-size:22px">${money(d.encaisse)}</div><div class="sub">hors activations annulées</div></div>
           <div class="kpi"><div class="lbl">À vérifier</div><div class="val" style="font-size:22px">${d.en_attente}</div><div class="sub">déclarations Mobile Money</div></div>
           <div class="kpi"><div class="lbl">Mixx by Yas</div><div class="val" style="font-size:19px">${money(parOperateur.mixx || 0)}</div><div class="sub">encaissé</div></div>
           <div class="kpi"><div class="lbl">Moov Money</div><div class="val" style="font-size:19px">${money(parOperateur.moov || 0)}</div><div class="sub">encaissé</div></div>
           <div class="kpi"><div class="lbl">CinetPay</div><div class="val" style="font-size:19px">${money(parOperateur.cinetpay || 0)}</div><div class="sub">${reg.cinetpay.actif ? 'en ligne actif' : 'non activé'}</div></div>
+          <div class="kpi"><div class="lbl">Activations annulées</div><div class="val" style="font-size:19px">${money(aRapprocher)}</div><div class="sub">argent éventuellement à vérifier / restituer</div></div>
         </div>
 
         <div class="panel">
@@ -4285,21 +4315,26 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                   <div style="font-family:monospace;font-size:11.5px">${esc(p.transaction_ref || '—')}</div>
                   <div class="muted" style="font-size:10.5px">${esc(p.reference || '')}</div>
                   ${p.note ? `<div class="muted" style="font-size:10.5px;font-style:italic">${esc(p.note)}</div>` : ''}
+                  ${p.motif_annulation ? `<div class="small" style="color:#991b1b">Correction : ${esc(p.motif_annulation)} · ${esc(p.annuleur || '')}</div>` : ''}
                 </td>
                 <td class="right strong nowrap">${money(p.montant, p.devise)}</td>
                 <td class="center">${badgePaiementStatut(p.statut)}
-                  ${p.valide_le ? `<div class="muted" style="font-size:10px">${dateFr(p.valide_le)}</div>` : ''}</td>
+                  ${p.valide_le ? `<div class="muted" style="font-size:10px">${dateFr(p.valide_le)}</div>` : ''}
+                  ${p.annule_le ? `<div class="muted" style="font-size:10px">Annulé le ${dateFr(p.annule_le)}</div>` : ''}</td>
                 <td class="right"><div class="row-actions">
-                  ${p.statut === 'en_attente' ? `
+                  ${p.statut === 'en_attente' && p.canal === 'manuel' ? `
                     <button class="btn btn-primary btn-sm" onclick="App.validerPaiement(${p.id})">✓ Valider</button>
-                    <button class="btn btn-danger btn-sm" onclick="App.rejeterPaiement(${p.id})">✗</button>` : `
-                    <span class="small muted">${esc(p.valideur || '')}</span>`}
+                    <button class="btn btn-danger btn-sm" onclick="App.rejeterPaiement(${p.id})">✗</button>` :
+                    p.statut === 'en_attente' ? '<span class="small muted">Vérification en ligne</span>' :
+                    `<span class="small muted">${esc(p.valideur || '')}</span>`}
+                  ${p.statut === 'paye' && p.canal === 'manuel' && p.operation_id && p.operation_id === p.derniere_operation_id
+                    ? `<button class="btn btn-danger btn-sm" onclick="App.annulerPaiement(${p.id})">Annuler l’activation</button>` : ''}
                   ${p.statut === 'paye' ? `<button class="icon-btn" title="Reçu PDF" onclick="window.open(lienServeur('/api/admin/paiements/${p.id}/recu.pdf'),'_blank')">📄</button>` : ''}
                 </div></td>
               </tr>`).join('')}</tbody>
           </table></div>` : emptyState('💳', 'Aucun paiement enregistré.')}
           <div class="notice info" style="margin-top:14px"><b>Bon réflexe :</b> comparez la référence de transaction avec le SMS reçu
-            sur le compte marchand et le montant exact. En cas de doute, rejetez avec une note.</div>
+            sur le compte marchand et le montant exact. <b>Annuler l’activation ne rembourse pas l’argent</b> : vérifiez et restituez séparément si nécessaire. Seule la dernière activation peut être annulée sans toucher à un renouvellement ultérieur.</div>
         </div>
 
         <div class="two-col">
@@ -4506,7 +4541,62 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     }
   });
 
+  // Même confirmation pour un paiement et pour la ligne « Établissements ».
+  // Le motif est obligatoire ; il reste visible dans l'historique d'audit.
+  function demanderCorrectionAbonnement({ titre, explication, envoyer, succes }) {
+    const m = modal({
+      title: titre, size: 'small',
+      body: `<p class="small" style="line-height:1.6">${explication}</p>
+        <form id="motif-correction"><div class="field"><label>Pourquoi ? (obligatoire)</label>
+          <textarea name="motif" required minlength="5" maxlength="300" rows="3" placeholder="Ex. : activation du mauvais établissement"></textarea>
+        </div></form>`,
+      footer: `<button class="btn btn-ghost btn-sm" data-close>Retour</button>
+        <button class="btn btn-danger btn-sm" type="submit" form="motif-correction" id="confirmer-correction">Confirmer</button>`
+    });
+    m.root.querySelector('#motif-correction').onsubmit = async (ev) => {
+      ev.preventDefault();
+      const bouton = m.root.querySelector('#confirmer-correction');
+      bouton.disabled = true;
+      try {
+        const motif = new FormData(ev.target).get('motif').trim();
+        await envoyer(motif);
+        toast(succes);
+        m.close(); renderRoute();
+      } catch (e) { toast(e.message, 'err'); bouton.disabled = false; }
+    };
+  }
+
   Object.assign(window.App, {
+    async actionAbonnement(id, action, operationId) {
+      const e = (S.adminEcoles || []).find(x => x.id === id);
+      if (!e) return toast('Rechargez la page des établissements.', 'err');
+      const annuler = action === 'annuler';
+      demanderCorrectionAbonnement({
+        titre: annuler ? 'Annuler la dernière activation' : 'Suspendre l’abonnement',
+        explication: `<b>${esc(e.nom)}</b> : ${annuler
+          ? 'le statut, la formule et l’échéance précédents seront rétablis. Si un paiement manuel a été validé, son activation sera marquée « annulée ».'
+          : 'l’établissement passera en statut « suspendu ». Son échéance et ses paiements seront conservés.'}
+          <b>Aucun remboursement automatique.</b> Vérifiez l’argent reçu séparément.`,
+        envoyer: motif => api(`/api/admin/etablissements/${id}/abonnement`, {
+          method: 'PATCH', body: { action, operation_id: operationId, motif }
+        }),
+        succes: annuler ? 'Activation annulée — état précédent rétabli' : 'Abonnement suspendu'
+      });
+    },
+
+    annulerPaiement(id) {
+      const p = (S.adminPaiements || []).find(x => x.id === id);
+      if (!p) return toast('Rechargez la liste des paiements.', 'err');
+      demanderCorrectionAbonnement({
+        titre: 'Annuler une activation erronée',
+        explication: `<b>${esc(p.ecole_nom)}</b> · ${money(p.montant, p.devise)}. L’abonnement précédent sera rétabli et cette activation sera marquée « annulée » dans l’historique. <b>Le paiement Mobile Money / espèces n’est pas remboursé par le site.</b> Vérifiez l’argent reçu séparément.`,
+        envoyer: motif => api('/api/admin/paiements/' + id, {
+          method: 'PATCH', body: { action: 'annuler', motif }
+        }),
+        succes: 'Activation annulée — abonnement précédent rétabli'
+      });
+    },
+
     creerEcoleAdmin() {
       const m = modal({
         title: 'Nouvel établissement client', size: 'large',
@@ -4554,6 +4644,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       try {
         await api('/api/admin/etablissements/' + id, { method: 'PATCH', body });
         toast('Établissement mis à jour');
+        renderRoute();
       } catch (e) { toast(e.message, 'err'); renderRoute(); }
     },
 
