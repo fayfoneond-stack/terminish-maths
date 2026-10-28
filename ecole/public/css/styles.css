@@ -294,6 +294,24 @@ footer.landing-foot a { color: #cfe5da; text-decoration: none; }
 .userbox b { font-size: 12.5px; display: block; }
 .userbox span { font-size: 10.5px; color: var(--muted); text-transform: capitalize; }
 .content { padding: clamp(14px, 3vw, 28px); max-width: 1420px; width: 100%; }
+/* Le statut suspendu doit être visible même quand on change de rubrique. */
+.lecture-seule-banner {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
+  margin: 12px clamp(14px, 3vw, 28px) 0; padding: 12px 15px;
+  border: 1px solid #edcd86; border-radius: 11px; background: #fff7e6;
+  color: #694409; font-size: 13px; line-height: 1.45;
+}
+.lecture-seule-banner[hidden] { display: none; }
+.lecture-seule-icone { font-size: 23px; }
+.lecture-seule-texte { flex: 1 1 260px; min-width: 0; }
+.lecture-seule-texte b, .lecture-seule-texte span { display: block; }
+.lecture-seule-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.lecture-seule-actions .btn { white-space: normal; }
+@media (max-width: 560px) {
+  .lecture-seule-banner { margin: 10px 12px 0; padding: 11px; gap: 8px; }
+  .lecture-seule-actions { width: 100%; }
+  .lecture-seule-actions .btn { flex: 1 1 auto; }
+}
 .burger { display: none; background: #fff; border: 1px solid var(--bord); border-radius: 9px; padding: 7px 10px; cursor: pointer; }
 /* Voile du menu mobile : masqué par défaut (visible seulement quand le tiroir
    est ouvert, et seulement sur petit écran). */

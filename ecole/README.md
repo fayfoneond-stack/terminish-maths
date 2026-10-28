@@ -245,9 +245,24 @@ Un webhook tardif ne réactive pas une validation annulée ou rejetée.
 
 **Important :** annuler une activation ou suspendre un établissement **ne rembourse pas** le paiement
 réel (Mobile Money, espèces, virement). Vérifiez le relevé et régularisez/remboursez séparément ; un
-reçu déjà téléchargé ne peut pas être effacé chez son destinataire. Le statut « suspendu » est dans
-cette version un **statut administratif** : il ne coupe pas à lui seul la connexion des utilisateurs
-à l'application. Le blocage technique des accès liés à un abonnement reste à définir séparément.
+reçu déjà téléchargé ne peut pas être effacé chez son destinataire.
+
+### Établissement suspendu : consultation seulement
+Le statut **« suspendu »** conserve la connexion des comptes de l'établissement (direction,
+enseignants, familles) et leurs droits **de lecture et de téléchargement** selon leur profil : notes,
+élèves, résultats, bulletins imprimables, PDF de résultats et reçus déjà validés. Un bandeau l'indique
+sur chaque page ; la grille des notes devient non modifiable. Le serveur revérifie le statut de l'école
+à **chaque requête authentifiée** et rejette les créations/modifications/suppressions scolaires avec
+`HTTP 403` et le code `ABONNEMENT_SUSPENDU` : ce blocage ne dépend pas de l'interface.
+
+Restent possibles pour la direction : consulter l'abonnement, déclarer un paiement Mobile Money et
+initier un paiement en ligne **uniquement si la passerelle est configurée** ; l'éditeur vérifie les
+règlements manuels avant toute réactivation. La déconnexion, le changement du mot de passe personnel
+et le calcul de l'aperçu de passage (sans écriture) restent possibles. La récupération du mot de passe
+par les voies habituelles reste disponible. Après validation du paiement ou réactivation par l'éditeur,
+les écritures reviennent **sans reconnexion** (bouton « Vérifier l'activation » ou navigation).
+Les écoles **« actif »** et **« essai »**, ainsi que la console du super-administrateur, ne sont pas
+restreintes. La suspension ne rembourse pas un paiement et n'annule pas l'historique.
 
 ### Reçus PDF
 Chaque paiement validé génère un **reçu PDF A4** téléchargeable (bouton 📄 dans l'historique de l'école ou

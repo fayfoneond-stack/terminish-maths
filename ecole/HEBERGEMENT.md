@@ -144,6 +144,16 @@ la nouvelle table `operations_abonnement` soit créée automatiquement. Vérifie
 **Console → Paiements** et le journal dans **Console → Établissements**. Ne lancez pas `npm ci`
 juste pour cette mise à jour.
 
+**Mise à jour « consultation seulement des écoles suspendues » :** remplacez
+`server/index.js`, `public/js/app.js`, `public/css/styles.css` et `public/app.html`, et ajoutez
+`server/acces-abonnement.js` depuis **la même version GitHub**. Faites d'abord une **nouvelle
+sauvegarde SQLite** dans `~/app/data/sauvegardes/` ; conservez `data/`, `.env` et `node_modules`
+intacts. Redémarrez ensuite **alwaysdata → Web → Sites → kodjone.alwaysdata.net → Redémarrer**
+(les fichiers statiques sont déjà publiés après la copie). Vérifiez avec une école de test suspendue :
+lecture de notes/bulletins/PDF et déclaration de paiement permises, saisie de notes interdite ;
+réactivez-la et contrôlez le retour des droits sans déconnexion. Pas de nouvelle dépendance, pas de
+migration de la base, **ne lancez pas `npm ci`** sur alwaysdata pour cette mise à jour.
+
 **Si alwaysdata arrête npm avec `Killed` :** ne redémarrez pas : `npm ci` a peut-être vidé
 `node_modules` avant d'être interrompu. Sur un serveur **Linux x64**, lancez depuis `~/app` :
 

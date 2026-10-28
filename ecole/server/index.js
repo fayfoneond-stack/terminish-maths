@@ -12,6 +12,7 @@ const { computeClasse, computeFusion, bulletinData } = require('./stats');
 const stockage = require('./storage');
 const P = require('./paiements');
 const Abonnement = require('./abonnements');
+const { autoriseEnSuspension } = require('./acces-abonnement');
 const { genererRecuPDF } = require('./recu');
 const { genererFusionPDF } = require('./fusion-pdf');
 const { analyserListePDF, dateISO, MAX_OCTETS } = require('./liste-pdf');
@@ -77,12 +78,25 @@ function setSessionCookie(res, token) {
 function clearSessionCookie(res) {
   res.setHeader('Set-Cookie', `${COOKIE}=; Path=/; HttpOnly; SameSite=${SAME_SITE}${(COOKIE_SECURE || SAME_SITE === 'None') ? '; Secure' : ''}; Max-Age=0`);
 }
+const ERREUR_SUSPENSION = 'Abonnement suspendu : consultation seulement. Les modifications sont bloquées jusqu’à la réactivation.';
+function refuserEcritureSuspendue(res) {
+  res.set('Cache-Control', 'no-store');
+  return res.status(403).json({ error: ERREUR_SUSPENSION, code: 'ABONNEMENT_SUSPENDU' });
+}
+// À réévaluer après chaque await d'un endpoint qui modifie la base :
+// l'administrateur peut avoir suspendu l'école pendant un transfert externe.
+function suspensionCourante(req) {
+  return req.user.ecole_id && req.user.role !== 'super_admin' &&
+    db.prepare('SELECT statut FROM etablissements WHERE id = ?').get(req.user.ecole_id)?.statut === 'suspendu';
+}
 function auth(req, res, next) {
   const token = parseCookies(req)[COOKIE];
   if (!token) return res.status(401).json({ error: 'Non authentifié' });
   const row = db.prepare(`
-    SELECT s.token, s.expire_le, u.id, u.nom, u.email, u.role, u.ecole_id, u.actif FROM sessions s
-    JOIN utilisateurs u ON u.id = s.user_id WHERE s.token = ?`).get(token);
+    SELECT s.token, s.expire_le, u.id, u.nom, u.email, u.role, u.ecole_id, u.actif,
+      e.statut AS statut_abonnement FROM sessions s
+    JOIN utilisateurs u ON u.id = s.user_id
+    LEFT JOIN etablissements e ON e.id = u.ecole_id WHERE s.token = ?`).get(token);
   if (!row || row.expire_le < now() || !row.actif) {
     db.prepare('DELETE FROM sessions WHERE token = ?').run(token);
     return res.status(401).json({ error: 'Session expirée, veuillez vous reconnecter' });
@@ -90,6 +104,8 @@ function auth(req, res, next) {
   req.user = row;
   req.token = token;
   req.ecoleId = row.ecole_id;
+  if (row.ecole_id && row.role !== 'super_admin' && row.statut_abonnement === 'suspendu' &&
+      !autoriseEnSuspension(req.method, req.path)) return refuserEcritureSuspendue(res);
   next();
 }
 function roles(...allowed) {
@@ -202,6 +218,7 @@ app.put('/api/moi/signature', auth, staffOnly, async (req, res) => {
   if (signature === undefined) return res.status(400).json({ error: 'Signature manquante' });
   try {
     const sig = await enregistrerSignature(signature, req.user.ecole_id || 'global');
+    if (suspensionCourante(req)) return refuserEcritureSuspendue(res);
     if (!sig) {
       db.prepare('UPDATE utilisateurs SET signature = NULL, signature_provider = NULL WHERE id = ?').run(req.user.id);
       return res.json({ ok: true, signature: null });
@@ -366,6 +383,7 @@ app.put('/api/etablissement', auth, directionOnly, async (req, res) => {
     }
   }
 
+  if (suspensionCourante(req)) return refuserEcritureSuspendue(res);
   if (!sets.length) return res.json({ ok: true });
   db.exec('BEGIN IMMEDIATE');
   try {
@@ -837,6 +855,7 @@ app.post('/api/enseignants', auth, directionOnly, async (req, res) => {
     try { sig = await enregistrerSignature(signature, id); }
     catch (err) { return res.status(400).json({ error: `Signature non enregistrée : ${err.message}` }); }
   }
+  if (suspensionCourante(req)) return refuserEcritureSuspendue(res);
   const uid = createUser({ ecole_id: id, nom, email, password, role: 'enseignant', telephone });
   if (sig) db.prepare('UPDATE utilisateurs SET signature = ?, signature_provider = ? WHERE id = ?').run(sig.url, sig.provider, uid);
   (affectations || []).forEach(a => {
@@ -859,14 +878,14 @@ app.put('/api/enseignants/:id', auth, directionOnly, async (req, res) => {
     if (!signature) {
       db.prepare('UPDATE utilisateurs SET signature = NULL, signature_provider = NULL WHERE id = ?').run(u.id);
     } else {
-      try {
-        const sig = await enregistrerSignature(signature, id);
-        db.prepare('UPDATE utilisateurs SET signature = ?, signature_provider = ? WHERE id = ?').run(sig.url, sig.provider, u.id);
-      } catch (err) {
-        return res.status(400).json({ error: `Signature non enregistrée : ${err.message}` });
-      }
+      let sig;
+      try { sig = await enregistrerSignature(signature, id); }
+      catch (err) { return res.status(400).json({ error: `Signature non enregistrée : ${err.message}` }); }
+      if (suspensionCourante(req)) return refuserEcritureSuspendue(res);
+      db.prepare('UPDATE utilisateurs SET signature = ?, signature_provider = ? WHERE id = ?').run(sig.url, sig.provider, u.id);
     }
   }
+  if (suspensionCourante(req)) return refuserEcritureSuspendue(res);
   db.prepare('UPDATE utilisateurs SET nom = ?, telephone = ?, actif = ? WHERE id = ?')
     .run(nom ?? u.nom, telephone ?? u.telephone, actif === undefined ? u.actif : (actif ? 1 : 0), u.id);
   if (password) db.prepare('UPDATE utilisateurs SET mot_de_passe = ? WHERE id = ?').run(hashPassword(password), u.id);

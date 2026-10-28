@@ -20,6 +20,18 @@
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const enConsultation = () => S.me && S.me.role !== 'super_admin' && S.etab?.statut === 'suspendu';
+
+  function afficherEtatAbonnement() {
+    const bann = $('#lecture-seule-banner');
+    if (!bann) return;
+    bann.hidden = !enConsultation();
+    const repere = $('#annee-tag');
+    if (repere && S.etab) {
+      repere.textContent = enConsultation() ? 'Consultation seule' : (S.etab.annee_scolaire || '');
+      repere.className = enConsultation() ? 'tag or' : 'tag vert';
+    }
+  }
 
   const ROLE_LABEL = {
     directeur: "Chef d'établissement",
@@ -427,9 +439,21 @@
               <button class="icon-btn" id="btn-logout" title="Se déconnecter">⎋</button>
             </div>
           </header>
+          <div class="lecture-seule-banner" id="lecture-seule-banner" role="status" hidden>
+            <span class="lecture-seule-icone" aria-hidden="true">🔒</span>
+            <div class="lecture-seule-texte"><b>Abonnement suspendu — consultation seulement.</b>
+              <span>Vos notes, élèves, résultats et PDF restent accessibles. Les nouvelles modifications sont bloquées.</span>
+              ${role === 'directeur' ? '<span>Pour réactiver, consultez la page Abonnement.</span>' : '<span>Pour réactiver, contactez la direction de votre établissement.</span>'}
+            </div>
+            <div class="lecture-seule-actions">
+              ${role === 'directeur' ? `<button class="btn btn-primary btn-sm" onclick="App.go('abonnement')">Voir l’abonnement</button>` : ''}
+              <button class="btn btn-ghost btn-sm" onclick="App.verifierAbonnement()">Vérifier l’activation</button>
+            </div>
+          </div>
           <div class="content" id="content"></div>
         </div>
       </div>`;
+    afficherEtatAbonnement();
 
     /* ---------------- Menu latéral sur téléphone ----------------
        Sur petit écran le menu est un tiroir. Il doit se refermer dès qu'on
@@ -515,9 +539,17 @@
     const view = V[route];
     if (!view) { content.innerHTML = `<div class="notice err">Page introuvable.</div>`; return; }
     try {
+      // Relire l'état à chaque navigation : une suspension ou une réactivation
+      // décidée par l'éditeur prend effet sans reconnexion ni ancienne bannière.
+      if (S.me.role !== 'super_admin') {
+        const me = await api('/api/me');
+        S.etab = me.etablissement;
+        afficherEtatAbonnement();
+      }
       const html = await view.render();
       content.innerHTML = html;
       if (view.mount) await view.mount();
+      afficherEtatAbonnement();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       console.error(err);
@@ -679,15 +711,15 @@
             <div class="muted small">${esc(etab.nom)} · ${esc(etab.ville || '')} · Année ${esc(etab.annee_scolaire)}</div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-ghost btn-sm" onclick="App.go('saisie')">✍️ Saisir des notes</button>
+            <button class="btn btn-ghost btn-sm" onclick="App.go('saisie')">${enConsultation() ? '👁️ Voir les notes' : '✍️ Saisir des notes'}</button>
             <button class="btn btn-ghost btn-sm" onclick="App.go('bulletins')">📄 Bulletins</button>
             <button class="btn btn-ghost btn-sm" onclick="App.go('resultats')">🏆 Résultats</button>
-            ${role === 'directeur' ? `<button class="btn btn-primary btn-sm" onclick="App.nouvelEleve()">➕ Élève</button>` : ''}
+            ${role === 'directeur' && !enConsultation() ? `<button class="btn btn-primary btn-sm" onclick="App.nouvelEleve()">➕ Élève</button>` : ''}
           </div>
         </div>
 
         <div class="cards">${kpis}</div>
-        ${role === 'directeur' && (d.compteurs.classes === 0 || d.compteurs.eleves === 0) ? `
+        ${role === 'directeur' && !enConsultation() && (d.compteurs.classes === 0 || d.compteurs.eleves === 0) ? `
           <div class="panel" style="border:1px solid #cfe6da;background:linear-gradient(135deg,#f7fbf9,#fff)">
             <div class="panel-head"><div><h2>🚀 Bien démarrer avec Terminish École</h2><div class="sub">Quelques étapes pour votre premier bulletin</div></div></div>
             <div class="steps" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
@@ -725,7 +757,7 @@
                           <div class="progress ${c.progression < 50 ? 'or' : ''}"><i style="width:${c.progression}%"></i></div>
                           <div class="small muted">${c.progression}%</div>
                         </td>
-                        <td class="right"><button class="icon-btn" onclick="App.go('saisie',{classe_id:${c.id}})" title="Saisir les notes">✍️</button></td>
+                        <td class="right"><button class="icon-btn" onclick="App.go('saisie',{classe_id:${c.id}})" title="${enConsultation() ? 'Voir les notes' : 'Saisir les notes'}">${enConsultation() ? '👁️' : '✍️'}</button></td>
                       </tr>`).join('') : `<tr><td colspan="6">${emptyState('🏫', 'Aucune classe pour cette période.')}</td></tr>`}
                   </tbody>
                 </table>
@@ -790,6 +822,16 @@
     const qs = q && Object.keys(q).length ? '?' + new URLSearchParams(q).toString() : '';
     if (location.hash === `#/${r}${qs}`) renderRoute();
     else location.hash = `#/${r}${qs}`;
+  },
+  async verifierAbonnement() {
+    try {
+      const me = await api('/api/me');
+      S.etab = me.etablissement;
+      afficherEtatAbonnement();
+      if (enConsultation()) return toast('L’abonnement est toujours suspendu. Contactez la direction ou l’éditeur.', 'err');
+      toast('Abonnement réactivé : vous pouvez de nouveau modifier vos données.');
+      await renderRoute();
+    } catch (e) { toast(e.message, 'err'); }
   }};
 
   /* ---------------------------------------------------------------- */
@@ -1960,7 +2002,8 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       const matieresClasse = matieresDe(classe);
       const periodesDispo = classe ? S.periodes.filter(p => p.cycle === classe.cycle) : S.periodes;
       const periode = S.periodes.find(p => p.id === Number(periodeId));
-      const verrou = periode && periode.statut === 'fermee' && S.me.role !== 'directeur' && S.me.role !== 'super_admin';
+      const verrouPeriode = periode && periode.statut === 'fermee' && S.me.role !== 'directeur' && S.me.role !== 'super_admin';
+      const verrou = enConsultation() || verrouPeriode;
 
       const barre = `
         <div class="toolbar saisie-filtres">
@@ -2013,14 +2056,16 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       return `
         <div class="panel">
           <div class="panel-head">
-            <div><h2>Saisie des notes</h2><div class="sub">La moyenne se calcule en direct. Appuyez sur « Enregistrer » pour conserver vos notes.</div></div>
+            <div><h2>${enConsultation() ? 'Consultation des notes' : 'Saisie des notes'}</h2><div class="sub">${enConsultation() ? 'Les notes restent visibles. Aucune modification n’est possible pendant la suspension.' : 'La moyenne se calcule en direct. Appuyez sur « Enregistrer » pour conserver vos notes.'}</div></div>
             <div class="right">
               <span class="tag vert" id="saisie-progress">—</span>
               ${S.me.role === 'directeur' ? `<button class="btn btn-ghost btn-sm" onclick="App.go('parametres')">🔒 Périodes</button>` : ''}
             </div>
           </div>
           ${barre}
-          ${verrou ? '<div class="notice warn">Cette période est <b>clôturée</b> : la saisie est verrouillée. Contactez la direction pour la réouvrir.</div>' : ''}
+          ${enConsultation()
+            ? '<div class="notice warn"><b>Consultation seulement.</b> Cet abonnement est suspendu : vous pouvez lire les notes, mais pas les enregistrer ou les modifier.</div>'
+            : verrouPeriode ? '<div class="notice warn">Cette période est <b>clôturée</b> : la saisie est verrouillée. Contactez la direction pour la réouvrir.</div>' : ''}
           ${corps}
         </div>
         ${journal}`;
@@ -2147,7 +2192,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
 
     return `
       ${data.eleves.length ? '' : '<div class="notice warn">Aucun élève actif dans cette classe.</div>'}
-      ${data.eleves.length ? `<div class="mobile-saisie-intro">📱 <b>Une fiche par élève.</b> Entrez une note de 0 à 20 (virgule acceptée),
+      ${data.eleves.length && !verrou ? `<div class="mobile-saisie-intro">📱 <b>Une fiche par élève.</b> Entrez une note de 0 à 20 (virgule acceptée),
         utilisez « Suivant » sur le clavier, puis touchez <b>Enregistrer les notes</b>.</div>` : ''}
       <div class="table-wrap saisie-wrap">
         <table class="grille grille-mode-${mode}" id="grille-notes" data-verrou="${verrou ? 1 : 0}"
@@ -2160,9 +2205,9 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         </table>
       </div>
       <div class="sticky-save saisie-save">
-        <button class="btn btn-primary btn-sm" id="btn-save-notes" disabled>💾 Enregistrer les notes</button>
-        <span class="saisie-aide muted small">Entrée = case suivante · Ctrl+S = enregistrer</span>
-        <span class="saisie-statut" id="saisie-statut" role="status" aria-live="polite">Aucune modification en attente</span>
+        <button class="btn btn-primary btn-sm" id="btn-save-notes" disabled>${enConsultation() ? '🔒 Consultation seule' : '💾 Enregistrer les notes'}</button>
+        ${!verrou ? '<span class="saisie-aide muted small">Entrée = case suivante · Ctrl+S = enregistrer</span>' : ''}
+        <span class="saisie-statut" id="saisie-statut" role="status" aria-live="polite">${enConsultation() ? 'Notes en lecture seule' : 'Aucune modification en attente'}</span>
         <span class="keystat" id="saisie-stat"></span>
       </div>
       <div class="notice info" style="margin-top:12px">
@@ -2244,8 +2289,9 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     if (save) save.disabled = !dirty || grid.dataset.verrou === '1' || grid.dataset.saving === '1';
     const etat = $('#saisie-statut');
     if (etat) {
-      const texte = grid.dataset.saving === '1' ? 'Enregistrement en cours…'
-        : dirty ? '● Modifications non enregistrées' : '✓ Aucune modification en attente';
+      const texte = enConsultation() ? '🔒 Notes en consultation seulement'
+        : grid.dataset.saving === '1' ? 'Enregistrement en cours…'
+          : dirty ? '● Modifications non enregistrées' : '✓ Aucune modification en attente';
       if (etat.textContent !== texte) etat.textContent = texte;
       etat.classList.toggle('en-attente', dirty);
     }
@@ -3830,6 +3876,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       const opSel = options.operateurs.find(o => o.code === f.operateur) || operateursDispo[0] || null;
 
       return `
+        ${e.statut === 'suspendu' ? `<div class="notice warn"><b>Établissement suspendu :</b> les données et PDF restent consultables, sans modification possible. Vous pouvez toujours déclarer un paiement ou payer en ligne si un prestataire est configuré. Après validation et réactivation par l’éditeur, vos droits reviennent sans reconnexion.</div>` : ''}
         <div class="two-col">
           <div class="panel">
             <div class="panel-head"><div><h2>Votre formule</h2><div class="sub">Abonnement de ${esc(e.nom)}</div></div>
@@ -4575,7 +4622,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         titre: annuler ? 'Annuler la dernière activation' : 'Suspendre l’abonnement',
         explication: `<b>${esc(e.nom)}</b> : ${annuler
           ? 'le statut, la formule et l’échéance précédents seront rétablis. Si un paiement manuel a été validé, son activation sera marquée « annulée ».'
-          : 'l’établissement passera en statut « suspendu ». Son échéance et ses paiements seront conservés.'}
+          : 'l’établissement passera en statut « suspendu ». Ses utilisateurs pourront consulter les données et télécharger les PDF, mais ne pourront plus les modifier. Son échéance et ses paiements seront conservés.'}
           <b>Aucun remboursement automatique.</b> Vérifiez l’argent reçu séparément.`,
         envoyer: motif => api(`/api/admin/etablissements/${id}/abonnement`, {
           method: 'PATCH', body: { action, operation_id: operationId, motif }
