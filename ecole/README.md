@@ -25,10 +25,14 @@ npm start
 Prérequis : **Node.js ≥ 22.5** (utilise le module natif `node:sqlite`, aucune compilation nécessaire).
 Le port peut être changé avec `PORT=8080 npm start`.
 
-La base SQLite est créée automatiquement dans `ecole/data/terminish-ecole.db` et remplie avec un jeu de
-démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimestre / 1er semestre, examen blanc).
+La base SQLite est créée automatiquement dans `ecole/data/terminish-ecole.db`.
+Par défaut, elle contient seulement un compte administrateur avec un mot de passe aléatoire annoncé
+une fois dans les journaux du premier démarrage. Pour obtenir **sur une installation locale uniquement**
+un jeu fictif (2 établissements, 7 classes, 142 élèves), lancer `npm run seed:demo`
+avec une base vide. Les raccourcis de connexion aux comptes de démonstration ne sont plus affichés
+sur l'écran public de connexion.
 
-### Comptes de démonstration
+### Comptes de démonstration (mode explicite seulement, jamais sur un site public)
 
 | Profil | Email | Mot de passe |
 |---|---|---|
@@ -662,7 +666,7 @@ derrière Nginx (`deploy/nginx.conf`) ou Caddy.
 |---|---|
 | `PORT` | port d'écoute (3000 par défaut) |
 | `TERMINISH_DATA_DIR` | dossier de la base SQLite (ex. `/data` sur un volume) |
-| `TERMINISH_SEED` | `demo` (défaut) = école + comptes de démonstration ; `prod` = uniquement le compte admin |
+| `TERMINISH_SEED` | `prod` (défaut) = uniquement le compte admin ; `demo` = école + comptes publics de démonstration, réservé au local |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NOM` | compte super-admin créé au premier démarrage (mot de passe aléatoire affiché si absent). En mode `TERMINISH_SEED=demo`, le compte est `admin@terminish.tg` / `admin1234` — pour imposer un autre mot de passe : `npm run motdepasse` |
 | `COOKIE_SECURE` | `1` pour marquer le cookie de session `Secure` (obligatoire derrière HTTPS) |
 | `APP_PUBLIC_URL` | origine HTTPS du site, ex. `https://votre-compte.alwaysdata.net`, sans chemin |

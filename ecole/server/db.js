@@ -721,9 +721,9 @@ function seedDemo() {
     VALUES (?,?,?,?,?,?,?, 'nouveau', ?)`).run(...l, now()));
 }
 
-// Mode `demo` (défaut) : jeu de données complet pour découvrir l'application.
-// Mode `prod` : aucun établissement de démonstration, seulement le compte administrateur.
-const SEED_MODE = String(process.env.TERMINISH_SEED || 'demo').toLowerCase();
+// Mode `prod` (défaut) : aucun établissement de démonstration, seulement le compte administrateur.
+// Le jeu de données et les mots de passe publics nécessitent TERMINISH_SEED=demo explicite.
+const SEED_MODE = String(process.env.TERMINISH_SEED || 'prod').toLowerCase();
 if (SEED_MODE === 'demo') {
   seedDemo();
 } else {

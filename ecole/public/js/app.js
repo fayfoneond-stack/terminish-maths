@@ -150,26 +150,11 @@
             <p class="small" style="text-align:center;margin:10px 0 0">
               <a href="#" id="lien-oubli">Mot de passe oublié ?</a>
             </p>
-            <div class="demo-accounts">
-              <div class="lbl">Comptes de démonstration</div>
-              <button type="button" data-demo="directeur@demo.tg|demo1234"><span>👔</span><span><b>Direction</b> — chef d'établissement</span><span class="role">directeur</span></button>
-              <button type="button" data-demo="prof.maths@demo.tg|prof1234"><span>👩‍🏫</span><span><b>Enseignant</b> — M. Agbeko (Maths)</span><span class="role">prof</span></button>
-              <button type="button" data-demo="eleve@demo.tg|eleve1234"><span>🎒</span><span><b>Élève / Parent</b></span><span class="role">famille</span></button>
-              <button type="button" data-demo="admin@terminish.tg|admin1234"><span>🛰️</span><span><b>Console SaaS</b> — Terminish</span><span class="role">éditeur</span></button>
-            </div>
             <p class="small muted" style="margin-top:16px;text-align:center">Pas encore de compte ? <a href="#inscription">Créer un établissement</a> · <a href="/">Retour au site</a></p>
           </form>
         </div>
       </div>`;
 
-    $$('[data-demo]').forEach(b => {
-      b.onclick = () => {
-        const [e, p] = b.dataset.demo.split('|');
-        $('#login-email').value = e;
-        $('#login-password').value = p;
-        $('#login-form').requestSubmit();
-      };
-    });
     $('#login-form').onsubmit = async (e) => {
       e.preventDefault();
       const btn = $('#login-btn');
