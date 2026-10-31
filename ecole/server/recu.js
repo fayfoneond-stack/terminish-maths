@@ -27,7 +27,8 @@ const OP_LABEL = {
   paydunya: 'PayDunya — paiement en ligne',
   manuel: 'Espèces / virement encaissé par l’éditeur'
 };
-const PLAN_LABEL = { essai: 'Essai gratuit', essentiel: 'Essentiel', standard: 'Standard', reseau: 'Réseau' };
+const PLAN_LABEL = { essai: 'Essai gratuit', essentiel: 'Essentiel', standard: 'Standard', reseau: 'Réseau',
+  effectif: 'Abonnement mensuel selon l’effectif' };
 
 /** Extrait les dimensions d'un PNG/JPEG data URL (pour insérer le logo dans le PDF). */
 function imageBuffer(logo) {
@@ -132,6 +133,7 @@ function genererRecuPDF(paiement, ecole, opts = {}) {
 
       const details = [
         ['Formule souscrite', `${PLAN_LABEL[paiement.plan] || paiement.plan || '—'} (${paiement.mois || 1} mois)`],
+        ...(paiement.effectif_facture == null ? [] : [['Effectif retenu', `${paiement.effectif_facture} élèves actifs`]]),
         ['Moyen de paiement', OP_LABEL[paiement.operateur] || OP_LABEL[paiement.canal] || '—'],
         ['Numéro payeur', paiement.telephone_payeur || '—'],
         ['Référence opérateur', paiement.transaction_ref || '—'],
@@ -166,9 +168,9 @@ function genererRecuPDF(paiement, ecole, opts = {}) {
       doc.fillColor('#8a5a05').font('Helvetica-Bold').fontSize(8.5).text('MENTION', L + 12, y + 10);
       doc.fillColor('#5c4a1e').font('Helvetica').fontSize(8.2).text(
         "Ce reçu atteste du règlement de l'abonnement à la plateforme Terminish École pour la période indiquée. "
-        + "Il est généré automatiquement après vérification du paiement Mobile Money par l'éditeur. "
-        + "Aucun remboursement n'est possible après activation, sauf erreur de notre part. "
-        + "Conservez ce document : il vaut justificatif comptable.",
+        + "Il est disponible après vérification du paiement par l'éditeur ou le prestataire. "
+        + "Toute demande de remboursement est traitée séparément : ce reçu ne déclenche aucun remboursement automatique. "
+        + "Conservez ce document : il vaut justificatif du paiement enregistré.",
         L + 12, y + 22, { width: W - 24, align: 'justify', lineGap: 1.5 });
 
       /* ---------------- Pied de page ---------------- */

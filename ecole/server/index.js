@@ -12,6 +12,9 @@ const { computeClasse, computeFusion, bulletinData } = require('./stats');
 const stockage = require('./storage');
 const P = require('./paiements');
 const Abonnement = require('./abonnements');
+const Tarif = require('./tarifs-effectif');
+const Preuve = require('./preuves-paiement');
+const WhatsApp = require('./whatsapp-paiement');
 const { autoriseEnSuspension } = require('./acces-abonnement');
 const { genererRecuPDF } = require('./recu');
 const { genererFusionPDF } = require('./fusion-pdf');
@@ -1557,7 +1560,7 @@ app.patch('/api/admin/etablissements/:id', auth, roles('super_admin'), (req, res
   const { statut, plan, date_fin_abonnement, nom } = req.body || {};
   if (statut !== undefined && !['actif', 'essai', 'suspendu'].includes(statut))
     return res.status(400).json({ error: 'Statut invalide' });
-  if (plan !== undefined && !['essai', 'essentiel', 'standard', 'reseau'].includes(plan))
+  if (plan !== undefined && !['essai', 'effectif', 'essentiel', 'standard', 'reseau'].includes(plan))
     return res.status(400).json({ error: 'Formule invalide' });
   if (date_fin_abonnement !== undefined &&
       (typeof date_fin_abonnement !== 'string' || !/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)?$/.test(date_fin_abonnement) ||
@@ -1593,22 +1596,50 @@ app.get('/api/admin/abonnements/historique', auth, roles('super_admin'), (req, r
     ORDER BY o.id DESC LIMIT 50`).all());
 });
 
+// Saisie directe réservée à l'éditeur : montant fixé par le serveur, 1 mois.
+// Elle suppose que l'éditeur a déjà contrôlé SON relevé avant d'autoriser le reçu.
+app.get('/api/admin/paiements/tarif', auth, roles('super_admin'), (req, res) => {
+  const id = Number(req.query.ecole_id);
+  if (!Number.isSafeInteger(id) || id < 1 ||
+      !db.prepare('SELECT 1 FROM etablissements WHERE id = ?').get(id))
+    return res.status(404).json({ error: 'Établissement introuvable' });
+  res.json(Tarif.tarifPourEcole(db, id));
+});
 app.post('/api/admin/paiements', auth, roles('super_admin'), (req, res) => {
-  const { ecole_id, montant, plan, reference, duree_jours, operateur } = req.body || {};
-  const id = Number(ecole_id), somme = Number(montant), jours = Number(duree_jours);
+  const b = req.body || {};
+  const id = Number(b.ecole_id);
   if (!Number.isSafeInteger(id) || id < 1) return res.status(400).json({ error: 'Établissement invalide' });
-  if (!['essentiel', 'standard', 'reseau'].includes(plan)) return res.status(400).json({ error: 'Formule invalide' });
-  if (!Number.isFinite(somme) || somme < 0) return res.status(400).json({ error: 'Montant invalide' });
-  if (!Number.isSafeInteger(jours) || jours < 1 || jours > 3650)
-    return res.status(400).json({ error: 'Durée invalide (1 à 3 650 jours)' });
+  if (!db.prepare('SELECT 1 FROM etablissements WHERE id = ?').get(id))
+    return res.status(404).json({ error: 'Établissement introuvable' });
+  const tarif = Tarif.tarifPourEcole(db, id);
+  if ((b.plan !== undefined && b.plan !== 'effectif') ||
+      (b.mois !== undefined && Number(b.mois) !== 1) ||
+      (b.duree_jours !== undefined && Number(b.duree_jours) !== 30) ||
+      (b.montant !== undefined && Number(b.montant) !== tarif.montant)) {
+    return res.status(400).json({ error: 'Un mois au tarif lié aux élèves actifs : ' + tarif.montant + ' F CFA. Rechargez la page.' });
+  }
+  if (b.confirmation_releve !== true)
+    return res.status(400).json({ error: 'Confirmez avoir vérifié votre relevé avant d’autoriser le reçu.' });
+  const ref = String(b.reference || '').trim();
+  if (!/^[A-Za-z0-9][A-Za-z0-9.\/_-]{3,99}$/.test(ref))
+    return res.status(400).json({ error: 'Saisissez la référence réellement constatée sur votre relevé.' });
+  const operateur = ['mixx', 'moov'].includes(b.operateur) ? b.operateur : 'manuel';
+  const refNorm = ref.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (db.prepare('SELECT 1 FROM paiements WHERE reference = ?').get(ref) ||
+      (operateur !== 'manuel' && db.prepare(`SELECT 1 FROM paiements WHERE operateur = ?
+        AND (transaction_ref_norm = ? OR lower(trim(transaction_ref)) = lower(?))`).get(operateur, refNorm, ref))) {
+    return res.status(409).json({ error: 'Cette référence existe déjà. Vérifiez la transaction avant d’autoriser un autre reçu.' });
+  }
   try {
     const resultat = Abonnement.enregistrerPaiementManuel(db, {
-      ecoleId: id, montant: somme, plan, dureeJours: jours,
-      reference: String(reference || '').trim().slice(0, 100) || `PAY-${Date.now()}`,
-      operateur: String(operateur || 'manuel').slice(0, 30)
+      ecoleId: id, montant: tarif.montant, plan: 'effectif', dureeJours: 30,
+      effectifFacture: tarif.effectif, tarifCode: tarif.code,
+      reference: ref, operateur,
+      transactionRef: operateur === 'manuel' ? null : ref,
+      transactionRefNorm: operateur === 'manuel' ? null : refNorm
     }, req.user.id);
-    res.json({ ok: true, ...resultat });
-  } catch (e) { res.status(e.status || 500).json({ error: e.message }); }
+    res.json({ ok: true, ...resultat, montant: tarif.montant, effectif: tarif.effectif });
+  } catch (e) { res.status(e.status || (/UNIQUE/.test(e.message) ? 409 : 500)).json({ error: 'Paiement impossible : ' + e.message }); }
 });
 app.get('/api/admin/demandes', auth, roles('super_admin'), (req, res) => {
   res.json(db.prepare('SELECT * FROM demandes ORDER BY cree_le DESC').all());
@@ -1633,7 +1664,7 @@ app.get('/api/admin/statistiques', auth, roles('super_admin'), (req, res) => {
 
 
 /* ------------------------------------------------------------------ */
-/* Paiements Mobile Money (Mixx by Yas, Moov Money) & CinetPay         */
+/* Paiements Mobile Money (Mixx, Moov) et anciens webhooks            */
 /* ------------------------------------------------------------------ */
 app.get('/api/paiements', auth, directionOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
@@ -1785,9 +1816,13 @@ app.post('/api/enseignants/:id/acces', auth, directionOnly, (req, res) => {
 });
 
 app.get('/api/paiement/options', auth, directionOnly, (req, res) => {
+  const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
   const reglages = P.lireReglages(db);
-  const cp = P.cinetpayConfig(reglages);
+  const tarif = Tarif.tarifPourEcole(db, ecoleId);
   res.json({
+    tarif,
+    tarifs_effectif: Tarif.TARIFS.map(t => ({ code: t.code, libelle: t.libelle, montant: t.montant })),
+    whatsapp_api: { actif: WhatsApp.configuration().actif },
     operateurs: Object.values(P.OPERATEURS).map(o => ({
       code: o.code, nom: o.nom, ancien: o.ancien, reseau: o.reseau, ussd_menu: o.ussd_menu,
       ussd_paiement: o.ussd_paiement, comment_payer: o.comment_payer, couleur: o.couleur,
@@ -1796,81 +1831,114 @@ app.get('/api/paiement/options', auth, directionOnly, (req, res) => {
       actif: (o.code === 'mixx' ? reglages.mixx_actif : reglages.moov_actif) === '1'
         && !!(o.code === 'mixx' ? reglages.mixx_numero : reglages.moov_numero)
     })),
-    plans: Object.values(P.PLANS).map(p => ({
-      code: p.code, nom: p.nom,
-      prix_mensuel: P.prixMensuel(reglages, p.code),
-      sur_devis: p.code === 'reseau',
-      montants: P.DUREES.map(d => ({ mois: d.mois, libelle: d.libelle, remise: d.remise, montant: P.montantPour(reglages, p.code, d.mois) }))
-    })),
-    durees: P.DUREES,
-    cinetpay: { actif: cp.actif, mode: cp.mode },
-    passerelles: P.passerelles(reglages)
+    plans: [{ code: 'effectif', nom: 'Abonnement mensuel selon l’effectif',
+      prix_mensuel: tarif.montant, montants: [{ mois: 1, montant: tarif.montant }] }],
+    durees: [{ mois: 1, libelle: '1 mois', remise: 0 }],
+    cinetpay: { actif: false, historique: true },
+    passerelles: [] // les anciens webhooks restent actifs uniquement pour les dossiers déjà ouverts
   });
 });
 
-app.post('/api/paiement/declarer', auth, directionOnly, (req, res) => {
+app.post('/api/paiement/declarer', auth, directionOnly, async (req, res) => {
   const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
-  const { plan, mois, operateur, telephone_payeur, transaction_ref, note } = req.body || {};
+  const b = req.body || {};
+  try { Tarif.verifierDemandeMensuelle(b); }
+  catch (e) { return res.status(e.status || 400).json({ error: e.message }); }
+  const { operateur, telephone_payeur, transaction_ref, note, capture } = b;
   const reglages = P.lireReglages(db);
-  if (!P.PLANS[plan] || plan === 'reseau') return res.status(400).json({ error: 'Formule invalide (Réseau : sur devis)' });
-  if (!P.OPERATEURS[operateur]) return res.status(400).json({ error: 'Opérateur Mobile Money invalide' });
+  if (typeof operateur !== 'string' || !Object.hasOwn(P.OPERATEURS, operateur))
+    return res.status(400).json({ error: 'Opérateur Mobile Money invalide.' });
   const op = P.OPERATEURS[operateur];
   const numero = operateur === 'mixx' ? reglages.mixx_numero : reglages.moov_numero;
   const actif = (operateur === 'mixx' ? reglages.mixx_actif : reglages.moov_actif) === '1';
-  if (!actif || !numero) return res.status(400).json({ error: `${op.nom} n’est pas encore configuré. Contactez l’éditeur.` });
-  const montant = P.montantPour(reglages, plan, mois);
-  if (montant == null || montant <= 0) return res.status(400).json({ error: 'Montant introuvable pour cette formule' });
-  const ref = String(transaction_ref || '').trim();
-  if (ref.length < 4) return res.status(400).json({ error: 'Indiquez l’identifiant (ID) de la transaction reçu par SMS' });
-  if (!String(telephone_payeur || '').trim()) return res.status(400).json({ error: 'Indiquez le numéro de téléphone utilisé pour payer' });
-  const doublon = db.prepare('SELECT id FROM paiements WHERE operateur = ? AND transaction_ref = ?').get(operateur, ref);
-  if (doublon) return res.status(409).json({ error: 'Cette transaction a déjà été déclarée. Contactez l’éditeur si ce n’est pas vous.' });
+  if (!actif || !numero) return res.status(400).json({ error: `${op.nom} n’est pas configuré. Contactez l’éditeur.` });
+  if (b.option && !['capture', 'reference'].includes(b.option)) return res.status(400).json({ error: 'Option inconnue.' });
+  const option = b.option || (capture ? 'capture' : 'reference');
+  if (option === 'capture' && !capture) return res.status(400).json({ error: 'Choisissez une capture de paiement.' });
+  if (option === 'reference' && capture) return res.status(400).json({ error: 'Choisissez la capture OU la référence, pas les deux.' });
 
-  const reference = P.referencePaiement(operateur);
-  const duree = P.DUREES.find(d => d.mois === Number(mois)) || P.DUREES[0];
-  const info = db.prepare(`INSERT INTO paiements (ecole_id, montant, devise, plan, reference, statut,
-    periode_debut, periode_fin, operateur, telephone_payeur, transaction_ref, canal, mois, note, demande_par, cree_le)
-    VALUES (?,?,?,?,?, 'en_attente', ?,?,?,?,?, 'manuel', ?,?,?,?)`).run(
-    ecoleId, montant, 'FCFA', plan, reference, today(),
-    new Date(Date.now() + duree.mois * 30 * 864e5).toISOString().slice(0, 10),
-    operateur, String(telephone_payeur).trim(), ref, duree.mois, note || '', req.user.id, now());
-  res.json({
-    ok: true, id: Number(info.lastInsertRowid), reference, montant, statut: 'en_attente',
-    message: 'Paiement déclaré. L’éditeur vérifie la transaction et active votre abonnement (généralement sous quelques heures).'
-  });
+  const tarif = Tarif.tarifPourEcole(db, ecoleId);
+  let image = null, empreinte = null, analyse = null;
+  if (capture !== undefined && capture !== '') {
+    try {
+      ({ image, empreinte } = await Preuve.normaliserCapture(capture));
+      analyse = await Preuve.analyserCapture(image, tarif.montant);
+    } catch (e) { return res.status(e.status || 400).json({ error: e.message }); }
+  }
+  const ref = String(transaction_ref || analyse?.references?.[0] || '').trim();
+  if ((ref || option === 'reference') && !/^[A-Za-z0-9][A-Za-z0-9.\/_-]{3,79}$/.test(ref)) {
+    return res.status(400).json({ error: 'Référence illisible : saisissez l’identifiant de la transaction reçu par SMS (4 caractères minimum).' });
+  }
+  const refNorm = ref ? ref.toUpperCase().replace(/[^A-Z0-9]/g, '') : null;
+  // Ne pas confondre le numéro marchand affiché sur le reçu avec celui du payeur.
+  const numerosPayeurs = (analyse?.numeros || []).filter(x => x.replace(/\D/g, '') !== numero.replace(/\D/g, ''));
+  const telephone = String(telephone_payeur || (numerosPayeurs.length === 1 ? numerosPayeurs[0] : '')).replace(/\D/g, '');
+  if ((telephone || option === 'reference') && !/^(?:228)?[79]\d{7}$/.test(telephone)) {
+    return res.status(400).json({ error: 'Saisissez le numéro togolais utilisé pour payer (8 chiffres, avec ou sans +228).' });
+  }
+  if (analyse && ref && analyse.references.length && !analyse.references.some(x =>
+    x.toUpperCase().replace(/[^A-Z0-9]/g, '') === refNorm)) {
+    analyse.alertes.push('La référence saisie diffère de celle lue sur la capture. Vérifiez votre relevé.');
+  }
+  if (analyse && !ref) analyse.alertes.push('Identifiant illisible : à vérifier sur la capture et le relevé.');
+  if (analyse && !telephone) analyse.alertes.push('Numéro payeur illisible : à vérifier sur la capture et le relevé.');
+
+  let fichier = null, paiementId = null, transactionOuverte = false;
+  try {
+    if (image) fichier = Preuve.enregistrerCapture(image);
+    db.exec('BEGIN IMMEDIATE'); transactionOuverte = true;
+    const enAttente = db.prepare("SELECT COUNT(*) AS n FROM paiements WHERE ecole_id = ? AND canal = 'manuel' AND statut = 'en_attente'")
+      .get(ecoleId).n;
+    if (enAttente >= 10) {
+      const e = new Error('Trop de déclarations en attente pour cet établissement. Contactez l’éditeur.');
+      e.status = 429; throw e;
+    }
+    const autre = refNorm ? db.prepare(`SELECT id FROM paiements WHERE operateur = ?
+      AND (transaction_ref_norm = ? OR lower(trim(transaction_ref)) = lower(?)) LIMIT 1`)
+      .get(operateur, refNorm, ref) : null;
+    if (autre || (empreinte && db.prepare('SELECT id FROM paiements WHERE preuve_empreinte = ?').get(empreinte))) {
+      const e = new Error('Cette transaction ou cette capture a déjà été déclarée. Contactez l’éditeur.');
+      e.status = 409; throw e;
+    }
+    const courant = Tarif.tarifPourEcole(db, ecoleId);
+    if (courant.effectif !== tarif.effectif || courant.montant !== tarif.montant) {
+      const e = new Error('L’effectif a changé pendant la demande. Rechargez le tarif avant de recommencer.');
+      e.status = 409; throw e;
+    }
+    const reference = P.referencePaiement(operateur);
+    const info = db.prepare(`INSERT INTO paiements (ecole_id, montant, devise, plan, reference, statut,
+      periode_debut, periode_fin, operateur, telephone_payeur, transaction_ref, transaction_ref_norm,
+      canal, mois, note, demande_par, cree_le, effectif_facture, tarif_code,
+      preuve_fichier, preuve_analyse, preuve_empreinte, notification_whatsapp)
+      VALUES (?,?,?,?,?,'en_attente',?,?,?,?,?,?,'manuel',1,?,?,?,?,?,?,?,?,'en_cours')`).run(
+      ecoleId, tarif.montant, 'FCFA', 'effectif', reference, today(),
+      new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10),
+      operateur, telephone || null, ref || null, refNorm, String(note || '').trim().slice(0, 300), req.user.id,
+      now(), tarif.effectif, tarif.code, fichier, analyse ? JSON.stringify(analyse) : null, empreinte);
+    paiementId = Number(info.lastInsertRowid);
+    db.exec('COMMIT'); transactionOuverte = false;
+  } catch (e) {
+    if (transactionOuverte) db.exec('ROLLBACK');
+    if (fichier) Preuve.supprimerCapture(fichier);
+    const doublon = /UNIQUE constraint failed/.test(String(e.message));
+    return res.status(e.status || (doublon ? 409 : 500)).json({ error: doublon
+      ? 'Cette transaction ou cette capture a déjà été déclarée.' : e.status ? e.message : 'Impossible de déclarer le paiement.' });
+  }
+  // L'alerte échoue sans changer le paiement ni l'abonnement. Jamais de
+  // validation automatique fondée sur une capture d'écran.
+  let notification = { statut: 'echec' };
+  try { notification = await WhatsApp.notifierPaiement(db, paiementId); }
+  catch (e) { console.warn('Notification WhatsApp non traitée :', e.message); }
+  res.json({ ok: true, id: paiementId, reference: db.prepare('SELECT reference FROM paiements WHERE id = ?').get(paiementId).reference,
+    montant: tarif.montant, effectif: tarif.effectif, statut: 'en_attente',
+    analyse, notification_whatsapp: notification.statut,
+    message: 'Déclaration enregistrée. L’éditeur vérifiera le relevé Mobile Money, puis autorisera le reçu et la réactivation.' });
 });
 
-app.post('/api/paiement/cinetpay/initier', auth, directionOnly, async (req, res) => {
-  const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
-  const { plan, mois } = req.body || {};
-  const reglages = P.lireReglages(db);
-  const cfg = P.cinetpayConfig(reglages);
-  if (!cfg.actif) return res.status(400).json({ error: 'Le paiement en ligne CinetPay n’est pas activé. Utilisez le paiement Mobile Money manuel.' });
-  if (!P.PLANS[plan] || plan === 'reseau') return res.status(400).json({ error: 'Formule invalide' });
-  const montant = P.montantPour(reglages, plan, mois);
-  if (!montant) return res.status(400).json({ error: 'Montant introuvable' });
-  const etab = db.prepare('SELECT * FROM etablissements WHERE id = ?').get(ecoleId);
-  const duree = P.DUREES.find(d => d.mois === Number(mois)) || P.DUREES[0];
-  const reference = P.referencePaiement('cinetpay');
-  const info = db.prepare(`INSERT INTO paiements (ecole_id, montant, devise, plan, reference, statut,
-    periode_debut, periode_fin, canal, mois, demande_par, cree_le)
-    VALUES (?,?,?,?,?, 'en_attente', ?,?, 'cinetpay', ?,?,?)`).run(
-    ecoleId, montant, 'FCFA', plan, reference, today(),
-    new Date(Date.now() + duree.mois * 30 * 864e5).toISOString().slice(0, 10),
-    duree.mois, req.user.id, now());
-  const id = Number(info.lastInsertRowid);
-  try {
-    const { url } = await P.initierCinetPay(cfg, {
-      montant, devise: 'FCFA', transactionId: reference,
-      description: `Abonnement ${P.PLANS[plan].nom} — ${duree.libelle} — ${etab.nom}`,
-      ecole: etab, telephone: req.body.telephone || etab.telephone, email: req.user.email,
-      nom: req.user.nom, baseUrl: baseUrl(req)
-    });
-    res.json({ ok: true, url, reference, montant, id });
-  } catch (e) {
-    db.prepare("UPDATE paiements SET statut = 'rejete', note = ? WHERE id = ?").run(String(e.message).slice(0, 300), id);
-    res.status(502).json({ error: e.message });
-  }
+// Nouveau parcours : pas d'initiation en ligne ; l'éditeur autorise chaque reçu.
+// Les webhooks ci-dessous restent actifs UNIQUEMENT pour d'anciens dossiers déjà initiés.
+app.post('/api/paiement/cinetpay/initier', auth, directionOnly, (req, res) => {
+  res.status(410).json({ error: 'Le paiement en ligne automatique n’est plus proposé. Payez par Mixx ou Moov, puis déclarez une capture ou votre référence et votre téléphone.' });
 });
 
 /** Notification CinetPay — on ne fait jamais confiance au corps : on interroge l'API. */
@@ -1905,37 +1973,10 @@ app.post('/api/webhooks/cinetpay', async (req, res) => {
 });
 
 /** Initialisation d'un paiement PayDunya (T-Money / Flooz / carte). */
-app.post('/api/paiement/paydunya/initier', auth, directionOnly, async (req, res) => {
-  const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
-  const { plan, mois } = req.body || {};
-  const reglages = P.lireReglages(db);
-  const cfg = P.paydunyaConfig(reglages);
-  if (!cfg.actif) return res.status(400).json({ error: 'PayDunya n’est pas activé. Utilisez le paiement Mobile Money manuel.' });
-  if (!P.PLANS[plan] || plan === 'reseau') return res.status(400).json({ error: 'Formule invalide' });
-  const montant = P.montantPour(reglages, plan, mois);
-  if (!montant) return res.status(400).json({ error: 'Montant introuvable' });
-  const etab = db.prepare('SELECT * FROM etablissements WHERE id = ?').get(ecoleId);
-  const duree = P.DUREES.find(d => d.mois === Number(mois)) || P.DUREES[0];
-  const reference = P.referencePaiement('paydunya');
-  const info = db.prepare(`INSERT INTO paiements (ecole_id, montant, devise, plan, reference, statut,
-    periode_debut, periode_fin, canal, mois, telephone_payeur, demande_par, cree_le)
-    VALUES (?,?,?,?,?, 'en_attente', ?,?, 'paydunya', ?,?,?,?)`).run(
-    ecoleId, montant, 'FCFA', plan, reference, today(),
-    new Date(Date.now() + duree.mois * 30 * 864e5).toISOString().slice(0, 10),
-    duree.mois, req.body.telephone || etab.telephone || '', req.user.id, now());
-  const id = Number(info.lastInsertRowid);
-  try {
-    const { url, token } = await P.initierPaydunya(cfg, {
-      montant, description: `Abonnement ${P.PLANS[plan].nom} — ${duree.libelle} — ${etab.nom}`,
-      ecole: etab, telephone: req.body.telephone || etab.telephone, email: req.user.email,
-      nom: req.user.nom, baseUrl: baseUrl(req)
-    });
-    db.prepare('UPDATE paiements SET transaction_ref = ? WHERE id = ?').run(token, id);
-    res.json({ ok: true, url, reference, token, montant, id });
-  } catch (e) {
-    db.prepare("UPDATE paiements SET statut = 'rejete', note = ? WHERE id = ?").run(String(e.message).slice(0, 300), id);
-    res.status(502).json({ error: e.message });
-  }
+// Nouveau parcours : pas d'initiation en ligne ; l'éditeur autorise chaque reçu.
+// Les webhooks ci-dessous restent actifs UNIQUEMENT pour d'anciens dossiers déjà initiés.
+app.post('/api/paiement/paydunya/initier', auth, directionOnly, (req, res) => {
+  res.status(410).json({ error: 'Le paiement en ligne automatique n’est plus proposé. Payez par Mixx ou Moov, puis déclarez une capture ou votre référence et votre téléphone.' });
 });
 
 /** IPN PayDunya : on vérifie l'empreinte HMAC puis on confirme auprès de l'API. */
@@ -2017,6 +2058,31 @@ app.get('/api/admin/paiements/:id/recu.pdf', auth, roles('super_admin'), (req, r
   envoyerRecu(res, paiement);
 });
 
+/** Les captures sont PRIVÉES : fichier hors public/, session et école vérifiées. */
+function envoyerPreuve(res, paiement) {
+  if (!paiement) return res.status(404).json({ error: 'Paiement introuvable.' });
+  const image = Preuve.lireFichier(paiement.preuve_fichier);
+  if (!image) return res.status(404).json({ error: 'Aucune capture disponible pour ce paiement.' });
+  res.set({ 'Content-Type': 'image/jpeg', 'Content-Length': String(image.length),
+    'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff',
+    'Content-Disposition': `inline; filename="justificatif-${paiement.id}.jpg"`,
+    'Content-Security-Policy': "default-src 'none'" });
+  res.end(image);
+}
+app.get('/api/paiements/:id/preuve', auth, directionOnly, (req, res) => {
+  const paiement = db.prepare('SELECT * FROM paiements WHERE id = ? AND ecole_id = ?')
+    .get(req.params.id, req.user.ecole_id);
+  envoyerPreuve(res, paiement);
+});
+app.get('/api/admin/paiements/:id/preuve', auth, roles('super_admin'), (req, res) => {
+  const paiement = db.prepare('SELECT * FROM paiements WHERE id = ?').get(req.params.id);
+  envoyerPreuve(res, paiement);
+});
+app.post('/api/admin/paiements/:id/notifier', auth, roles('super_admin'), async (req, res) => {
+  try { res.json({ ok: true, ...await WhatsApp.notifierPaiement(db, Number(req.params.id)) }); }
+  catch (e) { res.status(e.status || 500).json({ error: e.message }); }
+});
+
 /* --------------------------- Admin : réglages & validation --------- */
 app.get('/api/admin/reglages', auth, roles('super_admin'), (req, res) => {
   const r = P.lireReglages(db);
@@ -2027,6 +2093,8 @@ app.get('/api/admin/reglages', auth, roles('super_admin'), (req, res) => {
     moov_numero: r.moov_numero || '', moov_nom: r.moov_nom || '', moov_actif: r.moov_actif === '1',
     prix_essentiel: Number(r.prix_essentiel) || 15000,
     prix_standard: Number(r.prix_standard) || 25000,
+    tarifs_effectif: Tarif.TARIFS.map(t => ({ code: t.code, libelle: t.libelle, montant: t.montant })),
+    whatsapp_api: { actif: WhatsApp.configuration().actif },
     cinetpay: {
       actif: cfg.actif, mode: cfg.mode,
       source: process.env.CINETPAY_APIKEY ? 'variables d’environnement' : (r.cinetpay_apikey ? 'base de données' : 'non configuré'),

@@ -2581,6 +2581,14 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       window.open(lienServeur(`/api/paiements/${paiementId}/recu.pdf`), '_blank');
     },
 
+    voirPreuvePaiement(paiementId) {
+      window.open(lienServeur(`/api/paiements/${paiementId}/preuve`), '_blank', 'noopener');
+    },
+
+    voirPreuveAdmin(paiementId) {
+      window.open(lienServeur(`/api/admin/paiements/${paiementId}/preuve`), '_blank', 'noopener');
+    },
+
     imprimerExamen(examenId, classeId) {
       window.open(lienServeur(`/print/examen/${examenId}?classe_id=${classeId}`), '_blank');
     },
@@ -3790,9 +3798,10 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
   /* -------------------------- ABONNEMENT --------------------------- */
   const PLANS = {
     essai: { nom: 'Essai gratuit', prix: 0, desc: '30 jours pour découvrir la plateforme.' },
-    essentiel: { nom: 'Essentiel', prix: 15000, desc: 'Jusqu’à 300 élèves, 3 enseignants, bulletins et statistiques.' },
-    standard: { nom: 'Standard', prix: 25000, desc: 'Élèves et enseignants illimités, examens blancs, espace familles.' },
-    reseau: { nom: 'Réseau', prix: null, desc: 'Plusieurs établissements, console centrale et accompagnement.' }
+    essentiel: { nom: 'Essentiel (historique)', prix: 15000, desc: 'Ancien forfait conservé dans les reçus.' },
+    standard: { nom: 'Standard (historique)', prix: 25000, desc: 'Ancien forfait conservé dans les reçus.' },
+    reseau: { nom: 'Réseau', prix: null, desc: 'Plusieurs établissements.' },
+    effectif: { nom: 'Abonnement mensuel', prix: null, desc: 'Tarif calculé sur les élèves actifs.' }
   };
 
   const OP_STYLE = {
@@ -3823,264 +3832,159 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
   V.abonnement = {
     async render() {
       const [e, options, paiements, contact] = await Promise.all([
-        api('/api/etablissement'),
-        api('/api/paiement/options'),
-        api('/api/paiements'),
+        api('/api/etablissement'), api('/api/paiement/options'), api('/api/paiements'),
         api('/api/public/contact').catch(() => ({ whatsapp: '' }))
       ]);
       S.etab = e;
       S.payOpts = options;
-      S.payForm = S.payForm || { plan: e.plan === 'essentiel' ? 'essentiel' : 'standard', mois: 12, operateur: 'mixx' };
+      const tarif = options.tarif;
+      const actifs = options.operateurs.filter(o => o.actif);
+      S.payForm = S.payForm || { operateur: actifs[0]?.code || 'mixx', option: 'capture' };
       const f = S.payForm;
-      const plan = options.plans.find(x => x.code === f.plan) || options.plans.find(x => !x.sur_devis) || options.plans[0];
-      const dureeChoisie = plan.montants.find(m => m.mois === Number(f.mois)) || plan.montants[0];
-      const montant = dureeChoisie ? dureeChoisie.montant : 0;
+      const op = options.operateurs.find(o => o.code === f.operateur && o.actif) || actifs[0];
+      if (op) f.operateur = op.code;
+      const enAttente = paiements.filter(p => p.statut === 'en_attente' && p.canal === 'manuel');
+      const dernier = S.paiementDernierResultat;
+      S.paiementDernierResultat = null;
       const jours = e.date_fin_abonnement ? Math.ceil((new Date(e.date_fin_abonnement) - Date.now()) / 864e5) : null;
-      const enAttente = paiements.filter(p => p.statut === 'en_attente');
-      const operateursDispo = options.operateurs.filter(o => o.actif);
-      const aucunOperateur = operateursDispo.length === 0;
-
-      const cartesFormules = options.plans.map(p => {
-        const mensuel = p.sur_devis ? 'Sur devis' : (p.prix_mensuel ? money(p.prix_mensuel) + ' / mois' : 'Prix à définir');
-        return `<button type="button" class="plan-select ${p.code === f.plan ? 'on' : ''} ${p.sur_devis ? 'devis' : ''}"
-            data-plan="${p.code}" ${p.sur_devis ? 'disabled' : ''}>
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-            <b>${esc(p.nom)}</b>${p.code === e.plan ? '<span class="tag vert">Actuelle</span>' : ''}
-          </div>
-          <div class="small muted" style="margin-top:2px">${esc((PLANS[p.code] || {}).desc || '')}</div>
-          <div style="margin-top:7px;font-weight:800;color:var(--vert-fonce);font-size:15px">${mensuel}</div>
-          ${p.sur_devis ? '<div class="small muted" style="margin-top:4px">Nous contacter</div>' : ''}
-        </button>`;
-      }).join('');
-
-      const cartesDuree = plan.montants.map(m => `
-        <button type="button" class="duree-select ${Number(f.mois) === m.mois ? 'on' : ''}" data-mois="${m.mois}">
-          <b>${esc(m.libelle)}</b>
-          <div class="small muted">${money(m.montant)}</div>
-          ${m.remise ? '<span class="tag or" style="margin-top:3px">2 mois offerts</span>' : ''}
-        </button>`).join('');
-
-      const cartesOperateur = options.operateurs.map(o => {
-        const st = OP_STYLE[o.code] || OP_STYLE.manuel;
-        return `<button type="button" class="op-select ${o.code === f.operateur ? 'on' : ''}" data-op="${o.code}"
-            ${o.actif ? '' : 'disabled title="Opérateur non configuré"'}>
-          <span class="op-logo" style="background:${st.bg};color:${st.color};border-color:${st.border}">${st.short}</span>
-          <span style="flex:1;text-align:left">
-            <b>${esc(o.nom)}</b>
-            <div class="small muted">${esc(o.ancien)}</div>
-          </span>
-          ${o.actif ? '' : '<span class="tag gris">Indisponible</span>'}
-        </button>`;
-      }).join('');
-
-      const opSel = options.operateurs.find(o => o.code === f.operateur) || operateursDispo[0] || null;
-
+      const noteNotification = p => p.notification_whatsapp === 'envoye' ? '<span class="tag vert">WhatsApp accepté par l’API</span>'
+        : p.notification_whatsapp === 'echec' ? '<span class="tag or">WhatsApp non remis · console informée</span>'
+          : p.notification_whatsapp === 'non_configure' ? '<span class="tag or">WhatsApp non configuré · console informée</span>'
+            : p.notification_whatsapp === 'en_cours' ? '<span class="tag gris">WhatsApp en cours · console informée</span>' : '';
       return `
-        ${e.statut === 'suspendu' ? `<div class="notice warn"><b>Établissement suspendu :</b> les données et PDF restent consultables, sans modification possible. Vous pouvez toujours déclarer un paiement ou payer en ligne si un prestataire est configuré. Après validation et réactivation par l’éditeur, vos droits reviennent sans reconnexion.</div>` : ''}
+        ${e.statut === 'suspendu' ? `<div class="notice warn"><b>Consultation seulement :</b> vous pouvez toujours déclarer votre paiement ici. Après vérification et validation par l’éditeur, vos droits reviennent sans reconnexion.</div>` : ''}
+        ${dernier ? `<div class="notice ok" role="status"><b>Déclaration ${esc(dernier.reference)} enregistrée.</b>
+          ${money(dernier.montant)} · ${dernier.effectif} élèves. ${dernier.notification_whatsapp === 'envoye'
+            ? 'Alerte WhatsApp acceptée par l’API (remise à confirmer).' : 'Alerte visible dans la console de l’éditeur ; WhatsApp automatique non remis.'}
+          ${dernier.analyse?.alertes?.length ? `<div class="small">Capture analysée : ${dernier.analyse.alertes.map(x => esc(x)).join(' ')}</div>` : ''}
+          Le reçu sera disponible uniquement après son accord et la vérification du relevé Mobile Money.</div>` : ''}
         <div class="two-col">
           <div class="panel">
-            <div class="panel-head"><div><h2>Votre formule</h2><div class="sub">Abonnement de ${esc(e.nom)}</div></div>
+            <div class="panel-head"><div><h2>Votre abonnement</h2><div class="sub">${esc(e.nom)}</div></div>
               <div class="right">${badgeStatut(e.statut)}</div></div>
-            <div class="plan-current" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
-              <div style="flex:1">
-                <div class="small muted">Formule actuelle</div>
-                <div style="font-size:22px;font-weight:800;color:var(--vert-fonce)">${esc((PLANS[e.plan] || {}).nom || e.plan)}</div>
-                <div class="small muted">${jours == null ? '' : jours >= 0 ? `${jours} jour(s) restant(s)` : '<span style="color:#b91c1c">Abonnement expiré</span>'}</div>
-              </div>
-              <div style="text-align:right"><div class="small muted">Échéance</div><div style="font-weight:700">${dateFr(e.date_fin_abonnement)}</div></div>
+            <div class="plan-current">
+              <b>${esc((PLANS[e.plan] || {}).nom || e.plan)}</b>
+              <div class="small muted">Échéance : ${dateFr(e.date_fin_abonnement)}${jours == null ? '' : ` · ${jours >= 0 ? jours + ' jour(s) restants' : 'expiré'}`}</div>
             </div>
-            ${enAttente.length ? `<div class="notice warn" style="margin-top:12px">
-              <b>${enAttente.length} paiement(s) en attente de vérification.</b>
-              Référence : ${enAttente.map(p => `<b>${esc(p.reference)}</b>`).join(', ')}. L’activation est automatique dès validation par l’éditeur.
-            </div>` : ''}
-            <div class="notice ${jours !== null && jours <= 10 ? 'warn' : 'info'}" style="margin-top:12px">
-              ${jours !== null && jours <= 10
-                ? '<b>Votre échéance approche.</b> Réglez par Mixx by Yas ou Moov Money : l’activation suit la vérification du paiement.'
-                : 'Payez par <b>Mixx by Yas</b> ou <b>Moov Money</b>. L’abonnement est prolongé dès la validation du paiement.'}
-            </div>
-            ${String(contact.whatsapp || '').replace(/\D/g, '') ? `<a class="btn btn-ghost btn-sm" href="https://wa.me/${String(contact.whatsapp).replace(/\D/g, '')}?text=${encodeURIComponent('Bonjour, abonnement Terminish École — ' + e.nom)}" target="_blank" rel="noopener" style="margin-top:4px">💬 Une question ? WhatsApp</a>` : ''}
+            ${enAttente.length ? `<div class="notice warn" style="margin-top:12px"><b>${enAttente.length} paiement(s) à vérifier.</b> L’école reste en consultation seule si elle est suspendue. Aucun reçu avant l’accord de l’éditeur.</div>` : ''}
+            <div class="notice info" style="margin-top:12px">Les élèves, bulletins et PDF restent consultables pendant une suspension. Un paiement non vérifié ne réactive pas l’école.</div>
+            ${String(contact.whatsapp || '').replace(/\D/g, '') ? `<a class="btn btn-ghost btn-sm" href="https://wa.me/${String(contact.whatsapp).replace(/\D/g, '')}?text=${encodeURIComponent('Bonjour, abonnement Terminish École — ' + e.nom)}" target="_blank" rel="noopener">💬 Contacter l’éditeur</a>` : ''}
           </div>
-
           <div class="panel">
-            <div class="panel-head"><div><h2>Historique des paiements</h2><div class="sub">${paiements.length} opération(s)</div></div></div>
-            ${paiements.length ? `<div class="table-wrap"><table class="data">
-              <thead><tr><th>Date</th><th>Formule</th><th>Moyen</th><th class="right">Montant</th><th class="center">Statut</th><th></th></tr></thead>
-              <tbody>${paiements.map(p => `<tr>
-                <td class="small nowrap">${dateFr(p.cree_le)}</td>
-                <td class="small" style="text-transform:capitalize">${esc(p.plan || '—')}${p.mois ? ` · ${p.mois} mois` : ''}</td>
-                <td class="small">${badgeOperateur(p.operateur || (p.canal === 'cinetpay' || p.canal === 'paydunya' ? p.canal : 'manuel'))}</td>
-                <td class="right strong">${money(p.montant, p.devise)}</td>
-                <td class="center">${badgePaiementStatut(p.statut)}</td>
-                <td class="right">${p.statut === 'paye'
-                  ? `<button class="icon-btn" title="Télécharger le reçu PDF" onclick="App.telechargerRecu(${p.id})">📄</button>` : ''}</td>
-              </tr>`).join('')}</tbody>
-            </table></div>` : emptyState('💳', 'Aucun paiement enregistré pour le moment.')}
+            <div class="panel-head"><div><h2>Votre tarif pour 1 mois</h2><div class="sub">Calculé sur les élèves actifs enregistrés</div></div></div>
+            <div class="pay-total"><div class="small muted">Effectif retenu : <b>${tarif.effectif} élève(s)</b> · ${esc(tarif.libelle)}</div>
+              <div class="amount">${money(tarif.montant)}</div><div class="small">Un paiement = un mois. Le serveur recalcule le montant à chaque demande.</div></div>
+            <div class="tarif-tranches">${options.tarifs_effectif.map(t => `<div class="tarif-tranche ${t.code === tarif.code ? 'active' : ''}"><b>${esc(t.libelle)}</b><span>${money(t.montant)} / mois</span></div>`).join('')}</div>
+            ${tarif.effectif === 0 ? '<div class="notice warn" style="margin-top:12px">Aucun élève actif inscrit. Si vous n’avez pas encore importé vos élèves, signalez votre effectif réel à l’éditeur avant de payer.</div>' : ''}
           </div>
         </div>
 
         <div class="panel">
-          <div class="panel-head">
-            <div><h2>💳 Payer mon abonnement</h2><div class="sub">Mixx by Yas · Moov Money${options.cinetpay.actif ? ' · CinetPay' : ''}</div></div>
-            <div class="right"><span class="tag vert">Paiement sécurisé</span></div>
-          </div>
-
-          <div class="grid2" style="gap:0 18px">
-            <div>
-              <div class="field"><label>1. Formule souhaitée</label>
-                <div class="plan-selects">${cartesFormules}</div>
-              </div>
-              <div class="field"><label>2. Durée</label>
-                <div class="duree-selects">${cartesDuree}</div>
-              </div>
-              <div class="field"><label>3. Moyen de paiement</label>
-                <div class="op-selects">${cartesOperateur}</div>
-                ${aucunOperateur ? '<div class="notice warn" style="margin-top:8px">Les numéros marchands ne sont pas encore configurés par l’éditeur. Contactez-le pour activer le paiement.</div>' : ''}
-              </div>
-            </div>
-
-            <div>
-              <div class="pay-total">
-                <div class="small muted">Montant à payer</div>
-                <div class="amount" id="pay-amount">${money(montant)}</div>
-                <div class="small muted" id="pay-detail">${esc(plan.nom)} · ${esc(dureeChoisie ? dureeChoisie.libelle : '')}${dureeChoisie && dureeChoisie.remise ? ' (2 mois offerts)' : ''}</div>
-                ${(options.passerelles || []).filter(p => p.actif).map(g => `
-                  <button class="btn btn-gold btn-block" data-gateway="${g.code}" style="margin-top:12px">Payer en ligne — ${esc(g.nom)}</button>
-                  <div class="small muted center" style="margin-top:5px">${esc(g.description)}${g.mode === 'test' ? ' · mode test' : ''}</div>`).join('')}
-              </div>
-
-              ${opSel && opSel.actif ? `
-                <div class="pay-instructions" data-op="${opSel.code}">
-                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-                    ${badgeOperateur(opSel.code)}
-                    <span class="small muted">Numéro marchand</span>
-                  </div>
-                  <div class="merchant-line">
-                    <span class="merchant-num" id="merchant-num">${esc(opSel.numero || '—')}</span>
-                    <button class="icon-btn" type="button" data-copy="${esc(opSel.numero || '')}" title="Copier">📋</button>
-                  </div>
-                  ${opSel.nom_marchand ? `<div class="small muted">Bénéficiaire : <b>${esc(opSel.nom_marchand)}</b></div>` : ''}
-                  <div class="ussd-line"><span>Code USSD</span><b>${esc(opSel.ussd_paiement)}</b></div>
-                  <div class="small" style="margin-top:8px;line-height:1.55">${opSel.comment_payer}</div>
-                  <div class="small" style="margin-top:8px"><b>Montant exact : ${money(montant)}</b> — ajoutez la référence <b>${esc(e.nom).slice(0, 18)}</b> si l’opérateur la demande.</div>
-                </div>
-
-                <form id="pay-form" style="margin-top:12px">
-                  <div class="field"><label>Numéro utilisé pour payer *</label>
-                    <input name="telephone_payeur" required placeholder="+228 90 12 34 56" value="${esc(e.telephone || '')}"></div>
-                  <div class="field"><label>ID / référence de la transaction *</label>
-                    <input name="transaction_ref" required minlength="4" placeholder="Ex. MP260521.1042.C12345">
-                    <div class="hint">Copiez l’identifiant reçu par SMS après le paiement.</div></div>
-                  <div class="field"><label>Note (facultatif)</label>
-                    <input name="note" placeholder="Paiement du 1er trimestre"></div>
-                  <button class="btn btn-primary btn-block" type="submit" id="btn-declarer">✅ J’ai payé — déclarer mon paiement</button>
-                </form>` : `
-                <div class="notice info" style="margin-top:10px">Sélectionnez un moyen de paiement disponible à gauche.</div>`}
-            </div>
-          </div>
-
-          <div class="notice info" style="margin-top:14px">
-            <b>Comment ça marche ?</b> Vous payez par Mobile Money vers le numéro marchand, puis vous déclarez ici l’identifiant
-            de la transaction. L’éditeur vérifie et votre abonnement est prolongé automatiquement. Aucun numéro de carte n’est demandé.
-            ${options.cinetpay.actif ? 'Le paiement CinetPay, lui, est confirmé automatiquement en quelques secondes.' : ''}
-          </div>
+          <div class="panel-head"><div><h2>💳 Déclarer mon paiement Mobile Money</h2><div class="sub">Deux choix : capture d’écran ou référence de transaction · Mixx by Yas / Moov Money</div></div>
+            <div class="right"><span class="tag or">Validation par l’éditeur</span></div></div>
+          <div class="notice warn"><b>Une capture n’est pas une preuve que l’argent est arrivé.</b> Une lecture automatique repère les informations visibles, mais seul l’éditeur confirme la transaction sur son propre relevé avant d’autoriser le reçu et de réactiver l’abonnement.</div>
+          <div class="field"><label>1. Choisissez le réseau utilisé</label><div class="op-selects">
+            ${options.operateurs.map(o => `<button type="button" class="op-select ${o.code === f.operateur ? 'on' : ''}" data-op="${o.code}" ${!o.actif ? 'disabled title="Numéro indisponible"' : ''}>${badgeOperateur(o.code)} <span class="small">${esc(o.numero || 'Non configuré')}</span></button>`).join('')}
+          </div></div>
+          ${op ? `<div class="pay-instructions"><div class="small muted">Envoyez <b>${money(tarif.montant)}</b> par ${esc(op.nom)} au numéro affiché :</div>
+            <div class="merchant-line"><span class="merchant-num">${esc(op.numero)}</span><button class="icon-btn" type="button" data-copy="${esc(op.numero)}" title="Copier le numéro">📋</button></div>
+            ${op.nom_marchand ? `<div class="small muted">Bénéficiaire : ${esc(op.nom_marchand)}</div>` : ''}
+            <div class="small muted">Code USSD : <b>${esc(op.ussd_paiement)}</b>. Ne communiquez jamais votre code secret.</div></div>
+            <div class="field" style="margin-top:16px"><label>2. Comment justifiez-vous le paiement ?</label>
+              <div class="preuve-options">
+                <button type="button" class="btn ${f.option === 'capture' ? 'btn-primary' : 'btn-ghost'}" data-preuve-option="capture">📷 Importer une capture d’écran</button>
+                <button type="button" class="btn ${f.option === 'reference' ? 'btn-primary' : 'btn-ghost'}" data-preuve-option="reference">🔢 Saisir l’ID de transaction</button>
+              </div></div>
+            <form id="pay-form" style="margin-top:12px">
+              ${f.option === 'capture' ? `<div class="field"><label for="pay-capture">Capture PNG ou JPEG (2,5 Mo maximum) *</label>
+                <input id="pay-capture" type="file" accept="image/png,image/jpeg" ${S.payCapture ? '' : 'required'}>
+                <div class="hint">L’image reste privée ; seuls vous et l’éditeur pouvez la consulter.</div>
+                <div id="pay-apercu">${S.payCapture ? `<img class="pay-apercu-img" src="${S.payCapture}" alt="Capture choisie">` : ''}</div></div>` : ''}
+              <div class="field"><label>3. Numéro utilisé pour payer ${f.option === 'reference' ? '*' : '(si connu)'}</label>
+                <input name="telephone_payeur" type="tel" inputmode="tel" ${f.option === 'reference' ? 'required' : ''} placeholder="+228 90 12 34 56">
+                ${f.option === 'capture' ? '<div class="hint">Sans ce numéro lisible sur la capture, l’éditeur devra le vérifier sur son relevé.</div>' : ''}</div>
+              <div class="field"><label>ID de la transaction ${f.option === 'capture' ? '(si connu)' : '*'}</label>
+                <input name="transaction_ref" ${f.option === 'reference' ? 'required' : ''} minlength="4" maxlength="80" placeholder="Ex. MP260521.1042.C12345">
+                <div class="hint">${f.option === 'capture'
+                  ? 'L’ID peut être lu sur l’image. S’il est illisible, l’éditeur contrôlera sa capture et son propre relevé avant tout reçu.'
+                  : 'Recopiez l’identifiant tel que reçu par SMS. L’éditeur devra le retrouver sur son propre relevé.'}</div></div>
+              <div class="field"><label>Note (facultatif)</label><input name="note" maxlength="300" placeholder="Information pour l’éditeur"></div>
+              <button class="btn btn-primary btn-block" type="submit" id="btn-declarer">Envoyer pour vérification · ${money(tarif.montant)}</button>
+            </form>` : '<div class="notice warn">Les numéros Mobile Money ne sont pas encore configurés. Contactez l’éditeur.</div>'}
+          <div class="notice info" style="margin-top:14px">Après votre déclaration, l’éditeur reçoit une alerte dans sa console.
+            ${options.whatsapp_api?.actif ? 'Une alerte WhatsApp est aussi envoyée automatiquement si l’API confirme l’envoi.' : 'L’envoi WhatsApp automatique exige une configuration officielle qui n’est pas encore active.'}
+            Vérifiez toujours le statut dans l’historique ci-dessous.</div>
         </div>
 
         <div class="panel">
-          <div class="panel-head"><div><h2>Formules disponibles</h2><div class="sub">Tarifs en francs CFA · 2 mois offerts sur 12 mois</div></div></div>
-          <div class="plans" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">
-            ${options.plans.filter(p => !p.sur_devis).map(p => `
-              <div class="plan ${p.code === e.plan ? 'pop' : ''}">
-                ${p.code === 'standard' ? '<span class="tag">Le plus choisi</span>' : ''}
-                <h3>${esc(p.nom)}</h3>
-                <div class="desc">${esc((PLANS[p.code] || {}).desc || '')}</div>
-                <div class="price">${p.prix_mensuel ? p.prix_mensuel.toLocaleString('fr-FR') + ' F<small> / mois</small>' : 'Sur devis'}</div>
-                <ul>
-                  ${p.code === 'essentiel' ? '<li>Jusqu’à 300 élèves</li><li>Bulletins &amp; statistiques</li><li>3 enseignants</li><li>Logo de l’école</li><li class="off">Examens blancs</li>'
-                    : '<li>Élèves illimités</li><li>Enseignants illimités</li><li>Examens blancs</li><li>Espace familles</li><li>Support prioritaire</li>'}
-                </ul>
-                <button class="btn ${p.code === f.plan ? 'btn-primary' : 'btn-ghost'} btn-block" data-plan-choose="${p.code}" ${p.code === f.plan ? 'disabled' : ''}>
-                  ${p.code === f.plan ? 'Formule sélectionnée' : 'Choisir cette formule'}
-                </button>
-              </div>`).join('')}
-          </div>
+          <div class="panel-head"><div><h2>Historique des paiements</h2><div class="sub">${paiements.length} opération(s)</div></div></div>
+          ${paiements.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>Date</th><th>Montant</th><th>Transaction</th><th>Statut</th><th>Reçu / preuve</th></tr></thead><tbody>
+            ${paiements.map(p => `<tr><td class="small nowrap">${dateFr(p.cree_le)}</td>
+              <td class="strong">${money(p.montant, p.devise)}<div class="small muted">${p.effectif_facture == null ? esc((PLANS[p.plan] || {}).nom || p.plan || '—') : `${p.effectif_facture} élèves · 1 mois`}</div></td>
+              <td class="small"><b>${badgeOperateur(p.operateur || p.canal || 'manuel')}</b><div>${esc(p.transaction_ref || '—')}</div><div class="muted">Dossier : ${esc(p.reference || '—')}</div></td>
+              <td>${badgePaiementStatut(p.statut)}<div style="margin-top:5px">${noteNotification(p)}</div></td>
+              <td>${p.preuve_fichier ? `<button class="btn btn-ghost btn-sm" onclick="App.voirPreuvePaiement(${p.id})">📷 Capture</button>` : ''}
+                ${p.statut === 'paye' ? `<button class="btn btn-ghost btn-sm" onclick="App.telechargerRecu(${p.id})">📄 Reçu autorisé</button>` : ''}
+                ${p.statut === 'rejete' ? `<div class="small muted">${esc(p.note || 'Rejeté')}</div>` : ''}</td></tr>`).join('')}
+          </tbody></table></div>` : emptyState('💳', 'Aucun paiement déclaré pour le moment.')}
         </div>`;
     },
 
     async mount() {
-      const options = S.payOpts || await api('/api/paiement/options');
       const f = S.payForm;
-      const recalcul = () => {
-        const plan = options.plans.find(x => x.code === f.plan) || options.plans[0];
-        const d = plan.montants.find(m => m.mois === Number(f.mois)) || plan.montants[0];
-        const amt = document.getElementById('pay-amount');
-        if (amt) amt.textContent = money(d ? d.montant : 0);
-        const det = document.getElementById('pay-detail');
-        if (det) det.textContent = `${plan.nom} · ${d ? d.libelle : ''}${d && d.remise ? ' (2 mois offerts)' : ''}`;
-      };
-      $$('[data-plan]').forEach(b => b.onclick = () => {
-        f.plan = b.dataset.plan;
-        S.payForm = f;
+      $$('[data-op]').forEach(btn => btn.onclick = () => {
+        f.operateur = btn.dataset.op;
+        S.payCapture = null;
         renderRoute();
       });
-      $$('[data-plan-choose]').forEach(b => b.onclick = () => {
-        f.plan = b.dataset.planChoose;
-        S.payForm = f;
+      $$('[data-preuve-option]').forEach(btn => btn.onclick = () => {
+        f.option = btn.dataset.preuveOption;
+        if (f.option !== 'capture') S.payCapture = null;
         renderRoute();
       });
-      $$('[data-mois]').forEach(b => b.onclick = () => {
-        f.mois = Number(b.dataset.mois);
-        S.payForm = f;
-        renderRoute();
+      $$('[data-copy]').forEach(btn => btn.onclick = async () => {
+        try { await navigator.clipboard.writeText(btn.dataset.copy); toast('Numéro copié'); }
+        catch { toast('Notez le numéro affiché', 'err'); }
       });
-      $$('[data-op]').forEach(b => b.onclick = () => {
-        f.operateur = b.dataset.op;
-        S.payForm = f;
-        renderRoute();
-      });
-      $$('[data-copy]').forEach(b => b.onclick = async () => {
-        try { await navigator.clipboard.writeText(b.dataset.copy); toast('Numéro copié'); }
-        catch { toast('Copie impossible : notez le numéro affiché', 'err'); }
-      });
-
-      const form = document.getElementById('pay-form');
-      if (form) form.onsubmit = async (ev) => {
-        ev.preventDefault();
-        const btn = document.getElementById('btn-declarer');
-        const data = Object.fromEntries(new FormData(form).entries());
-        btn.disabled = true; btn.textContent = 'Enregistrement…';
+      const photo = $('#pay-capture');
+      if (photo) photo.onchange = async () => {
+        const fichier = photo.files[0];
+        if (!fichier) return;
+        if (!['image/png', 'image/jpeg'].includes(fichier.type) || fichier.size > 2500000 || fichier.size < 100) {
+          S.payCapture = null; photo.value = '';
+          return toast('Capture PNG/JPEG de 2,5 Mo maximum.', 'err');
+        }
         try {
-          const res = await api('/api/paiement/declarer', { method: 'POST', body: {
-            plan: f.plan, mois: f.mois, operateur: f.operateur,
-            telephone_payeur: data.telephone_payeur, transaction_ref: data.transaction_ref, note: data.note
-          }});
-          toast(`Paiement déclaré — réf. ${res.reference}. Activation après vérification.`);
+          S.payCapture = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('Capture illisible'));
+            reader.readAsDataURL(fichier);
+          });
+          $('#pay-apercu').innerHTML = `<img class="pay-apercu-img" src="${S.payCapture}" alt="Capture choisie">`;
+        } catch (e) { toast(e.message, 'err'); }
+      };
+      const form = $('#pay-form');
+      if (form) form.onsubmit = async ev => {
+        ev.preventDefault();
+        const btn = $('#btn-declarer');
+        if (f.option === 'capture' && !S.payCapture) return toast('Choisissez votre capture de paiement.', 'err');
+        const data = Object.fromEntries(new FormData(form).entries());
+        btn.disabled = true; btn.textContent = 'Analyse et envoi…';
+        try {
+          S.paiementDernierResultat = await api('/api/paiement/declarer', { method: 'POST', body: {
+            plan: 'effectif', mois: 1, option: f.option, operateur: f.operateur,
+            telephone_payeur: data.telephone_payeur, transaction_ref: data.transaction_ref,
+            note: data.note, ...(f.option === 'capture' ? { capture: S.payCapture } : {})
+          } });
+          S.payCapture = null;
+          toast('Déclaration reçue. En attente de contrôle par l’éditeur.');
           renderRoute();
         } catch (e) {
-          toast(e.message, 'err');
-          btn.disabled = false; btn.textContent = '✅ J’ai payé — déclarer mon paiement';
+          toast(e.message, 'err', 6500);
+          btn.disabled = false; btn.textContent = 'Envoyer pour vérification';
         }
       };
-
-      $$('[data-gateway]').forEach(btn => btn.onclick = async () => {
-        const g = btn.dataset.gateway;
-        const libelle = btn.textContent;
-        btn.disabled = true; btn.textContent = 'Connexion à ' + (g === 'paydunya' ? 'PayDunya' : 'CinetPay') + '…';
-        try {
-          const res = await api(`/api/paiement/${g}/initier`, { method: 'POST', body: { plan: f.plan, mois: f.mois } });
-          window.location.href = res.url;
-        } catch (e) {
-          toast(e.message, 'err');
-          btn.disabled = false; btn.textContent = libelle;
-        }
-      });
-
-      const ref = new URLSearchParams(location.hash.split('?')[1] || '').get('paiement');
-      if (ref) {
-        const paiements = await api('/api/paiements');
-        const p = paiements.find(x => x.reference === ref);
-        if (p && p.statut === 'paye') toast('Paiement confirmé — abonnement activé ✅');
-        else if (p) toast('Paiement en cours de vérification par l’éditeur.');
-      }
     }
   };
 
@@ -4260,7 +4164,8 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                 <td class="small">${esc(e.chef_nom || '—')}<div class="muted">${esc(e.email || e.telephone || '')}</div></td>
                 <td class="center small">${e.eleves} élèves<div class="muted">${e.classes} classes · ${e.profs} profs</div></td>
                 <td><select class="icon-btn" onchange="App.majEcole(${e.id},{plan:this.value})">
-                  ${['essai', 'essentiel', 'standard', 'reseau'].map(p => `<option value="${p}" ${e.plan === p ? 'selected' : ''}>${esc(PLANS[p] ? PLANS[p].nom : p)}</option>`).join('')}
+                  ${['essai', 'effectif', ...(['essentiel', 'standard', 'reseau'].includes(e.plan) ? [e.plan] : [])]
+                    .map(p => `<option value="${p}" ${e.plan === p ? 'selected' : ''}>${esc(PLANS[p] ? PLANS[p].nom : p)}</option>`).join('')}
                 </select></td>
                 <td><select class="icon-btn" onchange="App.majEcole(${e.id},{statut:this.value})">
                   ${[['actif', 'Actif'], ['essai', 'Essai'], ['suspendu', 'Suspendu']].map(([v, l]) => `<option value="${v}" ${e.statut === v ? 'selected' : ''}>${l}</option>`).join('')}
@@ -4313,6 +4218,18 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     }
   };
 
+  function resumeLectureCapture(p) {
+    if (!p.preuve_analyse) return '';
+    let a;
+    try { a = JSON.parse(p.preuve_analyse); } catch { return ''; }
+    return `<div class="small muted" style="margin-top:4px">Lecture auto (indicative) :
+      montant ${esc((a.montants || []).join(', ') || 'illisible')},
+      ID ${esc((a.references || []).join(', ') || 'illisible')},
+      numéro ${esc((a.numeros || []).join(', ') || 'illisible')}
+      ${a.confiance == null ? '' : `· confiance ${Number(a.confiance)} %`}</div>
+      ${(a.alertes || []).map(x => `<div class="small" style="color:#8a5a05">⚠ ${esc(x)}</div>`).join('')}`;
+  }
+
   V['admin-paiements'] = {
     async render() {
       const [d, ecoles, reg] = await Promise.all([
@@ -4339,7 +4256,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
           <div class="kpi"><div class="lbl">À vérifier</div><div class="val" style="font-size:22px">${d.en_attente}</div><div class="sub">déclarations Mobile Money</div></div>
           <div class="kpi"><div class="lbl">Mixx by Yas</div><div class="val" style="font-size:19px">${money(parOperateur.mixx || 0)}</div><div class="sub">encaissé</div></div>
           <div class="kpi"><div class="lbl">Moov Money</div><div class="val" style="font-size:19px">${money(parOperateur.moov || 0)}</div><div class="sub">encaissé</div></div>
-          <div class="kpi"><div class="lbl">CinetPay</div><div class="val" style="font-size:19px">${money(parOperateur.cinetpay || 0)}</div><div class="sub">${reg.cinetpay.actif ? 'en ligne actif' : 'non activé'}</div></div>
+          <div class="kpi"><div class="lbl">CinetPay</div><div class="val" style="font-size:19px">${money(parOperateur.cinetpay || 0)}</div><div class="sub">anciens dossiers seulement</div></div>
           <div class="kpi"><div class="lbl">Activations annulées</div><div class="val" style="font-size:19px">${money(aRapprocher)}</div><div class="sub">argent éventuellement à vérifier / restituer</div></div>
         </div>
 
@@ -4348,14 +4265,14 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
             <div><h2>Demandes de paiement</h2><div class="sub">Vérifiez la transaction dans votre relevé Mobile Money avant de valider</div></div>
             <div class="right"><button class="btn btn-primary btn-sm" onclick="App.paiementEcole()">➕ Encaisser manuellement</button></div>
           </div>
-          ${attente.length ? `<div class="notice warn"><b>${attente.length} paiement(s) en attente.</b> La validation prolonge automatiquement l’abonnement de l’établissement.</div>` : ''}
+          ${attente.length ? `<div class="notice warn"><b>${attente.length} paiement(s) en attente.</b> Vérifiez le montant et l’ID <b>sur le relevé de VOTRE compte Mobile Money</b>, et non uniquement dans la capture. La validation manuelle autorise ensuite l’activation et le reçu.</div>` : ''}
           ${rows.length ? `<div class="table-wrap"><table class="data">
-            <thead><tr><th>Date</th><th>Établissement</th><th>Formule</th><th>Moyen</th><th>Transaction</th><th class="right">Montant</th><th class="center">Statut</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Date</th><th>Établissement</th><th>Effectif / formule</th><th>Moyen</th><th>Transaction</th><th>Capture et WhatsApp</th><th class="right">Montant</th><th class="center">Statut</th><th>Actions</th></tr></thead>
             <tbody>${rows.map(p => `
               <tr>
                 <td class="small nowrap">${dateFr(p.cree_le)}<div class="muted">${heureFr(p.cree_le)}</div></td>
                 <td><div class="strong small">${esc(p.ecole_nom)}</div><div class="muted small">${esc(p.ecole_ville || '')}${p.demandeur ? ' · ' + esc(p.demandeur) : ''}</div></td>
-                <td class="small" style="text-transform:capitalize">${esc(p.plan || '—')}<div class="muted">${p.mois || 1} mois</div></td>
+                <td class="small">${esc((PLANS[p.plan] || {}).nom || p.plan || '—')}<div class="muted">${p.effectif_facture == null ? '' : `${p.effectif_facture} élèves actifs · `}${p.mois || 1} mois</div></td>
                 <td class="small">${badgeOperateur(p.operateur || (p.canal === 'cinetpay' ? 'cinetpay' : 'manuel'))}
                   ${p.telephone_payeur ? `<div class="muted" style="font-size:11px">${esc(p.telephone_payeur)}</div>` : ''}</td>
                 <td class="small" style="max-width:180px">
@@ -4364,13 +4281,23 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                   ${p.note ? `<div class="muted" style="font-size:10.5px;font-style:italic">${esc(p.note)}</div>` : ''}
                   ${p.motif_annulation ? `<div class="small" style="color:#991b1b">Correction : ${esc(p.motif_annulation)} · ${esc(p.annuleur || '')}</div>` : ''}
                 </td>
+                <td class="small" style="min-width:185px">
+                  ${p.preuve_fichier ? `<button class="btn btn-ghost btn-sm" onclick="App.voirPreuveAdmin(${p.id})">📷 Voir la capture privée</button>` : '<span class="muted">Référence sans capture</span>'}
+                  ${resumeLectureCapture(p)}
+                  <div style="margin-top:5px">${p.notification_whatsapp === 'envoye' ? '<span class="tag vert">WhatsApp accepté par l’API</span>'
+                    : p.notification_whatsapp === 'non_configure' ? '<span class="tag or">API WhatsApp absente</span>'
+                      : p.notification_whatsapp === 'echec' ? '<span class="tag or">WhatsApp non remis</span>'
+                        : p.notification_whatsapp === 'en_cours' ? '<span class="tag gris">Envoi en cours</span>' : ''}
+                  ${p.canal === 'manuel' && p.statut === 'en_attente' && p.notification_whatsapp !== 'envoye' && reg.whatsapp_api?.actif
+                    ? `<button class="btn btn-ghost btn-sm" onclick="App.relancerWhatsApp(${p.id})">↻ Renvoyer</button>` : ''}</div>
+                </td>
                 <td class="right strong nowrap">${money(p.montant, p.devise)}</td>
                 <td class="center">${badgePaiementStatut(p.statut)}
                   ${p.valide_le ? `<div class="muted" style="font-size:10px">${dateFr(p.valide_le)}</div>` : ''}
                   ${p.annule_le ? `<div class="muted" style="font-size:10px">Annulé le ${dateFr(p.annule_le)}</div>` : ''}</td>
                 <td class="right"><div class="row-actions">
                   ${p.statut === 'en_attente' && p.canal === 'manuel' ? `
-                    <button class="btn btn-primary btn-sm" onclick="App.validerPaiement(${p.id})">✓ Valider</button>
+                    <button class="btn btn-primary btn-sm" onclick="App.validerPaiement(${p.id})">✓ Autoriser le reçu</button>
                     <button class="btn btn-danger btn-sm" onclick="App.rejeterPaiement(${p.id})">✗</button>` :
                     p.statut === 'en_attente' ? '<span class="small muted">Vérification en ligne</span>' :
                     `<span class="small muted">${esc(p.valideur || '')}</span>`}
@@ -4402,35 +4329,10 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
               </div>
               <label class="switch" style="margin-bottom:14px"><input type="checkbox" name="moov_actif" ${reg.moov_actif ? 'checked' : ''}> Accepter les paiements Moov Money</label>
 
-              <h4 style="margin:6px 0 8px;font-size:13px">💰 Tarifs mensuels</h4>
-              <div class="grid2">
-                <div class="field"><label>Essentiel (FCFA / mois)</label><input type="number" name="prix_essentiel" min="0" step="500" value="${reg.prix_essentiel}"></div>
-                <div class="field"><label>Standard (FCFA / mois)</label><input type="number" name="prix_standard" min="0" step="500" value="${reg.prix_standard}"></div>
-              </div>
-              <div class="field"><label>Autoriser le paiement en ligne CinetPay</label>
-                <select name="cinetpay_mode">
-                  <option value="test" ${reg.cinetpay.mode === 'test' ? 'selected' : ''}>Mode test</option>
-                  <option value="live" ${reg.cinetpay.mode === 'live' ? 'selected' : ''}>Mode production</option>
-                </select>
-                <div class="hint">Les clés CinetPay se configurent par variables d’environnement <code>CINETPAY_APIKEY</code> et <code>CINETPAY_SITE_ID</code>, ou ci-dessous.</div>
-              </div>
-              <div class="grid2">
-                <div class="field"><label>Clé API CinetPay</label><input name="cinetpay_apikey" placeholder="${reg.cinetpay.actif ? '•••• (déjà configurée)' : 'non configurée'}" autocomplete="off"></div>
-                <div class="field"><label>Site ID CinetPay</label><input name="cinetpay_site_id" placeholder="${reg.cinetpay.site_id || 'non configuré'}" autocomplete="off"></div>
-              </div>
-
-              <h4 style="margin:14px 0 8px;font-size:13px">🟠 PayDunya <span class="tag gris">T-Money · Flooz · cartes</span></h4>
-              <div class="grid2">
-                <div class="field"><label>Master key</label><input name="paydunya_master_key" placeholder="${reg.paydunya.actif ? '•••• (déjà configurée)' : 'non configurée'}" autocomplete="off"></div>
-                <div class="field"><label>Private key</label><input name="paydunya_private_key" placeholder="${reg.paydunya.actif ? '•••• (déjà configurée)' : 'non configurée'}" autocomplete="off"></div>
-              </div>
-              <div class="grid2">
-                <div class="field"><label>Token</label><input name="paydunya_token" placeholder="${reg.paydunya.token || 'non configuré'}" autocomplete="off"></div>
-                <div class="field"><label>Mode PayDunya</label><select name="paydunya_mode">
-                  <option value="test" ${reg.paydunya.mode === 'test' ? 'selected' : ''}>Test (sandbox)</option>
-                  <option value="live" ${reg.paydunya.mode === 'live' ? 'selected' : ''}>Production</option>
-                </select></div>
-              </div>
+              <h4 style="margin:6px 0 8px;font-size:13px">💰 Tarifs mensuels selon l’effectif actif</h4>
+              <div class="tarif-tranches">${(reg.tarifs_effectif || []).map(t => `<div class="tarif-tranche"><b>${esc(t.libelle)}</b><span>${money(t.montant)} / mois</span></div>`).join('')}</div>
+              <div class="hint">Tarifs définis par l’éditeur : un mois à la fois. Les anciens forfaits restent dans les reçus historiques.</div>
+              <div class="notice info" style="margin-top:14px">Les anciennes intégrations CinetPay / PayDunya ne sont plus proposées aux écoles : chaque nouveau paiement passe par Mixx ou Moov et attend votre accord. Les confirmations de dossiers anciens déjà initiés continuent de fonctionner.</div>
 
               <h4 style="margin:14px 0 8px;font-size:13px">🗄️ Stockage externe <span class="tag gris">MEGA · Cloudinary · Google Drive</span></h4>
               ${vueStockage(stock)}
@@ -4461,24 +4363,12 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
             <div class="panel-head"><div><h2>État de la configuration</h2></div></div>
             <div class="stat-line"><span class="muted">Mixx by Yas</span>${reg.mixx_numero ? `<b>${esc(reg.mixx_numero)}</b>` : '<span class="tag or">Numéro manquant</span>'}</div>
             <div class="stat-line"><span class="muted">Moov Money</span>${reg.moov_numero ? `<b>${esc(reg.moov_numero)}</b>` : '<span class="tag or">Numéro manquant</span>'}</div>
-            <div class="stat-line"><span class="muted">CinetPay</span>${reg.cinetpay.actif
-              ? `<span class="tag vert">Actif (${esc(reg.cinetpay.mode)})</span>`
-              : '<span class="tag gris">Non configuré</span>'}</div>
-            <div class="stat-line"><span class="muted">PayDunya</span>${reg.paydunya.actif
-              ? `<span class="tag vert">Actif (${esc(reg.paydunya.mode)})</span>`
-              : '<span class="tag gris">Non configuré</span>'}</div>
-            <div class="stat-line"><span class="muted">Source des clés</span><b class="small">CinetPay : ${esc(reg.cinetpay.source)} · PayDunya : ${esc(reg.paydunya.source)}</b></div>
-            <div class="notice info" style="margin-top:12px">
-              <b>Pour passer en automatique :</b> ouvrez un compte marchand CinetPay (Tmoney &amp; Flooz du Togo), puis renseignez
-              les clés. Les paiements seront confirmés en quelques secondes, sans vérification manuelle.
-            </div>
-            <div class="notice warn" style="margin-top:8px">
-              <b>Devenir marchand :</b> un numéro marchand s’obtient auprès de Yas (Mixx) et de Moov Africa avec une carte d’opérateur
-              économique, une pièce d’identité et un contrat marchand. L’éditeur peut aussi encaisser sur son compte personnel au démarrage.
-            </div>
-            <div class="notice" style="margin-top:8px;background:#f4f7f5;color:#41584e;border:1px solid #e2ebe6">
-              ℹ️ Aucun frais de plateforme n’est prélevé : le montant payé par l’école arrive directement sur le compte marchand.
-            </div>
+            <div class="stat-line"><span class="muted">WhatsApp automatique</span>${reg.whatsapp_api?.actif
+              ? '<span class="tag vert">API configurée · vérifier la remise</span>'
+              : '<span class="tag or">API non configurée · alertes dans cette console</span>'}</div>
+            <div class="stat-line"><span class="muted">Paiements anciens CinetPay / PayDunya</span><span class="small">Webhooks conservés pour les dossiers déjà initiés ; aucune nouvelle initiation.</span></div>
+            <div class="notice info" style="margin-top:12px">Pour WhatsApp, utiliser uniquement l’API officielle avec un modèle approuvé et votre consentement ; configuration par variables d’environnement, sans communiquer de secrets dans le chat.</div>
+            <div class="notice warn" style="margin-top:8px">La capture et le SMS fournis par l’école peuvent être falsifiés. Vérifiez impérativement VOTRE relevé Mixx/Moov et le montant exact avant « Valider et autoriser le reçu ».</div>
           </div>
         </div>`;
     },
@@ -4491,16 +4381,8 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         const fd = new FormData(form);
         const body = {
           mixx_numero: fd.get('mixx_numero'), mixx_nom: fd.get('mixx_nom'), mixx_actif: !!fd.get('mixx_actif'),
-          moov_numero: fd.get('moov_numero'), moov_nom: fd.get('moov_nom'), moov_actif: !!fd.get('moov_actif'),
-          prix_essentiel: fd.get('prix_essentiel'), prix_standard: fd.get('prix_standard'),
-          cinetpay_mode: fd.get('cinetpay_mode')
+          moov_numero: fd.get('moov_numero'), moov_nom: fd.get('moov_nom'), moov_actif: !!fd.get('moov_actif')
         };
-        if (fd.get('cinetpay_apikey')) body.cinetpay_apikey = fd.get('cinetpay_apikey');
-        if (fd.get('cinetpay_site_id')) body.cinetpay_site_id = fd.get('cinetpay_site_id');
-        if (fd.get('paydunya_master_key')) body.paydunya_master_key = fd.get('paydunya_master_key');
-        if (fd.get('paydunya_private_key')) body.paydunya_private_key = fd.get('paydunya_private_key');
-        if (fd.get('paydunya_token')) body.paydunya_token = fd.get('paydunya_token');
-        body.paydunya_mode = fd.get('paydunya_mode');
         ['editeur_nom', 'editeur_ville', 'editeur_sous_titre', 'editeur_telephone', 'editeur_email', 'editeur_whatsapp']
           .forEach(k => { if (fd.get(k) !== null) body[k] = fd.get(k); });
         try {
@@ -4566,13 +4448,31 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     },
 
     async validerPaiement(id) {
-      const ok = await confirmer('Confirmer que le paiement a bien été reçu ?<br><span class="small">L’abonnement de l’établissement sera prolongé automatiquement.</span>', {
-        titre: 'Valider le paiement', danger: false, ok: 'Valider et activer'
+      const p = (S.adminPaiements || []).find(x => x.id === id);
+      if (!p || p.statut !== 'en_attente') return toast('Rechargez la liste des paiements.', 'err');
+      const ok = await confirmer(`<b>${esc(p.ecole_nom)}</b> · ${money(p.montant, p.devise)} ·
+        ${p.effectif_facture == null ? 'effectif ancien' : `${p.effectif_facture} élèves actifs`}<br>
+        ${esc(p.operateur || 'Mobile Money')} · numéro ${esc(p.telephone_payeur || 'non précisé')}<br>
+        Identifiant ${esc(p.transaction_ref || 'à lire sur la capture')}<br><br>
+        <b>Confirmez-vous avoir retrouvé CE paiement et CE montant sur VOTRE relevé Mixx/Moov ?</b>
+        La capture ou son OCR ne suffisent jamais. Votre accord rend le reçu disponible et active un mois.`, {
+        titre: 'Vérifier puis autoriser le reçu', danger: false, ok: 'Paiement reçu : autoriser'
       });
       if (!ok) return;
       try {
         const r = await api('/api/admin/paiements/' + id, { method: 'PATCH', body: { action: 'valider' } });
         toast(`Paiement validé — abonnement jusqu’au ${dateFr(r.date_fin_abonnement)}`);
+        renderRoute();
+      } catch (e) { toast(e.message, 'err'); }
+    },
+
+    async relancerWhatsApp(id) {
+      try {
+        const r = await api(`/api/admin/paiements/${id}/notifier`, { method: 'POST', body: {} });
+        toast(r.statut === 'envoye' ? 'Alerte acceptée par l’API WhatsApp.'
+          : r.statut === 'non_configure' ? 'API WhatsApp non configurée : l’alerte reste dans la console.'
+            : r.statut === 'en_cours' ? 'Envoi WhatsApp déjà en cours.' : 'Envoi non confirmé. Réessayez plus tard.',
+          r.statut === 'envoye' ? 'ok' : 'err');
         renderRoute();
       } catch (e) { toast(e.message, 'err'); }
     },
@@ -4668,9 +4568,8 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
             <div class="field"><label>Mot de passe provisoire *</label><input name="chef_password" required minlength="6" value="Ecole${Math.floor(1000 + Math.random() * 9000)}"></div>
             <div class="field"><label>Durée de l'essai (jours)</label><input name="duree_jours" type="number" value="30" min="1"></div>
           </div>
-          <div class="field"><label>Formule</label><select name="plan">
-            <option value="essai">Essai gratuit</option><option value="essentiel">Essentiel</option><option value="standard">Standard</option><option value="reseau">Réseau</option>
-          </select></div>
+          <div class="notice info">Le nouvel établissement démarre en essai gratuit. Un abonnement mensuel selon l’effectif sera choisi au premier règlement.</div>
+          <input name="plan" type="hidden" value="essai">
         </form>`,
         footer: `<button class="btn btn-ghost btn-sm" data-close>Annuler</button><button class="btn btn-primary btn-sm" id="save-ae">Créer l'établissement</button>`
       });
@@ -4698,34 +4597,52 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     async paiementEcole(ecoleId) {
       const ecoles = await api('/api/admin/etablissements');
       const m = modal({
-        title: 'Enregistrer un paiement',
-        body: `<form id="pay-form">
+        title: 'Enregistrer un paiement vérifié',
+        body: `<form id="admin-pay-form">
           <div class="field"><label>Établissement *</label><select name="ecole_id" required>
             <option value="">Choisir…</option>
-            ${ecoles.map(e => `<option value="${e.id}" ${e.id === ecoleId ? 'selected' : ''}>${esc(e.nom)} — ${e.statut}</option>`).join('')}
+            ${ecoles.map(e => `<option value="${e.id}" ${e.id === ecoleId ? 'selected' : ''}>${esc(e.nom)} — ${esc(e.statut)}</option>`).join('')}
           </select></div>
-          <div class="grid2">
-            <div class="field"><label>Formule</label><select name="plan">
-              <option value="essentiel">Essentiel — 15 000 F/mois</option>
-              <option value="standard" selected>Standard — 25 000 F/mois</option>
-              <option value="reseau">Réseau — sur devis</option>
-            </select></div>
-            <div class="field"><label>Montant encaissé (FCFA)</label><input type="number" name="montant" value="300000" min="0"></div>
-          </div>
-          <div class="grid2">
-            <div class="field"><label>Durée (jours)</label><input type="number" name="duree_jours" value="365" min="1"></div>
-            <div class="field"><label>Référence</label><input name="reference" placeholder="MM-2026-001"></div>
-          </div>
-          <div class="notice info">Le paiement active automatiquement l'établissement et prolonge son échéance.</div>
+          <div class="pay-total" id="admin-pay-tarif">Choisissez l’établissement pour voir le tarif lié aux élèves actifs.</div>
+          <div class="field"><label>Numéro / référence constaté sur VOTRE relevé *</label>
+            <input name="reference" required minlength="4" maxlength="100" placeholder="MM-2026-001"></div>
+          <div class="field"><label>Réseau d’encaissement</label><select name="operateur">
+            <option value="mixx">Mixx by Yas</option><option value="moov">Moov Money</option>
+            <option value="manuel">Autre encaissement vérifié</option></select></div>
+          <label class="switch" style="margin:16px 0"><input name="confirmation" type="checkbox" required>
+            J’ai vérifié mon relevé et le montant ; je peux autoriser ce reçu et ce mois d’abonnement.
+          </label>
+          <div class="notice warn">Une capture fournie par l’école ne suffit pas. Cette action marque directement le paiement comme encaissé. Aucun remboursement automatique.</div>
         </form>`,
-        footer: `<button class="btn btn-ghost btn-sm" data-close>Annuler</button><button class="btn btn-primary btn-sm" id="save-pay">Enregistrer</button>`
+        footer: `<button class="btn btn-ghost btn-sm" data-close>Annuler</button><button class="btn btn-primary btn-sm" id="save-pay">Autoriser le reçu · 1 mois</button>`
       });
-      m.root.querySelector('#save-pay').onclick = async () => {
-        const form = m.root.querySelector('#pay-form');
-        if (!form.reportValidity()) return;
+      const form = m.root.querySelector('#admin-pay-form');
+      const select = form.querySelector('[name="ecole_id"]');
+      const zone = m.root.querySelector('#admin-pay-tarif');
+      select.onchange = async () => {
+        zone.dataset.montant = '';
+        zone.textContent = 'Calcul du tarif…';
+        if (!select.value) { zone.textContent = 'Choisissez un établissement.'; return; }
+        const choix = select.value;
         try {
-          await api('/api/admin/paiements', { method: 'POST', body: Object.fromEntries(new FormData(form).entries()) });
-          toast('Paiement enregistré — abonnement activé');
+          const t = await api(`/api/admin/paiements/tarif?ecole_id=${encodeURIComponent(choix)}`);
+          if (select.value !== choix) return;
+          zone.dataset.montant = String(t.montant);
+          zone.innerHTML = `<div>${t.effectif} élèves actifs · ${esc(t.libelle)}</div><div class="amount">${money(t.montant)}</div><div>Pour un seul mois.</div>`;
+        } catch (e) { if (select.value === choix) zone.textContent = e.message; }
+      };
+      if (select.value) select.dispatchEvent(new Event('change'));
+      m.root.querySelector('#save-pay').onclick = async () => {
+        if (!form.reportValidity()) return;
+        if (!zone.dataset.montant) return toast('Attendez le calcul du tarif.', 'err');
+        const data = Object.fromEntries(new FormData(form).entries());
+        try {
+          await api('/api/admin/paiements', { method: 'POST', body: {
+            ecole_id: data.ecole_id, reference: data.reference, operateur: data.operateur,
+            montant: Number(zone.dataset.montant), plan: 'effectif', mois: 1,
+            confirmation_releve: true
+          } });
+          toast('Paiement vérifié et reçu autorisé pour un mois');
           m.close(); renderRoute();
         } catch (e) { toast(e.message, 'err'); }
       };

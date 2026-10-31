@@ -75,8 +75,8 @@ démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimest
 - Paramètres : identité, **logo importé**, titre du chef, année scolaire, devise, formule de calcul des
   moyennes, ouverture/clôture des périodes, changement de mot de passe. Une fois des résultats saisis,
   l'année ne se change plus ici : utilisez « Décision finale » pour la suivante.
-- Abonnement : formule, échéance, **paiement par Mixx by Yas ou Moov Money**, paiement en ligne
-  (CinetPay/PayDunya si activés), historique et **reçus PDF**.
+- Abonnement : tarif **mensuel selon les élèves actifs**, paiement Mixx by Yas ou Moov Money,
+  déclaration par **capture ou référence + téléphone**, contrôle humain, historique et **reçus PDF validés**.
 
 ### Enseignant
 - Connexion à distance depuis n'importe quel appareil.
@@ -100,7 +100,7 @@ démonstration (2 établissements, 7 classes, 142 élèves, notes du 1er trimest
 - Suivi des demandes entrantes du site vitrine.
 - **Validation des paiements Mobile Money** déclarés par les écoles (Mixx by Yas / Moov Money),
   prolongation automatique de l'abonnement à la validation, **reçus PDF**.
-- Configuration des **numéros marchands**, des tarifs et de CinetPay.
+- Configuration des **numéros de réception Mixx/Moov** et suivi de l’alerte WhatsApp (désactivée sans API officielle).
 - Enregistrement des paiements hors ligne, création d'établissements, suivi des demandes.
 - **Correction des activations erronées** : annulation tracée de la dernière activation manuelle,
   restauration du statut, de la formule et de l'échéance précédents ; suspension prudente pour les
@@ -140,7 +140,9 @@ conservés par l'application.
 L'OCR fonctionne avec les dépendances locales installées depuis `package-lock.json`. Si une future version
 modifie ces dépendances, sauvegardez la base avant de les mettre à jour. Sur alwaysdata, **si `npm ci` affiche
 `Killed`, ne le relancez pas** : utilisez l'installateur léger décrit dans `HEBERGEMENT.md` pour restaurer
-`node_modules` avant tout redémarrage. La présente adaptation mobile ne change aucune dépendance.
+`node_modules` avant tout redémarrage. La lecture des captures réutilise `@napi-rs/canvas`,
+`tesseract.js` et la langue française déjà déclarés dans le projet ; vérifiez leur présence avant
+un éventuel déploiement, sans relancer `npm ci` sur alwaysdata.
 
 ### Décision finale et changement d'année
 
@@ -200,27 +202,51 @@ doté de résultats : privilégiez l'archivage.
 
 ---
 
-## 4. Paiements Mobile Money (Togo)
+## 4. Abonnement mensuel et Mobile Money (Togo)
 
-Trois moyens sont proposés aux établissements depuis **Abonnement** :
+Le **seul nouveau parcours** est **Direction → Administration → Abonnement** : un mois, payé
+par **Mixx by Yas** (`+228 93 15 01 78`) ou **Moov Money** (`+228 97 24 30 86`). Le
+serveur compte les élèves enregistrés avec `statut = actif` dans **cet établissement** :
 
-| Moyen | Comment l'école paie | Activation |
-|---|---|---|
-| **Mixx by Yas** (ex T-Money, Yas Togo) | Paiement marchand `*145*5#` vers le numéro de l'éditeur | L'école déclare l'ID de transaction → l'éditeur valide |
-| **Moov Money** (Flooz, Moov Africa) | `*155#` → option 2 (marchand), ou `*155*2*2*numéro*montant*code#` | idem |
-| **CinetPay** (optionnel) | Page de paiement CinetPay (Mobile Money + carte) | **automatique** via notification |
-| **PayDunya** (optionnel) | Page de paiement PayDunya (T-Money/Mixx, Flooz/Moov, cartes) | **automatique** via IPN |
+| Élèves actifs dans l'application | Prix pour un mois |
+|---|---:|
+| 0 à 299 | **7 500 F CFA** |
+| 300 à 999 | **15 000 F CFA** |
+| 1 000 et plus | **20 000 F CFA** |
 
-### Mode manuel (fonctionne immédiatement, sans contrat)
-1. L'éditeur renseigne ses numéros marchands dans **Console → Paiements → Numéros marchands**.
-2. Sur la page Abonnement, l'école choisit sa formule, sa durée (1, 3 ou 12 mois), son opérateur, puis paie
-   vers le numéro marchand affiché.
-3. Elle colle l'**ID de transaction reçu par SMS**.
-4. L'éditeur vérifie (relevé Mobile Money) et clique **Valider** : l'établissement passe « actif » et
-   l'échéance est prolongée du nombre de mois payés. Un rejet est possible avec un motif.
+Les élèves archivés ne comptent pas. Le montant et l'effectif sont enregistrés au moment de la
+déclaration et revérifiés avant validation (si l'effectif a fait monter le tarif, l'éditeur est averti
+et ne peut pas valider ce paiement insuffisant). Le client ne peut pas choisir un autre forfait, une
+autre durée ou un autre prix ; l'encaissement direct par l'éditeur est également limité au tarif en
+vigueur et à 30 jours. Les anciens forfaits et reçus **ne sont pas effacés**.
 
-Durées : 1 mois, 3 mois, ou 12 mois **facturés 10 mois** (2 mois offerts). Les prix sont modifiables
-dans la console ; par défaut Essentiel 15 000 F et Standard 25 000 F par mois.
+1. L'école consulte le tarif, paie par Mixx ou Moov vers le numéro affiché et garde le SMS.
+2. Elle choisit **une seule des deux options** : **importer une capture d'écran** PNG/JPEG (2,5 Mo)
+   **ou saisir l'identifiant de transaction et le numéro du payeur**. Avec une capture, ces deux
+   champs sont facultatifs : l'OCR français local essaie de les lire. S'ils restent illisibles, la
+   direction peut quand même transmettre l'image ; l'éditeur lit le justificatif et son propre relevé.
+3. Un dossier **en attente** apparaît dans **Console → Paiements** avec l'école, le prix, l'effectif,
+   le réseau, l'ID, le téléphone, les valeurs lues et les avertissements. Seuls le chef concerné
+   et le super-administrateur peuvent voir l'image ; elle est recomposée sans métadonnées dans le
+   dossier privé `data/preuves-paiement/`, jamais dans `/public` ni envoyée sur WhatsApp.
+4. L'éditeur confirme **sur son propre relevé Mobile Money** le numéro, la référence et la somme ;
+   la capture (même avec OCR) et le SMS de l'école **ne prouvent pas l'encaissement**. Il clique
+   **« Autoriser le reçu »** ou rejette avec un motif. Le reçu PDF et l'activation n'existent
+   qu'après son accord. Les écoles suspendues restent en consultation et peuvent payer pendant ce délai.
+
+La console montre toujours les dossiers, même sans WhatsApp. **L'alerte WhatsApp automatique n'est
+pas opérationnelle sans l'API officielle configurée** ; un lien `wa.me` de contact n'est pas un envoi
+automatique. Quand l'API Business Cloud, le destinataire consentant et un modèle approuvé sont prêts,
+la déclaration déclenche l'envoi des **six champs** : nom de l'école, montant, numéro du payeur (ou
+« non précisé »), réseau et ID de transaction (ou « à lire sur la capture »), référence interne du
+dossier, effectif. L'API peut accepter un message sans garantir sa remise ; son état est affiché dans
+la console et un bouton **« Renvoyer »** est prévu en cas d'échec. Jamais de validation automatique.
+
+**Protection :** au plus 10 déclarations en attente par école ; doublons de référence/opérateur et
+de capture refusés ; images limitées en taille et en pixels, converties en JPEG, stockées sous un nom
+aléatoire avec droits privés. L'OCR n'enregistre pas le texte brut. Les reçus et historiques antérieurs
+restent disponibles. Sauvegardez **la base ET `data/preuves-paiement/`** ensemble en cas de migration :
+`npm run backup` ne copie que la base SQLite. Ne publiez pas les captures ni le `.env` dans Git.
 
 ### Corriger une activation faite par erreur (super-administrateur)
 
@@ -255,9 +281,9 @@ sur chaque page ; la grille des notes devient non modifiable. Le serveur revéri
 à **chaque requête authentifiée** et rejette les créations/modifications/suppressions scolaires avec
 `HTTP 403` et le code `ABONNEMENT_SUSPENDU` : ce blocage ne dépend pas de l'interface.
 
-Restent possibles pour la direction : consulter l'abonnement, déclarer un paiement Mobile Money et
-initier un paiement en ligne **uniquement si la passerelle est configurée** ; l'éditeur vérifie les
-règlements manuels avant toute réactivation. La déconnexion, le changement du mot de passe personnel
+Restent possibles pour la direction : consulter l'abonnement et déclarer un paiement Mobile Money
+(capture ou référence + téléphone). Les anciennes initiations de paiement en ligne sont désactivées ;
+l'éditeur vérifie chaque nouveau règlement avant toute réactivation. La déconnexion, le changement du mot de passe personnel
 et le calcul de l'aperçu de passage (sans écriture) restent possibles. La récupération du mot de passe
 par les voies habituelles reste disponible. Après validation du paiement ou réactivation par l'éditeur,
 les écritures reviennent **sans reconnexion** (bouton « Vérifier l'activation » ou navigation).
@@ -285,43 +311,28 @@ pour l'affichage. La data URL reste en base et sert de **repli automatique** si 
   l'interface et journalisé côté serveur.
 - État visible dans Console → Paiements → Cloudinary.
 
-### Mode automatique PayDunya (optionnel)
-PayDunya couvre **t-money-togo** et **moov-togo** via une page de paiement (et les cartes bancaires).
+### Anciennes passerelles en ligne (historique uniquement)
 
-```bash
-export PAYDUNYA_MASTER_KEY="..."
-export PAYDUNYA_PRIVATE_KEY="..."
-export PAYDUNYA_TOKEN="..."
-export PAYDUNYA_MODE="live"      # test | live
-npm start
-```
+Les routes de **nouvelle** initiation CinetPay et PayDunya renvoient `HTTP 410` même si des clés
+subsistent : elles ne doivent pas activer directement un reçu à la place de l'éditeur. Les webhooks
+conservés ne traitent que les dossiers **déjà initiés** avant cette mise à jour, après confirmation
+auprès du prestataire ; aucun nouveau lien n'est créé. Les frais et critères d'ouverture d'un compte
+marchand ne sont **pas** présumés nuls. Le parcours actuel utilise les numéros Mobile Money choisis
+par l'éditeur, et ne réclame ni carte bancaire, ni identifiants de passerelle.
 
-L'IPN `POST /api/webhooks/paydunya` contrôle l'empreinte SHA-512 de la master key puis **confirme la facture
-auprès de l'API PayDunya** avant validation ; le montant confirmé doit couvrir le montant attendu. Les liens
-de paiement renvoyés sont refusés s'ils ne sont pas en HTTPS. Les clés peuvent aussi être saisies dans la
-console (elles priment sur les variables d'environnement par ordre inverse : les variables d'environnement
-ont la priorité).
+### Configurer plus tard l'alerte WhatsApp officielle
 
-### Mode automatique CinetPay (optionnel)
-CinetPay couvre Tmoney (Mixx) et Flooz (Moov) au Togo. Il faut un compte marchand CinetPay, puis :
+Dans le `.env` **privé du serveur** seulement (jamais dans un chat, une capture ou un dépôt), définir
+`WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_ADMIN_DESTINATION` (format
+international `228…`), `WHATSAPP_TEMPLATE_NAME` et `WHATSAPP_TEMPLATE_LANG` (`fr` par défaut).
+Le destinataire doit accepter de recevoir les messages ; enregistrer auprès de Meta un modèle approuvé
+avec **6 paramètres de texte** dans l'ordre indiqué plus haut. Le nom par défaut du modèle est
+`terminish_paiement`. `WHATSAPP_GRAPH_VERSION` (par défaut `v23.0`) permet de suivre la version
+supportée de l'API. Sans ID, jeton et numéro de destination valides, l'API est **désactivée** :
+aucune requête WhatsApp n'est envoyée. Voir `ecole/.env.example` pour les noms des variables,
+**sans y coller de vrais secrets**. L'envoi renvoie « accepté » ou « non remis » ; contrôler aussi
+la remise dans la console officielle Meta. Aucun test réel d'envoi n'est possible sans configuration.
 
-```bash
-export CINETPAY_APIKEY="..."
-export CINETPAY_SITE_ID="..."
-export CINETPAY_MODE="live"      # test | live
-npm start
-```
-
-(ou renseigner les clés dans la console éditeur). Le serveur crée alors un lien de paiement ; la
-notification `POST /api/webhooks/cinetpay` **revérifie la transaction auprès de l'API CinetPay** avant
-de valider (le contenu de la notification n'est jamais pris pour argent comptant), et contrôle que le
-montant reçu couvre bien le montant attendu.
-
-### Devenir marchand
-Un numéro marchand s'obtient auprès de **Yas (Mixx by Yas)** et de **Moov Africa** avec une carte
-d'opérateur économique / CFE (NIF), une pièce d'identité et la signature d'un contrat marchand.
-En attendant, l'éditeur peut encaisser sur son numéro personnel et valider manuellement.
-Les montants arrivent directement sur le compte marchand : **la plateforme ne prélève aucune commission**.
 
 ---
 
@@ -539,8 +550,9 @@ et le contrôle du tunnel (`502` si le tunnel ne pointe pas sur le même port).
 `etablissements`, `utilisateurs`, `sessions`, `classes`, `matieres`, `classe_matieres`, `eleves`,
 `periodes`, `affectations`, `examens`, `epreuves`, `evaluations`, `notes`, `bulletins`, `paiements`,
 `operations_abonnement` (états avant/après, auteur, motif d'annulation), `demandes`, `reglages`
-(numéros marchands, tarifs, clés CinetPay). La nouvelle table est créée automatiquement au démarrage,
-sans retirer de données aux paiements déjà enregistrés.
+(numéros de réception et éventuelles anciennes clés). Les colonnes de `paiements` pour l’effectif,
+les captures privées et l’état de la notification sont ajoutées automatiquement au démarrage ;
+les anciens paiements ne sont ni réécrits ni supprimés.
 
 ### API (aperçu)
 
@@ -572,16 +584,18 @@ sans retirer de données aux paiements déjà enregistrés.
 | POST | `/api/demandes-mdp/:id/traiter` | direction |
 | POST | `/api/enseignants/:id/identifiants` | direction (nouveau mot de passe, affiché une fois) |
 | POST | `/api/enseignants/:id/acces` | direction (`actif` 0/1, révoque les sessions) |
-| GET | `/api/paiement/options` | direction (opérateurs, tarifs) |
-| POST | `/api/paiement/declarer` | direction (déclaration Mobile Money) |
-| POST | `/api/paiement/cinetpay/initier` | direction (si CinetPay configuré) |
-| POST | `/api/paiement/paydunya/initier` | direction (si PayDunya configuré) |
-| POST | `/api/webhooks/cinetpay` | CinetPay (public, vérifié côté API) |
-| POST | `/api/webhooks/paydunya` | PayDunya (public, empreinte + confirmation API) |
-| GET | `/api/paiements/:id/recu.pdf` | direction (reçu PDF de son école) |
-| GET | `/api/admin/paiements/:id/recu.pdf` | super administrateur |
-| GET/POST | `/api/admin/paiements` | super administrateur (liste / encaissement manuel) |
-| PATCH | `/api/admin/paiements/:id` (`valider`, `rejeter`, `annuler` + `motif`) | super administrateur (paiements manuels) |
+| GET | `/api/paiement/options` | direction (tarif calculé, opérateurs, un mois) |
+| POST | `/api/paiement/declarer` | direction (capture OU référence + téléphone, statut en attente) |
+| GET | `/api/paiements/:id/preuve` | direction de l’école propriétaire uniquement (JPEG privé) |
+| GET | `/api/admin/paiements/:id/preuve` | super administrateur (JPEG privé) |
+| POST | `/api/admin/paiements/:id/notifier` | super administrateur (renvoi WhatsApp si API prête) |
+| POST | `/api/paiement/cinetpay/initier`, `/api/paiement/paydunya/initier` | direction (désactivés : HTTP 410) |
+| POST | `/api/webhooks/cinetpay`, `/api/webhooks/paydunya` | seulement pour les anciens dossiers initiés |
+| GET | `/api/paiements/:id/recu.pdf` | école propriétaire, seulement après validation |
+| GET | `/api/admin/paiements/:id/recu.pdf` | super administrateur, seulement après validation |
+| GET/POST | `/api/admin/paiements` | super administrateur (liste / encaissement direct au tarif du mois ; POST exige `reference` et `confirmation_releve: true`) |
+| GET | `/api/admin/paiements/tarif?ecole_id=…` | super administrateur (tarif actuel) |
+| PATCH | `/api/admin/paiements/:id` (`valider`, `rejeter`, `annuler` + `motif`) | super administrateur (contrôle humain) |
 | PATCH | `/api/admin/etablissements/:id/abonnement` (`annuler` + `operation_id` ou `suspendre`, `motif`) | super administrateur |
 | GET | `/api/admin/abonnements/historique` | super administrateur (50 derniers changements) |
 | GET/PUT | `/api/admin/reglages` | super administrateur |
@@ -653,8 +667,9 @@ derrière Nginx (`deploy/nginx.conf`) ou Caddy.
 | `COOKIE_SECURE` | `1` pour marquer le cookie de session `Secure` (obligatoire derrière HTTPS) |
 | `APP_PUBLIC_URL` | origine HTTPS du site, ex. `https://votre-compte.alwaysdata.net`, sans chemin |
 | `GMAIL_USER`, `GMAIL_APP_PASSWORD` | compte Gmail expéditeur et mot de passe **d'application** privé (jamais celui du compte Google) ; requis avec `APP_PUBLIC_URL` pour la récupération chef/admin |
-| `CINETPAY_APIKEY`, `CINETPAY_SITE_ID`, `CINETPAY_MODE` | paiement automatique CinetPay |
-| `PAYDUNYA_MASTER_KEY`, `PAYDUNYA_PRIVATE_KEY`, `PAYDUNYA_TOKEN`, `PAYDUNYA_MODE` | paiement automatique PayDunya |
+| `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_ADMIN_DESTINATION` | API WhatsApp Business Cloud pour l’alerte à l’éditeur, désactivée si incomplète ; secrets dans `.env` privé uniquement |
+| `WHATSAPP_TEMPLATE_NAME`, `WHATSAPP_TEMPLATE_LANG`, `WHATSAPP_GRAPH_VERSION` | modèle approuvé (6 paramètres), langue (`fr`), version Graph (`v23.0`) |
+| `CINETPAY_*`, `PAYDUNYA_*` | uniquement pour les webhooks des anciens dossiers déjà initiés ; aucune nouvelle initiation |
 | `CLOUDINARY_URL` **ou** `CLOUDINARY_CLOUD_NAME` + `CLOUDINARY_API_KEY` + `CLOUDINARY_API_SECRET` | copie optionnelle des logos sur le CDN Cloudinary |
 
 ### Sauvegarde
@@ -664,6 +679,9 @@ npm run backup            # copie cohérente (VACUUM INTO) dans data/sauvegardes
 ```
 
 À planifier en cron une fois par jour et à copier hors du serveur (voir DEPLOIEMENT.md, section 8).
+**Important :** cette commande copie la base seule ; si des captures de paiement existent,
+copier aussi `data/preuves-paiement/` avec des droits privés, sans le publier sur le Web.
+Au redémarrage sur une sauvegarde, restaurer la base et ses captures correspondantes.
 
 > ⚠️ Ne déployez jamais avec `TERMINISH_SEED=demo` sur un site public : les comptes `admin1234`
 > et `demo1234` seraient accessibles à tous.
@@ -675,8 +693,9 @@ cloisonnée par `ecole_id`.
 
 ## 7. Limites connues / pistes d'évolution
 
-- Le mode Mobile Money manuel dépend d'une vérification humaine (pas de rapprochement automatique des
-  relevés) ; CinetPay ou PayDunya automatisent cette étape mais demandent un compte marchand.
+- Le mode Mobile Money dépend d'une **vérification humaine du relevé réel** ; l’OCR et les captures
+  ne garantissent pas l’encaissement. Les nouvelles initiations CinetPay/PayDunya sont désactivées.
+- WhatsApp automatique indisponible sans compte API Business, accord du destinataire et modèle approuvé.
 - Pas de paiement récurrent automatique (renouvellement à l'initiative de l'école).
 - Les reçus sont des PDF simples (pas de facturation électronique certifiée ni de numérotation fiscale).
 - Pas d'envoi automatique de SMS/WhatsApp aux parents (les demandes partent vers WhatsApp en un clic).

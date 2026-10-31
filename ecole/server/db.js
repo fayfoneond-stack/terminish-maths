@@ -312,6 +312,20 @@ ensureColumn('paiements', 'valide_le', 'TEXT');
 ensureColumn('paiements', 'note', 'TEXT');
 ensureColumn('paiements', 'mois', 'INTEGER DEFAULT 1');
 ensureColumn('paiements', 'canal', "TEXT DEFAULT 'manuel'");
+// Justificatifs de paiement privés : seul le nom aléatoire du fichier est dans
+// SQLite. Les reçus anciens ne changent pas ; les justificatifs sont sous data/.
+ensureColumn('paiements', 'effectif_facture', 'INTEGER');
+ensureColumn('paiements', 'tarif_code', 'TEXT');
+ensureColumn('paiements', 'preuve_fichier', 'TEXT');
+ensureColumn('paiements', 'preuve_analyse', 'TEXT');
+ensureColumn('paiements', 'preuve_empreinte', 'TEXT');
+ensureColumn('paiements', 'transaction_ref_norm', 'TEXT');
+ensureColumn('paiements', 'notification_whatsapp', 'TEXT');
+ensureColumn('paiements', 'notification_le', 'TEXT');
+db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_paiements_preuve_unique
+  ON paiements(preuve_empreinte) WHERE preuve_empreinte IS NOT NULL;
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_paiements_transaction_unique
+  ON paiements(operateur, transaction_ref_norm) WHERE transaction_ref_norm IS NOT NULL;`);
 // Miroir Cloudinary du logo d'établissement (facultatif) : la data URL reste
 // la source de vérité, `logo_url` n'est qu'une copie optimisée sur le CDN.
 ensureColumn('etablissements', 'logo_url', 'TEXT');
@@ -716,4 +730,4 @@ if (SEED_MODE === 'demo') {
   seedAdmin();
 }
 
-module.exports = { db, hashPassword, verifyPassword, createEtablissement, createUser, seedPeriodes, now, today, addDays, ensureColumn };
+module.exports = { db, DATA_DIR, hashPassword, verifyPassword, createEtablissement, createUser, seedPeriodes, now, today, addDays, ensureColumn };

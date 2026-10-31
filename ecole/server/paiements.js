@@ -2,12 +2,10 @@
 /**
  * Module de paiement — Mobile Money Togo (Mixx by Yas, Moov Money) + CinetPay.
  *
- * Deux modes :
- *  1. « manuel »  : l'école paie par paiement marchand / transfert Mobile Money vers le numéro
- *     de l'éditeur, puis déclare sa transaction. L'éditeur vérifie et valide → activation immédiate.
- *     Fonctionne sans contrat marchand, dès aujourd'hui.
- *  2. « cinetpay » : paiement en ligne automatique (USSD push sur le téléphone du payeur).
- *     Activé uniquement si CINETPAY_APIKEY et CINETPAY_SITE_ID sont configurés.
+ * Le nouveau parcours est manuel : Mixx/Moov, capture ou référence + téléphone,
+ * puis contrôle humain du relevé et autorisation du reçu par l'éditeur.
+ * Les fonctions CinetPay/PayDunya sont conservées pour les webhooks de paiements
+ * historiques déjà initiés ; aucun nouveau lien n'est créé.
  */
 const crypto = require('node:crypto');
 
@@ -41,15 +39,18 @@ const OPERATEURS = {
 };
 
 const PLANS = {
+  // Forfaits historiques : leurs reçus et activations déjà enregistrés restent lisibles.
   essentiel: { code: 'essentiel', nom: 'Essentiel', cle_prix: 'prix_essentiel', defaut: 15000 },
   standard: { code: 'standard', nom: 'Standard', cle_prix: 'prix_standard', defaut: 25000 },
-  reseau: { code: 'reseau', nom: 'Réseau', cle_prix: null, defaut: null }
+  reseau: { code: 'reseau', nom: 'Réseau', cle_prix: null, defaut: null },
+  effectif: { code: 'effectif', nom: 'Abonnement mensuel selon l’effectif', cle_prix: null, defaut: null }
 };
 
+// Historique uniquement : l'API des nouveaux paiements expose exclusivement un mois.
 const DUREES = [
   { mois: 1, libelle: '1 mois', remise: 0 },
   { mois: 3, libelle: '3 mois', remise: 0 },
-  { mois: 12, libelle: '12 mois', remise: 2 } // 2 mois offerts
+  { mois: 12, libelle: '12 mois', remise: 2 }
 ];
 
 function lireReglages(db) {
@@ -69,7 +70,7 @@ function ecrireReglages(db, valeurs) {
 function prixMensuel(reglages, plan) {
   const p = PLANS[plan];
   if (!p) return null;
-  if (p.reseau) return null;
+  if (!p.cle_prix) return null; // le tarif « effectif » dépend de l'école, pas d'un prix libre
   const v = Number(reglages[p.cle_prix]);
   return Number.isFinite(v) && v > 0 ? v : p.defaut;
 }

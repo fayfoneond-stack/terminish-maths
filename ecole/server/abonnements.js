@@ -4,7 +4,8 @@
  * atomiques. Une ancienne activation sans journal ne peut pas être reconstituée
  * automatiquement ; la suspension est alors la seule correction sûre.
  */
-const { now, today, addDays } = require('./db');
+const { now } = require('./db');
+const { tarifPourEcole } = require('./tarifs-effectif');
 
 function erreur(message, status = 409) {
   const e = new Error(message);
@@ -59,18 +60,23 @@ function modifierEcole(db, id, changements, acteur) {
   });
 }
 
-function enregistrerPaiementManuel(db, { ecoleId, montant, plan, reference, dureeJours, operateur }, acteur) {
+function enregistrerPaiementManuel(db, { ecoleId, montant, plan, reference, dureeJours, operateur,
+  effectifFacture = null, tarifCode = null, transactionRef = null, transactionRefNorm = null }, acteur) {
   return transaction(db, () => {
     const avant = db.prepare('SELECT * FROM etablissements WHERE id = ?').get(ecoleId);
     if (!avant) erreur('Établissement introuvable', 404);
-    const fin = addDays(dureeJours);
+    const echeance = Date.parse(avant.date_fin_abonnement || '');
+    const debut = Number.isFinite(echeance) && echeance > Date.now() ? echeance : Date.now();
+    const fin = new Date(debut + dureeJours * 864e5).toISOString();
     const date = now();
     const info = db.prepare(`INSERT INTO paiements
       (ecole_id, montant, devise, plan, reference, statut, periode_debut, periode_fin,
-       operateur, canal, mois, valide_par, valide_le, cree_le)
-      VALUES (?,?,?,?,?, 'paye', ?,?,?,?,?,?,?,?)`).run(
-      avant.id, montant, 'FCFA', plan, reference, today(), fin.slice(0, 10),
-      operateur || 'manuel', 'manuel', Math.max(1, Math.round(dureeJours / 30)), acteur, date, date
+       operateur, canal, mois, valide_par, valide_le, cree_le, effectif_facture, tarif_code,
+       transaction_ref, transaction_ref_norm)
+      VALUES (?,?,?,?,?, 'paye', ?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+      avant.id, montant, 'FCFA', plan, reference, new Date(debut).toISOString().slice(0, 10), fin.slice(0, 10),
+      operateur || 'manuel', 'manuel', Math.max(1, Math.round(dureeJours / 30)), acteur, date, date,
+      effectifFacture, tarifCode, transactionRef, transactionRefNorm
     );
     const apres = { statut: 'actif', plan, date_fin_abonnement: fin };
     db.prepare("UPDATE etablissements SET statut = 'actif', plan = ?, date_fin_abonnement = ? WHERE id = ?")
@@ -90,10 +96,15 @@ function validerPaiement(db, paiementId, acteur) {
     if (p.statut !== 'en_attente') return { statut: p.statut, deja: true };
     const avant = db.prepare('SELECT * FROM etablissements WHERE id = ?').get(p.ecole_id);
     if (!avant) erreur('Établissement introuvable', 404);
+    if (p.canal === 'manuel' && p.plan === 'effectif' &&
+        tarifPourEcole(db, p.ecole_id).montant > Number(p.montant)) {
+      erreur('L’effectif a augmenté depuis la déclaration : le montant reçu ne couvre plus la nouvelle tranche. Contactez l’établissement.', 409);
+    }
     const echeance = Date.parse(avant.date_fin_abonnement || '');
     const base = Number.isFinite(echeance) && echeance > Date.now() ? echeance : Date.now();
     const mois = Number(p.mois) || 1;
-    if (!Number.isSafeInteger(mois) || mois < 1 || mois > 60) erreur('Durée du paiement invalide', 400);
+    if (!Number.isSafeInteger(mois) || mois < 1 || mois > 60 || (p.plan === 'effectif' && mois !== 1))
+      erreur('La durée du paiement doit être d’un mois.', 400);
     const fin = new Date(base + mois * 30 * 864e5).toISOString();
     const date = now();
     db.prepare(`UPDATE paiements SET statut = 'paye', valide_par = ?, valide_le = ?,

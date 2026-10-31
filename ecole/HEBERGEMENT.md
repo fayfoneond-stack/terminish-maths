@@ -56,16 +56,17 @@ sessions, des PDF. Il lui faut un **disque**, pas seulement de la mémoire.
 | Serveurs | en France |
 
 ### Les limites, dites franchement
-- **Usage personnel** dans les conditions de l'offre gratuite. Pour une école **payante**, c'est la
-  même réserve que Tailscale : ça fonctionne très bien, mais l'hébergeur peut demander un jour de
-  passer sur une offre payante (à partir de 5 € HT/mois). À prévoir dans le prix de vente, pas à
-  découvrir en cours d'année.
-- 256 Mo de RAM : aucun souci pour 1 000 élèves, mais évitez de lancer plusieurs instances.
-- 1 Go de disque : la base d'une école fait quelques mégaoctets ; vous avez des années devant vous.
-  Surveillez avec `npm run base` (taille du fichier).
-  **Ce 1 Go n'est pas une limite pour les images** : branchez votre compte MEGA (25 Go gratuits) et
-  les signatures, logos et pièces jointes partent chez MEGA, le disque ne gardant qu'une copie de
-  secours. Deux commandes, sans droits administrateur :
+- **Attention : l’offre Free d’alwaysdata ne peut pas être utilisée à des fins lucratives**
+  ([conditions officielles](https://help.alwaysdata.com/en/docs/admin-billing/billing/public-cloud-prices/)).
+  Facturer des établissements nécessite donc une offre compatible, payante : ne lancez pas une
+  activité commerciale sur ce forfait gratuit sans accord explicite de l’hébergeur.
+- 256 Mo de RAM : testez l’OCR des captures sur une base temporaire avant une mise en production ;
+  un worker de reconnaissance peut consommer sensiblement plus qu’une requête ordinaire. Évitez
+  plusieurs instances et surveillez la mémoire.
+- 1 Go de disque : surveillez la base **et les captures de paiement privées** dans
+  `data/preuves-paiement/` ; elles restent locales, même si les autres images vont vers MEGA.
+  Le stockage externe des signatures/logos peut se configurer séparément. Deux commandes,
+  sans droits administrateur :
 
   ```bash
   bash deploy/alwaysdata/rclone.sh --installer
@@ -153,6 +154,21 @@ intacts. Redémarrez ensuite **alwaysdata → Web → Sites → kodjone.alwaysda
 lecture de notes/bulletins/PDF et déclaration de paiement permises, saisie de notes interdite ;
 réactivez-la et contrôlez le retour des droits sans déconnexion. Pas de nouvelle dépendance, pas de
 migration de la base, **ne lancez pas `npm ci`** sur alwaysdata pour cette mise à jour.
+
+**Nouvel abonnement mensuel selon l’effectif (31 octobre 2026) — PAS ENCORE DÉPLOYÉ :**
+attendez d’abord la **confirmation du redémarrage et de la vérification en production** de la mise
+à jour « consultation seulement ». Cette refonte ajoute `server/tarifs-effectif.js`,
+`server/preuves-paiement.js`, `server/whatsapp-paiement.js`, de nouvelles colonnes et index SQLite,
+et modifie `server/index.js`, `server/db.js`, `server/abonnements.js`, `server/paiements.js`,
+`server/recu.js`, `public/js/app.js`, `public/css/styles.css`, `public/app.html` et
+`public/index.html`. Ne copiez **que des fichiers issus d’une même version testée**. Sauvegardez
+préalablement la base et, si le dossier existe, **`data/preuves-paiement/`** ; ne remplacez jamais
+`~/app/data`, `~/app/.env`, ni `~/app/node_modules`. L’OCR réutilise les dépendances déjà
+installées ; **ne lancez pas `npm ci` sur alwaysdata**. En cas de manque, vérifier les modules
+et employer l’installateur léger ci-dessous. L’envoi WhatsApp officiel restera **désactivé**
+tant que son API et son modèle ne sont pas configurés en privé (voir `README.md`) ; ne communiquez
+jamais un jeton ou un mot de passe dans le chat. Avant toute mise à jour du site public, tester sur
+une **base temporaire** puis vérifier prix, capture privée, relevé réel, accord et reçu.
 
 **Si alwaysdata arrête npm avec `Killed` :** ne redémarrez pas : `npm ci` a peut-être vidé
 `node_modules` avant d'être interrompu. Sur un serveur **Linux x64**, lancez depuis `~/app` :

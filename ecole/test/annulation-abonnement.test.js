@@ -90,8 +90,8 @@ test('Annuler un paiement manuel : restaure l’essai, conserve la trace, protè
   const a = await creerEcole('École A', 'chef-a@test.tg');
   const b = await creerEcole('École B', 'chef-b@test.tg');
   const avant = { ...ecole(base, a.id) };
-  const details = { ecole_id: a.id, plan: 'standard', montant: 300000,
-    duree_jours: 365, reference: 'REF-TEST-ANNULE' };
+  const details = { ecole_id: a.id, plan: 'effectif', montant: 7500,
+    duree_jours: 30, reference: 'REF-TEST-ANNULE', confirmation_releve: true };
   for (const faux of [
     { montant: -500 }, { plan: 'inventé' }, { duree_jours: 0 }, { ecole_id: -1 }
   ]) {
@@ -105,9 +105,9 @@ test('Annuler un paiement manuel : restaure l’essai, conserve la trace, protè
   assert.equal(cree.status, 200, JSON.stringify(cree.data));
   const id = cree.data.id;
   assert.equal(paiement(base, id).statut, 'paye');
-  assert.equal(ecole(base, a.id).plan, 'standard');
+  assert.equal(ecole(base, a.id).plan, 'effectif');
   assert.equal(ecole(base, b.id).statut, 'essai');
-  assert.equal((await appeler('/api/admin/paiements', { cookie: admin })).data.encaisse, 300000);
+  assert.equal((await appeler('/api/admin/paiements', { cookie: admin })).data.encaisse, 7500);
   const recu = await appeler(`/api/admin/paiements/${id}/recu.pdf`, { cookie: admin });
   assert.equal(recu.status, 200);
   assert.ok(recu.data.byteLength > 500);
@@ -152,7 +152,8 @@ test('Deux activations : impossible d’annuler la plus ancienne avant la nouvel
   const essai = { ...ecole(base, a.id) };
   const enregistrer = async reference => {
     const r = await appeler('/api/admin/paiements', { method: 'POST', cookie: admin, body: {
-      ecole_id: a.id, plan: 'essentiel', montant: 15000, duree_jours: 30, reference
+      ecole_id: a.id, plan: 'effectif', montant: 7500, duree_jours: 30, reference,
+      confirmation_releve: true
     } });
     assert.equal(r.status, 200);
     return r.data.id;
@@ -194,7 +195,7 @@ test('Validation déclarée, modification directe et anciennes activations : ann
   const ancien = await creerEcole('École héritée', 'chef-ancien@test.tg');
   const essai = { ...ecole(base, a.id) };
   const declare = await appeler('/api/paiement/declarer', { method: 'POST', cookie: a.cookie, body: {
-    plan: 'essentiel', mois: 3, operateur: 'mixx', telephone_payeur: '+22893000001',
+    plan: 'effectif', mois: 1, operateur: 'mixx', telephone_payeur: '+22893000001',
     transaction_ref: 'MM-TEST-2026-001'
   } });
   assert.equal(declare.status, 200, JSON.stringify(declare.data));
@@ -216,7 +217,7 @@ test('Validation déclarée, modification directe et anciennes activations : ann
   const courante = (await appeler('/api/admin/etablissements', { cookie: admin })).data.find(e => e.id === a.id);
   assert.equal((await appeler(`/api/admin/etablissements/${a.id}/abonnement`, { method: 'PATCH', cookie: admin,
     body: { action: 'annuler', operation_id: courante.operation_id, motif: 'Date incorrecte' } })).status, 200);
-  assert.equal(ecole(base, a.id).plan, 'essentiel');
+  assert.equal(ecole(base, a.id).plan, 'effectif');
   assert.equal((await appeler(`/api/admin/paiements/${id}`, { method: 'PATCH', cookie: admin,
     body: { action: 'annuler', motif: 'Validation erronée' } })).status, 200);
   assert.deepEqual({ ...ecole(base, a.id) }, essai);

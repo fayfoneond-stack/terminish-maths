@@ -130,7 +130,8 @@ test('Une école suspendue lit, télécharge ses PDF et calcule un aperçu, sans
     }
     const ex = await ok('/api/examens', { method: 'POST', cookie: a.cookie, body: { nom: 'Examen blanc de test' } });
     const paye = await ok('/api/admin/paiements', { method: 'POST', cookie: admin,
-      body: { ecole_id: a.id, montant: 15000, plan: 'essentiel', duree_jours: 30, reference: 'REC-SUSPENSION' } });
+      body: { ecole_id: a.id, montant: 7500, plan: 'effectif', duree_jours: 30,
+        reference: 'REC-SUSPENSION', confirmation_releve: true } });
     assert.equal((await ok('/api/me', { cookie: a.cookie })).etablissement.statut, 'actif');
     await suspendre(a.id);
     assert.equal((await ok('/api/me', { cookie: a.cookie })).etablissement.statut, 'suspendu');
@@ -213,11 +214,11 @@ test('Le paiement manuel reste possible, l’éditeur réactive sans reconnexion
       body: { nom: 'Impossible' } })).data.code, 'ABONNEMENT_SUSPENDU');
     for (const chemin of ['/api/paiement/cinetpay/initier', '/api/paiement/paydunya/initier']) {
       const r = await appeler(chemin, { method: 'POST', cookie: a.cookie, body: { plan: 'essentiel', mois: 3 } });
-      assert.equal(r.status, 400, 'passerelle non configurée : refus normal, pas refus dû à la suspension');
+      assert.equal(r.status, 410, 'nouvelle initiation en ligne désactivée : paiement manuel toujours permis');
       assert.notEqual(r.data.code, 'ABONNEMENT_SUSPENDU');
     }
     const declaration = await ok('/api/paiement/declarer', { method: 'POST', cookie: a.cookie, body: {
-      plan: 'essentiel', mois: 3, operateur: 'mixx', telephone_payeur: '+22893000000',
+      plan: 'effectif', mois: 1, operateur: 'mixx', telephone_payeur: '+22893000000',
       transaction_ref: 'MM-SUSPENDU-2026-01'
     } });
     assert.equal(declaration.statut, 'en_attente');

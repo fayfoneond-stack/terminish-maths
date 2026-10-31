@@ -729,6 +729,17 @@ table.data .strong { font-weight: 700; }
 }
 .ussd-line b { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 14px; color: var(--vert); }
 .pay-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+.tarif-tranches { display: grid; gap: 6px; }
+.tarif-tranche { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; border: 1px solid var(--bord); border-radius: 9px; padding: 9px 11px; font-size: 12px; }
+.tarif-tranche.active { background: #eaf7f0; color: var(--vert-fonce); border-color: var(--vert-clair); }
+.preuve-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.preuve-options .btn { flex: 1 1 190px; min-height: 44px; white-space: normal; }
+.pay-apercu-img { display: block; max-width: 100%; max-height: 240px; object-fit: contain; border-radius: 9px; border: 1px solid var(--bord); margin-top: 10px; }
+@media (max-width: 600px) {
+  .preuve-options .btn { width: 100%; flex-basis: 100%; }
+  .tarif-tranche { font-size: 12.5px; }
+  .merchant-num { font-size: 17px; }
+}
 
 /* ---------------- Landing : moyens de paiement ---------------- */
 .pay-methods { max-width: 1000px; margin: 34px auto 0; background: #fff; border: 1px solid var(--bord); border-radius: 20px; padding: 26px clamp(16px, 3vw, 30px); box-shadow: var(--ombre); }
