@@ -20,6 +20,8 @@ const { genererRecuPDF } = require('./recu');
 const { genererFusionPDF } = require('./fusion-pdf');
 const { analyserListePDF, dateISO, MAX_OCTETS } = require('./liste-pdf');
 const { verifierListe, importerListe } = require('./import-eleves-pdf');
+const { analyserListeFichier } = require('./liste-fichiers');
+const { ancienneteValide } = require('./anciennete-eleves');
 const recuperation = require('./recuperation');
 const courriel = require('./courriel');
 const { optionsPassage, preparerPassage, validerPassage, annulerPassage,
@@ -664,8 +666,12 @@ app.get('/api/eleves', auth, staffOnly, (req, res) => {
 });
 app.post('/api/eleves', auth, directionOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
-  const { nom, prenom, sexe, date_naissance, lieu_naissance, classe_id, tuteur_nom, tuteur_tel, matricule } = req.body || {};
+  const { nom, prenom, sexe, date_naissance, lieu_naissance, classe_id, tuteur_nom, tuteur_tel,
+    matricule, anciennete_etablissement } = req.body || {};
   if (!String(nom || '').trim()) return res.status(400).json({ error: 'Le nom est requis' });
+  let anciennete;
+  try { anciennete = ancienneteValide(anciennete_etablissement, 'nouveau'); }
+  catch (e) { return res.status(400).json({ error: e.message }); }
   if (classe_id && !db.prepare('SELECT 1 FROM classes WHERE id = ? AND ecole_id = ?').get(classe_id, id)) {
     return res.status(400).json({ error: 'Classe invalide' });
   }
@@ -679,10 +685,10 @@ app.post('/api/eleves', auth, directionOnly, (req, res) => {
   db.exec('BEGIN IMMEDIATE');
   try {
     const info = db.prepare(`INSERT INTO eleves (ecole_id, matricule, nom, prenom, sexe, date_naissance, lieu_naissance,
-      classe_id, tuteur_nom, tuteur_tel, statut, cree_le) VALUES (?,?,?,?,?,?,?,?,?,?, 'actif', ?)`)
+      classe_id, tuteur_nom, tuteur_tel, statut, anciennete_etablissement, cree_le) VALUES (?,?,?,?,?,?,?,?,?,?, 'actif', ?, ?)`)
       .run(id, mat, String(nom).trim().toUpperCase(), String(prenom || '').trim(), ['M', 'F'].includes(sexe) ? sexe : '',
         date_naissance || '', lieu_naissance || '',
-        classe_id ? Number(classe_id) : null, tuteur_nom || '', tuteur_tel || '', now());
+        classe_id ? Number(classe_id) : null, tuteur_nom || '', tuteur_tel || '', anciennete, now());
     const eleveId = Number(info.lastInsertRowid);
     memoriserInscription(db, id, eleveId, classe_id ? Number(classe_id) : null);
     db.exec('COMMIT');
@@ -699,6 +705,11 @@ app.put('/api/eleves/:id', auth, directionOnly, (req, res) => {
   if (!el) return res.status(404).json({ error: 'Élève introuvable' });
   const b = req.body || {};
   if (!String(b.nom ?? el.nom).trim()) return res.status(400).json({ error: 'Le nom de l’élève est requis.' });
+  if (b.statut !== undefined && !['actif', 'inactif'].includes(b.statut))
+    return res.status(400).json({ error: 'Statut scolaire invalide.' });
+  let anciennete;
+  try { anciennete = ancienneteValide(b.anciennete_etablissement, el.anciennete_etablissement); }
+  catch (e) { return res.status(400).json({ error: e.message }); }
   if (b.date_naissance !== undefined) {
     const date = String(b.date_naissance || '').trim();
     if (date && (dateISO(date) !== date || date > today())) {
@@ -717,10 +728,10 @@ app.put('/api/eleves/:id', auth, directionOnly, (req, res) => {
   db.exec('BEGIN IMMEDIATE');
   try {
     db.prepare(`UPDATE eleves SET nom = ?, prenom = ?, sexe = ?, date_naissance = ?, lieu_naissance = ?, classe_id = ?,
-      tuteur_nom = ?, tuteur_tel = ?, statut = ? WHERE id = ?`).run(
+      tuteur_nom = ?, tuteur_tel = ?, statut = ?, anciennete_etablissement = ? WHERE id = ?`).run(
       (b.nom ?? el.nom).toUpperCase(), b.prenom ?? el.prenom, b.sexe ?? el.sexe, b.date_naissance ?? el.date_naissance,
       b.lieu_naissance ?? el.lieu_naissance, classeCible, b.tuteur_nom ?? el.tuteur_nom,
-      b.tuteur_tel ?? el.tuteur_tel, b.statut ?? el.statut, el.id);
+      b.tuteur_tel ?? el.tuteur_tel, b.statut ?? el.statut, anciennete, el.id);
     if ((b.statut ?? el.statut) === 'actif') memoriserInscription(db, id, el.id, classeCible);
     db.exec('COMMIT');
     res.json({ ok: true });
@@ -747,12 +758,16 @@ app.delete('/api/eleves/:id', auth, directionOnly, (req, res) => {
 app.post('/api/eleves/import', auth, directionOnly, (req, res) => {
   const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
   const { lignes, classe_id } = req.body || {};
-  if (!Array.isArray(lignes) || !lignes.length) return res.status(400).json({ error: 'Aucune ligne à importer' });
+  if (!Array.isArray(lignes) || !lignes.length || lignes.length > 300)
+    return res.status(400).json({ error: 'Choisissez entre 1 et 300 élèves à importer.' });
   const annee = (db.prepare('SELECT annee_scolaire FROM etablissements WHERE id = ?').get(ecoleId).annee_scolaire || '2025').slice(0, 4);
   let last = db.prepare("SELECT matricule FROM eleves WHERE ecole_id = ? AND matricule LIKE ? ORDER BY matricule DESC LIMIT 1").get(ecoleId, `${annee}%`);
   let num = last ? Number(last.matricule.slice(4)) || 0 : 0;
   const crees = [], erreurs = [];
   lignes.forEach((l, i) => {
+    if (!l || typeof l !== 'object' || Array.isArray(l)) {
+      erreurs.push(`Ligne ${i + 1} : ligne invalide`); return;
+    }
     const nom = String(l.nom || '').trim().toUpperCase();
     const prenom = String(l.prenom || '').trim();
     if (!nom) { erreurs.push(`Ligne ${i + 1} : nom manquant`); return; }
@@ -765,15 +780,16 @@ app.post('/api/eleves/import', auth, directionOnly, (req, res) => {
       if (classeCible && !db.prepare('SELECT 1 FROM classes WHERE id = ? AND ecole_id = ?').get(classeCible, ecoleId)) {
         erreurs.push(`Ligne ${i + 1} : classe inconnue dans cet établissement`); return;
       }
+      const anciennete = ancienneteValide(l.anciennete_etablissement); // liste ancienne : ne rien supposer
       num++;
       const matricule = `${annee}${String(num).padStart(4, '0')}`;
       db.exec('BEGIN IMMEDIATE');
       try {
         const info = db.prepare(`INSERT INTO eleves (ecole_id, matricule, nom, prenom, sexe, date_naissance, lieu_naissance,
-          classe_id, tuteur_nom, tuteur_tel, statut, cree_le) VALUES (?,?,?,?,?,?,?,?,?,?, 'actif', ?)`)
+          classe_id, tuteur_nom, tuteur_tel, statut, anciennete_etablissement, cree_le) VALUES (?,?,?,?,?,?,?,?,?,?, 'actif', ?, ?)`)
           .run(ecoleId, matricule, nom, prenom, /^f/i.test(l.sexe || '') ? 'F' : /^m/i.test(l.sexe || '') ? 'M' : '',
             l.date_naissance || '', l.lieu_naissance || '', classeCible ? Number(classeCible) : null,
-            l.tuteur_nom || '', l.tuteur_tel || '', now());
+            l.tuteur_nom || '', l.tuteur_tel || '', anciennete, now());
         memoriserInscription(db, ecoleId, Number(info.lastInsertRowid), classeCible ? Number(classeCible) : null);
         db.exec('COMMIT');
         crees.push({ nom, prenom, matricule });
@@ -785,8 +801,8 @@ app.post('/api/eleves/import', auth, directionOnly, (req, res) => {
   res.json({ ok: true, crees: crees.length, erreurs, eleves: crees });
 });
 
-/* Import PDF : analyse seule, aperçu modifiable, puis confirmation par la direction.
- * Les octets du PDF et les images OCR ne sont jamais conservés en base. */
+/* Import PDF historique : analyse seule. Le parcours multi-format partage l'aperçu
+ * modifiable et la confirmation réservés à la direction. Aucun fichier n'est conservé. */
 const lireFichierPDF = express.raw({ type: 'application/pdf', limit: MAX_OCTETS });
 app.post('/api/eleves/import-pdf/analyser', auth, directionOnly, (req, res, next) => {
   lireFichierPDF(req, res, err => err
@@ -802,19 +818,40 @@ app.post('/api/eleves/import-pdf/analyser', auth, directionOnly, (req, res, next
     res.status(busy ? 429 : 422).json({ error: e.message });
   }
 });
-app.post('/api/eleves/import-pdf/verifier', auth, directionOnly, (req, res) => {
+// Word (.docx), Excel (.xlsx), CSV et PDF : lecture locale seulement.
+// Le même aperçu/verifier/confirmer sert à tous les formats et reste réservé à la direction.
+const lireFichierListe = express.raw({ type: 'application/octet-stream', limit: MAX_OCTETS });
+app.post('/api/eleves/import-fichier/analyser', auth, directionOnly, (req, res, next) => {
+  lireFichierListe(req, res, err => err
+    ? res.status(err.status === 413 ? 413 : 400).json({ error: 'Fichier trop volumineux (8 Mo maximum) ou illisible.' })
+    : next());
+}, async (req, res) => {
+  if (!ecoleOf(req, res)) return;
+  if (!Buffer.isBuffer(req.body)) return res.status(415).json({ error: 'Choisissez un fichier PDF, Word .docx, Excel .xlsx ou CSV.' });
+  try {
+    res.json(await analyserListeFichier(req.body, req.query.nom));
+  } catch (e) {
+    res.status(e.message?.startsWith('Une reconnaissance') ? 429 : 422).json({ error: e.message });
+  }
+});
+function verifierImportFichier(req, res) {
   const id = ecoleOf(req, res); if (!id) return;
   try {
     const { statuts } = verifierListe(db, id, req.body?.lignes);
     res.json({ statuts });
   } catch (e) { res.status(e.status || 400).json({ error: e.message }); }
-});
-app.post('/api/eleves/import-pdf/confirmer', auth, directionOnly, (req, res) => {
+}
+function confirmerImportFichier(req, res) {
   const id = ecoleOf(req, res); if (!id) return;
   try { res.json(importerListe(db, id, req.body?.lignes, now,
     (eleveId, classeId) => memoriserInscription(db, id, eleveId, classeId))); }
   catch (e) { res.status(e.status || 400).json({ error: e.message }); }
-});
+}
+// Garder les URLs PDF historiques pour les navigateurs qui les ont encore en cache.
+app.post('/api/eleves/import-pdf/verifier', auth, directionOnly, verifierImportFichier);
+app.post('/api/eleves/import-pdf/confirmer', auth, directionOnly, confirmerImportFichier);
+app.post('/api/eleves/import-fichier/verifier', auth, directionOnly, verifierImportFichier);
+app.post('/api/eleves/import-fichier/confirmer', auth, directionOnly, confirmerImportFichier);
 
 app.get('/api/eleves/:id', auth, staffOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
@@ -1430,6 +1467,7 @@ app.get('/api/dashboard', auth, staffOnly, (req, res) => {
       trim(coalesce(prenom, '')) = '' OR trim(coalesce(sexe, '')) = ''
       OR trim(coalesce(date_naissance, '')) = '' OR trim(coalesce(lieu_naissance, '')) = ''
       OR trim(coalesce(tuteur_nom, '')) = '' OR trim(coalesce(tuteur_tel, '')) = ''
+      OR trim(coalesce(anciennete_etablissement, '')) = ''
     )`).get(ecoleId).n;
   let nbMatieres = db.prepare('SELECT COUNT(*) AS n FROM matieres WHERE ecole_id = ?').get(ecoleId).n;
   if (isProf) {

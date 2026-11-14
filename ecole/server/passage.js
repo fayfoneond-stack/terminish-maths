@@ -282,6 +282,10 @@ function ouvrirAnneeSuivante(db, ecoleId, anneeConfirmee) {
     }
     db.prepare('UPDATE etablissements SET annee_scolaire = ? WHERE id = ?').run(anneeConfirmee, ecoleId);
     db.prepare('UPDATE classes SET annee = ? WHERE ecole_id = ?').run(anneeConfirmee, ecoleId);
+    // Un élève arrivé cette année devient ancien de CET établissement l'année
+    // suivante. Les dossiers hérités « À préciser » restent inconnus.
+    db.prepare("UPDATE eleves SET anciennete_etablissement = 'ancien' WHERE ecole_id = ? AND anciennete_etablissement = 'nouveau'")
+      .run(ecoleId);
     db.exec('COMMIT');
     return { ok: true, annee_scolaire: anneeConfirmee, periodes_creees: periodes.length };
   } catch (e) { db.exec('ROLLBACK'); throw e; }

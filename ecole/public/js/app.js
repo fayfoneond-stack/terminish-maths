@@ -605,7 +605,8 @@
   }
   function badgeStatut(statut) {
     const map = {
-      actif: ['vert', 'Actif'], essai: ['or', 'Essai'], suspendu: ['rouge', 'Suspendu'],
+      actif: ['vert', 'Actif'], inactif: ['gris', 'Archivé'],
+      essai: ['or', 'Essai'], suspendu: ['rouge', 'Suspendu'],
       ouvert: ['vert', 'Ouverte'], fermee: ['gris', 'Clôturée'],
       prepare: ['or', 'Préparé'], en_cours: ['bleu', 'En cours'], termine: ['vert', 'Terminé'],
       nouveau: ['or', 'Nouveau'], traite: ['vert', 'Traité'], archive: ['gris', 'Archivé'],
@@ -713,7 +714,7 @@
               <div class="step" style="padding:16px"><h4>2. Classes</h4><p>${d.compteurs.classes ? d.compteurs.classes + ' classe(s) créée(s).' : 'Créez vos classes et leurs coefficients.'}</p>
                 <button class="btn btn-ghost btn-sm" onclick="App.go('classes')">Gérer les classes</button></div>
               <div class="step" style="padding:16px"><h4>3. Élèves</h4><p>${d.compteurs.eleves ? d.compteurs.eleves + ' élève(s) inscrit(s).' : 'Inscrivez ou importez vos élèves.'}</p>
-                <button class="btn btn-ghost btn-sm" onclick="App.importerListePDF()">Importer une liste PDF</button></div>
+                <button class="btn btn-ghost btn-sm" onclick="App.importerListePDF()">Importer PDF, Word, Excel ou CSV</button></div>
               <div class="step" style="padding:16px"><h4>4. Enseignants</h4><p>${d.compteurs.enseignants ? d.compteurs.enseignants + ' enseignant(s).' : 'Donnez-leur accès à la saisie à distance.'}</p>
                 <button class="btn btn-ghost btn-sm" onclick="App.go('enseignants')">Ajouter un enseignant</button></div>
             </div>
@@ -781,7 +782,7 @@
               <div class="panel-head"><h2>Raccourcis</h2></div>
               <div style="display:grid;gap:8px">
                 ${role === 'directeur' ? `
-                  <button class="btn btn-ghost" style="justify-content:flex-start" onclick="App.importerListePDF()">📑 Importer une liste de classe PDF</button>
+                  <button class="btn btn-ghost" style="justify-content:flex-start" onclick="App.importerListePDF()">📑 Importer une liste PDF, Word, Excel ou CSV</button>
                   <button class="btn btn-ghost" style="justify-content:flex-start" onclick="App.ouvrirDossiersIncomplets()">📝 Compléter les dossiers des élèves</button>
                   <button class="btn btn-ghost" style="justify-content:flex-start" onclick="App.nouvelEleve()">👨‍🎓 Inscrire un élève</button>
                   <button class="btn btn-ghost" style="justify-content:flex-start" onclick="App.nouvelleClasse()">🏫 Créer une classe</button>
@@ -824,7 +825,30 @@
   /* ---------------------------------------------------------------- */
 
   /* ---------------------------- ÉLÈVES ----------------------------- */
-  S.filtresEleves = { q: '', classe_id: '', statut: 'actif', incomplets: false };
+  S.filtresEleves = { q: '', classe_id: '', statut: 'actif', anciennete: '', incomplets: false };
+
+  function libelleAnciennete(e) {
+    if (e.anciennete_etablissement === 'nouveau') return e.sexe === 'F'
+      ? 'Nouvelle dans l’établissement' : e.sexe === 'M'
+        ? 'Nouveau dans l’établissement' : 'Nouveau/Nouvelle dans l’établissement';
+    if (e.anciennete_etablissement === 'ancien') return e.sexe === 'F'
+      ? 'Ancienne de l’établissement' : e.sexe === 'M'
+        ? 'Ancien de l’établissement' : 'Ancien/Ancienne de l’établissement';
+    return 'À préciser';
+  }
+  function badgeAnciennete(e) {
+    const couleur = e.anciennete_etablissement === 'nouveau' ? 'bleu'
+      : e.anciennete_etablissement === 'ancien' ? 'vert' : 'gris';
+    return `<span class="tag ${couleur}">${esc(libelleAnciennete(e))}</span>`;
+  }
+  function actualiserLibellesAnciennete(conteneur, sexe) {
+    const select = conteneur.querySelector('[name="anciennete_etablissement"], [data-field="anciennete_etablissement"]');
+    if (!select) return;
+    for (const valeur of ['nouveau', 'ancien']) {
+      select.querySelector(`option[value="${valeur}"]`).textContent =
+        libelleAnciennete({ anciennete_etablissement: valeur, sexe });
+    }
+  }
 
   const sexeTag = (s) => s === 'F' ? '<span class="tag or">F</span>'
     : s === 'M' ? '<span class="tag bleu">M</span>' : '<span class="tag gris">—</span>';
@@ -834,7 +858,7 @@
   function infosACompleter(e) {
     return [['prenom', 'Prénom(s)'], ['sexe', 'Sexe'], ['date_naissance', 'Date de naissance'],
       ['lieu_naissance', 'Lieu de naissance'], ['tuteur_nom', 'Nom du tuteur'],
-      ['tuteur_tel', 'Téléphone du tuteur']]
+      ['tuteur_tel', 'Téléphone du tuteur'], ['anciennete_etablissement', 'Arrivée dans l’établissement']]
       .filter(([champ]) => !String(e[champ] || '').trim()).map(([, libelle]) => libelle);
   }
 
@@ -844,7 +868,9 @@
     if (f.classe_id) params.set('classe_id', f.classe_id);
     if (f.q) params.set('q', f.q);
     const rows = await api('/api/eleves?' + params.toString());
-    const avecStatut = f.statut ? rows.filter(r => r.statut === f.statut) : rows;
+    const avecStatut = rows.filter(r => (!f.statut || r.statut === f.statut) &&
+      (!f.anciennete || (f.anciennete === 'a_preciser'
+        ? !r.anciennete_etablissement : r.anciennete_etablissement === f.anciennete)));
     const aCompleter = avecStatut.filter(r => r.statut === 'actif' && infosACompleter(r).length);
     const liste = f.incomplets ? aCompleter : avecStatut;
     S.elevesCourants = liste;
@@ -871,7 +897,7 @@
       <div class="table-wrap"><table class="data">
         <thead><tr>
           <th>Matricule</th><th>Nom &amp; prénom(s)</th><th class="center">Sexe</th><th>Classe</th>
-          <th>Tuteur</th><th class="center">Statut</th>${S.me.role === 'directeur' ? '<th>Dossier</th>' : ''}<th></th>
+          <th>Tuteur</th><th>Dans l’établissement</th><th class="center">Actif / archivé</th>${S.me.role === 'directeur' ? '<th>Dossier</th>' : ''}<th></th>
         </tr></thead>
         <tbody>${liste.map(e => `
           <tr>
@@ -880,6 +906,7 @@
             <td class="center">${sexeTag(e.sexe)}</td>
             <td>${e.classe_nom ? `<span class="tag ${e.cycle === 'lycee' ? 'bleu' : 'gris'}">${esc(e.classe_nom)}</span>` : '<span class="muted">Non affecté</span>'}</td>
             <td class="small">${esc(e.tuteur_nom || '—')}${e.tuteur_tel ? `<div class="muted">${esc(e.tuteur_tel)}</div>` : ''}</td>
+            <td>${badgeAnciennete(e)}</td>
             <td class="center">${badgeStatut(e.statut)}</td>
             ${S.me.role === 'directeur' ? `<td>${e.statut !== 'actif' ? '<span class="muted">—</span>'
               : infosACompleter(e).length
@@ -905,22 +932,28 @@
           <div class="panel-head">
             <div><h2>Répertoire des élèves</h2><div class="sub">Recherche, dossiers et inscriptions</div></div>
             <div class="right">
-              ${direction ? `<button class="btn btn-ghost btn-sm" onclick="App.importerListePDF()">📑 Importer une liste PDF</button>
+              ${direction ? `<button class="btn btn-ghost btn-sm" onclick="App.importerListePDF()">📑 Importer un fichier</button>
               <button class="btn btn-ghost btn-sm" onclick="App.importerEleves()">⬆️ Coller une liste</button>
               <button class="btn btn-ghost btn-sm" onclick="App.exporterEleves()">⬇️ Export CSV</button>
               <button class="btn btn-primary btn-sm" onclick="App.nouvelEleve()">➕ Nouvel élève</button>` : ''}
             </div>
           </div>
-          ${direction ? `<div class="notice info">Vous pouvez inscrire ou importer une liste PDF avec <b>nom et classe uniquement</b>.
-            La naissance, le tuteur et les autres renseignements se complètent plus tard :
-            utilisez <b>À compléter</b>, puis <b>Compléter</b> sur la ligne de l'élève.</div>` : ''}
+          ${direction ? `<div class="notice info">Inscrivez les élèves ou importez une liste <b>PDF, Word (.docx), Excel (.xlsx) ou CSV</b>.
+            Nom et classe suffisent. Vérifiez les lignes avant confirmation, notamment « Nouveau / Ancien ».
+            La naissance et le tuteur peuvent être renseignés plus tard via <b>À compléter</b>.</div>` : ''}
           <div class="toolbar">
             <div class="field"><label>Recherche</label><input id="f-q" placeholder="Nom, prénom ou matricule" value="${esc(S.filtresEleves.q)}"></div>
             <div class="field"><label>Classe</label><select id="f-classe">${optionClasses(S.query.classe_id || S.filtresEleves.classe_id, { vide: 'Toutes les classes' })}</select></div>
-            <div class="field"><label>Statut</label><select id="f-statut">
+            <div class="field"><label>Actif / archivé</label><select id="f-statut">
               <option value="actif" ${S.filtresEleves.statut === 'actif' ? 'selected' : ''}>Actifs</option>
-              <option value="inactif" ${S.filtresEleves.statut === 'inactif' ? 'selected' : ''}>Inactifs</option>
+              <option value="inactif" ${S.filtresEleves.statut === 'inactif' ? 'selected' : ''}>Archivés</option>
               <option value="" ${S.filtresEleves.statut === '' ? 'selected' : ''}>Tous</option>
+            </select></div>
+            <div class="field"><label>Arrivée dans l’établissement</label><select id="f-anciennete">
+              <option value="" ${!S.filtresEleves.anciennete ? 'selected' : ''}>Tous</option>
+              <option value="nouveau" ${S.filtresEleves.anciennete === 'nouveau' ? 'selected' : ''}>Nouveaux / Nouvelles</option>
+              <option value="ancien" ${S.filtresEleves.anciennete === 'ancien' ? 'selected' : ''}>Anciens / Anciennes</option>
+              <option value="a_preciser" ${S.filtresEleves.anciennete === 'a_preciser' ? 'selected' : ''}>À préciser</option>
             </select></div>
             ${direction ? `<div class="field"><label>Suivi des dossiers</label>
               <button type="button" class="btn ${S.filtresEleves.incomplets ? 'btn-primary' : 'btn-ghost'} btn-sm" id="f-incomplets"
@@ -939,6 +972,7 @@
         timer = setTimeout(() => { S.filtresEleves.q = e.target.value.trim(); chargerEleves(); }, 260);
       };
       $('#f-classe').onchange = (e) => { S.filtresEleves.classe_id = e.target.value; chargerEleves(); };
+      $('#f-anciennete').onchange = (e) => { S.filtresEleves.anciennete = e.target.value; chargerEleves(); };
       $('#f-statut').onchange = (e) => {
         S.filtresEleves.statut = e.target.value;
         if (e.target.value !== 'actif') S.filtresEleves.incomplets = false;
@@ -970,6 +1004,12 @@
           <option value="F" ${e.sexe === 'F' ? 'selected' : ''}>Féminin</option></select></div>
         <div class="field"><label>Classe</label><select name="classe_id">${optionClasses(e.classe_id, { vide: 'Non affecté' })}</select></div>
       </div>
+      <div class="field"><label>Arrivée dans cet établissement</label>
+        <select name="anciennete_etablissement">
+          <option value="nouveau" ${(!e.id || e.anciennete_etablissement === 'nouveau') ? 'selected' : ''}>${esc(libelleAnciennete({ anciennete_etablissement: 'nouveau', sexe: e.sexe }))}</option>
+          <option value="ancien" ${e.anciennete_etablissement === 'ancien' ? 'selected' : ''}>${esc(libelleAnciennete({ anciennete_etablissement: 'ancien', sexe: e.sexe }))}</option>
+          <option value="" ${e.id && !e.anciennete_etablissement ? 'selected' : ''}>À préciser</option>
+        </select><div class="hint">« Nouveau » devient « Ancien » à l’ouverture de l’année scolaire suivante. Ce choix ne change pas le statut actif/archivé.</div></div>
       <div class="grid2">
         <div class="field"><label>Date de naissance</label><input type="date" name="date_naissance" value="${esc(e.date_naissance || '')}"></div>
         <div class="field"><label>Lieu de naissance</label><input name="lieu_naissance" value="${esc(e.lieu_naissance || '')}" placeholder="Lomé"></div>
@@ -978,7 +1018,7 @@
         <div class="field"><label>Nom du tuteur</label><input name="tuteur_nom" value="${esc(e.tuteur_nom || '')}"></div>
         <div class="field"><label>Téléphone du tuteur</label><input name="tuteur_tel" value="${esc(e.tuteur_tel || '')}" placeholder="+228 ..."></div>
       </div>
-      ${e.id ? `<div class="field"><label>Statut</label><select name="statut">
+      ${e.id ? `<div class="field"><label>Statut administratif (archivage et facturation)</label><select name="statut">
         <option value="actif" ${e.statut === 'actif' ? 'selected' : ''}>Actif</option>
         <option value="inactif" ${e.statut === 'inactif' ? 'selected' : ''}>Inactif (archivé)</option></select></div>
         <div class="small muted">Matricule : <b>${esc(e.matricule)}</b></div>`
@@ -987,7 +1027,7 @@
 
   Object.assign(window.App, {
     ouvrirDossiersIncomplets() {
-      S.filtresEleves = { q: '', classe_id: '', statut: 'actif', incomplets: true };
+      S.filtresEleves = { q: '', classe_id: '', statut: 'actif', anciennete: '', incomplets: true };
       App.go('eleves');
     },
 
@@ -1003,6 +1043,9 @@
         body: `<form id="eleve-form">${eleveFormHtml()}</form>`,
         footer: `<button class="btn btn-ghost btn-sm" data-close>Annuler</button><button class="btn btn-primary btn-sm" id="save-eleve">Enregistrer l'élève</button>`
       });
+      m.root.querySelector('#eleve-form [name="anciennete_etablissement"]').value = 'nouveau';
+      m.root.querySelector('#eleve-form [name="sexe"]').onchange = ev =>
+        actualiserLibellesAnciennete(m.root.querySelector('#eleve-form'), ev.target.value);
       m.root.querySelector('#save-eleve').onclick = async () => {
         const form = m.root.querySelector('#eleve-form');
         if (!form.reportValidity()) return;
@@ -1027,6 +1070,9 @@
           <form id="eleve-form">${eleveFormHtml(e)}</form>`,
         footer: `<button class="btn btn-ghost btn-sm" data-close>Annuler</button><button class="btn btn-primary btn-sm" id="save-eleve">Enregistrer</button>`
       });
+      m.root.querySelector('#eleve-form [name="anciennete_etablissement"]').value = e.anciennete_etablissement || '';
+      m.root.querySelector('#eleve-form [name="sexe"]').onchange = ev =>
+        actualiserLibellesAnciennete(m.root.querySelector('#eleve-form'), ev.target.value);
       m.root.querySelector('#save-eleve').onclick = async () => {
         const form = m.root.querySelector('#eleve-form');
         if (!form.reportValidity()) return;
@@ -1066,7 +1112,7 @@
               <div style="font-size:17px;font-weight:800">${esc(e.nom)} ${esc(e.prenom)}</div>
               <div class="muted small">Matricule ${esc(e.matricule)} · ${e.classe_nom ? esc(e.classe_nom) : 'Sans classe'} · ${e.sexe === 'F' ? 'Féminin' : e.sexe === 'M' ? 'Masculin' : 'Non renseigné'}</div>
             </div>
-            ${badgeStatut(e.statut)}
+            <div style="display:flex;flex-wrap:wrap;gap:6px">${badgeAnciennete(e)} ${badgeStatut(e.statut)}</div>
           </div>
           <div class="grid2" style="gap:4px 18px;font-size:13px;margin-bottom:16px">
             <div class="stat-line"><span class="muted">Date de naissance</span><b>${dateFr(e.date_naissance)}</b></div>
@@ -1098,19 +1144,21 @@
       if (S.me.role !== 'directeur') return;
       if (!S.classes.length) return toast('Créez d’abord une classe dans Scolarité → Classes.', 'err');
       const m = modal({
-        title: 'Importer une liste de classe en PDF', size: 'large',
+        title: 'Importer une liste de classe', size: 'large',
         body: `<div class="pdf-import">
-          <div class="notice info">Choisissez la classe et un PDF : les noms seront affichés <b>avant</b> l’inscription.
-            Corrigez chaque ligne si nécessaire. Seul le <b>nom et la classe</b> sont obligatoires ;
-            prénom, date de naissance, sexe et matricule sont facultatifs. Aucune note n’est modifiée.
-            Après l’import, retrouvez les élèves dans <b>À compléter</b> pour renseigner naissance et tuteur plus tard.</div>
+          <div class="notice info">Choisissez un fichier <b>PDF, Word (.docx), Excel (.xlsx) ou CSV</b> et la classe par défaut.
+            Vérifiez les élèves <b>avant</b> l’inscription : nom et classe sont nécessaires ;
+            naissance, sexe et matricule sont facultatifs. Vérifiez « Nouveau / Ancien »
+            pour chaque élève ; sans indication dans le fichier, ce champ reste « À préciser ».
+            Il est indépendant du statut actif/archivé. Aucune note n’est modifiée.
+            Après l’import, complétez les dossiers via <b>À compléter</b>.</div>
           <div class="grid2">
             <div class="field"><label for="pdf-classe">Classe par défaut *</label>
               <select id="pdf-classe">${optionClasses(S.query.classe_id || S.filtresEleves.classe_id || '', { vide: 'Choisir une classe…' })}</select></div>
-            <div class="field"><label for="pdf-fichier">Liste PDF (8 Mo maximum)</label>
-              <input id="pdf-fichier" type="file" accept=".pdf,application/pdf"></div>
+            <div class="field"><label for="pdf-fichier">Liste PDF, Word .docx, Excel .xlsx ou CSV (8 Mo)</label>
+              <input id="pdf-fichier" type="file" accept=".pdf,.docx,.xlsx,.csv,application/pdf,text/csv"></div>
           </div>
-          <button class="btn btn-ghost btn-sm" id="pdf-lire">📑 Lire le PDF</button>
+          <button class="btn btn-ghost btn-sm" id="pdf-lire">📑 Lire le fichier</button>
           <div id="pdf-message" role="status" aria-live="polite" style="margin-top:12px"></div>
           <div id="pdf-suite"></div>
           <div id="pdf-apercu"></div>
@@ -1130,7 +1178,8 @@
         .replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
       const classeReconnue = (nom) => S.classes.find(c => normaliserClasse(c.nom) === normaliserClasse(nom));
       const lignesTableau = () => $$('tr[data-index]', apercu);
-      const ligneCorrigee = (tr) => Object.fromEntries(['nom', 'prenom', 'matricule', 'date_naissance', 'sexe', 'classe_id']
+      const ligneCorrigee = (tr) => Object.fromEntries(['nom', 'prenom', 'matricule', 'date_naissance',
+        'sexe', 'classe_id', 'anciennete_etablissement']
         .map(k => [k, tr.querySelector(`[data-field="${k}"]`).value.trim()]));
       const afficherMessage = (texte, type = 'info') => {
         message.innerHTML = `<div class="notice ${type}">${esc(texte)}</div>`;
@@ -1145,7 +1194,7 @@
         const lignes = lignesTableau();
         if (!lignes.length) return;
         const no = ++verification;
-        const d = await api('/api/eleves/import-pdf/verifier', {
+        const d = await api('/api/eleves/import-fichier/verifier', {
           method: 'POST', body: { lignes: lignes.map(ligneCorrigee) }
         });
         if (no !== verification || !root.isConnected) return;
@@ -1156,7 +1205,7 @@
           tr.dataset.etat = v.etat;
           const etat = tr.querySelector('[data-etat]');
           etat.textContent = v.etat === 'pret'
-            ? (eleves[i]?.incertain ? 'Nom / prénom à vérifier' : 'Prêt') : v.message;
+            ? (eleves[i]?.incertain ? 'Ligne à vérifier' : 'Prêt') : v.message;
           etat.className = v.etat === 'pret' && !eleves[i]?.incertain ? 'small muted' : 'small pdf-attention';
         });
         compter();
@@ -1168,29 +1217,30 @@
       const lire = async () => {
         if (lecture || confirmationEnCours) return;
         if (!classeDefaut.value) return afficherMessage('Choisissez d’abord une classe par défaut.', 'warn');
-        if (!fichier.files.length) return afficherMessage('Choisissez un fichier PDF.', 'warn');
+        if (!fichier.files.length) return afficherMessage('Choisissez un fichier de classe.', 'warn');
         const f = fichier.files[0];
-        if (f.size > 8 * 1024 * 1024) return afficherMessage('PDF trop volumineux : 8 Mo maximum.', 'err');
+        if (f.size > 8 * 1024 * 1024) return afficherMessage('Fichier trop volumineux : 8 Mo maximum.', 'err');
         lecture = true; verification++;
         eleves = []; apercu.innerHTML = ''; compter();
         fichier.disabled = true; root.querySelector('#pdf-lire').disabled = true;
-        afficherMessage('Lecture du PDF en cours… Les pages scannées peuvent prendre quelques instants.');
+        afficherMessage('Lecture du fichier en cours… Les PDF scannés peuvent prendre quelques instants.');
         try {
-          const res = await fetch(lienServeur('/api/eleves/import-pdf/analyser'), {
+          const res = await fetch(lienServeur('/api/eleves/import-fichier/analyser?nom=' + encodeURIComponent(f.name)), {
             method: 'POST', credentials: apiBase() ? 'include' : 'same-origin',
-            headers: { 'Content-Type': 'application/pdf' }, body: f
+            headers: { 'Content-Type': 'application/octet-stream' }, body: f
           });
           const data = await res.json().catch(() => ({}));
-          if (!res.ok) throw new Error(data.error || `Erreur ${res.status} pendant la lecture du PDF.`);
+          if (!res.ok) throw new Error(data.error || `Erreur ${res.status} pendant la lecture du fichier.`);
           eleves = data.eleves;
           const options = (sel) => optionClasses(sel, { vide: 'Choisir une classe…' });
-          apercu.innerHTML = `<p class="small" style="margin:14px 0 8px"><b>${eleves.length} nom(s) extrait(s) de ${data.pages} page(s).</b>
-            ${data.ocr ? 'Pages scannées lues localement par OCR : vérifiez attentivement les noms.' : 'PDF textuel.'}
-            Corrigez, décochez ou choisissez la classe de chaque élève avant de confirmer.</p>
+          const unite = data.format === 'Excel' ? 'onglet(s)' : data.format === 'Word' ? 'tableau(x)' : 'page(s)';
+          apercu.innerHTML = `<p class="small" style="margin:14px 0 8px"><b>${eleves.length} nom(s) extrait(s) de ${data.pages} ${unite} (${esc(data.format)}).</b>
+            ${data.ocr ? 'PDF scanné lu localement par OCR : vérifiez attentivement les noms.' : 'Fichier lu localement.'}
+            Corrigez, décochez ou choisissez la classe et l’arrivée de chaque élève avant de confirmer.</p>
             ${data.avertissements.length ? `<div class="notice warn">${data.avertissements.slice(0, 8).map(esc).join('<br>')}</div>` : ''}
-            <div class="table-wrap" aria-label="Aperçu des élèves du PDF"><table class="data">
-              <thead><tr><th>Inscrire</th><th>Page</th><th>Nom *</th><th>Prénom(s)</th><th>Matricule</th><th>Classe *</th>
-                <th>Sexe</th><th>Naissance</th><th>Vérification</th></tr></thead>
+            <div class="table-wrap" aria-label="Aperçu des élèves du fichier"><table class="data">
+              <thead><tr><th>Inscrire</th><th>Page / onglet</th><th>Nom *</th><th>Prénom(s)</th><th>Matricule</th><th>Classe *</th>
+                <th>Sexe</th><th>Naissance</th><th>Dans l’établissement</th><th>Vérification</th></tr></thead>
               <tbody>${eleves.map((e, i) => {
                 const correspondance = classeReconnue(e.classe);
                 return `<tr data-index="${i}" data-classe-detectee="${correspondance ? 'oui' : ''}">
@@ -1201,15 +1251,23 @@
                   <td><input class="pdf-input pdf-mat" data-field="matricule" maxlength="24" aria-label="Matricule ligne ${i + 1}" value="${esc(e.matricule)}" placeholder="Auto"></td>
                   <td><select class="pdf-input pdf-classe" data-field="classe_id" aria-label="Classe ligne ${i + 1}">
                     ${options(correspondance?.id || classeDefaut.value)}</select>
-                    ${e.classe && !correspondance ? `<span class="small pdf-attention">PDF : ${esc(e.classe)} (non trouvée)</span>` : ''}</td>
+                    ${e.classe && !correspondance ? `<span class="small pdf-attention">Fichier : ${esc(e.classe)} (non trouvée)</span>` : ''}</td>
                   <td><select class="pdf-input pdf-sexe" data-field="sexe" aria-label="Sexe ligne ${i + 1}">
                     <option value="" ${!e.sexe ? 'selected' : ''}>—</option>
                     <option value="F" ${e.sexe === 'F' ? 'selected' : ''}>F</option>
                     <option value="M" ${e.sexe === 'M' ? 'selected' : ''}>M</option></select></td>
                   <td><input class="pdf-input pdf-date" type="date" data-field="date_naissance" aria-label="Naissance ligne ${i + 1}" value="${esc(e.date_naissance)}"></td>
+                  <td><select class="pdf-input pdf-anciennete" data-field="anciennete_etablissement" aria-label="Arrivée dans l’établissement ligne ${i + 1}">
+                    <option value="" ${!e.anciennete_etablissement ? 'selected' : ''}>À préciser</option>
+                    <option value="nouveau" ${e.anciennete_etablissement === 'nouveau' ? 'selected' : ''}>${esc(libelleAnciennete({ anciennete_etablissement: 'nouveau', sexe: e.sexe }))}</option>
+                    <option value="ancien" ${e.anciennete_etablissement === 'ancien' ? 'selected' : ''}>${esc(libelleAnciennete({ anciennete_etablissement: 'ancien', sexe: e.sexe }))}</option></select></td>
                   <td data-etat class="small muted">À vérifier</td>
                 </tr>`;
               }).join('')}</tbody></table></div>`;
+          lignesTableau().forEach((tr, i) => {
+            tr.querySelector('[data-field="anciennete_etablissement"]').value =
+              eleves[i].anciennete_etablissement || '';
+          });
           afficherMessage('Aperçu prêt. Aucune inscription n’a encore été créée.');
           await verifier();
         } catch (e) {
@@ -1231,7 +1289,9 @@
         if (e.target.closest('tr[data-index]')) demanderVerification();
       });
       apercu.addEventListener('change', e => {
-        if (!e.target.closest('tr[data-index]')) return;
+        const tr = e.target.closest('tr[data-index]');
+        if (!tr) return;
+        if (e.target.matches('[data-field="sexe"]')) actualiserLibellesAnciennete(tr, e.target.value);
         if (e.target.matches('[data-field="inclure"]')) compter();
         else demanderVerification();
       });
@@ -1247,7 +1307,7 @@
           if (trChoisis.length !== avant || trChoisis.some(tr => tr.dataset.etat !== 'pret')) {
             return afficherMessage('Des doublons ou erreurs viennent d’être détectés. Corrigez puis cochez les lignes souhaitées.', 'warn');
           }
-          const res = await api('/api/eleves/import-pdf/confirmer', {
+          const res = await api('/api/eleves/import-fichier/confirmer', {
             method: 'POST', body: { lignes: trChoisis.map(ligneCorrigee) }
           });
           afficherMessage(`${res.crees} élève(s) inscrit(s). ${res.ignores.length} ligne(s) ignorée(s) (doublon ou erreur).`
@@ -1276,8 +1336,9 @@
       const m = modal({
         title: 'Importer des élèves', size: 'large',
         body: `
-          <div class="notice info">Collez vos lignes au format <b>NOM ; PRÉNOM ; SEXE ; DATE DE NAISSANCE ; CLASSE ; TUTEUR ; TÉLÉPHONE</b>.<br>
-          Seul le nom est obligatoire ; laissez les autres cases vides avec <code>;</code>. Une ligne par élève. Les matricules sont générés automatiquement.</div>
+          <div class="notice info">Collez vos lignes au format <b>NOM ; PRÉNOM ; SEXE ; DATE DE NAISSANCE ; CLASSE ; TUTEUR ; TÉLÉPHONE ; ARRIVÉE</b>.<br>
+          ARRIVÉE = <b>nouveau</b>, <b>ancien</b> ou vide (<b>À préciser</b> par défaut).
+          Une ligne par élève ; les matricules sont générés automatiquement.</div>
           <div class="field"><label>Classe par défaut (si la colonne classe est vide)</label>
             <select id="imp-classe">${optionClasses('', { vide: 'Aucune — utiliser la colonne CLASSE' })}</select></div>
           <div class="field"><label>Élèves à importer</label>
@@ -1294,7 +1355,11 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         const lignes = brut.split(/\r?\n/).filter(l => l.trim()).map(l => {
           const sep = l.includes(';') ? ';' : l.includes('\t') ? '\t' : ',';
           const c = l.split(sep).map(x => x.trim());
-          return { nom: c[0], prenom: c[1], sexe: c[2], date_naissance: c[3], classe: c[4], tuteur_nom: c[5], tuteur_tel: c[6] };
+          const arrivee = String(c[7] || '').toLowerCase();
+          return { nom: c[0], prenom: c[1], sexe: c[2], date_naissance: c[3], classe: c[4],
+            tuteur_nom: c[5], tuteur_tel: c[6], anciennete_etablissement:
+              !arrivee ? '' : /^(ancien|ancienne)$/.test(arrivee) ? 'ancien'
+                : /^(nouveau|nouvelle)$/.test(arrivee) ? 'nouveau' : arrivee };
         });
         const btn = m.root.querySelector('#run-import');
         btn.disabled = true; btn.textContent = 'Import…';
@@ -1313,9 +1378,15 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     exporterEleves() {
       const rows = S.elevesCourants || [];
       if (!rows.length) return toast('Aucun élève à exporter', 'err');
-      const head = 'Matricule;Nom;Prenom;Sexe;Date de naissance;Classe;Tuteur;Telephone tuteur;Statut\n';
-      const body = rows.map(e => [e.matricule, e.nom, e.prenom, e.sexe, e.date_naissance, e.classe_nom, e.tuteur_nom, e.tuteur_tel, e.statut]
-        .map(v => String(v ?? '').replace(/;/g, ',')).join(';')).join('\n');
+      const head = 'Matricule;Nom;Prenom;Sexe;Date de naissance;Classe;Tuteur;Telephone tuteur;Statut;Anciennete etablissement\n';
+      const cellule = v => {
+        let texte = String(v ?? '');
+        if (/^[=+@\-\t\r]/.test(texte.trimStart())) texte = "'" + texte; // aucune formule Excel à l'ouverture
+        return /[;\r\n"]/.test(texte) ? `"${texte.replace(/"/g, '""')}"` : texte;
+      };
+      const body = rows.map(e => [e.matricule, e.nom, e.prenom, e.sexe, e.date_naissance,
+        e.classe_nom, e.tuteur_nom, e.tuteur_tel, e.statut, e.anciennete_etablissement]
+        .map(cellule).join(';')).join('\n');
       download(`eleves-${(S.etab.nom || 'ecole').replace(/\W+/g, '-')}.csv`, '\ufeff' + head + body, 'text/csv;charset=utf-8');
       toast('Export CSV téléchargé');
     },
@@ -3378,6 +3449,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     const annee = S.optionsPassage?.prochaine_annee;
     if (!annee) return;
     const oui = await confirmer(`Ouvrir l’année scolaire <b>${esc(annee)}</b> ?<br>
+      Les élèves « Nouveau/Nouvelle » deviendront « Ancien/Ancienne » ; les dossiers « À préciser » resteront inchangés.
       Les anciens trimestres/semestres, bulletins et décisions restent archivés.`,
     { titre: 'Nouvelle année', danger: false, ok: 'Ouvrir la nouvelle année' });
     if (!oui) return;
@@ -3403,7 +3475,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         <div class="panel">
           <div class="panel-head">
             <div><h2>Examens blancs</h2><div class="sub">Simulez les conditions du BEPC et du BAC</div></div>
-            <div class="right">${direction ? `<button class="btn btn-ghost btn-sm" onclick="App.importerListePDF()">📑 Importer une liste PDF</button>
+            <div class="right">${direction ? `<button class="btn btn-ghost btn-sm" onclick="App.importerListePDF()">📑 Importer un fichier</button>
             <button class="btn btn-primary btn-sm" onclick="App.creerExamen()">➕ Nouvel examen blanc</button>` : ''}</div>
           </div>
           <div class="notice info">Planifiez les épreuves (matière, coefficient, durée, salle), faites saisir les notes par les enseignants, puis comparez les résultats aux bulletins de période.</div>
@@ -3603,7 +3675,8 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                 <div class="field"><label>Téléphone</label><input name="telephone" value="${esc(e.telephone || '')}"></div>
                 <div class="field"><label>Email</label><input name="email" value="${esc(e.email || '')}"></div>
                 <div class="field"><label>Devise</label><input name="devise" value="${esc(e.devise || 'FCFA')}"></div>
-                <div class="field"><label>Année scolaire</label><input name="annee_scolaire" value="${esc(e.annee_scolaire || '')}" placeholder="2025-2026"></div>
+                <div class="field"><label>Année scolaire</label><input name="annee_scolaire" value="${esc(e.annee_scolaire || '')}" placeholder="2025-2026">
+                  <div class="hint">Corriger l’année initiale uniquement. Pour ouvrir l’année suivante et changer « Nouveau » en « Ancien », utilisez Évaluations → Décision finale.</div></div>
                 <div class="field"><label>Nom du chef d'établissement</label><input name="chef_nom" value="${esc(e.chef_nom || '')}"></div>
                 <div class="field"><label>Titre / fonction</label><input name="chef_titre" value="${esc(e.chef_titre || "Le Chef d'Établissement")}"></div>
               </div>

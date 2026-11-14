@@ -23,7 +23,8 @@ function baseEnMemoire() {
     CREATE TABLE classes (id INTEGER PRIMARY KEY, ecole_id INTEGER, nom TEXT);
     CREATE TABLE eleves (id INTEGER PRIMARY KEY, ecole_id INTEGER, matricule TEXT, nom TEXT NOT NULL,
       prenom TEXT NOT NULL, sexe TEXT, date_naissance TEXT, lieu_naissance TEXT, classe_id INTEGER,
-      tuteur_nom TEXT, tuteur_tel TEXT, statut TEXT, cree_le TEXT, UNIQUE(ecole_id,matricule));
+      tuteur_nom TEXT, tuteur_tel TEXT, statut TEXT, anciennete_etablissement TEXT, cree_le TEXT,
+      UNIQUE(ecole_id,matricule));
     INSERT INTO etablissements VALUES (1,'2026-2027'), (2,'2026-2027');
     INSERT INTO classes VALUES (7,1,'6ème A'), (8,1,'6ème B'), (9,2,'6ème A');
     INSERT INTO eleves(ecole_id,matricule,nom,prenom,classe_id) VALUES (1,'20260010','ADJOVI','Ama',7);`);
@@ -111,7 +112,7 @@ test('Aperçu et confirmation : doublons, nom seul, matricules, classes isolées
   const db = baseEnMemoire();
   const lignes = [
     { nom: 'Adjovi', prenom: 'Ama', matricule: 'autre-numero', classe_id: 8 }, // nom déjà dans une autre classe
-    { nom: 'KOUASSI', prenom: 'Elom', classe_id: 7 },
+    { nom: 'KOUASSI', prenom: 'Elom', classe_id: 7, anciennete_etablissement: 'ancien' },
     { nom: 'Mensah', prenom: '', classe_id: 7, date_naissance: '2012-04-03' },
     { nom: 'DOSSEH', prenom: 'Kofi', classe_id: 9 }, // autre établissement
     { nom: 'Kouassi', prenom: 'Elom', classe_id: 7 }, // doublon dans le fichier
@@ -124,11 +125,18 @@ test('Aperçu et confirmation : doublons, nom seul, matricules, classes isolées
   const resultat = importerListe(db, 1, lignes, () => '2026-10-26');
   assert.equal(resultat.crees, 2);
   assert.equal(resultat.ignores.length, 4);
-  assert.deepEqual(db.prepare('SELECT nom,prenom,sexe,date_naissance,tuteur_nom,matricule,classe_id FROM eleves WHERE id>1 ORDER BY id').all()
-    .map(r => ({ ...r })), [
-    { nom: 'KOUASSI', prenom: 'Elom', sexe: '', date_naissance: '', tuteur_nom: '', matricule: '20260011', classe_id: 7 },
-    { nom: 'MENSAH', prenom: '', sexe: '', date_naissance: '2012-04-03', tuteur_nom: '', matricule: '20260012', classe_id: 7 }
+  assert.deepEqual(db.prepare(`SELECT nom,prenom,sexe,date_naissance,tuteur_nom,matricule,classe_id,
+    statut,anciennete_etablissement FROM eleves WHERE id>1 ORDER BY id`).all().map(r => ({ ...r })), [
+    { nom: 'KOUASSI', prenom: 'Elom', sexe: '', date_naissance: '', tuteur_nom: '',
+      matricule: '20260011', classe_id: 7, statut: 'actif', anciennete_etablissement: 'ancien' },
+    { nom: 'MENSAH', prenom: '', sexe: '', date_naissance: '2012-04-03', tuteur_nom: '',
+      matricule: '20260012', classe_id: 7, statut: 'actif', anciennete_etablissement: null }
   ]);
+  assert.deepEqual(verifierListe(db, 1, [
+    { nom: 'INVALIDE', classe_id: 7, anciennete_etablissement: 'archive' },
+    { nom: 'NOUVELLE', classe_id: 7, anciennete_etablissement: 'nouveau' },
+    { nom: 'INCONNUE', classe_id: 7, anciennete_etablissement: '' }
+  ]).statuts.map(s => s.etat), ['erreur', 'pret', 'pret']);
   assert.equal(importerListe(db, 1, lignes.slice(1, 3), () => '2026-10-26').crees, 0,
     'un second import du même PDF ne recrée pas les élèves');
   db.close();

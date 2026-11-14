@@ -88,7 +88,8 @@ CREATE TABLE IF NOT EXISTS eleves (
   classe_id INTEGER REFERENCES classes(id) ON DELETE SET NULL,
   tuteur_nom TEXT,
   tuteur_tel TEXT,
-  statut TEXT DEFAULT 'actif',
+  statut TEXT DEFAULT 'actif',               -- actif | inactif : archivage, effectif facturé
+  anciennete_etablissement TEXT,              -- nouveau | ancien | NULL (à préciser)
   user_id INTEGER REFERENCES utilisateurs(id) ON DELETE SET NULL,
   cree_le TEXT NOT NULL,
   UNIQUE(ecole_id, matricule)
@@ -306,6 +307,9 @@ function ensureColumn(table, column, decl) {
 ensureColumn('paiements', 'operateur', 'TEXT');
 ensureColumn('paiements', 'telephone_payeur', 'TEXT');
 ensureColumn('paiements', 'transaction_ref', 'TEXT');
+// Ancienneté dans l'établissement distincte d'actif/inactif. Ne rien inventer
+// pour les élèves déjà présents lors de la migration : NULL = « À préciser ».
+ensureColumn('eleves', 'anciennete_etablissement', 'TEXT');
 ensureColumn('paiements', 'demande_par', 'INTEGER');
 ensureColumn('paiements', 'valide_par', 'INTEGER');
 ensureColumn('paiements', 'valide_le', 'TEXT');

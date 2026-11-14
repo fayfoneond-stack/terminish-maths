@@ -87,13 +87,15 @@ async function serveur(t, { gmail = true } = {}) {
   });
   base = new DatabaseSync(path.join(dossier, 'terminish-ecole.db'));
   base.exec('PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000');
-  const appeler = async (uri, { cookie, method = 'GET', body, pdf: fichier } = {}) => {
+  const appeler = async (uri, { cookie, method = 'GET', body, pdf: fichierPDF, octets } = {}) => {
     const reponse = await fetch(`http://127.0.0.1:${port}${uri}`, {
       method,
       headers: { ...(cookie ? { cookie } : {}),
         ...(body ? { 'content-type': 'application/json' } : {}),
-        ...(fichier ? { 'content-type': 'application/pdf' } : {}) },
-      ...(body ? { body: JSON.stringify(body) } : {}), ...(fichier ? { body: fichier } : {})
+        ...(fichierPDF ? { 'content-type': 'application/pdf' } : {}),
+        ...(octets ? { 'content-type': 'application/octet-stream' } : {}) },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+      ...(fichierPDF ? { body: fichierPDF } : {}), ...(octets ? { body: octets } : {})
     });
     const type = reponse.headers.get('content-type') || '';
     return { status: reponse.status, cookie: reponse.headers.get('set-cookie'),
@@ -216,7 +218,8 @@ test('HTTP : PDF → élève sans naissance → compléter plus tard sans modifi
   const correction = await appeler(`/api/eleves/${eleve.id}`, { method: 'PUT', cookie, body: {
     nom: eleve.nom, prenom: 'Elom', classe_id: classe.data.id,
     sexe: 'M', date_naissance: '2012-04-03', lieu_naissance: 'Lomé',
-    tuteur_nom: 'KOUASSI Akou', tuteur_tel: '+228 90 01 02 03', statut: 'actif'
+    tuteur_nom: 'KOUASSI Akou', tuteur_tel: '+228 90 01 02 03',
+    anciennete_etablissement: 'nouveau', statut: 'actif'
   } });
   assert.equal(correction.status, 200, JSON.stringify(correction.data));
   const apres = (await appeler('/api/eleves', { cookie })).data.find(e => e.id === eleve.id);
@@ -254,3 +257,146 @@ test('HTTP : PDF → élève sans naissance → compléter plus tard sans modifi
   await attendre(() => base.prepare('SELECT id FROM demandes_mdp WHERE email=?').get('prof-pdf@test.tg'),
     'demande enseignant même sans Gmail');
 });
+
+test('HTTP : Word, Excel, CSV et PDF → aperçu → contrôle → inscription, ancienneté indépendante',
+  { timeout: 30000 }, async t => {
+    const { appeler, base } = await serveur(t, { gmail: false });
+    const creerEcole = async (nom, email) => {
+      const r = await appeler('/api/inscription', { method: 'POST', body: {
+        etablissement: nom, nom: 'Chef test', email, password: 'chef-test-local', type: 'college'
+      } });
+      assert.equal(r.status, 200, JSON.stringify(r.data));
+      return { id: r.data.ecole_id, cookie: r.cookie.split(';')[0] };
+    };
+    const a = await creerEcole('École import', 'import@test.tg');
+    const b = await creerEcole('Autre école', 'autre-import@test.tg');
+    const creerClasse = async (cookie, nom) => {
+      const r = await appeler('/api/classes', { method: 'POST', cookie, body: { nom, cycle: 'college' } });
+      assert.equal(r.status, 200, JSON.stringify(r.data));
+      return r.data.id;
+    };
+    const classe = Object.fromEntries(await Promise.all(['6ème A', '5ème B', '4ème C']
+      .map(async nom => [nom, await creerClasse(a.cookie, nom)])));
+    const classeAutre = await creerClasse(b.cookie, '6ème A');
+    const importer = (nom, octets, cookie = a.cookie) => appeler(
+      `/api/eleves/import-fichier/analyser?nom=${encodeURIComponent(nom)}`,
+      { method: 'POST', cookie, octets });
+    const verifier = (lignes, cookie = a.cookie) => appeler('/api/eleves/import-fichier/verifier', {
+      method: 'POST', cookie, body: { lignes }
+    });
+    const confirmer = (lignes, cookie = a.cookie) => appeler('/api/eleves/import-fichier/confirmer', {
+      method: 'POST', cookie, body: { lignes }
+    });
+    const liste = () => appeler('/api/eleves', { cookie: a.cookie });
+    const fixture = nom => fs.readFileSync(path.join(__dirname, 'fixtures', nom));
+
+    const word = await importer('classe.docx', fixture('liste-eleves.docx'));
+    assert.equal(word.status, 200, JSON.stringify(word.data));
+    assert.equal(word.data.format, 'Word');
+    const lignesWord = word.data.eleves.map(e => ({ ...e, classe_id: classe[e.classe] }));
+    assert.deepEqual((await verifier(lignesWord)).data.statuts.map(s => s.etat), ['pret', 'pret']);
+    assert.equal((await liste()).data.length, 0, 'analyse et vérification sans aucune inscription');
+    assert.equal((await confirmer(lignesWord)).data.crees, 2);
+    assert.equal((await confirmer(lignesWord)).data.crees, 0, 'fichier réimporté : doublons écartés');
+    assert.equal((await appeler('/api/paiement/options', { cookie: a.cookie })).data.tarif.effectif, 2);
+
+    const excel = await importer('classes.xlsx', fixture('liste-eleves.xlsx'));
+    assert.equal(excel.status, 200, JSON.stringify(excel.data));
+    const lignesExcel = excel.data.eleves.map(e => ({ ...e, classe_id: classe[e.classe] }));
+    assert.deepEqual((await verifier(lignesExcel)).data.statuts.map(s => s.etat), ['pret', 'pret', 'pret']);
+    assert.equal((await confirmer(lignesExcel)).data.crees, 3);
+    const inconnue = (await liste()).data.find(e => e.nom === 'MENSAH');
+    assert.equal(inconnue.anciennete_etablissement, null, 'case À préciser conservée en base');
+    assert.equal(inconnue.statut, 'actif', 'ancienneté différente du statut de facturation');
+    assert.equal(inconnue.classe_id, classe['5ème B']);
+
+    const csv = await importer('import.csv', Buffer.from(
+      'Nom;Prénom;Classe;Statut;Anciennete etablissement\n' +
+      'ADJOVI;Ama;6ème A;actif;Nouveau\n' +
+      'KONDO;Akou;4ème C;inactif;\n'));
+    assert.equal(csv.status, 200, JSON.stringify(csv.data));
+    const lignesCsv = csv.data.eleves.map(e => ({ ...e, classe_id: classe[e.classe] }));
+    assert.deepEqual((await verifier(lignesCsv)).data.statuts.map(s => s.etat), ['doublon', 'pret']);
+    assert.equal((await confirmer(lignesCsv)).data.crees, 1);
+    const kondo = (await liste()).data.find(e => e.nom === 'KONDO');
+    assert.equal(kondo.anciennete_etablissement, null, 'case vide ne devient pas nouveau');
+    assert.equal(kondo.statut, 'actif', 'CSV « inactif » ne désactive pas un nouvel inscrit');
+    assert.equal((await verifier([{ nom: 'AUTRE', classe_id: classeAutre }])).data.statuts[0].etat, 'erreur');
+    assert.equal((await confirmer([{ nom: 'AUTRE', classe_id: classeAutre }])).data.crees, 0,
+      'pas d’insertion dans la classe d’une autre école');
+    assert.equal((await appeler('/api/eleves', { cookie: b.cookie })).data.length, 0);
+
+    const pdfImport = await importer('liste.pdf', await pdf('1 20260029 TCHALLA Akou'));
+    assert.equal(pdfImport.status, 200, JSON.stringify(pdfImport.data));
+    assert.equal(pdfImport.data.format, 'PDF');
+    assert.equal(pdfImport.data.eleves[0].anciennete_etablissement, '');
+    const lignePdf = { ...pdfImport.data.eleves[0], classe_id: classe['6ème A'],
+      anciennete_etablissement: 'nouveau' }; // correction dans l’aperçu
+    assert.equal((await confirmer([lignePdf])).data.crees, 1);
+    const tChalla = (await liste()).data.find(e => e.nom === 'TCHALLA');
+    assert.equal(tChalla.anciennete_etablissement, 'nouveau');
+
+    assert.equal((await appeler(`/api/eleves/${inconnue.id}`, { method: 'PUT', cookie: a.cookie,
+      body: { anciennete_etablissement: 'ancien' } })).status, 200);
+    assert.equal((await liste()).data.find(e => e.id === inconnue.id).statut, 'actif');
+    assert.equal((await appeler(`/api/eleves/${inconnue.id}`, { method: 'PUT', cookie: a.cookie,
+      body: { anciennete_etablissement: 'archive' } })).status, 400);
+    assert.equal((await appeler(`/api/eleves/${inconnue.id}`, { method: 'PUT', cookie: a.cookie,
+      body: { anciennete_etablissement: '' } })).status, 200);
+    assert.equal((await appeler(`/api/eleves/${inconnue.id}`, { cookie: a.cookie })).data.eleve.anciennete_etablissement,
+      null, 'la direction peut remettre un dossier historique À préciser');
+    const inscription = await appeler('/api/eleves', { method: 'POST', cookie: a.cookie,
+      body: { nom: 'HOUNKPATI', classe_id: classe['6ème A'] } });
+    assert.equal(inscription.status, 200);
+    assert.equal((await liste()).data.find(e => e.nom === 'HOUNKPATI').anciennete_etablissement,
+      'nouveau', 'inscription individuelle d’un nouveau venu');
+    assert.equal((await appeler('/api/eleves', { method: 'POST', cookie: a.cookie,
+      body: { nom: 'INTERDIT', anciennete_etablissement: 'inactif' } })).status, 400);
+
+    const colle = await appeler('/api/eleves/import', { method: 'POST', cookie: a.cookie,
+      body: { classe_id: classe['6ème A'], lignes: [
+        { nom: 'COLLE', anciennete_etablissement: 'ancien' }, { nom: 'INCONNU COLLE' },
+        { nom: 'ERREUR COLLE', anciennete_etablissement: 'archivé' }
+      ] } });
+    assert.equal(colle.status, 200);
+    assert.equal(colle.data.crees, 2);
+    assert.equal(colle.data.erreurs.length, 1);
+    assert.equal((await liste()).data.find(e => e.nom === 'COLLE').anciennete_etablissement, 'ancien');
+    assert.equal((await liste()).data.find(e => e.nom === 'INCONNU COLLE').anciennete_etablissement, null);
+    const complet = await appeler('/api/eleves', { method: 'POST', cookie: a.cookie, body: {
+      nom: 'DOSSIER COMPLET', prenom: 'Ama', sexe: 'F', classe_id: classe['4ème C'],
+      date_naissance: '2012-03-14', lieu_naissance: 'Lomé',
+      tuteur_nom: 'Parent test', tuteur_tel: '+228 90 00 00 00', anciennete_etablissement: ''
+    } });
+    assert.equal(complet.status, 200);
+    const nbDossiers = (await appeler('/api/dashboard', { cookie: a.cookie })).data.compteurs.dossiers_a_completer;
+    assert.equal((await appeler(`/api/eleves/${complet.data.id}`, { method: 'PUT', cookie: a.cookie,
+      body: { anciennete_etablissement: 'ancien' } })).status, 200);
+    assert.equal((await appeler('/api/dashboard', { cookie: a.cookie })).data.compteurs.dossiers_a_completer,
+      nbDossiers - 1, 'un dossier avec tous les autres renseignements est complet après cette correction');
+    const avant = (await liste()).data.length;
+    assert.equal((await importer('ancien.doc', fixture('liste-eleves.docx'))).status, 422);
+    assert.equal((await importer('erreur.csv', Buffer.from('pas un csv'))).status, 422);
+    assert.equal((await appeler('/api/eleves/import-fichier/analyser?nom=liste.csv', {
+      method: 'POST', cookie: a.cookie, body: { faux: true } })).status, 415);
+    assert.equal((await importer('trop.csv', Buffer.alloc(8 * 1024 * 1024 + 1))).status, 413);
+    assert.equal((await liste()).data.length, avant, 'aucune analyse ne modifie la base');
+
+    const prof = await appeler('/api/enseignants', { method: 'POST', cookie: a.cookie, body: {
+      nom: 'Prof import', email: 'prof-import@test.tg', password: 'prof-test-local'
+    } });
+    assert.equal(prof.status, 200);
+    const profSession = await appeler('/api/auth/login', { method: 'POST', body: {
+      email: 'prof-import@test.tg', password: 'prof-test-local'
+    } });
+    assert.equal((await importer('classe.xlsx', fixture('liste-eleves.xlsx'),
+      profSession.cookie.split(';')[0])).status, 403, 'lecture réservée à la direction');
+    base.prepare("UPDATE etablissements SET statut='suspendu' WHERE id=?").run(a.id);
+    assert.equal((await importer('classe.docx', fixture('liste-eleves.docx'))).status, 403);
+    assert.equal((await verifier(lignesWord)).status, 403);
+    assert.equal((await confirmer(lignesWord)).status, 403);
+    assert.equal((await appeler('/api/eleves', { cookie: a.cookie })).status, 200,
+      'lecture maintenue pour l’école suspendue');
+    assert.equal((await liste()).data.length, avant);
+    assert.equal(base.prepare('SELECT statut FROM etablissements WHERE id=?').get(b.id).statut, 'essai');
+  });

@@ -49,8 +49,9 @@ sur l'écran public de connexion.
 
 ### Direction (chef d'établissement)
 - Tableau de bord : effectifs, dossiers à compléter, progression de la saisie, moyennes par classe, meilleurs élèves, activité récente.
-- Élèves : inscription unitaire, **import direct des listes PDF** (ou CSV/Excel par copier-coller),
-  dossier individuel, historique, export CSV, archivage.
+- Élèves : inscription unitaire, **import de listes PDF, Word `.docx`, Excel `.xlsx` et CSV** avec aperçu
+  (ou lignes collées), dossier individuel, historique et export CSV. L’arrivée dans l’établissement
+  (« Nouveau / Nouvelle », « Ancien / Ancienne » ou « À préciser ») est distincte du statut actif/archivé.
 - Classes : cycles collège (trimestres) / lycée (semestres), séries, titulaire, matières et coefficients.
 - Matières : bibliothèque de l'établissement, groupes disciplinaires.
 - Enseignants : comptes et **affectations classe × matière** (matrice de cases à cocher).
@@ -71,14 +72,15 @@ sur l'écran public de connexion.
   puis 2, puis 3… en maths ») et la **répartition des moyennes** (« combien ont 10, 11, 12… »).
   Fonctionne aussi sur un examen blanc et en mode « composition seule » ; export CSV.
 - Examens blancs : planification des épreuves (date, heure, durée, salle, coefficient), saisie des notes,
-  résultats comparables aux bulletins de période. Un accès direct à l'import PDF permet d'inscrire les élèves
-  dans leurs classes avant de saisir les épreuves.
+  résultats comparables aux bulletins de période. Un accès direct à l'import de listes de classe permet
+  d'inscrire les élèves dans leurs classes avant de saisir les épreuves.
 - **Décision finale** : seuil réglable, moyenne annuelle sur les trois trimestres ou deux semestres,
   aperçu élève par élève, confirmation des passages 6ème → 5ème, 5ème → 4ème, 4ème → 3ème et
   2nde → 1ère (choix de la division/série), historique et ouverture de l'année suivante.
 - Paramètres : identité, **logo importé**, titre du chef, année scolaire, devise, formule de calcul des
   moyennes, ouverture/clôture des périodes, changement de mot de passe. Une fois des résultats saisis,
-  l'année ne se change plus ici : utilisez « Décision finale » pour la suivante.
+  l'année ne se change plus ici : utilisez « Décision finale » pour la suivante. La saisie dans
+  Paramètres sert à corriger l'année initiale, **pas à ouvrir la nouvelle année**.
 - Abonnement : tarif **mensuel selon les élèves actifs**, paiement Mixx by Yas ou Moov Money,
   déclaration par **capture ou référence + téléphone**, contrôle humain, historique et **reçus PDF validés**.
 
@@ -112,34 +114,37 @@ sur l'écran public de connexion.
 
 ---
 
-### Importer une liste de classe en PDF
+### Importer une liste de classe (PDF, Word, Excel ou CSV)
 
-1. La direction ouvre **Scolarité → Élèves → « Importer une liste PDF »** (ou
-   **Évaluations → Examens blancs → « Importer une liste PDF »**).
-2. Elle choisit une **classe déjà créée** et sélectionne son PDF. Le site lit les tableaux textuels ; pour une
-   page scannée sans texte, il essaie un **OCR français local**, sans service externe. La reconnaissance d'une
-   écriture manuscrite ou d'une mise en page inhabituelle n'est pas garantie.
-3. Dans l'**aperçu**, elle corrige les noms, prénoms, matricules, classes ou dates mal reconnus et décoche
-   les lignes à écarter ; les doublons et les classes inconnues sont signalés. Rien n'est enregistré avant
-   « Confirmer l'inscription ».
+1. La direction ouvre **Scolarité → Élèves → « Importer un fichier »** (ou
+   **Évaluations → Examens blancs → « Importer un fichier »**).
+2. Choisissez une **classe déjà créée** par défaut, puis un PDF, un Word **`.docx`**, un Excel **`.xlsx`** ou
+   un **`.csv`**. Cliquez sur **« Lire le fichier »** si la lecture ne démarre pas automatiquement. Les fichiers
+   sont lus localement par le serveur, sans service externe. Pour les PDF scannés sans texte, l'application
+   essaie un OCR français local : relisez soigneusement le résultat.
+3. Dans l'**aperçu**, corrigez les noms, classes, matricules, dates, sexes et choix « Nouveau / Ancien » ;
+   décochez les lignes à écarter, puis cliquez sur **« Confirmer l’inscription »**. Les doublons et classes
+   inconnues sont signalés. **La lecture et la vérification ne créent aucun élève.**
 
-**Nom + classe uniquement obligatoires** dans ce parcours. Prénom(s), sexe, date de naissance et matricule
-peuvent rester vides. Un matricule manquant est généré ; un sexe inconnu n'est jamais deviné et aucun tuteur
-n'est inventé. Chaque nouvel élève est immédiatement disponible dans les épreuves de sa classe. Les
-**notes, moyennes et classements déjà présents ne sont pas modifiés** par l'import.
+**Nom + classe uniquement obligatoires** dans cet import. Prénom(s), sexe, naissance et matricule peuvent
+rester vides. Un matricule manquant est généré ; aucun sexe ni tuteur n'est inventé. Si la liste n'indique
+pas l'arrivée de l'élève dans cet établissement, elle reste **« À préciser »** : la liste peut être celle
+d'élèves déjà présents depuis longtemps. Le chef peut compléter ou corriger ce choix dans le dossier.
+**Nouveau/Nouvelle devient Ancien/Ancienne uniquement à l'ouverture de l'année scolaire suivante** (menu
+« Décision finale »). Le statut administratif actif/archivé, qui détermine aussi l'effectif facturé, ne dépend
+jamais de ce choix. **Les notes, moyennes et classements existants ne sont pas modifiés.**
 
 **Compléter plus tard :** après confirmation, cliquez sur **« Voir les dossiers à compléter »** ; ou ouvrez
 **Scolarité → Élèves → « À compléter »**, puis **« Compléter »** à côté de l'élève. La liste montre les
-renseignements encore absents (naissance, sexe, prénom, tuteur et téléphone). Ils restent **facultatifs** :
-leur absence n'empêche ni l'inscription ni la saisie des notes. La date et les autres informations peuvent
-être ajoutées ou corrigées ultérieurement, sans perdre les notes ni les bulletins.
+renseignements manquants (naissance, sexe, prénom, tuteur, téléphone ou arrivée). Ils restent facultatifs :
+leur absence n'empêche ni l'inscription ni la saisie des notes.
 
-**Limites :** PDF de 8 Mo et 15 pages maximum ; jusqu'à 6 pages scannées avec OCR par fichier, 300 élèves
-par confirmation. Pour un document plus grand, séparer les classes en plusieurs PDF. Relire soigneusement
-les pages OCR et les lignes « Nom / prénom à vérifier ». Les doublons sont contrôlés à nouveau côté serveur au
-moment de la confirmation (matricule ou même nom et prénom déjà présents dans l'établissement) ; importer
-le même fichier une seconde fois ne réinscrit pas ses élèves. Les octets du PDF et les images OCR ne sont pas
-conservés par l'application.
+**Limites :** 8 Mo et 300 élèves par fichier/confirmation ; jusqu'à 15 pages PDF (6 scannées avec OCR),
+15 tableaux Word ou 15 onglets Excel ; CSV jusqu'à 2 000 lignes. Les anciens formats `.doc` et `.xls`
+ne sont pas pris en charge : enregistrez-les d'abord en `.docx` ou `.xlsx`. En cas de mise en page complexe,
+relisez les lignes signalées « À vérifier ». Les doublons sont revérifiés côté serveur lors de la confirmation
+(matricule ou même nom et prénom dans l'établissement) ; réimporter un fichier n'en crée pas de nouveaux.
+Les octets des fichiers et les images OCR ne sont pas conservés par l'application.
 
 L'OCR fonctionne avec les dépendances locales installées depuis `package-lock.json`. Si une future version
 modifie ces dépendances, sauvegardez la base avant de les mettre à jour. Sur alwaysdata, **si `npm ci` affiche
@@ -171,6 +176,8 @@ l'application**, puis vérifiez que les listes et les notes sont complètes avan
    suivante** : de nouvelles périodes sont créées, les notes de l'année terminée ne sont ni effacées ni
    copiées. Les bulletins et classements antérieurs sont accessibles en sélectionnant leur **année dans
    Bulletins ou Résultats** ; les décisions se retrouvent dans **Décision finale → Décisions enregistrées**.
+   À cette ouverture, les élèves « Nouveau/Nouvelle » de cet établissement deviennent « Ancien/Ancienne » ;
+   les dossiers « À préciser » gardent cette mention et les archives actif/inactif ne changent pas.
    Après l'ouverture, une ancienne décision ne peut plus être annulée et les anciennes notes sont protégées.
 
 **Calcul :** moyenne annuelle = moyenne arithmétique des **3 moyennes trimestrielles** (collège) ou des
@@ -569,7 +576,9 @@ les anciens paiements ne sont ni réécrits ni supprimés.
 | GET/PUT | `/api/etablissement` | direction |
 | GET/PUT | `/api/periodes` | direction |
 | CRUD | `/api/eleves`, `/api/classes`, `/api/matieres`, `/api/enseignants` | direction (lecture élargie) |
-| POST | `/api/eleves/import` | direction |
+| POST | `/api/eleves/import` | direction (lignes collées) |
+| POST | `/api/eleves/import-fichier/analyser?nom=liste.docx` | direction (octets PDF/.docx/.xlsx/.csv, lecture seule) |
+| POST | `/api/eleves/import-fichier/verifier`, `/api/eleves/import-fichier/confirmer` | direction (aperçu/confirmation pour tous les formats ; anciennes URL `/import-pdf/...` conservées) |
 | GET | `/api/notes/grille` | personnel (affectations) |
 | GET | `/api/journal-notes` | direction (traçabilité des saisies) |
 | PUT | `/api/moi/signature` | personnel (sa propre signature manuscrite) |

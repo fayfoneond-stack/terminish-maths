@@ -264,7 +264,37 @@ test('La formule de l’ancienne année reste figée après un changement de for
     AND annee_scolaire = '2026-2027' AND classe_id = ?`).get(e.id, six).formule_moyenne, 'co2');
 });
 
-test('Migration d’une ancienne base : année ajoutée aux périodes/examens sans perte de notes, relance idempotente', () => {
+test('Ouverture de l’année : Nouveau devient Ancien, inconnus/statuts/autres écoles inchangés', () => {
+  const e = ecole(), autre = ecole();
+  const actifs = [e.eleve('NOUVEAU', null), e.eleve('ANCIEN', null),
+    e.eleve('INCONNU', null), e.eleve('ARCHIVE', null)];
+  const autreEleve = autre.eleve('AUTRE ECOLE', null);
+  db.prepare("UPDATE eleves SET anciennete_etablissement='nouveau' WHERE id IN (?, ?, ?)")
+    .run(actifs[0], actifs[3], autreEleve);
+  db.prepare("UPDATE eleves SET anciennete_etablissement='ancien' WHERE id=?").run(actifs[1]);
+  db.prepare("UPDATE eleves SET statut='inactif' WHERE id=?").run(actifs[3]);
+  const lire = id => db.prepare('SELECT statut,anciennete_etablissement FROM eleves WHERE id=?').get(id);
+  const effectif = () => require('../server/tarifs-effectif').tarifPourEcole(db, e.id).effectif;
+  assert.equal(effectif(), 3, 'élèves archivés non facturés, indépendamment de l’ancienneté');
+  assert.throws(() => ouvrirAnneeSuivante(db, e.id, '2027-2028'), /Fermez toutes les périodes/);
+  assert.equal(lire(actifs[0]).anciennete_etablissement, 'nouveau', 'échec : aucun changement');
+  fermerPeriodes(e);
+  assert.throws(() => ouvrirAnneeSuivante(db, e.id, '2028-2029'), /Année suivante incorrecte/);
+  assert.equal(lire(actifs[0]).anciennete_etablissement, 'nouveau');
+  assert.equal(ouvrirAnneeSuivante(db, e.id, '2027-2028').ok, true);
+  assert.deepEqual(actifs.map(id => ({ ...lire(id) })), [
+    { statut: 'actif', anciennete_etablissement: 'ancien' },
+    { statut: 'actif', anciennete_etablissement: 'ancien' },
+    { statut: 'actif', anciennete_etablissement: null },
+    { statut: 'inactif', anciennete_etablissement: 'ancien' }
+  ]);
+  assert.deepEqual({ ...lire(autreEleve) }, { statut: 'actif', anciennete_etablissement: 'nouveau' });
+  assert.equal(effectif(), 3, 'le passage annuel ne modifie pas l’effectif facturé');
+  assert.throws(() => ouvrirAnneeSuivante(db, e.id, '2027-2028'), /Année suivante incorrecte/);
+  assert.equal(lire(actifs[2]).anciennete_etablissement, null);
+});
+
+test('Migration ancienne base : ancienneté inconnue, statut/notes préservés, relance idempotente', () => {
   const ancienDossier = path.join(dossier, 'base-ancienne');
   fs.mkdirSync(ancienDossier);
   const ancienne = new DatabaseSync(path.join(ancienDossier, 'terminish-ecole.db'));
@@ -276,7 +306,10 @@ test('Migration d’une ancienne base : année ajoutée aux périodes/examens sa
     CREATE TABLE evaluations (id INTEGER PRIMARY KEY, ecole_id INTEGER, classe_id INTEGER,
       matiere_id INTEGER, periode_id INTEGER, epreuve_id INTEGER, type TEXT);
     CREATE TABLE notes (id INTEGER PRIMARY KEY, evaluation_id INTEGER, eleve_id INTEGER, valeur REAL);
+    CREATE TABLE eleves (id INTEGER PRIMARY KEY, ecole_id INTEGER, matricule TEXT, nom TEXT,
+      prenom TEXT, classe_id INTEGER, statut TEXT, cree_le TEXT);
     INSERT INTO etablissements VALUES (42,'2024-2025');
+    INSERT INTO eleves VALUES (22,42,'MAT-22','HISTORIQUE','Awa',11,'inactif','2024-09-01');
     INSERT INTO periodes VALUES (17,42,'T1','1er Trimestre','college',1,'fermee',NULL,NULL);
     INSERT INTO examens VALUES (7,42,'Examen blanc',17,NULL,NULL,'termine','2025-01-01');
     INSERT INTO evaluations VALUES (5,42,11,3,17,NULL,'composition');
@@ -286,6 +319,8 @@ test('Migration d’une ancienne base : année ajoutée aux périodes/examens sa
     periode:db.prepare('SELECT annee_scolaire FROM periodes WHERE id=17').get().annee_scolaire,
     examen:db.prepare('SELECT annee_scolaire FROM examens WHERE id=7').get().annee_scolaire,
     note:db.prepare('SELECT valeur FROM notes WHERE id=8').get().valeur,
+    eleve:db.prepare('SELECT matricule,statut,anciennete_etablissement FROM eleves WHERE id=22').get(),
+    colonnes:db.prepare('PRAGMA table_info(eleves)').all().filter(c=>c.name==='anciennete_etablissement').length,
     photos:db.prepare('SELECT COUNT(*) AS n FROM inscriptions_historiques').get().n,
     classes:db.prepare('SELECT COUNT(*) AS n FROM classes_historiques').get().n,
     matieres:db.prepare('SELECT COUNT(*) AS n FROM matieres_historiques').get().n,
@@ -300,8 +335,9 @@ test('Migration d’une ancienne base : année ajoutée aux périodes/examens sa
     const ligne = r.stdout.split('\n').find(l => l.startsWith('MIGRE:'));
     assert.ok(ligne, r.stdout);
     assert.deepEqual(JSON.parse(ligne.slice(6)), {
-      periode: '2024-2025', examen: '2024-2025', note: 17.25, photos: 0, classes: 0, matieres: 0,
-      recuperation: 0
+      periode: '2024-2025', examen: '2024-2025', note: 17.25,
+      eleve: { matricule: 'MAT-22', statut: 'inactif', anciennete_etablissement: null },
+      colonnes: 1, photos: 0, classes: 0, matieres: 0, recuperation: 0
     });
   }
 });
