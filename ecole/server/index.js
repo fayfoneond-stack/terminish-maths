@@ -22,6 +22,7 @@ const { analyserListePDF, dateISO, MAX_OCTETS } = require('./liste-pdf');
 const { verifierListe, importerListe } = require('./import-eleves-pdf');
 const { analyserListeFichier } = require('./liste-fichiers');
 const { ancienneteValide } = require('./anciennete-eleves');
+const { statutScolaireValide } = require('./statut-scolaire');
 const recuperation = require('./recuperation');
 const courriel = require('./courriel');
 const { optionsPassage, preparerPassage, validerPassage, annulerPassage,
@@ -667,11 +668,13 @@ app.get('/api/eleves', auth, staffOnly, (req, res) => {
 app.post('/api/eleves', auth, directionOnly, (req, res) => {
   const id = ecoleOf(req, res); if (!id) return;
   const { nom, prenom, sexe, date_naissance, lieu_naissance, classe_id, tuteur_nom, tuteur_tel,
-    matricule, anciennete_etablissement } = req.body || {};
+    matricule, anciennete_etablissement, statut_scolaire } = req.body || {};
   if (!String(nom || '').trim()) return res.status(400).json({ error: 'Le nom est requis' });
-  let anciennete;
-  try { anciennete = ancienneteValide(anciennete_etablissement, 'nouveau'); }
-  catch (e) { return res.status(400).json({ error: e.message }); }
+  let anciennete, situation;
+  try {
+    anciennete = ancienneteValide(anciennete_etablissement, 'nouveau');
+    situation = statutScolaireValide(statut_scolaire); // anciens clients : situation inconnue
+  } catch (e) { return res.status(400).json({ error: e.message }); }
   if (classe_id && !db.prepare('SELECT 1 FROM classes WHERE id = ? AND ecole_id = ?').get(classe_id, id)) {
     return res.status(400).json({ error: 'Classe invalide' });
   }
@@ -685,10 +688,11 @@ app.post('/api/eleves', auth, directionOnly, (req, res) => {
   db.exec('BEGIN IMMEDIATE');
   try {
     const info = db.prepare(`INSERT INTO eleves (ecole_id, matricule, nom, prenom, sexe, date_naissance, lieu_naissance,
-      classe_id, tuteur_nom, tuteur_tel, statut, anciennete_etablissement, cree_le) VALUES (?,?,?,?,?,?,?,?,?,?, 'actif', ?, ?)`)
+      classe_id, tuteur_nom, tuteur_tel, statut, anciennete_etablissement, statut_scolaire, cree_le)
+      VALUES (?,?,?,?,?,?,?,?,?,?, 'actif', ?, ?, ?)`)
       .run(id, mat, String(nom).trim().toUpperCase(), String(prenom || '').trim(), ['M', 'F'].includes(sexe) ? sexe : '',
         date_naissance || '', lieu_naissance || '',
-        classe_id ? Number(classe_id) : null, tuteur_nom || '', tuteur_tel || '', anciennete, now());
+        classe_id ? Number(classe_id) : null, tuteur_nom || '', tuteur_tel || '', anciennete, situation, now());
     const eleveId = Number(info.lastInsertRowid);
     memoriserInscription(db, id, eleveId, classe_id ? Number(classe_id) : null);
     db.exec('COMMIT');
@@ -706,10 +710,12 @@ app.put('/api/eleves/:id', auth, directionOnly, (req, res) => {
   const b = req.body || {};
   if (!String(b.nom ?? el.nom).trim()) return res.status(400).json({ error: 'Le nom de l’élève est requis.' });
   if (b.statut !== undefined && !['actif', 'inactif'].includes(b.statut))
-    return res.status(400).json({ error: 'Statut scolaire invalide.' });
-  let anciennete;
-  try { anciennete = ancienneteValide(b.anciennete_etablissement, el.anciennete_etablissement); }
-  catch (e) { return res.status(400).json({ error: e.message }); }
+    return res.status(400).json({ error: 'État du dossier invalide (actif ou archivé).' });
+  let anciennete, situation;
+  try {
+    anciennete = ancienneteValide(b.anciennete_etablissement, el.anciennete_etablissement);
+    situation = statutScolaireValide(b.statut_scolaire, el.statut_scolaire);
+  } catch (e) { return res.status(400).json({ error: e.message }); }
   if (b.date_naissance !== undefined) {
     const date = String(b.date_naissance || '').trim();
     if (date && (dateISO(date) !== date || date > today())) {
@@ -728,10 +734,10 @@ app.put('/api/eleves/:id', auth, directionOnly, (req, res) => {
   db.exec('BEGIN IMMEDIATE');
   try {
     db.prepare(`UPDATE eleves SET nom = ?, prenom = ?, sexe = ?, date_naissance = ?, lieu_naissance = ?, classe_id = ?,
-      tuteur_nom = ?, tuteur_tel = ?, statut = ?, anciennete_etablissement = ? WHERE id = ?`).run(
+      tuteur_nom = ?, tuteur_tel = ?, statut = ?, anciennete_etablissement = ?, statut_scolaire = ? WHERE id = ?`).run(
       (b.nom ?? el.nom).toUpperCase(), b.prenom ?? el.prenom, b.sexe ?? el.sexe, b.date_naissance ?? el.date_naissance,
       b.lieu_naissance ?? el.lieu_naissance, classeCible, b.tuteur_nom ?? el.tuteur_nom,
-      b.tuteur_tel ?? el.tuteur_tel, b.statut ?? el.statut, anciennete, el.id);
+      b.tuteur_tel ?? el.tuteur_tel, b.statut ?? el.statut, anciennete, situation, el.id);
     if ((b.statut ?? el.statut) === 'actif') memoriserInscription(db, id, el.id, classeCible);
     db.exec('COMMIT');
     res.json({ ok: true });
@@ -781,15 +787,17 @@ app.post('/api/eleves/import', auth, directionOnly, (req, res) => {
         erreurs.push(`Ligne ${i + 1} : classe inconnue dans cet établissement`); return;
       }
       const anciennete = ancienneteValide(l.anciennete_etablissement); // liste ancienne : ne rien supposer
+      const situation = statutScolaireValide(l.statut_scolaire);
       num++;
       const matricule = `${annee}${String(num).padStart(4, '0')}`;
       db.exec('BEGIN IMMEDIATE');
       try {
         const info = db.prepare(`INSERT INTO eleves (ecole_id, matricule, nom, prenom, sexe, date_naissance, lieu_naissance,
-          classe_id, tuteur_nom, tuteur_tel, statut, anciennete_etablissement, cree_le) VALUES (?,?,?,?,?,?,?,?,?,?, 'actif', ?, ?)`)
+          classe_id, tuteur_nom, tuteur_tel, statut, anciennete_etablissement, statut_scolaire, cree_le)
+          VALUES (?,?,?,?,?,?,?,?,?,?, 'actif', ?, ?, ?)`)
           .run(ecoleId, matricule, nom, prenom, /^f/i.test(l.sexe || '') ? 'F' : /^m/i.test(l.sexe || '') ? 'M' : '',
             l.date_naissance || '', l.lieu_naissance || '', classeCible ? Number(classeCible) : null,
-            l.tuteur_nom || '', l.tuteur_tel || '', anciennete, now());
+            l.tuteur_nom || '', l.tuteur_tel || '', anciennete, situation, now());
         memoriserInscription(db, ecoleId, Number(info.lastInsertRowid), classeCible ? Number(classeCible) : null);
         db.exec('COMMIT');
         crees.push({ nom, prenom, matricule });
@@ -1468,6 +1476,7 @@ app.get('/api/dashboard', auth, staffOnly, (req, res) => {
       OR trim(coalesce(date_naissance, '')) = '' OR trim(coalesce(lieu_naissance, '')) = ''
       OR trim(coalesce(tuteur_nom, '')) = '' OR trim(coalesce(tuteur_tel, '')) = ''
       OR trim(coalesce(anciennete_etablissement, '')) = ''
+      OR trim(coalesce(statut_scolaire, '')) = ''
     )`).get(ecoleId).n;
   let nbMatieres = db.prepare('SELECT COUNT(*) AS n FROM matieres WHERE ecole_id = ?').get(ecoleId).n;
   if (isProf) {

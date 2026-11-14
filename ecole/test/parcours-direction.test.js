@@ -202,7 +202,9 @@ test('HTTP : PDF → élève sans naissance → compléter plus tard sans modifi
   assert.equal(conf.status, 200);
   assert.equal(conf.data.crees, 2);
   const eleve = conf.data.eleves[0];
-  assert.equal((await appeler('/api/eleves', { cookie })).data.find(e => e.id === eleve.id).date_naissance, '');
+  const premiereFiche = (await appeler('/api/eleves', { cookie })).data.find(e => e.id === eleve.id);
+  assert.equal(premiereFiche.date_naissance, '');
+  assert.equal(premiereFiche.statut_scolaire, null, 'import PDF sans historique : redoublement à préciser');
   assert.equal((await appeler('/api/dashboard', { cookie })).data.compteurs.dossiers_a_completer, 2,
     'le chef voit les dossiers à traiter sur son tableau de bord');
   assert.equal((await appeler('/api/eleves/import-pdf/confirmer', { method: 'POST', cookie,
@@ -219,13 +221,15 @@ test('HTTP : PDF → élève sans naissance → compléter plus tard sans modifi
     nom: eleve.nom, prenom: 'Elom', classe_id: classe.data.id,
     sexe: 'M', date_naissance: '2012-04-03', lieu_naissance: 'Lomé',
     tuteur_nom: 'KOUASSI Akou', tuteur_tel: '+228 90 01 02 03',
-    anciennete_etablissement: 'nouveau', statut: 'actif'
+    anciennete_etablissement: 'nouveau', statut_scolaire: 'doublante', statut: 'actif'
   } });
   assert.equal(correction.status, 200, JSON.stringify(correction.data));
   const apres = (await appeler('/api/eleves', { cookie })).data.find(e => e.id === eleve.id);
   assert.equal(apres.date_naissance, '2012-04-03');
   assert.equal(apres.lieu_naissance, 'Lomé');
   assert.equal(apres.tuteur_nom, 'KOUASSI Akou');
+  assert.equal(apres.statut_scolaire, 'doublant');
+  assert.equal(apres.statut, 'actif', 'correction scolaire sans archivage ni modification de facturation');
   assert.equal((await appeler('/api/dashboard', { cookie })).data.compteurs.dossiers_a_completer, 1,
     'un dossier complété disparaît du décompte sans effacer le second');
   assert.equal(base.prepare('SELECT valeur FROM notes WHERE eleve_id=?').get(eleve.id).valeur, 17.25);
@@ -234,6 +238,10 @@ test('HTTP : PDF → élève sans naissance → compléter plus tard sans modifi
   assert.equal((await appeler(`/api/eleves/${eleve.id}`, { method: 'PUT', cookie,
     body: { date_naissance: '2040-01-01' } })).status, 400, 'date future refusée');
   assert.equal((await appeler('/api/eleves', { cookie })).data.find(e => e.id === eleve.id).date_naissance, '2012-04-03');
+  assert.equal((await appeler(`/api/eleves/${eleve.id}`, { method: 'PUT', cookie,
+    body: { statut_scolaire: 'inactif' } })).status, 400,
+  'un état de dossier n’est pas un statut scolaire');
+  assert.equal((await appeler('/api/eleves', { cookie })).data.find(e => e.id === eleve.id).statut_scolaire, 'doublant');
   const prof = await appeler('/api/enseignants', { method: 'POST', cookie, body: {
     nom: 'Prof test', email: 'prof-pdf@test.tg', password: 'test-prof-local'
   } });
@@ -311,15 +319,16 @@ test('HTTP : Word, Excel, CSV et PDF → aperçu → contrôle → inscription, 
     assert.equal(inconnue.classe_id, classe['5ème B']);
 
     const csv = await importer('import.csv', Buffer.from(
-      'Nom;Prénom;Classe;Statut;Anciennete etablissement\n' +
-      'ADJOVI;Ama;6ème A;actif;Nouveau\n' +
-      'KONDO;Akou;4ème C;inactif;\n'));
+      'Nom;Prénom;Classe;Statut;Anciennete etablissement;Statut scolaire\n' +
+      'ADJOVI;Ama;6ème A;actif;Nouveau;Doublante\n' +
+      'KONDO;Akou;4ème C;inactif;;Triplante\n'));
     assert.equal(csv.status, 200, JSON.stringify(csv.data));
     const lignesCsv = csv.data.eleves.map(e => ({ ...e, classe_id: classe[e.classe] }));
     assert.deepEqual((await verifier(lignesCsv)).data.statuts.map(s => s.etat), ['doublon', 'pret']);
     assert.equal((await confirmer(lignesCsv)).data.crees, 1);
     const kondo = (await liste()).data.find(e => e.nom === 'KONDO');
     assert.equal(kondo.anciennete_etablissement, null, 'case vide ne devient pas nouveau');
+    assert.equal(kondo.statut_scolaire, 'triplant', 'colonne scolaire explicite conservée');
     assert.equal(kondo.statut, 'actif', 'CSV « inactif » ne désactive pas un nouvel inscrit');
     assert.equal((await verifier([{ nom: 'AUTRE', classe_id: classeAutre }])).data.statuts[0].etat, 'erreur');
     assert.equal((await confirmer([{ nom: 'AUTRE', classe_id: classeAutre }])).data.crees, 0,
@@ -366,7 +375,8 @@ test('HTTP : Word, Excel, CSV et PDF → aperçu → contrôle → inscription, 
     const complet = await appeler('/api/eleves', { method: 'POST', cookie: a.cookie, body: {
       nom: 'DOSSIER COMPLET', prenom: 'Ama', sexe: 'F', classe_id: classe['4ème C'],
       date_naissance: '2012-03-14', lieu_naissance: 'Lomé',
-      tuteur_nom: 'Parent test', tuteur_tel: '+228 90 00 00 00', anciennete_etablissement: ''
+      tuteur_nom: 'Parent test', tuteur_tel: '+228 90 00 00 00', anciennete_etablissement: '',
+      statut_scolaire: 'nouveau'
     } });
     assert.equal(complet.status, 200);
     const nbDossiers = (await appeler('/api/dashboard', { cookie: a.cookie })).data.compteurs.dossiers_a_completer;

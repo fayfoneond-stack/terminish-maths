@@ -2,6 +2,7 @@
 /** Vérification et inscription après aperçu corrigé, quel que soit le format de la liste. */
 const { dateISO, MAX_ELEVES } = require('./liste-pdf');
 const { ancienneteValide } = require('./anciennete-eleves');
+const { statutScolaireValide } = require('./statut-scolaire');
 
 function erreur(message, status = 400) {
   const e = new Error(message);
@@ -49,6 +50,7 @@ function verifierListe(db, ecoleId, lignes) {
       const sexe = champ(l.sexe, 8, 'Sexe').toUpperCase();
       if (sexe && sexe !== 'M' && sexe !== 'F') throw erreur('Sexe : laissez vide ou indiquez M/F.');
       const anciennete = ancienneteValide(l.anciennete_etablissement); // absence = « À préciser »
+      const situation = statutScolaireValide(l.statut_scolaire); // aucune répétition supposée
       const naissanceSaisie = champ(l.date_naissance, 10, 'Date de naissance');
       const naissance = dateISO(naissanceSaisie);
       if (naissanceSaisie && !naissance) throw erreur('Date de naissance invalide (AAAA-MM-JJ).');
@@ -70,7 +72,7 @@ function verifierListe(db, ecoleId, lignes) {
       personnes.set(cle, classes.get(classeId));
       matricules.add(identite(matricule));
       prets.push({ nom, prenom, sexe, date_naissance: naissance, matricule, classe_id: classeId,
-        anciennete_etablissement: anciennete });
+        anciennete_etablissement: anciennete, statut_scolaire: situation });
       statuts.push({ ligne, etat: 'pret', message: '' });
     } catch (e) {
       statuts.push({ ligne, etat: 'erreur', message: e.message });
@@ -85,12 +87,13 @@ function importerListe(db, ecoleId, lignes, maintenant, apresInsertion = () => {
     db.exec('BEGIN IMMEDIATE');
     try {
       const stmt = db.prepare(`INSERT INTO eleves (ecole_id, matricule, nom, prenom, sexe, date_naissance,
-        lieu_naissance, classe_id, tuteur_nom, tuteur_tel, statut, anciennete_etablissement, cree_le)
-        VALUES (?, ?, ?, ?, ?, ?, '', ?, '', '', 'actif', ?, ?)`);
+        lieu_naissance, classe_id, tuteur_nom, tuteur_tel, statut, anciennete_etablissement,
+        statut_scolaire, cree_le)
+        VALUES (?, ?, ?, ?, ?, ?, '', ?, '', '', 'actif', ?, ?, ?)`);
       const creeLe = maintenant();
       for (const p of prets) {
         const info = stmt.run(ecoleId, p.matricule, p.nom, p.prenom, p.sexe,
-          p.date_naissance, p.classe_id, p.anciennete_etablissement, creeLe);
+          p.date_naissance, p.classe_id, p.anciennete_etablissement, p.statut_scolaire, creeLe);
         apresInsertion(Number(info.lastInsertRowid), p.classe_id);
         eleves.push({ id: Number(info.lastInsertRowid), matricule: p.matricule,
           nom: p.nom, prenom: p.prenom, classe_id: p.classe_id });

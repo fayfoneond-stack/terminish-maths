@@ -603,7 +603,7 @@ table.data .strong { font-weight: 700; }
 .modal.small { max-width: 440px; }
 /* Aperçu des listes PDF, Word, Excel et CSV : cellules éditables et défilement horizontal. */
 .pdf-import .table-wrap { max-height: 52vh; overflow: auto; border: 1px solid var(--bord); }
-.pdf-import table.data { min-width: 1220px; }
+.pdf-import table.data { min-width: 1400px; }
 .pdf-import table.data th { position: sticky; top: 0; z-index: 1; }
 .pdf-import .pdf-input { font: inherit; border: 1px solid #d7e2dc; border-radius: 6px; padding: 6px;
   background: #fff; color: var(--texte); }
@@ -614,7 +614,11 @@ table.data .strong { font-weight: 700; }
 .pdf-import .pdf-sexe { width: 50px; }
 .pdf-import .pdf-date { width: 125px; }
 .pdf-import .pdf-anciennete { width: 190px; }
+.pdf-import .pdf-statut-scolaire { width: 175px; }
 .pdf-import .pdf-attention { color: #9c5900; }
+.eleve-archivage { border: 1px solid var(--bord); border-radius: 9px; margin: 6px 0 14px; padding: 9px 12px; }
+.eleve-archivage summary { cursor: pointer; font-weight: 600; font-size: 13px; }
+.eleve-archivage .field { margin: 12px 0 0; }
 .pdf-import [data-etat] { min-width: 110px; max-width: 160px; }
 .pdf-import tr[data-etat="doublon"], .pdf-import tr[data-etat="erreur"] { background: #fff7ea; }
 @keyframes pop { from { transform: translateY(8px) scale(.99); opacity: .6; } to { transform: none; opacity: 1; } }

@@ -7,6 +7,7 @@
  */
 const crypto = require('node:crypto');
 const { computeClasse } = require('./stats');
+const { statutAnneeSuivante } = require('./statut-scolaire');
 
 const SUIVANT = { '6': '5', '5': '4', '4': '3', '2': '1' };
 function erreur(message, status = 400) {
@@ -27,6 +28,19 @@ function niveauDe(classe) {
     }
   }
   return '';
+}
+/** Même niveau, même cycle, même si la division change (3ème A → 3ème B). */
+function cleNiveauScolaire(classe) {
+  if (!classe) return '';
+  let niveau = niveauDe(classe);
+  if (!niveau) {
+    for (const texte of [classe.niveau, classe.nom]) {
+      const s = String(texte || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase().replace(/\s+/g, '');
+      if (/^T(?:LE|ERM(?:INALE)?)(?:[A-Z0-9-]|$)/.test(s)) { niveau = 'T'; break; }
+    }
+  }
+  return niveau ? `${classe.cycle}:${niveau}` : '';
 }
 function classesPassage(db, ecoleId) {
   const classes = db.prepare('SELECT * FROM classes WHERE ecole_id = ? ORDER BY cycle, niveau, nom').all(ecoleId);
@@ -259,6 +273,30 @@ function annulerPassage(db, ecoleId, classeIdBrut, maintenant) {
     return { ok: true, annules: lignes.length };
   } catch (e) { db.exec('ROLLBACK'); throw e; }
 }
+function actualiserStatutsScolaires(db, ecoleId, anneeTerminee) {
+  // La photo de l'année TERMINÉE précède tous les déplacements de fin d'année.
+  // Une promotion a déjà déplacé l'élève ; un maintien garde le même niveau.
+  const eleves = db.prepare(`SELECT e.id, e.statut_scolaire,
+      COALESCE(ch.nom, origine.nom) AS nom_origine,
+      COALESCE(ch.niveau, origine.niveau) AS niveau_origine,
+      COALESCE(ch.cycle, origine.cycle) AS cycle_origine,
+      cible.nom AS nom_cible, cible.niveau AS niveau_cible, cible.cycle AS cycle_cible
+    FROM inscriptions_historiques h
+    JOIN eleves e ON e.id = h.eleve_id AND e.ecole_id = h.ecole_id AND e.statut = 'actif'
+    JOIN classes origine ON origine.id = h.classe_id AND origine.ecole_id = h.ecole_id
+    JOIN classes cible ON cible.id = e.classe_id AND cible.ecole_id = h.ecole_id
+    LEFT JOIN classes_historiques ch ON ch.ecole_id = h.ecole_id
+      AND ch.annee_scolaire = h.annee_scolaire AND ch.classe_id = h.classe_id
+    WHERE h.ecole_id = ? AND h.annee_scolaire = ?`).all(ecoleId, anneeTerminee);
+  const modifier = db.prepare('UPDATE eleves SET statut_scolaire = ? WHERE id = ? AND ecole_id = ?');
+  for (const e of eleves) {
+    const avant = cleNiveauScolaire({ nom: e.nom_origine, niveau: e.niveau_origine, cycle: e.cycle_origine });
+    const apres = cleNiveauScolaire({ nom: e.nom_cible, niveau: e.niveau_cible, cycle: e.cycle_cible });
+    if (!avant || !apres) continue; // niveaux inconnus : la direction précisera le dossier
+    const suivant = statutAnneeSuivante(e.statut_scolaire, avant === apres);
+    if (suivant !== e.statut_scolaire) modifier.run(suivant, e.id, ecoleId);
+  }
+}
 function ouvrirAnneeSuivante(db, ecoleId, anneeConfirmee) {
   db.exec('BEGIN IMMEDIATE');
   try {
@@ -273,6 +311,7 @@ function ouvrirAnneeSuivante(db, ecoleId, anneeConfirmee) {
     if (db.prepare('SELECT 1 FROM periodes WHERE ecole_id = ? AND annee_scolaire = ?').get(ecoleId, anneeConfirmee))
       throw erreur('Les périodes de la nouvelle année existent déjà.', 409);
     photographierEffectifs(db, ecoleId, options.annee_scolaire);
+    actualiserStatutsScolaires(db, ecoleId, options.annee_scolaire);
     const inserer = db.prepare(`INSERT INTO periodes
       (ecole_id, code, libelle, cycle, ordre, statut, date_debut, date_fin, annee_scolaire)
       VALUES (?, ?, ?, ?, ?, 'ouverte', NULL, NULL, ?)`);

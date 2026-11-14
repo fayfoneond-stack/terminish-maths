@@ -50,6 +50,8 @@ test('CSV Excel (BOM, point-virgule, cellules entre guillemets) : statut adminis
   ]);
   assert.equal(d.eleves[1].anciennete_etablissement, '',
     'ni le statut inactif ni une cellule vide ne veulent dire « nouveau »');
+  assert.deepEqual(d.eleves.map(e => e.statut_scolaire), ['', ''],
+    'ancien CSV « Statut: actif/inactif » : aucune répétition supposée');
   assert.deepEqual(d.avertissements, []);
   const virgules = await analyserCsv('Nom,Prénom,Classe,Statut\nDOSSEH,"Kofi, Junior",6ème A,actif\n');
   assert.equal(virgules.eleves[0].prenom, 'Kofi, Junior');
@@ -62,6 +64,22 @@ test('CSV Excel (BOM, point-virgule, cellules entre guillemets) : statut adminis
   assert.equal(cp1252.eleves[0].prenom, 'Afi');
   assert.equal(cp1252.eleves[0].anciennete_etablissement, 'ancien');
   assert.match(cp1252.avertissements[0], /Windows-1252/);
+});
+
+test('CSV : statut scolaire explicite lu séparément de l’ancienneté et de l’archivage', async () => {
+  const d = await analyserCsv('Nom;Prénom;Classe;Statut;Statut scolaire;Anciennete etablissement\n' +
+    'KONDO;Ama;4ème C;actif;Doublante;Ancienne\n' +
+    'DOSSEH;Afi;4ème C;inactif;Triplante;Nouvelle\n' +
+    'KOUASSI;Akou;4ème C;actif;Quatriplant;\n' +
+    'MENSAH;Eli;4ème C;actif;Nouveau;Ancien\n' +
+    'ADJOVI;Ena;4ème C;inactif;;\n' +
+    'ASSOGBA;Kossi;4ème C;actif;exclu;\n');
+  assert.deepEqual(d.eleves.map(e => e.statut_scolaire),
+    ['doublant', 'triplant', 'quatriplant', 'nouveau', '', '']);
+  assert.deepEqual(d.eleves.map(e => e.anciennete_etablissement),
+    ['ancien', 'nouveau', '', 'ancien', '', '']);
+  assert.equal(d.eleves.at(-1).incertain, true);
+  assert.match(d.avertissements.join(' '), /statut scolaire .*exclu/i);
 });
 
 test('CSV inconnu ou mauvais format : pas d’inscription silencieuse ni de confusion de statut', async () => {

@@ -122,22 +122,30 @@ sur l'écran public de connexion.
    un **`.csv`**. Cliquez sur **« Lire le fichier »** si la lecture ne démarre pas automatiquement. Les fichiers
    sont lus localement par le serveur, sans service externe. Pour les PDF scannés sans texte, l'application
    essaie un OCR français local : relisez soigneusement le résultat.
-3. Dans l'**aperçu**, corrigez les noms, classes, matricules, dates, sexes et choix « Nouveau / Ancien » ;
-   décochez les lignes à écarter, puis cliquez sur **« Confirmer l’inscription »**. Les doublons et classes
-   inconnues sont signalés. **La lecture et la vérification ne créent aucun élève.**
+3. Dans l'**aperçu**, corrigez noms, classes, matricules, dates, sexes, arrivée et statut scolaire
+   (« Nouveau / Doublant / Triplant / Quatriplant ») ; décochez les lignes à écarter, puis cliquez sur
+   **« Confirmer l’inscription »**. Les doublons et classes inconnues sont signalés.
+   **La lecture et la vérification ne créent aucun élève.**
 
 **Nom + classe uniquement obligatoires** dans cet import. Prénom(s), sexe, naissance et matricule peuvent
 rester vides. Un matricule manquant est généré ; aucun sexe ni tuteur n'est inventé. Si la liste n'indique
-pas l'arrivée de l'élève dans cet établissement, elle reste **« À préciser »** : la liste peut être celle
-d'élèves déjà présents depuis longtemps. Le chef peut compléter ou corriger ce choix dans le dossier.
-**Nouveau/Nouvelle devient Ancien/Ancienne uniquement à l'ouverture de l'année scolaire suivante** (menu
-« Décision finale »). Le statut administratif actif/archivé, qui détermine aussi l'effectif facturé, ne dépend
-jamais de ce choix. **Les notes, moyennes et classements existants ne sont pas modifiés.**
+pas l'arrivée ou le statut scolaire, ils restent **« À préciser »** : une liste peut contenir des élèves
+anciens ou redoublants. Un fichier CSV/Word/Excel avec une colonne « Statut scolaire » explicite reconnaît
+« Nouveau », « Doublant », « Triplant » ou « Quatriplant » (féminin accepté). Une colonne « Statut » contenant
+« actif/inactif » ne sert **pas** à déduire un redoublement. L'export CSV conserve les trois champs distincts.
+
+Dans **Scolarité → Élèves → Compléter/Modifier**, le champ **Statut scolaire (dans ce niveau)** prend les
+valeurs Nouveau/Nouvelle (première année dans ce niveau), Doublant/Doublante (deuxième), Triplant/Triplante
+(troisième), Quatriplant/Quatriplante (quatrième **ou plus**) ou « À préciser ». Le chef peut le corriger ;
+les dossiers **déjà enregistrés** restent « À préciser », sans inventer leur passé. Le champ **Arrivée dans
+l'établissement** demeure séparé : « Nouveau/Nouvelle dans l'établissement » devient « Ancien/Ancienne »
+uniquement à l'ouverture de l'année suivante. **Archivage du dossier** (Actif/Archivé) est dans une rubrique
+séparée de la fiche : lui seul détermine l'effectif facturé. Aucun de ces changements n'efface les notes.
 
 **Compléter plus tard :** après confirmation, cliquez sur **« Voir les dossiers à compléter »** ; ou ouvrez
 **Scolarité → Élèves → « À compléter »**, puis **« Compléter »** à côté de l'élève. La liste montre les
-renseignements manquants (naissance, sexe, prénom, tuteur, téléphone ou arrivée). Ils restent facultatifs :
-leur absence n'empêche ni l'inscription ni la saisie des notes.
+renseignements manquants (naissance, sexe, prénom, tuteur, téléphone, arrivée ou statut scolaire). Ils
+restent facultatifs : leur absence n'empêche ni l'inscription ni la saisie des notes.
 
 **Limites :** 8 Mo et 300 élèves par fichier/confirmation ; jusqu'à 15 pages PDF (6 scannées avec OCR),
 15 tableaux Word ou 15 onglets Excel ; CSV jusqu'à 2 000 lignes. Les anciens formats `.doc` et `.xls`
@@ -176,8 +184,12 @@ l'application**, puis vérifiez que les listes et les notes sont complètes avan
    suivante** : de nouvelles périodes sont créées, les notes de l'année terminée ne sont ni effacées ni
    copiées. Les bulletins et classements antérieurs sont accessibles en sélectionnant leur **année dans
    Bulletins ou Résultats** ; les décisions se retrouvent dans **Décision finale → Décisions enregistrées**.
-   À cette ouverture, les élèves « Nouveau/Nouvelle » de cet établissement deviennent « Ancien/Ancienne » ;
-   les dossiers « À préciser » gardent cette mention et les archives actif/inactif ne changent pas.
+   À cette ouverture, les élèves « Nouveau/Nouvelle » de cet établissement deviennent « Ancien/Ancienne ».
+   **Le statut scolaire évolue aussi** selon la photo de la classe de l'année terminée : même niveau (même
+   si la division change) → nouveau devient doublant, doublant devient triplant, puis quatriplant ;
+   changement de niveau → nouveau dans ce niveau. En cas d'historique scolaire inconnu, le maintien dans
+   le même niveau laisse « À préciser » : la direction peut le corriger. Les dossiers sans classe ou
+   archivés ne sont pas modifiés ; l'état actif/archivé et l'effectif facturé ne changent pas.
    Après l'ouverture, une ancienne décision ne peut plus être annulée et les anciennes notes sont protégées.
 
 **Calcul :** moyenne annuelle = moyenne arithmétique des **3 moyennes trimestrielles** (collège) ou des

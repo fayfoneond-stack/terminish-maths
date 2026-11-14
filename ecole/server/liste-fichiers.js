@@ -48,6 +48,15 @@ function ancienneteFichier(v) {
   if (/^ANCIEN(?:NE)?(?:\b|$)/.test(s)) return { valeur: 'ancien' };
   return { valeur: '', incertain: true };
 }
+function statutScolaireFichier(v) {
+  const s = simplifier(v);
+  if (!s || ['A PRECISER', 'INCONNU', 'NON RENSEIGNE'].includes(s)) return { valeur: '' };
+  if (/^NOUVE(?:AU|LLE)(?:\b|$)/.test(s)) return { valeur: 'nouveau' };
+  for (const code of ['doublant', 'triplant', 'quatriplant']) {
+    if (new RegExp(`^${code.toUpperCase()}E?(?:\\b|$)`).test(s)) return { valeur: code };
+  }
+  return { valeur: '', incertain: true };
+}
 function typeColonne(texte) {
   const s = simplifier(texte).replace(/[^A-Z0-9]+/g, ' ').trim();
   if (/^(?:N|NO|NUMERO|RANG|ORDRE)$/.test(s)) return 'numero';
@@ -58,6 +67,7 @@ function typeColonne(texte) {
   if (/^(?:SEXE|GENRE)$/.test(s)) return 'sexe';
   if (/^(?:DATE DE NAISSANCE|DATE NAISSANCE|NAISSANCE|NE LE|NEE LE|DATE DE NAIS)$/.test(s)) return 'date_naissance';
   if (/^(?:CLASSE|DIVISION|NIVEAU)$/.test(s)) return 'classe';
+  if (/^(?:STATUT SCOLAIRE|SITUATION SCOLAIRE|SITUATION DANS LE NIVEAU|REDOUBLEMENT)$/.test(s)) return 'statut_scolaire';
   if (/^(?:ANCIENNETE|ANCIENNETE ETABLISSEMENT|ARRIVEE DANS L ETABLISSEMENT|NOUVEAU ANCIEN|ORIGINE ETABLISSEMENT|STATUT D ENTREE)$/.test(s)) return 'anciennete';
   return '';
 }
@@ -122,16 +132,20 @@ function analyserTableau(lignes, { classe = '', page = 1, depuis1904 = false } =
     if (!naissance && /^\d{4,5}(?:\.\d+)?$/.test(val.date_naissance || ''))
       naissance = dateExcel(val.date_naissance, depuis1904);
     const anciennete = ancienneteFichier(val.anciennete);
-    const incertain = personne.incertain || anciennete.incertain ||
+    const statutScolaire = statutScolaireFichier(val.statut_scolaire);
+    const incertain = personne.incertain || anciennete.incertain || statutScolaire.incertain ||
       Boolean(val.date_naissance && !naissance);
     if (val.anciennete && anciennete.incertain)
       avertissements.push(`Section ${page} : ancienneté « ${val.anciennete.slice(0, 32)} » à préciser dans l’aperçu.`);
+    if (val.statut_scolaire && statutScolaire.incertain)
+      avertissements.push(`Section ${page} : statut scolaire « ${val.statut_scolaire.slice(0, 32)} » à corriger dans l’aperçu.`);
     if (val.date_naissance && !naissance)
       avertissements.push(`Section ${page} : date « ${val.date_naissance.slice(0, 32)} » à corriger dans l’aperçu.`);
     eleves.push({ ...personne, nom: personne.nom.toUpperCase(),
       prenom: personne.prenom, matricule: val.matricule || '', sexe: sexeOptionnel(val.sexe),
       date_naissance: naissance, classe: nomClasse(val.classe) || classeActive,
-      anciennete_etablissement: anciennete.valeur, incertain: Boolean(incertain), page });
+      anciennete_etablissement: anciennete.valeur, statut_scolaire: statutScolaire.valeur,
+      incertain: Boolean(incertain), page });
     if (eleves.length > MAX_ELEVES) throw new Error('Plus de 300 élèves reconnus : importez une classe à la fois.');
   }
   return { eleves, avertissements };
@@ -166,7 +180,7 @@ function analyserWord(zip) {
   }
   if (!eleves.length) {
     const r = lireLignes(paragraphes.map(texte => ({ texte, items: [] })), 1);
-    eleves.push(...r.eleves.map(e => ({ ...e, anciennete_etablissement: '' })));
+    eleves.push(...r.eleves.map(e => ({ ...e, anciennete_etablissement: '', statut_scolaire: '' })));
     avertissements.push(...r.avertissements);
   }
   if (!eleves.length) throw new Error('Aucun élève trouvé dans le Word. Utilisez un tableau avec Nom et Prénom, ou une liste numérotée.');
@@ -321,7 +335,7 @@ async function analyserListeFichier(buffer, nom) {
   if (extension === '.pdf') {
     const resultat = await analyserListePDF(buffer);
     return { ...resultat, format: 'PDF', eleves: resultat.eleves.map(e =>
-      ({ ...e, anciennete_etablissement: '' })) };
+      ({ ...e, anciennete_etablissement: '', statut_scolaire: '' })) };
   }
   if (extension === '.csv') return analyserCsv(buffer);
   const zip = ouvrirZip(buffer);

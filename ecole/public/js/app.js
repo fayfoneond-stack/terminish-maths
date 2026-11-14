@@ -825,7 +825,32 @@
   /* ---------------------------------------------------------------- */
 
   /* ---------------------------- ÉLÈVES ----------------------------- */
-  S.filtresEleves = { q: '', classe_id: '', statut: 'actif', anciennete: '', incomplets: false };
+  S.filtresEleves = { q: '', classe_id: '', statut: 'actif', anciennete: '', situation: '', incomplets: false };
+
+  function libelleStatutScolaire(e) {
+    const libelles = {
+      nouveau: ['Nouveau dans ce niveau', 'Nouvelle dans ce niveau'],
+      doublant: ['Doublant', 'Doublante'],
+      triplant: ['Triplant', 'Triplante'],
+      quatriplant: ['Quatriplant (ou plus)', 'Quatriplante (ou plus)']
+    };
+    const choix = Object.hasOwn(libelles, e.statut_scolaire) ? libelles[e.statut_scolaire] : null;
+    return choix ? e.sexe === 'F' ? choix[1] : e.sexe === 'M'
+      ? choix[0] : `${choix[0]} / ${choix[1]}` : 'À préciser';
+  }
+  function badgeStatutScolaire(e) {
+    const couleur = e.statut_scolaire === 'nouveau' ? 'bleu'
+      : e.statut_scolaire === 'quatriplant' ? 'or' : 'vert';
+    return `<span class="tag ${e.statut_scolaire ? couleur : 'gris'}">${esc(libelleStatutScolaire(e))}</span>`;
+  }
+  function actualiserLibellesStatutScolaire(conteneur, sexe) {
+    const select = conteneur.querySelector('[name="statut_scolaire"], [data-field="statut_scolaire"]');
+    if (!select) return;
+    for (const valeur of ['nouveau', 'doublant', 'triplant', 'quatriplant']) {
+      select.querySelector(`option[value="${valeur}"]`).textContent =
+        libelleStatutScolaire({ statut_scolaire: valeur, sexe });
+    }
+  }
 
   function libelleAnciennete(e) {
     if (e.anciennete_etablissement === 'nouveau') return e.sexe === 'F'
@@ -858,7 +883,8 @@
   function infosACompleter(e) {
     return [['prenom', 'Prénom(s)'], ['sexe', 'Sexe'], ['date_naissance', 'Date de naissance'],
       ['lieu_naissance', 'Lieu de naissance'], ['tuteur_nom', 'Nom du tuteur'],
-      ['tuteur_tel', 'Téléphone du tuteur'], ['anciennete_etablissement', 'Arrivée dans l’établissement']]
+      ['tuteur_tel', 'Téléphone du tuteur'], ['anciennete_etablissement', 'Arrivée dans l’établissement'],
+      ['statut_scolaire', 'Statut scolaire dans ce niveau']]
       .filter(([champ]) => !String(e[champ] || '').trim()).map(([, libelle]) => libelle);
   }
 
@@ -870,7 +896,9 @@
     const rows = await api('/api/eleves?' + params.toString());
     const avecStatut = rows.filter(r => (!f.statut || r.statut === f.statut) &&
       (!f.anciennete || (f.anciennete === 'a_preciser'
-        ? !r.anciennete_etablissement : r.anciennete_etablissement === f.anciennete)));
+        ? !r.anciennete_etablissement : r.anciennete_etablissement === f.anciennete)) &&
+      (!f.situation || (f.situation === 'a_preciser'
+        ? !r.statut_scolaire : r.statut_scolaire === f.situation)));
     const aCompleter = avecStatut.filter(r => r.statut === 'actif' && infosACompleter(r).length);
     const liste = f.incomplets ? aCompleter : avecStatut;
     S.elevesCourants = liste;
@@ -897,7 +925,7 @@
       <div class="table-wrap"><table class="data">
         <thead><tr>
           <th>Matricule</th><th>Nom &amp; prénom(s)</th><th class="center">Sexe</th><th>Classe</th>
-          <th>Tuteur</th><th>Dans l’établissement</th><th class="center">Actif / archivé</th>${S.me.role === 'directeur' ? '<th>Dossier</th>' : ''}<th></th>
+          <th>Statut scolaire</th><th>Tuteur</th><th>Dans l’établissement</th><th class="center">Actif / archivé</th>${S.me.role === 'directeur' ? '<th>Dossier</th>' : ''}<th></th>
         </tr></thead>
         <tbody>${liste.map(e => `
           <tr>
@@ -905,6 +933,7 @@
             <td class="strong">${esc(e.nom)} <span style="font-weight:500">${esc(e.prenom)}</span></td>
             <td class="center">${sexeTag(e.sexe)}</td>
             <td>${e.classe_nom ? `<span class="tag ${e.cycle === 'lycee' ? 'bleu' : 'gris'}">${esc(e.classe_nom)}</span>` : '<span class="muted">Non affecté</span>'}</td>
+            <td>${badgeStatutScolaire(e)}</td>
             <td class="small">${esc(e.tuteur_nom || '—')}${e.tuteur_tel ? `<div class="muted">${esc(e.tuteur_tel)}</div>` : ''}</td>
             <td>${badgeAnciennete(e)}</td>
             <td class="center">${badgeStatut(e.statut)}</td>
@@ -939,11 +968,19 @@
             </div>
           </div>
           ${direction ? `<div class="notice info">Inscrivez les élèves ou importez une liste <b>PDF, Word (.docx), Excel (.xlsx) ou CSV</b>.
-            Nom et classe suffisent. Vérifiez les lignes avant confirmation, notamment « Nouveau / Ancien ».
-            La naissance et le tuteur peuvent être renseignés plus tard via <b>À compléter</b>.</div>` : ''}
+            Nom et classe suffisent. Vérifiez « Nouveau / Doublant / Triplant / Quatriplant »
+            et l’arrivée dans l’établissement ; ces renseignements se corrigent via <b>À compléter</b>.</div>` : ''}
           <div class="toolbar">
             <div class="field"><label>Recherche</label><input id="f-q" placeholder="Nom, prénom ou matricule" value="${esc(S.filtresEleves.q)}"></div>
             <div class="field"><label>Classe</label><select id="f-classe">${optionClasses(S.query.classe_id || S.filtresEleves.classe_id, { vide: 'Toutes les classes' })}</select></div>
+            <div class="field"><label>Statut scolaire</label><select id="f-situation">
+              <option value="" ${!S.filtresEleves.situation ? 'selected' : ''}>Tous</option>
+              <option value="nouveau" ${S.filtresEleves.situation === 'nouveau' ? 'selected' : ''}>Nouveaux / Nouvelles</option>
+              <option value="doublant" ${S.filtresEleves.situation === 'doublant' ? 'selected' : ''}>Doublants / Doublantes</option>
+              <option value="triplant" ${S.filtresEleves.situation === 'triplant' ? 'selected' : ''}>Triplants / Triplantes</option>
+              <option value="quatriplant" ${S.filtresEleves.situation === 'quatriplant' ? 'selected' : ''}>Quatriplants / Quatriplantes</option>
+              <option value="a_preciser" ${S.filtresEleves.situation === 'a_preciser' ? 'selected' : ''}>À préciser</option>
+            </select></div>
             <div class="field"><label>Actif / archivé</label><select id="f-statut">
               <option value="actif" ${S.filtresEleves.statut === 'actif' ? 'selected' : ''}>Actifs</option>
               <option value="inactif" ${S.filtresEleves.statut === 'inactif' ? 'selected' : ''}>Archivés</option>
@@ -972,6 +1009,7 @@
         timer = setTimeout(() => { S.filtresEleves.q = e.target.value.trim(); chargerEleves(); }, 260);
       };
       $('#f-classe').onchange = (e) => { S.filtresEleves.classe_id = e.target.value; chargerEleves(); };
+      $('#f-situation').onchange = (e) => { S.filtresEleves.situation = e.target.value; chargerEleves(); };
       $('#f-anciennete').onchange = (e) => { S.filtresEleves.anciennete = e.target.value; chargerEleves(); };
       $('#f-statut').onchange = (e) => {
         S.filtresEleves.statut = e.target.value;
@@ -1009,7 +1047,7 @@
           <option value="nouveau" ${(!e.id || e.anciennete_etablissement === 'nouveau') ? 'selected' : ''}>${esc(libelleAnciennete({ anciennete_etablissement: 'nouveau', sexe: e.sexe }))}</option>
           <option value="ancien" ${e.anciennete_etablissement === 'ancien' ? 'selected' : ''}>${esc(libelleAnciennete({ anciennete_etablissement: 'ancien', sexe: e.sexe }))}</option>
           <option value="" ${e.id && !e.anciennete_etablissement ? 'selected' : ''}>À préciser</option>
-        </select><div class="hint">« Nouveau » devient « Ancien » à l’ouverture de l’année scolaire suivante. Ce choix ne change pas le statut actif/archivé.</div></div>
+        </select><div class="hint">« Nouveau dans l’établissement » devient « Ancien » à l’ouverture de l’année suivante. Cette arrivée ne détermine pas le redoublement.</div></div>
       <div class="grid2">
         <div class="field"><label>Date de naissance</label><input type="date" name="date_naissance" value="${esc(e.date_naissance || '')}"></div>
         <div class="field"><label>Lieu de naissance</label><input name="lieu_naissance" value="${esc(e.lieu_naissance || '')}" placeholder="Lomé"></div>
@@ -1018,16 +1056,25 @@
         <div class="field"><label>Nom du tuteur</label><input name="tuteur_nom" value="${esc(e.tuteur_nom || '')}"></div>
         <div class="field"><label>Téléphone du tuteur</label><input name="tuteur_tel" value="${esc(e.tuteur_tel || '')}" placeholder="+228 ..."></div>
       </div>
-      ${e.id ? `<div class="field"><label>Statut administratif (archivage et facturation)</label><select name="statut">
-        <option value="actif" ${e.statut === 'actif' ? 'selected' : ''}>Actif</option>
-        <option value="inactif" ${e.statut === 'inactif' ? 'selected' : ''}>Inactif (archivé)</option></select></div>
+      <div class="field"><label>Statut scolaire (dans ce niveau)</label><select name="statut_scolaire">
+        <option value="" ${e.id && !e.statut_scolaire ? 'selected' : ''}>À préciser</option>
+        ${['nouveau', 'doublant', 'triplant', 'quatriplant'].map(v =>
+          `<option value="${v}" ${e.statut_scolaire === v || (!e.id && v === 'nouveau') ? 'selected' : ''}>${esc(libelleStatutScolaire({ statut_scolaire: v, sexe: e.sexe }))}</option>`).join('')}
+      </select><div class="hint">« Nouveau » = première année dans ce niveau, même pour un ancien de l’établissement.
+        Même niveau l’année suivante : doublant, puis triplant, puis quatriplant (ou plus) ; changement de niveau : nouveau.
+        La direction peut corriger ce choix. « À préciser » reste inchangé si l’historique est inconnu.</div></div>
+      ${e.id ? `<details class="eleve-archivage"><summary>Archivage du dossier (${e.statut === 'actif' ? 'actif' : 'archivé'})</summary>
+        <div class="field"><label>État du dossier (archivage et facturation)</label><select name="statut">
+          <option value="actif" ${e.statut === 'actif' ? 'selected' : ''}>Actif</option>
+          <option value="inactif" ${e.statut === 'inactif' ? 'selected' : ''}>Archivé</option></select>
+          <div class="hint">Archiver retire l’élève de l’effectif facturé, sans effacer ses notes.</div></div></details>
         <div class="small muted">Matricule : <b>${esc(e.matricule)}</b></div>`
         : `<div class="field"><label>Matricule</label><input name="matricule" placeholder="Généré automatiquement"><div class="hint">Laissez vide pour une génération automatique (année + numéro).</div></div>`}`;
   }
 
   Object.assign(window.App, {
     ouvrirDossiersIncomplets() {
-      S.filtresEleves = { q: '', classe_id: '', statut: 'actif', anciennete: '', incomplets: true };
+      S.filtresEleves = { q: '', classe_id: '', statut: 'actif', anciennete: '', situation: '', incomplets: true };
       App.go('eleves');
     },
 
@@ -1044,8 +1091,12 @@
         footer: `<button class="btn btn-ghost btn-sm" data-close>Annuler</button><button class="btn btn-primary btn-sm" id="save-eleve">Enregistrer l'élève</button>`
       });
       m.root.querySelector('#eleve-form [name="anciennete_etablissement"]').value = 'nouveau';
-      m.root.querySelector('#eleve-form [name="sexe"]').onchange = ev =>
-        actualiserLibellesAnciennete(m.root.querySelector('#eleve-form'), ev.target.value);
+      m.root.querySelector('#eleve-form [name="statut_scolaire"]').value = 'nouveau';
+      m.root.querySelector('#eleve-form [name="sexe"]').onchange = ev => {
+        const form = m.root.querySelector('#eleve-form');
+        actualiserLibellesAnciennete(form, ev.target.value);
+        actualiserLibellesStatutScolaire(form, ev.target.value);
+      };
       m.root.querySelector('#save-eleve').onclick = async () => {
         const form = m.root.querySelector('#eleve-form');
         if (!form.reportValidity()) return;
@@ -1071,8 +1122,12 @@
         footer: `<button class="btn btn-ghost btn-sm" data-close>Annuler</button><button class="btn btn-primary btn-sm" id="save-eleve">Enregistrer</button>`
       });
       m.root.querySelector('#eleve-form [name="anciennete_etablissement"]').value = e.anciennete_etablissement || '';
-      m.root.querySelector('#eleve-form [name="sexe"]').onchange = ev =>
-        actualiserLibellesAnciennete(m.root.querySelector('#eleve-form'), ev.target.value);
+      m.root.querySelector('#eleve-form [name="statut_scolaire"]').value = e.statut_scolaire || '';
+      m.root.querySelector('#eleve-form [name="sexe"]').onchange = ev => {
+        const form = m.root.querySelector('#eleve-form');
+        actualiserLibellesAnciennete(form, ev.target.value);
+        actualiserLibellesStatutScolaire(form, ev.target.value);
+      };
       m.root.querySelector('#save-eleve').onclick = async () => {
         const form = m.root.querySelector('#eleve-form');
         if (!form.reportValidity()) return;
@@ -1112,7 +1167,7 @@
               <div style="font-size:17px;font-weight:800">${esc(e.nom)} ${esc(e.prenom)}</div>
               <div class="muted small">Matricule ${esc(e.matricule)} · ${e.classe_nom ? esc(e.classe_nom) : 'Sans classe'} · ${e.sexe === 'F' ? 'Féminin' : e.sexe === 'M' ? 'Masculin' : 'Non renseigné'}</div>
             </div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px">${badgeAnciennete(e)} ${badgeStatut(e.statut)}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">${badgeStatutScolaire(e)} ${badgeAnciennete(e)} ${badgeStatut(e.statut)}</div>
           </div>
           <div class="grid2" style="gap:4px 18px;font-size:13px;margin-bottom:16px">
             <div class="stat-line"><span class="muted">Date de naissance</span><b>${dateFr(e.date_naissance)}</b></div>
@@ -1148,9 +1203,10 @@
         body: `<div class="pdf-import">
           <div class="notice info">Choisissez un fichier <b>PDF, Word (.docx), Excel (.xlsx) ou CSV</b> et la classe par défaut.
             Vérifiez les élèves <b>avant</b> l’inscription : nom et classe sont nécessaires ;
-            naissance, sexe et matricule sont facultatifs. Vérifiez « Nouveau / Ancien »
-            pour chaque élève ; sans indication dans le fichier, ce champ reste « À préciser ».
-            Il est indépendant du statut actif/archivé. Aucune note n’est modifiée.
+            naissance, sexe et matricule sont facultatifs. Vérifiez l’arrivée dans l’établissement
+            et le <b>statut scolaire</b> (nouveau, doublant, triplant ou quatriplant) de chaque élève.
+            Sans indication dans le fichier, ces champs restent « À préciser ».
+            Ils ne changent pas l’état actif/archivé. Aucune note n’est modifiée.
             Après l’import, complétez les dossiers via <b>À compléter</b>.</div>
           <div class="grid2">
             <div class="field"><label for="pdf-classe">Classe par défaut *</label>
@@ -1179,7 +1235,7 @@
       const classeReconnue = (nom) => S.classes.find(c => normaliserClasse(c.nom) === normaliserClasse(nom));
       const lignesTableau = () => $$('tr[data-index]', apercu);
       const ligneCorrigee = (tr) => Object.fromEntries(['nom', 'prenom', 'matricule', 'date_naissance',
-        'sexe', 'classe_id', 'anciennete_etablissement']
+        'sexe', 'classe_id', 'anciennete_etablissement', 'statut_scolaire']
         .map(k => [k, tr.querySelector(`[data-field="${k}"]`).value.trim()]));
       const afficherMessage = (texte, type = 'info') => {
         message.innerHTML = `<div class="notice ${type}">${esc(texte)}</div>`;
@@ -1236,11 +1292,11 @@
           const unite = data.format === 'Excel' ? 'onglet(s)' : data.format === 'Word' ? 'tableau(x)' : 'page(s)';
           apercu.innerHTML = `<p class="small" style="margin:14px 0 8px"><b>${eleves.length} nom(s) extrait(s) de ${data.pages} ${unite} (${esc(data.format)}).</b>
             ${data.ocr ? 'PDF scanné lu localement par OCR : vérifiez attentivement les noms.' : 'Fichier lu localement.'}
-            Corrigez, décochez ou choisissez la classe et l’arrivée de chaque élève avant de confirmer.</p>
+            Corrigez, décochez ou choisissez la classe, l’arrivée et le statut scolaire de chaque élève avant de confirmer.</p>
             ${data.avertissements.length ? `<div class="notice warn">${data.avertissements.slice(0, 8).map(esc).join('<br>')}</div>` : ''}
             <div class="table-wrap" aria-label="Aperçu des élèves du fichier"><table class="data">
               <thead><tr><th>Inscrire</th><th>Page / onglet</th><th>Nom *</th><th>Prénom(s)</th><th>Matricule</th><th>Classe *</th>
-                <th>Sexe</th><th>Naissance</th><th>Dans l’établissement</th><th>Vérification</th></tr></thead>
+                <th>Sexe</th><th>Naissance</th><th>Dans l’établissement</th><th>Statut scolaire</th><th>Vérification</th></tr></thead>
               <tbody>${eleves.map((e, i) => {
                 const correspondance = classeReconnue(e.classe);
                 return `<tr data-index="${i}" data-classe-detectee="${correspondance ? 'oui' : ''}">
@@ -1261,12 +1317,18 @@
                     <option value="" ${!e.anciennete_etablissement ? 'selected' : ''}>À préciser</option>
                     <option value="nouveau" ${e.anciennete_etablissement === 'nouveau' ? 'selected' : ''}>${esc(libelleAnciennete({ anciennete_etablissement: 'nouveau', sexe: e.sexe }))}</option>
                     <option value="ancien" ${e.anciennete_etablissement === 'ancien' ? 'selected' : ''}>${esc(libelleAnciennete({ anciennete_etablissement: 'ancien', sexe: e.sexe }))}</option></select></td>
+                  <td><select class="pdf-input pdf-statut-scolaire" data-field="statut_scolaire" aria-label="Statut scolaire ligne ${i + 1}">
+                    <option value="" ${!e.statut_scolaire ? 'selected' : ''}>À préciser</option>
+                    ${['nouveau', 'doublant', 'triplant', 'quatriplant'].map(v =>
+                      `<option value="${v}" ${e.statut_scolaire === v ? 'selected' : ''}>${esc(libelleStatutScolaire({ statut_scolaire: v, sexe: e.sexe }))}</option>`).join('')}
+                  </select></td>
                   <td data-etat class="small muted">À vérifier</td>
                 </tr>`;
               }).join('')}</tbody></table></div>`;
           lignesTableau().forEach((tr, i) => {
             tr.querySelector('[data-field="anciennete_etablissement"]').value =
               eleves[i].anciennete_etablissement || '';
+            tr.querySelector('[data-field="statut_scolaire"]').value = eleves[i].statut_scolaire || '';
           });
           afficherMessage('Aperçu prêt. Aucune inscription n’a encore été créée.');
           await verifier();
@@ -1291,7 +1353,10 @@
       apercu.addEventListener('change', e => {
         const tr = e.target.closest('tr[data-index]');
         if (!tr) return;
-        if (e.target.matches('[data-field="sexe"]')) actualiserLibellesAnciennete(tr, e.target.value);
+        if (e.target.matches('[data-field="sexe"]')) {
+          actualiserLibellesAnciennete(tr, e.target.value);
+          actualiserLibellesStatutScolaire(tr, e.target.value);
+        }
         if (e.target.matches('[data-field="inclure"]')) compter();
         else demanderVerification();
       });
@@ -1336,9 +1401,9 @@
       const m = modal({
         title: 'Importer des élèves', size: 'large',
         body: `
-          <div class="notice info">Collez vos lignes au format <b>NOM ; PRÉNOM ; SEXE ; DATE DE NAISSANCE ; CLASSE ; TUTEUR ; TÉLÉPHONE ; ARRIVÉE</b>.<br>
-          ARRIVÉE = <b>nouveau</b>, <b>ancien</b> ou vide (<b>À préciser</b> par défaut).
-          Une ligne par élève ; les matricules sont générés automatiquement.</div>
+          <div class="notice info">Collez vos lignes au format <b>NOM ; PRÉNOM ; SEXE ; DATE DE NAISSANCE ; CLASSE ; TUTEUR ; TÉLÉPHONE ; ARRIVÉE ; STATUT SCOLAIRE</b>.<br>
+          ARRIVÉE = nouveau, ancien ou vide. STATUT SCOLAIRE = nouveau, doublant, triplant, quatriplant ou vide (« À préciser »).
+          Les deux dernières colonnes sont facultatives. Une ligne par élève ; les matricules sont générés automatiquement.</div>
           <div class="field"><label>Classe par défaut (si la colonne classe est vide)</label>
             <select id="imp-classe">${optionClasses('', { vide: 'Aucune — utiliser la colonne CLASSE' })}</select></div>
           <div class="field"><label>Élèves à importer</label>
@@ -1357,7 +1422,8 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
           const c = l.split(sep).map(x => x.trim());
           const arrivee = String(c[7] || '').toLowerCase();
           return { nom: c[0], prenom: c[1], sexe: c[2], date_naissance: c[3], classe: c[4],
-            tuteur_nom: c[5], tuteur_tel: c[6], anciennete_etablissement:
+            tuteur_nom: c[5], tuteur_tel: c[6], statut_scolaire: c[8] || '',
+            anciennete_etablissement:
               !arrivee ? '' : /^(ancien|ancienne)$/.test(arrivee) ? 'ancien'
                 : /^(nouveau|nouvelle)$/.test(arrivee) ? 'nouveau' : arrivee };
         });
@@ -1378,14 +1444,14 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     exporterEleves() {
       const rows = S.elevesCourants || [];
       if (!rows.length) return toast('Aucun élève à exporter', 'err');
-      const head = 'Matricule;Nom;Prenom;Sexe;Date de naissance;Classe;Tuteur;Telephone tuteur;Statut;Anciennete etablissement\n';
+      const head = 'Matricule;Nom;Prenom;Sexe;Date de naissance;Classe;Tuteur;Telephone tuteur;Statut;Anciennete etablissement;Statut scolaire\n';
       const cellule = v => {
         let texte = String(v ?? '');
         if (/^[=+@\-\t\r]/.test(texte.trimStart())) texte = "'" + texte; // aucune formule Excel à l'ouverture
         return /[;\r\n"]/.test(texte) ? `"${texte.replace(/"/g, '""')}"` : texte;
       };
       const body = rows.map(e => [e.matricule, e.nom, e.prenom, e.sexe, e.date_naissance,
-        e.classe_nom, e.tuteur_nom, e.tuteur_tel, e.statut, e.anciennete_etablissement]
+        e.classe_nom, e.tuteur_nom, e.tuteur_tel, e.statut, e.anciennete_etablissement, e.statut_scolaire]
         .map(cellule).join(';')).join('\n');
       download(`eleves-${(S.etab.nom || 'ecole').replace(/\W+/g, '-')}.csv`, '\ufeff' + head + body, 'text/csv;charset=utf-8');
       toast('Export CSV téléchargé');
@@ -3449,7 +3515,9 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     const annee = S.optionsPassage?.prochaine_annee;
     if (!annee) return;
     const oui = await confirmer(`Ouvrir l’année scolaire <b>${esc(annee)}</b> ?<br>
-      Les élèves « Nouveau/Nouvelle » deviendront « Ancien/Ancienne » ; les dossiers « À préciser » resteront inchangés.
+      Arrivée : « Nouveau/Nouvelle dans l’établissement » deviendra « Ancien/Ancienne ».
+      Statut scolaire : même niveau → doublant, puis triplant, puis quatriplant (ou plus) ;
+      niveau différent → nouveau. Un statut inconnu reste « À préciser » si l’élève reste dans son niveau.
       Les anciens trimestres/semestres, bulletins et décisions restent archivés.`,
     { titre: 'Nouvelle année', danger: false, ok: 'Ouvrir la nouvelle année' });
     if (!oui) return;
@@ -3676,7 +3744,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                 <div class="field"><label>Email</label><input name="email" value="${esc(e.email || '')}"></div>
                 <div class="field"><label>Devise</label><input name="devise" value="${esc(e.devise || 'FCFA')}"></div>
                 <div class="field"><label>Année scolaire</label><input name="annee_scolaire" value="${esc(e.annee_scolaire || '')}" placeholder="2025-2026">
-                  <div class="hint">Corriger l’année initiale uniquement. Pour ouvrir l’année suivante et changer « Nouveau » en « Ancien », utilisez Évaluations → Décision finale.</div></div>
+                  <div class="hint">Corriger l’année initiale uniquement. Pour ouvrir l’année suivante et actualiser l’arrivée et le statut scolaire des élèves, utilisez Évaluations → Décision finale.</div></div>
                 <div class="field"><label>Nom du chef d'établissement</label><input name="chef_nom" value="${esc(e.chef_nom || '')}"></div>
                 <div class="field"><label>Titre / fonction</label><input name="chef_titre" value="${esc(e.chef_titre || "Le Chef d'Établissement")}"></div>
               </div>

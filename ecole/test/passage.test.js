@@ -73,6 +73,11 @@ test('Collège : moyenne des 3 trimestres, aperçu sans écriture, admission et 
   const admis = e.eleve('ADMIS', six), maintenu = e.eleve('MAINTENU', six);
   const incomplet = e.eleve('INCOMPLET', six), ancienCinq = e.eleve('CINQUIEME', cinq);
   const dejaArchive = e.eleve('ARCHIVE', trois);
+  const ecrireSituation = db.prepare('UPDATE eleves SET statut_scolaire = ? WHERE id = ?');
+  ecrireSituation.run('triplant', admis);
+  ecrireSituation.run('nouveau', maintenu);
+  ecrireSituation.run('nouveau', incomplet);
+  ecrireSituation.run('triplant', dejaArchive);
   e.notes(six, 'college', [admis, maintenu, incomplet], [[12, 14, 13], [9, 8, 7], [15, null, 18]]);
   e.notes(cinq, 'college', [ancienCinq], [[10, 11, 12]]);
   e.notes(trois, 'college', [dejaArchive], [[11, 12, 13]]);
@@ -146,6 +151,12 @@ test('Collège : moyenne des 3 trimestres, aperçu sans écriture, admission et 
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM periodes WHERE ecole_id = ? AND annee_scolaire = '2027-2028'")
     .get(e.id).n, 3);
   assert.equal(db.prepare('SELECT COUNT(*) AS n FROM decisions_finales WHERE ecole_id = ?').get(e.id).n, 4);
+  const lireSituation = id => db.prepare('SELECT statut_scolaire FROM eleves WHERE id = ?').get(id).statut_scolaire;
+  assert.equal(lireSituation(admis), 'nouveau', 'admis en 5ème : premier passage dans ce niveau');
+  assert.equal(lireSituation(ancienCinq), 'nouveau', 'admis en 4ème depuis la 5ème');
+  assert.equal(lireSituation(incomplet), 'doublant', 'période manquante : reste en 6ème, nouveau devient doublant');
+  assert.equal(lireSituation(maintenu), 'nouveau', 'dossier archivé : ne change pas');
+  assert.equal(lireSituation(dejaArchive), 'triplant', 'statut scolaire d’un autre élève archivé conservé');
   assert.equal(computeClasse(db, e.id, { classe_id: six, periode_id: t1.id }).resultats.length, 3);
   assert.equal(bulletinData(db, e.id, admis, t1.id).promo.classe.id, six);
   assert.match(renderBulletin(bulletinData(db, e.id, admis, t1.id)), /Année scolaire<strong>2026-2027<\/strong>/);
@@ -294,7 +305,59 @@ test('Ouverture de l’année : Nouveau devient Ancien, inconnus/statuts/autres 
   assert.equal(lire(actifs[2]).anciennete_etablissement, null);
 });
 
-test('Migration ancienne base : ancienneté inconnue, statut/notes préservés, relance idempotente', () => {
+test('Statut scolaire : même niveau entre divisions/années, Tle, inconnu et archivage séparés', () => {
+  const e = ecole('mixte'), autre = ecole('college');
+  const six = e.classe('6ème A', '6ème'), cinq = e.classe('5ème A', '5ème');
+  const troisA = e.classe('3ème A', '3ème'), troisB = e.classe('3ème B', '3ème');
+  const tle = e.classe('Tle D', 'Tle', 'lycee');
+  const declencheur = e.eleve('PHOTO', six);
+  const repete = e.eleve('REPETE', troisA);
+  const terminale = e.eleve('TERMINALE', tle);
+  const inconnu = e.eleve('INCONNU', troisA);
+  const archive = e.eleve('ARCHIVE', tle);
+  const autreId = autre.eleve('AUTRE', null);
+  db.prepare('UPDATE eleves SET statut_scolaire = ? WHERE id = ?').run('nouveau', repete);
+  db.prepare('UPDATE eleves SET statut_scolaire = ? WHERE id = ?').run('triplant', terminale);
+  db.prepare('UPDATE eleves SET statut_scolaire = ? WHERE id = ?').run('doublant', archive);
+  db.prepare('UPDATE eleves SET statut_scolaire = ? WHERE id = ?').run('nouveau', autreId);
+  db.prepare("UPDATE eleves SET statut = 'inactif' WHERE id = ?").run(archive);
+  const lire = id => db.prepare('SELECT statut,statut_scolaire FROM eleves WHERE id = ?').get(id);
+  assert.throws(() => ouvrirAnneeSuivante(db, e.id, '2027-2028'), /Décisions manquantes/);
+  assert.equal(lire(repete).statut_scolaire, 'nouveau', 'ouverture refusée : aucun changement');
+
+  fermerPeriodes(e);
+  const demande = { classe_id: six, cible_id: cinq, seuil: 10 };
+  const apercu = preparerPassage(db, e.id, demande);
+  assert.deepEqual(apercu.lignes.map(l => [l.eleve_id, l.decision]), [[declencheur, 'incomplet']]);
+  validerPassage(db, e.id, { ...demande, empreinte: apercu.empreinte }, e.direction, now);
+  // La photo a gardé 3ème A ; le niveau reste 3ème dans la division B.
+  db.prepare('UPDATE eleves SET classe_id = ? WHERE id = ?').run(troisB, repete);
+  assert.equal(ouvrirAnneeSuivante(db, e.id, '2027-2028').ok, true);
+  assert.equal(lire(repete).statut_scolaire, 'doublant', 'changer de division ≠ changer de niveau');
+  assert.equal(lire(terminale).statut_scolaire, 'quatriplant', 'Tle est un niveau reconnu');
+  assert.equal(lire(inconnu).statut_scolaire, null, 'nombre de redoublements inconnu non inventé');
+  assert.deepEqual({ ...lire(archive) }, { statut: 'inactif', statut_scolaire: 'doublant' });
+  assert.equal(lire(autreId).statut_scolaire, 'nouveau', 'l’autre école n’est pas modifiée');
+  // Sans élève actif en 6ème, aucune décision de passage supplémentaire n'est requise.
+  db.prepare("UPDATE eleves SET statut = 'inactif' WHERE id = ?").run(declencheur);
+  for (const [anneeFinie, anneeSuivanteAttendue, attendu] of [
+    ['2027-2028', '2028-2029', 'triplant'],
+    ['2028-2029', '2029-2030', 'quatriplant'],
+    ['2029-2030', '2030-2031', 'quatriplant']
+  ]) {
+    db.prepare("UPDATE periodes SET statut = 'fermee' WHERE ecole_id = ? AND annee_scolaire = ?")
+      .run(e.id, anneeFinie);
+    ouvrirAnneeSuivante(db, e.id, anneeSuivanteAttendue);
+    assert.equal(lire(repete).statut_scolaire, attendu);
+    assert.equal(lire(terminale).statut_scolaire, 'quatriplant', 'au-delà : quatriplant ou plus');
+    assert.equal(lire(inconnu).statut_scolaire, null);
+    assert.equal(lire(archive).statut_scolaire, 'doublant');
+  }
+  assert.throws(() => ouvrirAnneeSuivante(db, e.id, '2030-2031'), /Année suivante incorrecte/);
+  assert.equal(lire(repete).statut_scolaire, 'quatriplant');
+});
+
+test('Migration ancienne base : ancienneté et statut scolaire inconnus, notes préservées, relance idempotente', () => {
   const ancienDossier = path.join(dossier, 'base-ancienne');
   fs.mkdirSync(ancienDossier);
   const ancienne = new DatabaseSync(path.join(ancienDossier, 'terminish-ecole.db'));
@@ -319,8 +382,8 @@ test('Migration ancienne base : ancienneté inconnue, statut/notes préservés, 
     periode:db.prepare('SELECT annee_scolaire FROM periodes WHERE id=17').get().annee_scolaire,
     examen:db.prepare('SELECT annee_scolaire FROM examens WHERE id=7').get().annee_scolaire,
     note:db.prepare('SELECT valeur FROM notes WHERE id=8').get().valeur,
-    eleve:db.prepare('SELECT matricule,statut,anciennete_etablissement FROM eleves WHERE id=22').get(),
-    colonnes:db.prepare('PRAGMA table_info(eleves)').all().filter(c=>c.name==='anciennete_etablissement').length,
+    eleve:db.prepare('SELECT matricule,statut,anciennete_etablissement,statut_scolaire FROM eleves WHERE id=22').get(),
+    colonnes:db.prepare('PRAGMA table_info(eleves)').all().filter(c=>['anciennete_etablissement','statut_scolaire'].includes(c.name)).length,
     photos:db.prepare('SELECT COUNT(*) AS n FROM inscriptions_historiques').get().n,
     classes:db.prepare('SELECT COUNT(*) AS n FROM classes_historiques').get().n,
     matieres:db.prepare('SELECT COUNT(*) AS n FROM matieres_historiques').get().n,
@@ -336,8 +399,8 @@ test('Migration ancienne base : ancienneté inconnue, statut/notes préservés, 
     assert.ok(ligne, r.stdout);
     assert.deepEqual(JSON.parse(ligne.slice(6)), {
       periode: '2024-2025', examen: '2024-2025', note: 17.25,
-      eleve: { matricule: 'MAT-22', statut: 'inactif', anciennete_etablissement: null },
-      colonnes: 1, photos: 0, classes: 0, matieres: 0, recuperation: 0
+      eleve: { matricule: 'MAT-22', statut: 'inactif', anciennete_etablissement: null, statut_scolaire: null },
+      colonnes: 2, photos: 0, classes: 0, matieres: 0, recuperation: 0
     });
   }
 });

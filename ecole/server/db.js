@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS eleves (
   tuteur_tel TEXT,
   statut TEXT DEFAULT 'actif',               -- actif | inactif : archivage, effectif facturé
   anciennete_etablissement TEXT,              -- nouveau | ancien | NULL (à préciser)
+  statut_scolaire TEXT,                       -- nouveau | doublant | triplant | quatriplant | NULL
   user_id INTEGER REFERENCES utilisateurs(id) ON DELETE SET NULL,
   cree_le TEXT NOT NULL,
   UNIQUE(ecole_id, matricule)
@@ -310,6 +311,9 @@ ensureColumn('paiements', 'transaction_ref', 'TEXT');
 // Ancienneté dans l'établissement distincte d'actif/inactif. Ne rien inventer
 // pour les élèves déjà présents lors de la migration : NULL = « À préciser ».
 ensureColumn('eleves', 'anciennete_etablissement', 'TEXT');
+// Aucun redoublement n'est déductible d'un dossier ancien : laisser NULL.
+// La direction peut préciser la situation dans le niveau depuis la fiche élève.
+ensureColumn('eleves', 'statut_scolaire', 'TEXT');
 ensureColumn('paiements', 'demande_par', 'INTEGER');
 ensureColumn('paiements', 'valide_par', 'INTEGER');
 ensureColumn('paiements', 'valide_le', 'TEXT');
