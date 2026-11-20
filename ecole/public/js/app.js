@@ -98,7 +98,7 @@
     classes: ['Classes', 'Organisation pédagogique et coefficients'],
     matieres: ['Matières', 'Disciplines enseignées'],
     enseignants: ['Enseignants', 'Comptes et affectations'],
-    saisie: ['Saisie des notes', 'Devoirs, compositions et épreuves blanches'],
+    saisie: ['Saisie des notes', 'Note de classe, devoir, composition et épreuves blanches'],
     bulletins: ['Bulletins', 'Résultats, appréciations et publication'],
     statistiques: ['Statistiques', 'Analyses automatiques des résultats'],
     resultats: ['Résultats', 'Fusion de classes et classement de tous les élèves'],
@@ -2064,7 +2064,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       rows = await api(`/api/journal-notes?classe_id=${classeId}&periode_id=${periodeId}&limite=25`);
     } catch (_) { return ''; }
     if (!Array.isArray(rows) || !rows.length) return '';
-    const typeFr = t => t === 'composition' ? 'Composition' : (t === 'devoir1' ? 'Devoir 1' : (t === 'devoir2' ? 'Devoir 2' : 'Évaluation'));
+    const typeFr = t => t === 'composition' ? 'Composition' : (t === 'devoir1' ? 'Note de classe' : (t === 'devoir2' ? 'Devoir' : 'Évaluation'));
     return `
       <div class="panel" style="margin-top:18px">
         <div class="panel-head">
@@ -2143,7 +2143,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         <div class="toolbar saisie-filtres">
           <div class="field" style="min-width:190px"><label for="s-mode">Mode de saisie</label>
             <select id="s-mode">
-              <option value="periode" ${mode === 'periode' ? 'selected' : ''}>Devoirs &amp; composition</option>
+              <option value="periode" ${mode === 'periode' ? 'selected' : ''}>Note de classe · Devoir · Composition</option>
               <option value="epreuve" ${mode === 'epreuve' ? 'selected' : ''}>Examen blanc</option>
             </select>
           </div>
@@ -2275,7 +2275,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     const bareme = mode === 'epreuve' ? fmt(data.epreuve.bareme, 0) : '20';
     const header = mode === 'epreuve'
       ? `<th>Élève</th><th>Note /${bareme}</th><th>Absent</th><th>Appréciation</th>`
-      : `<th style="min-width:210px">Élève</th><th>Devoir 1</th><th>Devoir 2</th><th>Composition</th><th>Moyenne</th><th>Appréciation</th>`;
+      : `<th style="min-width:210px">Élève</th><th>Note de classe</th><th>Devoir</th><th>Composition</th><th>Moyenne</th><th>Appréciation</th>`;
     const evalIds = {};
     if (mode === 'periode') data.evaluations.forEach(ev => evalIds[ev.type] = ev.id);
 
@@ -2312,12 +2312,12 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       const caseNote = (type, libelle) => `<td class="note-cell" data-label="${libelle}">
         ${note(type, libelle, get(type), evalIds[type])}
         <label class="switch abs-toggle"><input type="checkbox" class="abs" data-type="${type}"
-          aria-label="Absent ${type === 'composition' ? 'à la composition' : 'au ' + libelle.toLowerCase()} : ${esc(nom)}"${absent(type)}> Absent</label>
+          aria-label="Absent ${type === 'devoir1' ? 'à la note de classe' : type === 'devoir2' ? 'au devoir' : 'à la composition'} : ${esc(nom)}"${absent(type)}> Absent</label>
       </td>`;
       return `<tr data-eleve="${e.id}">
         ${identite}
-        ${caseNote('devoir1', 'Devoir 1')}
-        ${caseNote('devoir2', 'Devoir 2')}
+        ${caseNote('devoir1', 'Note de classe')}
+        ${caseNote('devoir2', 'Devoir')}
         ${caseNote('composition', 'Composition')}
         <td class="calc" data-label="Moyenne">—</td>
         <td class="appr-cell small muted" data-label="Appréciation">—</td>
@@ -2346,8 +2346,8 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       </div>
       <div class="notice info" style="margin-top:12px">
         <b>Calcul :</b> ${formule === 'moy_co' || formule === 'tiers'
-          ? 'moyenne de la matière = (moyenne des devoirs + composition) ÷ 2'
-          : 'moyenne de la matière = (moyenne des devoirs + 2 × composition) ÷ 3'}.
+          ? 'moyenne de la matière = (moyenne des notes « Note de classe » et « Devoir » + composition) ÷ 2'
+          : 'moyenne de la matière = (moyenne des notes « Note de classe » et « Devoir » + 2 × composition) ÷ 3'}.
         Une absence est exclue du calcul. Une note vide n’est pas enregistrée.
       </div>`;
   }
@@ -2611,7 +2611,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
           </table></div>
           <div class="small muted" style="margin-top:10px">
             ${compoSeule ? 'Moyenne de chaque matière = note de composition. La moyenne générale est la moyenne des compositions pondérée par les coefficients.'
-              : `Formule appliquée : ${(promo.classe.formule_moyenne || S.etab.formule_moyenne) === 'moy_co' ? 'moyenne des devoirs et composition à parts égales' : '(moyenne des devoirs + 2 × composition) ÷ 3'}.`}
+              : `Formule appliquée : ${(promo.classe.formule_moyenne || S.etab.formule_moyenne) === 'moy_co' ? 'moyenne de la note de classe et du devoir, puis composition à parts égales' : '(moyenne de la note de classe et du devoir + 2 × composition) ÷ 3'}.`}
             Moyenne générale = Σ (moyenne × coefficient) ÷ Σ coefficients.
           </div>
         </div>`;
@@ -2770,7 +2770,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
         body: `
           <div class="notice info">Moyenne générale <b>${fmt(r.moyenne)}/20</b> · Rang <b>${r.rang ?? '—'}</b>/${promo.resultats.length} · Mention <b>${esc(r.mention)}</b></div>
           <div class="table-wrap"><table class="data">
-            <thead><tr><th>Matière</th><th class="center">Devoir 1</th><th class="center">Devoir 2</th><th class="center">Composition</th><th class="center">Moyenne</th><th class="center">Coef.</th><th class="center">Points</th><th class="center">Rang</th><th>Appréciation</th></tr></thead>
+            <thead><tr><th>Matière</th><th class="center">Note de classe</th><th class="center">Devoir</th><th class="center">Composition</th><th class="center">Moyenne</th><th class="center">Coef.</th><th class="center">Points</th><th class="center">Rang</th><th>Appréciation</th></tr></thead>
             <tbody>${r.lignes.map(l => `
               <tr>
                 <td class="strong">${esc(l.nom)}</td>
@@ -3112,7 +3112,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
                 </optgroup>` : ''}
               </select>
             </div>
-            ${scopeType !== 'examen' ? `<label class="chip" style="cursor:pointer"><input type="checkbox" id="fu-mode" ${modeComposition ? 'checked' : ''}> Compositions seules (sans devoirs)</label>` : ''}
+            ${scopeType !== 'examen' ? `<label class="chip" style="cursor:pointer"><input type="checkbox" id="fu-mode" ${modeComposition ? 'checked' : ''}> Compositions seules (sans note de classe ni devoir)</label>` : ''}
             ${S.me.role === 'directeur' ? `<button class="btn btn-ghost btn-sm" onclick="App.go('examens')">🎯 Programmer un examen blanc</button>` : ''}
           </div>
           <div class="small muted">${scopeType === 'examen'
@@ -3155,7 +3155,7 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
           ${selecteur}
           ${!totalNotes ? `<div class="notice warn">Aucune moyenne disponible pour cette source : le PDF sera disponible après la saisie des notes.</div>` : ''}
           ${d.examen ? `<div class="notice info">Résultats de l’examen blanc programmé « ${esc(d.examen.nom)} » : seules les épreuves de cet examen sont utilisées.</div>`
-            : modeComposition ? `<div class="notice info">Composition seule : les devoirs sont exclus. La direction peut télécharger le PDF de proclamation pour présenter ces résultats comme examen blanc. Cela ne crée pas d’épreuve et ne publie rien aux familles.</div>` : ''}
+            : modeComposition ? `<div class="notice info">Composition seule : la note de classe et le devoir sont exclus. La direction peut télécharger le PDF de proclamation pour présenter ces résultats comme examen blanc. Cela ne crée pas d’épreuve et ne publie rien aux familles.</div>` : ''}
 
           <div class="cards" style="margin-top:12px">
             <div class="kpi accent"><div class="lbl">Élèves réunis</div><div class="val">${st.effectif_total}</div><div class="sub">${d.classes.length} classe${d.classes.length > 1 ? 's' : ''}</div></div>
@@ -3773,12 +3773,12 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
               <input type="hidden" name="formule_moyenne" id="formule-input" value="${esc(e.formule_moyenne || 'co2')}">
               <div class="formules-choix">
                 <label class="plan" style="padding:14px;cursor:pointer;border-color:${(e.formule_moyenne || 'co2') === 'co2' ? 'var(--vert)' : 'var(--bord)'}" data-formule-card="co2">
-                  <div style="display:flex;gap:8px;align-items:center"><input type="radio" name="fm" value="co2" ${(e.formule_moyenne || 'co2') === 'co2' ? 'checked' : ''}><b style="font-size:13.5px">Devoirs + 2 × Composition</b></div>
-                  <div class="small muted" style="margin-top:6px;padding-left:22px">Moyenne = (moyenne des devoirs + 2 × composition) ÷ 3. Formule classique la plus répandue.</div>
+                  <div style="display:flex;gap:8px;align-items:center"><input type="radio" name="fm" value="co2" ${(e.formule_moyenne || 'co2') === 'co2' ? 'checked' : ''}><b style="font-size:13.5px">Notes de classe et de devoir + 2 × Composition</b></div>
+                  <div class="small muted" style="margin-top:6px;padding-left:22px">Moyenne = (moyenne de la note de classe et du devoir + 2 × composition) ÷ 3. Formule classique la plus répandue.</div>
                 </label>
                 <label class="plan" style="padding:14px;cursor:pointer;border-color:${e.formule_moyenne === 'moy_co' ? 'var(--vert)' : 'var(--bord)'}" data-formule-card="moy_co">
                   <div style="display:flex;gap:8px;align-items:center"><input type="radio" name="fm" value="moy_co" ${e.formule_moyenne === 'moy_co' ? 'checked' : ''}><b style="font-size:13.5px">Moyenne + Composition</b></div>
-                  <div class="small muted" style="margin-top:6px;padding-left:22px">Moyenne = (moyenne des devoirs + composition) ÷ 2. Utilisée dans plusieurs établissements.</div>
+                  <div class="small muted" style="margin-top:6px;padding-left:22px">Moyenne = (moyenne de la note de classe et du devoir + composition) ÷ 2. Utilisée dans plusieurs établissements.</div>
                 </label>
               </div>
             </div>

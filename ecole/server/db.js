@@ -653,7 +653,7 @@ function seedDemo() {
         ['devoir1', 'devoir2', 'composition'].forEach((type, ti) => {
           if (!complet && mi > 2) return;
           if (!complet && ti === 2 && mi > 1) return;
-          const libelle = type === 'composition' ? 'Composition' : `Devoir ${ti + 1}`;
+          const libelle = type === 'composition' ? 'Composition' : (type === 'devoir1' ? 'Note de classe' : 'Devoir');
           const evId = Number(insertEval.run(ecoleId, c.id, m.id, periode.id, type, libelle, now()).lastInsertRowid);
           elevesClasse.forEach(e => {
             const niveauEleve = profilClasse + (e.force - 0.5) * 6.5;

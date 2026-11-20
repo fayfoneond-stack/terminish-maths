@@ -1076,7 +1076,8 @@ app.post('/api/notes/saisie', auth, staffOnly, (req, res) => {
     if (!db.prepare('SELECT 1 FROM classe_matieres WHERE classe_id = ? AND matiere_id = ?').get(classe_id, matiere_id)) {
       return res.status(400).json({ error: 'Cette matière n’est pas enseignée dans cette classe' });
     }
-    const libelle = type === 'composition' ? 'Composition' : (type === 'devoir1' ? 'Devoir 1' : 'Devoir 2');
+    // Identifiants historiques inchangés pour conserver toutes les notes.
+    const libelle = type === 'composition' ? 'Composition' : (type === 'devoir1' ? 'Note de classe' : 'Devoir');
     evaluation = getOrCreateEvaluation(ecoleId, Number(classe_id), Number(matiere_id), Number(periode_id), type, libelle);
   }
 

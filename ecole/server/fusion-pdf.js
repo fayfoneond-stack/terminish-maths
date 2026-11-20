@@ -44,8 +44,8 @@ function genererFusionPDF(fusion, { proclamation = false } = {}) {
       const source = proclamation
         ? `Examen blanc proclamé à partir des compositions de ${texte(fusion.periode.libelle)}. Ce document n'utilise pas les épreuves d'un examen programmé.`
         : fusion.examen ? `Notes des épreuves de l'examen blanc programmé : ${texte(fusion.examen.nom)}.`
-          : compo ? `Notes de composition seules — ${texte(fusion.periode.libelle)}. Devoirs exclus du calcul.`
-            : `Toutes les notes de ${texte(fusion.periode?.libelle)} (devoirs et compositions).`;
+          : compo ? `Notes de composition seules — ${texte(fusion.periode.libelle)}. Note de classe et devoir exclus du calcul.`
+            : `Toutes les notes de ${texte(fusion.periode?.libelle)} (note de classe, devoir et composition).`;
       const doc = new PDFDocument({ size: 'A4', autoFirstPage: false, bufferPages: true, margin: 0,
         info: { Title: `${titre} — ${texte(etab.nom)}`, Author: texte(etab.nom) || 'Terminish École',
           Subject: source, Keywords: 'classement, fusion, résultats, compositions, examen blanc' } });

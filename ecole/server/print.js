@@ -200,7 +200,7 @@ function renderBulletin({ promo, ligne, bulletin, eleve, professeurs = {}, princ
     <thead>
       <tr>
         <th style="width:27%">Matières</th>
-        ${modeComposition ? '' : '<th>Devoir 1</th><th>Devoir 2</th>'}
+        ${modeComposition ? '' : '<th>Note de classe</th><th>Devoir</th>'}
         <th>Composition</th>
         <th>Moyenne</th><th>Coef.</th><th>Moy. × Coef.</th><th>Rang</th>
         <th style="width:15%">Appréciation</th>

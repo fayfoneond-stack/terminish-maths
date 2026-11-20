@@ -87,7 +87,7 @@ sur l'écran public de connexion.
 ### Enseignant
 - Connexion à distance depuis n'importe quel appareil.
 - Accès **limité à ses classes et matières** (contrôlé côté serveur).
-- Saisie des devoirs et compositions avec calcul de moyenne en direct, navigation clavier (`Entrée`),
+- Saisie de la note de classe, du devoir et de la composition avec calcul de moyenne en direct, navigation clavier (`Entrée`),
   enregistrement des seules cases modifiées, verrouillage si la période est clôturée.
 - Sur **Android**, l'écran « Saisie des notes » présente **une fiche par élève**, avec de grands champs
   numériques et les absences à cocher ; sur **ordinateur**, il reste un tableau. Choisissez la classe,
@@ -209,9 +209,10 @@ doté de résultats : privilégiez l'archivage.
 ## 3. Règles de calcul
 
 - Moyenne par matière (paramétrable par établissement) :
-  - `co2` (défaut) : `(moyenne des devoirs + 2 × composition) ÷ 3`
-  - `moy_co` : `(moyenne des devoirs + composition) ÷ 2`
-  - une absence ou une note non saisie est exclue ;
+  - `co2` (défaut) : `(moyenne de la note de classe et du devoir + 2 × composition) ÷ 3`
+  - `moy_co` : `(moyenne de la note de classe et du devoir + composition) ÷ 2`
+  - une absence ou une note non saisie est exclue. Les identifiants techniques `devoir1` et `devoir2`
+    restent inchangés pour conserver toutes les notes existantes ; seul le nom affiché change ;
 - Moyenne générale : `Σ (moyenne matière × coefficient) ÷ Σ coefficients` (seules les matières évaluées comptent).
 - Rang : classement « compétition » (1, 1, 3…), non classé si aucune moyenne. Il figure sur **chaque
   bulletin** (bloc « Résultats et positionnement » + colonne Rang par matière) et sur les **relevés
@@ -492,8 +493,9 @@ réception et indésirables ; si besoin, consulter les journaux du site).
 
 - Interface : *Bulletins* → **Type de bulletin → Composition seule**, puis 🖨️ *Bulletins de composition*.
 - URL directe : `/print/classe/:classeId?periode_id=…&mode=composition` (ou `/print/bulletin/:eleveId?...`).
-- Le bulletin s'intitule alors « **Bulletin de composition** », les colonnes Devoir 1 / Devoir 2
-  disparaissent, seules les compositions et les moyennes de composition sont imprimées, avec le rang
+- Le bulletin complet affiche **Note de classe → Devoir → Composition**. En mode « Bulletin de
+  composition », les colonnes Note de classe / Devoir disparaissent ; seules les compositions et les
+  moyennes de composition sont imprimées, avec le rang
   recalculé sur ces notes.
 - Les bulletins complets restent disponibles : l'option **remplace l'affichage à l'écran**, elle ne
   supprime rien.
@@ -513,7 +515,7 @@ réception et indésirables ; si besoin, consulter les journaux du site).
   **répartition note par note par matière** (histogramme 0→20 et tableau), **répartition des moyennes
   générales**, **classement fusionné** et repères par classe (premier de chaque division et son rang
   dans le niveau).
-- **Deux sources indépendantes** : sélectionnez une période puis cochez **Compositions seules (sans devoirs)**
+- **Deux sources indépendantes** : sélectionnez une période puis cochez **Compositions seules (sans note de classe ni devoir)**
   pour utiliser uniquement les notes de composition, ou choisissez dans **Source des résultats** un
   **examen blanc programmé** (ses épreuves et notes sont distinctes). La direction peut passer par
   **🎯 Programmer un examen blanc** pour créer une épreuve séparée.

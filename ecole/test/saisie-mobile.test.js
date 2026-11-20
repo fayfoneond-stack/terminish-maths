@@ -13,8 +13,8 @@ const { moyenneCalc, noteValide } = sandbox.window;
 
 test('moyenne en direct : les absences gardent leur place et la formule de la classe est respectée', () => {
   assert.equal(moyenneCalc(['', '', '12,5']), 12.5, 'composition seule, pas un devoir');
-  assert.equal(moyenneCalc([null, '8', '14']), 12, 'devoir 1 absent, devoir 2 et composition');
-  assert.equal(moyenneCalc(['10', null, '20']), 50 / 3, 'devoir 2 absent, pondération de la composition');
+  assert.equal(moyenneCalc([null, '8', '14']), 12, 'note de classe absente, devoir et composition');
+  assert.equal(moyenneCalc(['10', null, '20']), 50 / 3, 'devoir absent, note de classe et composition pondérée');
   assert.equal(moyenneCalc([null, '8', '14'], 'moy_co'), 11, 'formule alternative');
   assert.equal(moyenneCalc(['', '', '12,5'], 'moy_co'), 12.5);
   assert.equal(moyenneCalc(['10', '14', '18'], 'tiers'), 15, 'formule tiers de la classe');
