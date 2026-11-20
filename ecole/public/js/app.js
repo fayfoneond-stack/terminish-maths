@@ -1834,11 +1834,23 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
     let courante = initiale || null;      // URL d'origine (déjà enregistrée)
     let nouvelle = null;                  // data URL à envoyer
 
+    const verifierApercu = () => {
+      const image = apercu.querySelector('img');
+      if (!image) return;
+      const absente = () => {
+        if (!image.isConnected) return;
+        apercu.innerHTML = '<div class="sig-vide-txt">Photo introuvable.<br>Importez-la à nouveau avant d’imprimer.</div>';
+      };
+      image.addEventListener('error', absente, { once: true });
+      if (image.complete && !image.naturalWidth) absente();
+    };
+    verifierApercu(); // photo déjà enregistrée, même si le lien est en cache
     const rendre = (src) => {
       apercu.innerHTML = src
         ? `<img src="${esc(src)}" alt="signature">`
         : '<div class="sig-vide-txt">Glissez ici une photo de la signature<br><span>ou cliquez pour choisir un fichier</span></div>';
       if (boutonEffacer) boutonEffacer.style.display = src ? '' : 'none';
+      verifierApercu();
     };
 
     const prendre = async (f) => {
@@ -3721,6 +3733,12 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
       const e = await api('/api/etablissement');
       S.etab = e;
       const logo = e.logo || '';
+      const nomSignature = nom => String(nom || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/^(?:monsieur|madame|mme|m)(?:\.\s*|\s+)/i, '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+      const photoGeree = e.chef_signature_nom != null &&
+        nomSignature(e.chef_signature_nom) === nomSignature(e.chef_nom);
+      const sigChefAffichee = photoGeree ? e.chef_signature :
+        S.me.role === 'directeur' && nomSignature(S.me.nom) === nomSignature(e.chef_nom) ? S.signature : null;
       return `
         <form id="etab-form">
         <div class="two-col">
@@ -3782,8 +3800,9 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
               <div class="notice info" style="margin:12px 0 0">Le logo et les informations de l'établissement sont imprimés sur chaque bulletin, y compris lors de l'impression en lot.</div>
 
               <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--bord)">
-                ${signatureHtml(S.signature || null, { id: 'sig-chef', label: "Signature du chef d'établissement (imprimée sur les bulletins)" })}
-                <button type="button" class="btn btn-ghost btn-sm" id="btn-sig-chef">✍️ Enregistrer ma signature</button>
+                ${signatureHtml(sigChefAffichee || null, { id: 'sig-chef', label: "Signature du chef d'établissement (imprimée sur les bulletins)" })}
+                ${e.chef_signature && !photoGeree ? '<div class="hint" style="color:#9a3412">Le nom du chef a changé : importez sa nouvelle signature pour éviter de signer au nom de l’ancien chef.</div>' : ''}
+                <button type="button" class="btn btn-ghost btn-sm" id="btn-sig-chef">✍️ Enregistrer la signature du chef</button>
               </div>
             </div>
 
@@ -3864,15 +3883,16 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
 
       // Signature du chef d'établissement : importée une fois, apposée ensuite
       // automatiquement sur chaque bulletin.
-      const lireSigChef = monterSignature(document, 'sig-chef', S.signature || null);
+      const lireSigChef = monterSignature(document, 'sig-chef', $('#sig-chef-apercu img')?.getAttribute('src') || null);
       const btnSig = $('#btn-sig-chef');
       if (btnSig) btnSig.onclick = async () => {
         const valeur = lireSigChef();
         if (valeur === undefined) return toast('Choisissez d’abord une image de signature.', 'err');
         try {
-          const res = await api('/api/moi/signature', { method: 'PUT', body: { signature: valeur } });
-          S.signature = res.signature || null;
-          toast(valeur ? 'Signature enregistrée — elle apparaîtra sur les bulletins' : 'Signature retirée');
+          const res = await api('/api/etablissement/signature', { method: 'PUT', body: { signature: valeur } });
+          S.etab.chef_signature = res.signature;
+          S.etab.chef_signature_nom = res.chef_signature_nom;
+          toast(valeur ? 'Signature du chef enregistrée — elle apparaîtra sur les bulletins' : 'Signature du chef retirée');
         } catch (err) { toast(err.message, 'err'); }
       };
 
@@ -4463,9 +4483,9 @@ KOUASSI;Elom;M;2011-11-02;5ème A;;"></textarea>
               <h4 style="margin:14px 0 8px;font-size:13px">🗄️ Stockage externe <span class="tag gris">MEGA · Cloudinary · Google Drive</span></h4>
               ${vueStockage(stock)}
               <div class="notice info" style="margin:10px 0 0">
-                <b>Ce qui part à l’extérieur :</b> signatures, logos et pièces jointes.<br>
-                <b>Ce qui ne sort jamais :</b> notes, élèves, bulletins — ils restent dans la base SQLite de l’établissement.<br>
-                Le disque du serveur garde toujours une copie de secours : si MEGA tombe, le site continue de fonctionner.
+                <b>Ce qui peut partir à l’extérieur :</b> logos et pièces jointes, si un service est configuré.<br>
+                <b>Signatures :</b> enregistrées dans data/media pour être lisibles sur les bulletins, même si MEGA est configuré.<br>
+                <b>Ce qui ne sort jamais :</b> notes, élèves, bulletins — ils restent dans SQLite. Sauvegardez la base et data/media.
               </div>
 
               <h4 style="margin:14px 0 8px;font-size:13px">🧾 Identité sur les reçus</h4>

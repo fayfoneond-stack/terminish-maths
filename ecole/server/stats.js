@@ -385,12 +385,24 @@ function bulletinData(db, ecoleId, eleveId, periodeId, options = {}) {
   }
   if (!principal && classe && classe.titulaire) principal = { id: null, nom: classe.titulaire, signature: null };
 
-  /* --- Chef d'établissement : nom affiché + sa signature ---------------- */
-  const chefUser = db.prepare("SELECT nom, signature FROM utilisateurs WHERE ecole_id = ? AND role = 'directeur' ORDER BY id LIMIT 1").get(ecoleId);
+  /* --- Chef : la photo doit appartenir au NOM imprimé, pas au premier
+     compte direction (qui peut être désactivé ou être une autre personne). */
+  const etab = promo.etablissement || {};
+  const nomChef = String(etab.chef_nom || '').trim();
+  const normaliserNom = nom => String(nom || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/^(?:monsieur|madame|mme|m)(?:\.\s*|\s+)/i, '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+  const directeurs = db.prepare("SELECT nom, signature FROM utilisateurs WHERE ecole_id = ? AND role = 'directeur' AND actif = 1 ORDER BY id").all(ecoleId);
+  const chefUser = nomChef
+    ? directeurs.find(u => normaliserNom(u.nom) === normaliserNom(nomChef))
+    : directeurs[0];
+  // chef_signature_nom indique que la photo officielle a été explicitement
+  // gérée : même si elle est retirée, ne pas réutiliser une photo personnelle.
+  const signatureGeree = etab.chef_signature_nom != null &&
+    normaliserNom(etab.chef_signature_nom) === normaliserNom(nomChef);
   const chef = {
-    nom: (promo.etablissement && promo.etablissement.chef_nom) || (chefUser && chefUser.nom) || '',
-    titre: (promo.etablissement && promo.etablissement.chef_titre) || "Le Chef d'Établissement",
-    signature: (chefUser && chefUser.signature) || null
+    nom: nomChef || (chefUser && chefUser.nom) || '',
+    titre: etab.chef_titre || "Le Chef d'Établissement",
+    signature: signatureGeree ? (etab.chef_signature || null) : ((chefUser && chefUser.signature) || null)
   };
 
   return { promo, ligne, bulletin, eleve, professeurs, principal: principal || null, chef };

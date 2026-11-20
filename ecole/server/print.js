@@ -64,8 +64,53 @@ table.notes td.sigcell img.sig-mat { display: block; margin: 0 auto; max-height:
 .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; opacity: .045; font-size: 70px; font-weight: 900; transform: rotate(-28deg); color: #0b3d2e; letter-spacing: 4px; }
 .noprint { text-align: center; padding: 8px; }
 .noprint button { background: #0b6b4a; color: #fff; border: 0; padding: 9px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; }
-@media print { body { background: #fff; } .noprint { display: none; } .page { margin: 0; width: auto; min-height: auto; padding: 0; } }
+@media print { body { background: #fff; } .noprint { display: none; } .page { margin: 0; width: auto; min-height: 280mm; padding: 0 0 12mm; } .foot { bottom: 0; left: 0; right: 0; } }
 `;
+
+// La photo est incorporée au bulletin par le serveur. Attendre quand même son
+// décodage dans le navigateur avant d'ouvrir le dialogue PDF (Android compris).
+const SCRIPT_IMPRESSION = `<script>
+async function imprimerBulletin() {
+  const photos = [...document.querySelectorAll('.page img')];
+  const chargees = await Promise.all(photos.map(img => new Promise(resolve => {
+    if (img.complete) return resolve(img.naturalWidth > 0);
+    let fini = false;
+    const terminer = ok => {
+      if (fini) return;
+      fini = true;
+      clearTimeout(delai);
+      img.removeEventListener('load', chargee);
+      img.removeEventListener('error', ratee);
+      resolve(ok);
+    };
+    const chargee = () => terminer(img.naturalWidth > 0);
+    const ratee = () => terminer(false);
+    const delai = setTimeout(() => terminer(false), 10000);
+    img.addEventListener('load', chargee, { once: true });
+    img.addEventListener('error', ratee, { once: true });
+    if (img.complete) terminer(img.naturalWidth > 0);
+  })));
+  if ((!chargees.every(Boolean) || document.querySelector('[data-signature-indisponible]')) &&
+      !window.confirm('Une ou plusieurs images ne sont pas disponibles. Imprimer sans ces photos ?')) return;
+  window.print();
+}
+</script>`;
+
+function avisSignatures(list) {
+  const cassées = new Set();
+  list.forEach(b => {
+    Object.values(b.professeurs || {}).forEach(p => { if (p.signature_indisponible) cassées.add(p.nom); });
+    if (b.principal?.signature_indisponible) cassées.add(b.principal.nom);
+    if (b.chef?.signature_indisponible) cassées.add(b.chef.nom || 'chef d’établissement');
+  });
+  const avertissement = cassées.size
+    ? `<span class="avertissement" data-signature-indisponible="1" style="display:block;color:#9a3412;margin:6px">Photo de signature introuvable : ${[...cassées].map(esc).join(', ')}. Réimportez-la dans Enseignants ou Paramètres → Logo &amp; signature. Vous pouvez aussi signer à la main.</span>`
+    : '';
+  const chefNonSigne = list.some(b => b.chef && !b.chef.signature && !b.chef.signature_indisponible);
+  return avertissement + (chefNonSigne
+    ? '<span style="display:block;color:#5b6c61;margin:4px">Aucune signature du chef sélectionnée : Paramètres → Logo &amp; signature pour ajouter sa photo.</span>'
+    : '');
+}
 
 function noteCell(v) {
   if (v == null) return '<td>—</td>';
@@ -119,7 +164,7 @@ function renderBulletin({ promo, ligne, bulletin, eleve, professeurs = {}, princ
 <title>Bulletin ${esc(eleve.nom)} ${esc(eleve.prenom)} — ${esc(periode.libelle)}</title>
 <style>${CSS}</style></head>
 <body>
-<div class="noprint"><button onclick="window.print()">🖨️ Imprimer / Enregistrer en PDF</button></div>
+<div class="noprint"><button onclick="imprimerBulletin()">🖨️ Imprimer / Enregistrer en PDF</button>${avisSignatures([{ professeurs, principal, chef }])}</div>
 <div class="page">
   <div class="watermark">${esc(etab.nom)}</div>
   <div class="head">
@@ -224,7 +269,7 @@ function renderBulletin({ promo, ligne, bulletin, eleve, professeurs = {}, princ
     <span>Terminish École — Plateforme de gestion scolaire</span>
   </div>
 </div>
-</body></html>`;
+${SCRIPT_IMPRESSION}</body></html>`;
 }
 
 function defaultAppreciation(moy, rang, effectif) {
@@ -241,14 +286,15 @@ function renderBulletinBatch(list, periode) {
   if (!list.length) return '<p style="font-family:sans-serif;padding:20px">Aucun élève dans cette classe.</p>';
   const pages = list.map((b, i) => {
     const html = renderBulletin(b);
-    const body = html.split('<body>')[1].split('</body>')[0].replace(/<div class="noprint">[\s\S]*?<\/div>/, '');
+    const body = html.split('<body>')[1].split('</body>')[0]
+      .replace(/<div class="noprint">[\s\S]*?<\/div>/, '').replace(SCRIPT_IMPRESSION, '');
     return body.replace('<div class="page">', `<div class="page" style="${i > 0 ? 'page-break-before:always;' : ''}">`);
   }).join('\n');
   const etab = list[0].promo.etablissement;
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
 <title>Bulletins ${esc(periode.libelle)} — ${esc(etab.nom)}</title><style>${CSS}</style></head>
-<body><div class="noprint"><button onclick="window.print()">🖨️ Imprimer toute la classe (${list.length} bulletins)</button></div>
-${pages}</body></html>`;
+<body><div class="noprint"><button onclick="imprimerBulletin()">🖨️ Imprimer toute la classe (${list.length} bulletins)</button>${avisSignatures(list)}</div>
+${pages}${SCRIPT_IMPRESSION}</body></html>`;
 }
 
 const CSS_EXAM = `

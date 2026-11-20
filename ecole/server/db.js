@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS etablissements (
   devise TEXT DEFAULT 'FCFA',
   logo TEXT,                                    -- data URL
   chef_nom TEXT, chef_titre TEXT DEFAULT 'Le Chef d''Établissement',
+  chef_signature TEXT, chef_signature_nom TEXT,
   annee_scolaire TEXT DEFAULT '2025-2026',
   formule_moyenne TEXT DEFAULT 'co2',           -- co2 | moy_co | tiers
   plan TEXT DEFAULT 'essai',                    -- essai | essentiel | standard | reseau
@@ -359,6 +360,10 @@ if (!avaitNomCollege) {
 // professeur titulaire de la classe, et signature du chef d'établissement.
 ensureColumn('utilisateurs', 'signature', 'TEXT');
 ensureColumn('utilisateurs', 'signature_provider', 'TEXT');
+// Photo officielle propre à l'établissement : la signature personnelle d'un
+// directeur (ou du super-admin) ne doit pas signer au nom d'un autre chef.
+ensureColumn('etablissements', 'chef_signature', 'TEXT');
+ensureColumn('etablissements', 'chef_signature_nom', 'TEXT');
 ensureColumn('classes', 'titulaire_id', 'INTEGER');
 // Les bases déjà en service n'avaient qu'une seule année de périodes/examens.
 // On les rattache à l'année actuelle SANS effacer ni réécrire aucune note.

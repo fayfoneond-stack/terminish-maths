@@ -10,6 +10,7 @@ const path = require('node:path');
 const { db, hashPassword, verifyPassword, createEtablissement, createUser, now, today, addDays } = require('./db');
 const { computeClasse, computeFusion, bulletinData } = require('./stats');
 const stockage = require('./storage');
+const { preparerSignatures, mimeImage } = require('./signatures-bulletin');
 const P = require('./paiements');
 const Abonnement = require('./abonnements');
 const Tarif = require('./tarifs-effectif');
@@ -143,8 +144,13 @@ function baseUrl(req) {
 async function enregistrerSignature(dataUrl, ecoleId) {
   const brut = String(dataUrl || '').trim();
   if (!brut) return null;                                  // signature retirée
-  if (brut.length < 60) throw new Error('Image de signature invalide');
-  const resultat = await stockage.enregistrer(brut, { categorie: 'signatures', ecoleId });
+  const image = stockage.lireDataUrl(brut);
+  if (brut.length < 60 || !image || mimeImage(image.buffer) !== image.type)
+    throw new Error('Image de signature invalide (PNG, JPEG ou WebP requis)');
+  // Un lien de partage MEGA/Drive n'est pas une image imprimable. Garder la
+  // copie originale sur le disque sauvegardé de l'école, même si un stockage
+  // externe est configuré pour les autres fichiers.
+  const resultat = await stockage.enregistrer(brut, { categorie: 'signatures', ecoleId, seulement: ['local'] });
   return { url: resultat.url, provider: resultat.provider };
 }
 
@@ -232,6 +238,31 @@ app.put('/api/moi/signature', auth, staffOnly, async (req, res) => {
     db.prepare('UPDATE utilisateurs SET signature = ?, signature_provider = ? WHERE id = ?')
       .run(sig.url, sig.provider, req.user.id);
     res.json({ ok: true, signature: sig.url, provider: sig.provider });
+  } catch (err) {
+    res.status(400).json({ error: `Signature non enregistrée : ${err.message}` });
+  }
+});
+
+/** Photo officielle de la signature du chef, liée à UNE école et au nom
+ * imprimé. Une signature personnelle d'un autre compte ne sert jamais de
+ * substitut. Supprimer la photo ne supprime pas les autres fichiers. */
+app.put('/api/etablissement/signature', auth, directionOnly, async (req, res) => {
+  const id = ecoleOf(req, res); if (!id) return;
+  if (req.body?.signature === undefined) return res.status(400).json({ error: 'Signature manquante' });
+  const etab = db.prepare('SELECT chef_nom FROM etablissements WHERE id = ?').get(id);
+  if (!etab) return res.status(404).json({ error: 'Établissement introuvable' });
+  if (!String(etab.chef_nom || '').trim() && req.body.signature)
+    return res.status(400).json({ error: "Indiquez d’abord le nom du chef dans Paramètres." });
+  try {
+    const sig = await enregistrerSignature(req.body.signature, id);
+    if (suspensionCourante(req)) return refuserEcritureSuspendue(res);
+    // Le nom peut avoir changé pendant l'envoi ; on mémorise le nom actuel.
+    const nom = db.prepare('SELECT chef_nom FROM etablissements WHERE id = ?').get(id)?.chef_nom || '';
+    // Conserver le nom même si la photo est retirée : ne pas réafficher par
+    // mégarde une ancienne signature personnelle du compte direction.
+    db.prepare('UPDATE etablissements SET chef_signature = ?, chef_signature_nom = ? WHERE id = ?')
+      .run(sig?.url || null, nom.trim(), id);
+    res.json({ ok: true, signature: sig?.url || null, chef_signature_nom: nom.trim() });
   } catch (err) {
     res.status(400).json({ error: `Signature non enregistrée : ${err.message}` });
   }
@@ -2235,7 +2266,7 @@ app.patch('/api/admin/paiements/:id', auth, roles('super_admin'), (req, res) => 
 /* ------------------------------------------------------------------ */
 /* Pages imprimables (bulletins)                                       */
 /* ------------------------------------------------------------------ */
-app.get('/print/bulletin/:eleveId', auth, (req, res) => {
+app.get('/print/bulletin/:eleveId', auth, (req, res, next) => {
   const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
   const periodeId = Number(req.query.periode_id);
   if (!periodeId) return res.status(400).send('Période manquante');
@@ -2247,9 +2278,9 @@ app.get('/print/bulletin/:eleveId', auth, (req, res) => {
   if (req.user.role === 'enseignant' && !canAccessClasse(req, data.promo.classe.id)) return res.status(403).send('Accès refusé');
   if (req.user.role === 'eleve' && data.eleve.user_id !== req.user.id) return res.status(403).send('Accès refusé');
   if (req.user.role === 'eleve' && !(data.bulletin && data.bulletin.publie)) return res.status(403).send('Bulletin non encore publié');
-  res.send(renderBulletin(data));
+  preparerSignatures([data]).then(([pret]) => res.send(renderBulletin(pret))).catch(next);
 });
-app.get('/print/classe/:classeId', auth, staffOnly, (req, res) => {
+app.get('/print/classe/:classeId', auth, staffOnly, (req, res, next) => {
   const ecoleId = ecoleOf(req, res); if (!ecoleId) return;
   const classeId = Number(req.params.classeId);
   if (!canAccessClasse(req, classeId)) return res.status(403).send('Accès refusé');
@@ -2259,7 +2290,7 @@ app.get('/print/classe/:classeId', auth, staffOnly, (req, res) => {
   const mode = req.query.mode === 'composition' ? 'composition' : undefined;
   const promo = computeClasse(db, ecoleId, { classe_id: classeId, periode_id: periodeId, ...(mode ? { mode } : {}) });
   const bulletins = promo.resultats.map(r => bulletinData(db, ecoleId, r.eleve.id, periodeId, { mode })).filter(Boolean);
-  res.send(renderBulletinBatch(bulletins, periode));
+  preparerSignatures(bulletins).then(prets => res.send(renderBulletinBatch(prets, periode))).catch(next);
 });
 
 app.get('/print/examen/:examenId', auth, staffOnly, (req, res) => {

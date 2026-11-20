@@ -183,6 +183,7 @@ test('Une école suspendue lit, télécharge ses PDF et calcule un aperçu, sans
       ['PUT', `/api/periodes/${periode.id}`, { statut: 'fermee' }],
       ['PUT', '/api/etablissement', { nom: 'École modifiée' }],
       ['PUT', '/api/moi/signature', { signature: '' }],
+      ['PUT', '/api/etablissement/signature', { signature: '' }],
       ['POST', '/api/bulletins/publier', { classe_id: c.id, periode_id: periode.id, publie: true }],
       ['PUT', `/api/bulletins/${el.id}/${periode.id}`, { appreciation: 'Modifiée' }],
       ['POST', '/api/passages/valider', { classe_id: c.id }],

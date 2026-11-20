@@ -428,14 +428,23 @@ enseignants ; une note ne peut viser qu'un élève de la classe de l'évaluation
 | Nom du professeur, sous chaque matière | affectations (classe + matière) |
 | **Colonne « Signature du professeur »**, à droite du tableau | signature importée de l'enseignant affecté à la matière (case vide s'il n'en a pas : elle se signe à la main sur le bulletin imprimé) |
 | Bloc « Le Professeur titulaire » | `classes.titulaire_id` → nom **et signature** de l'enseignant |
-| Bloc « Le Chef d'Établissement » | `etablissements.chef_nom` / `chef_titre` + signature du compte direction |
+| Bloc « Le Chef d'Établissement » | `etablissements.chef_nom` / `chef_titre` + photo officielle de cet établissement, liée au nom imprimé (ou signature d'un directeur actif portant ce nom pour les anciens comptes) |
 | Le tuteur | **supprimé du bulletin** (les coordonnées du tuteur restent dans la fiche élève) |
 
 La signature s'importe **une seule fois** : console → *Enseignants* → ✏️ → zone de dépôt
 (glisser une photo, coller avec `Ctrl+V`, ou choisir un fichier). Elle est réduite à 600 px dans le
-navigateur, puis enregistrée sur le stockage configuré (`STORAGE_PROVIDERS`). Elle apparaît ensuite
-automatiquement sur tous les bulletins de l'enseignant, au-dessus de son nom.
-Le chef d'établissement importe la sienne depuis *Paramètres → Logo & signature*.
+navigateur, puis enregistrée dans `data/media/signatures` (ou `TERMINISH_DATA_DIR/media/signatures`).
+Les signatures sont conservées **localement, même si MEGA/Cloudinary est configuré** : un lien de partage
+MEGA n'est pas une image affichable et une URL distante peut échouer à l'impression. Le serveur incorpore
+la photo au bulletin avant l'impression ; faites la sauvegarde de `data/media` en plus de SQLite.
+Les anciennes photos stockées sur un fournisseur distant sont incorporées si leur lien public est
+encore lisible. Sinon le bulletin signale le nom concerné à l'écran et laisse une place pour signer
+à la main : il faut réimporter la photo dans *Enseignants → ✏️*.
+Le chef d'établissement importe la photo officielle depuis *Paramètres → Logo & signature* →
+*Enregistrer la signature du chef*. Si son nom change, l'ancienne photo n'est pas attribuée au nouveau
+chef ; elle reste enregistrée et une nouvelle photo peut être importée. Pour les écoles existantes,
+la signature d'un compte directeur actif n'est utilisée que si son nom correspond au nom affiché.
+L'impression par le bouton attend que les images soient chargées et avertit si l'une manque.
 
 ### Identifiants des enseignants (récupération de mot de passe)
 
@@ -531,9 +540,11 @@ réception et indésirables ; si besoin, consulter les journaux du site).
 ### Stockage externe
 
 `server/storage.js` centralise l'envoi des fichiers : Cloudinary (jusqu'à plusieurs comptes en
-rotation), Google Drive, **MEGA via rclone** (25 Go gratuits), et **repli local** systématique
-(`data/media`, servi sous `/media/...`). Seules les images (logos, signatures, pièces jointes)
-sortent : les notes et les bulletins restent dans SQLite.
+rotation), Google Drive, **MEGA via rclone** (25 Go gratuits), et **repli local en cas d'échec**
+(`data/media`, servi sous `/media/...`). Les signatures restent toujours sur le disque local pour
+être imprimables ; un fichier envoyé sur MEGA n'a pas automatiquement une deuxième copie locale.
+Sauvegardez donc la base SQLite **et** `data/media`. Les notes et les bulletins ne partent pas
+chez ces fournisseurs.
 
 ```bash
 npm run stockage                    # état des fournisseurs
